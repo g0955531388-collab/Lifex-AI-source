@@ -6,7 +6,6 @@
 library lifex_ai.core.device_interoperability.engine;
 
 import '../device_protocol/lifex_protocol.dart';
-import '../device_protocol/packet_type.dart';
 import '../device_protocol/protocol_packet.dart';
 
 class CommandMapping {

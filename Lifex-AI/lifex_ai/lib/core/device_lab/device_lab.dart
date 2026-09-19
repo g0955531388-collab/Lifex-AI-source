@@ -7,7 +7,6 @@ library lifex_ai.core.device_lab.device_lab;
 
 import 'base/virtual_device.dart';
 import 'lab_command.dart';
-import 'lab_kind.dart';
 import 'simulation/connection_simulator.dart';
 import 'virtual_device_factory.dart';
 import 'virtual_device_registry.dart';

@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/device_control_center/control_types.dart';
 import 'package:lifex_ai/core/device_drivers/smart_wheelchair_profile.dart';
 import 'package:lifex_ai/core/device_protocol/packet_type.dart';
-import 'package:lifex_ai/core/device_protocol/protocol_session.dart';
 import 'package:lifex_ai/features/devices/lifex_device_runtime.dart';
 import 'package:lifex_ai/features/voice/command_parser.dart';
 

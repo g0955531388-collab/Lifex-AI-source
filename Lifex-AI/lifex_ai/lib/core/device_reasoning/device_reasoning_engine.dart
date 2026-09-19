@@ -194,7 +194,7 @@ class DeviceReasoningEngine {
         ).firstOrNull ??
         options.first;
 
-    if (selected!.feasibility == OptionFeasibility.unauthorized ||
+    if (selected.feasibility == OptionFeasibility.unauthorized ||
         selected.feasibility == OptionFeasibility.unsafe) {
       return _store(
         DeviceDecision(

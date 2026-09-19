@@ -5,7 +5,6 @@ import 'package:lifex_ai/features/donations/donation_beneficiary_directory.dart'
 import 'package:lifex_ai/features/finance/payment_gateway_client.dart';
 import 'package:lifex_ai/features/finance/transaction_ledger.dart';
 import 'package:lifex_ai/features/finance/wallet_manager.dart';
-import 'package:lifex_ai/features/trusted_person/person_match_policy.dart';
 import 'package:lifex_ai/features/trusted_person/trusted_person_models.dart';
 import 'package:lifex_ai/features/voice/command_parser.dart';
 

@@ -14,7 +14,6 @@ import 'package:provider/provider.dart';
 
 import '../core/trial_manager.dart';
 import '../features/emergency/emergency_manager.dart';
-import '../features/network_box/box_unit_catalog.dart';
 import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/finance/billing_exemption_policy.dart';
 import '../features/location/gps_priority_monitor.dart';
@@ -26,7 +25,6 @@ import 'ai_agent_screen.dart';
 import 'ai_hub_screen.dart';
 import 'appointments_screen.dart';
 import 'blood_request_screen.dart';
-import 'box_unit_screen.dart';
 import 'camera_notes_screen.dart';
 import 'doctor_directory_screen.dart';
 import 'emergency_contacts_screen.dart';
