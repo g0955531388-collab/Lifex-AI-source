@@ -33,6 +33,7 @@ import 'data/medical_database_manager.dart';
 
 import 'features/accessibility/assistive_vision_engine.dart';
 import 'features/accessibility/multi_sensory_alert_manager.dart';
+import 'features/devices/lifex_device_runtime.dart';
 import 'features/ai/ai_bridge.dart';
 import 'features/ai/ai_service_router.dart';
 import 'features/ai/unified_ai_hub_gateway.dart';
@@ -116,6 +117,7 @@ class LifexAppContext {
     required this.trialManager,
     required this.localKnowledge,
     required this.lastingSearchIndex,
+    required this.deviceRuntime,
   });
 
   final MultiProfileEngine multiProfileEngine;
@@ -141,6 +143,7 @@ class LifexAppContext {
   final TrialManager trialManager;
   final LocalKnowledge localKnowledge;
   final LastingSearchIndex lastingSearchIndex;
+  final LifexDeviceRuntime deviceRuntime;
 }
 
 /// ⚠️ تنفيذ مؤقت (In-memory) لتخزين بيانات الاعتماد — **غير آمن** لأي
@@ -323,6 +326,9 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   );
   batteryMonitor.startMonitoring();
 
+  // 5-ب) منظومة الأجهزة العالمية — Hub + Control Center (محاكاة + مسار آمن).
+  final deviceRuntime = LifexDeviceRuntime();
+
   // 6) المراقبة عن بعد وتنبيهات الصحة.
   final trustedContactsManagers = <String, TrustedContactsManager>{};
   final healthAlertDispatcher = HealthAlertDispatcher(
@@ -340,10 +346,13 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   // 7) المحفظة الرقمية والمعاملات المالية.
   final transactionLedger = TransactionLedger();
   final walletManager = WalletManager(
-    // ⚠️ يتطلب مفتاح Stripe حقيقي قبل قبول أي دفعة فعلية — راجع
-    // REGULATORY_COMPLIANCE_NOTES.md أولاً.
-    gatewayClient: StripePaymentGatewayClient(publishableKey: 'pk_test_placeholder'),
+    // الإنتاج غير موصول: Sandbox صريح حتى يوجد مزود مرخّص حقيقي.
+    // لا تُخلط حركات Sandbox بأموال Production.
+    gatewayClient: SandboxPaymentGatewayClient(
+      feePolicy: const TopUpFeePolicy(fixedMinor: 200),
+    ),
     ledger: transactionLedger,
+    topUpFeePolicy: const TopUpFeePolicy(fixedMinor: 200),
   );
   final paymentController = PaymentController(walletManager: walletManager);
   final transactionService = TransactionService(ledger: transactionLedger);
@@ -416,6 +425,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     trialManager: trialManager,
     localKnowledge: localKnowledge,
     lastingSearchIndex: lastingSearchIndex,
+    deviceRuntime: deviceRuntime,
   );
 }
 
@@ -470,6 +480,7 @@ class LifexAiApp extends StatelessWidget {
         Provider<TrialManager>.value(value: appContext.trialManager),
         Provider<LocalKnowledge>.value(value: appContext.localKnowledge),
         Provider<LastingSearchIndex>.value(value: appContext.lastingSearchIndex),
+        Provider<LifexDeviceRuntime>.value(value: appContext.deviceRuntime),
       ],
       child: MaterialApp(
         navigatorKey: LifexNavigator.key,

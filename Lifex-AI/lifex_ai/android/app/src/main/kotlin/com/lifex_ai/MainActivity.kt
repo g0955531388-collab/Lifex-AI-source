@@ -1,10 +1,13 @@
 package com.lifex_ai
 
+import android.app.Activity
 import android.content.Intent
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.provider.ContactsContract
 import android.view.KeyEvent
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -14,7 +17,9 @@ class MainActivity : FlutterActivity() {
     private val cueChannel = "lifex_ai/hardware_cue"
     private val watchChannel = "lifex_ai/clinical_watch"
     private val shareChannel = "lifex_ai/share"
+    private val contactPickerChannel = "lifex_ai/contact_picker"
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val pickContactRequest = 9911
 
     private var cueKind: String = "volumeUpDouble"
     private var tapCount: Int = 2
@@ -22,6 +27,7 @@ class MainActivity : FlutterActivity() {
     private var hits: Int = 0
     private var lastHitAt: Long = 0
     private var lastCode: Int = 0
+    private var pendingContactResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -73,6 +79,113 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, contactPickerChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "pickContact" -> {
+                        if (pendingContactResult != null) {
+                            result.error("BUSY", "منتقي جهات الاتصال قيد الاستخدام.", null)
+                            return@setMethodCallHandler
+                        }
+                        pendingContactResult = result
+                        // Pick a phone row directly — minimum data, no full address book.
+                        val intent = Intent(
+                            Intent.ACTION_PICK,
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                        )
+                        try {
+                            startActivityForResult(intent, pickContactRequest)
+                        } catch (e: Exception) {
+                            pendingContactResult = null
+                            result.error("UNAVAILABLE", e.message, null)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != pickContactRequest) return
+        val reply = pendingContactResult
+        pendingContactResult = null
+        if (reply == null) return
+        if (resultCode != Activity.RESULT_OK || data?.data == null) {
+            reply.success(null)
+            return
+        }
+        try {
+            reply.success(readPickedContactMinimum(data.data!!))
+        } catch (e: Exception) {
+            reply.error("READ_FAILED", e.message, null)
+        }
+    }
+
+    /**
+     * Reads ONLY the selected contact URI (system picker grant).
+     * Does not dump the address book. No READ_CALL_LOG / READ_SMS.
+     */
+    private fun readPickedContactMinimum(contactUri: Uri): Map<String, String?> {
+        var displayName: String? = null
+        var lookupKey: String? = null
+        var contactId: String? = null
+        contentResolver.query(
+            contactUri,
+            arrayOf(
+                ContactsContract.Contacts._ID,
+                ContactsContract.Contacts.DISPLAY_NAME,
+                ContactsContract.Contacts.LOOKUP_KEY,
+            ),
+            null,
+            null,
+            null,
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                contactId = cursor.getString(0)
+                displayName = cursor.getString(1)
+                lookupKey = cursor.getString(2)
+            }
+        }
+
+        var phoneNumber: String? = null
+        if (contactId != null) {
+            contentResolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER),
+                "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID}=?",
+                arrayOf(contactId),
+                null,
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    phoneNumber = cursor.getString(0)
+                }
+            }
+        }
+
+        var email: String? = null
+        if (contactId != null) {
+            contentResolver.query(
+                ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                arrayOf(ContactsContract.CommonDataKinds.Email.ADDRESS),
+                "${ContactsContract.CommonDataKinds.Email.CONTACT_ID}=?",
+                arrayOf(contactId),
+                null,
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    email = cursor.getString(0)
+                }
+            }
+        }
+
+        return mapOf(
+            "displayName" to displayName,
+            "phoneNumber" to phoneNumber,
+            "email" to email,
+            "lookupKey" to lookupKey,
+            "contactId" to contactId,
+        )
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

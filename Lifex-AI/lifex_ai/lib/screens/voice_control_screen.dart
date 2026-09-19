@@ -28,12 +28,17 @@ import '../features/voice/voice_locale_policy.dart';
 import '../features/voice/voice_privacy_manager.dart';
 import '../features/voice/voice_reply.dart';
 import '../features/voice/wake_word_detector.dart';
+import '../features/devices/lifex_device_runtime.dart';
 import '../features/hospital/hospital_blood_bank.dart';
 import '../features/network_box/box_unit_catalog.dart';
 import '../widgets/accessible_widgets.dart';
 import 'blood_request_screen.dart';
 import 'box_unit_screen.dart';
+import 'device_center_screen.dart';
+import 'donations_center_screen.dart';
+import 'wallet_screen.dart';
 import 'accessibility_assistant_screen.dart';
+import '../features/finance/wallet_manager.dart';
 import 'appointments_screen.dart';
 import 'camera_notes_screen.dart';
 import 'clinical_watch_screen.dart';
@@ -837,11 +842,187 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
           ),
         );
         break;
+      case VoiceCommandIntent.openDeviceCenter:
+        await reply(
+          const VoiceReply(
+            ar: 'أفتح مركز الأجهزة. الدعم الفعلي يعتمد على Adapter وإذن Android.',
+            en: 'Opening the device center. Real support needs an adapter and Android permission.',
+          ),
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DeviceCenterScreen()),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.listConnectedDevices:
+        {
+          final runtime = context.read<LifexDeviceRuntime>();
+          final o = await runtime.listConnectedSpoken();
+          if (!mounted) return;
+          await reply(VoiceReply(ar: o.spokenAr, en: o.spokenEn));
+        }
+        break;
+      case VoiceCommandIntent.showWheelchair:
+        {
+          final runtime = context.read<LifexDeviceRuntime>();
+          final o = await runtime.attachSimulatedWheelchair();
+          if (!mounted) return;
+          await reply(VoiceReply(ar: o.spokenAr, en: o.spokenEn));
+        }
+        break;
+      case VoiceCommandIntent.wheelchairStatus:
+        {
+          final runtime = context.read<LifexDeviceRuntime>();
+          final o = await runtime.wheelchairStatusSpoken();
+          if (!mounted) return;
+          await reply(VoiceReply(ar: o.spokenAr, en: o.spokenEn));
+        }
+        break;
+      case VoiceCommandIntent.wheelchairMoveForward:
+        {
+          final runtime = context.read<LifexDeviceRuntime>();
+          final o = await runtime.runWheelchairAction('MOVE_FORWARD');
+          if (!mounted) return;
+          await reply(VoiceReply(ar: o.spokenAr, en: o.spokenEn));
+        }
+        break;
+      case VoiceCommandIntent.wheelchairStop:
+        {
+          final runtime = context.read<LifexDeviceRuntime>();
+          final o = await runtime.runWheelchairAction('STOP');
+          if (!mounted) return;
+          await reply(VoiceReply(ar: o.spokenAr, en: o.spokenEn));
+        }
+        break;
+      case VoiceCommandIntent.wheelchairEmergencyStop:
+        {
+          final runtime = context.read<LifexDeviceRuntime>();
+          final o = await runtime.runWheelchairAction('EMERGENCY_STOP');
+          if (!mounted) return;
+          await reply(VoiceReply(ar: o.spokenAr, en: o.spokenEn));
+        }
+        break;
+      case VoiceCommandIntent.wheelchairReadBattery:
+        {
+          final runtime = context.read<LifexDeviceRuntime>();
+          final o = await runtime.runWheelchairAction('READ_BATTERY');
+          if (!mounted) return;
+          await reply(VoiceReply(ar: o.spokenAr, en: o.spokenEn));
+        }
+        break;
+      case VoiceCommandIntent.confirmDeviceMotion:
+        {
+          final runtime = context.read<LifexDeviceRuntime>();
+          final o = await runtime.confirmPendingMotion();
+          if (!mounted) return;
+          await reply(VoiceReply(ar: o.spokenAr, en: o.spokenEn));
+        }
+        break;
+      case VoiceCommandIntent.openDonations:
+        await reply(
+          const VoiceReply(
+            ar: 'أفتح مركز التبرعات. البحث عام موافق فقط — ليس قائمة مرضى.',
+            en: 'Opening donations. Public consented profiles only — not patient lists.',
+          ),
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DonationsCenterScreen()),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.donateSearchCancer:
+        await reply(
+          const VoiceReply(
+            ar: 'أبحث عن حملات ومستفيدين عامين لفئة السرطان. ثم اختر من القائمة.',
+            en: 'Searching public cancer donation programs. Then pick from the list.',
+          ),
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DonationsCenterScreen()),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.donateSearchHeart:
+        await reply(
+          const VoiceReply(
+            ar: 'أبحث عن برامج دعم القلب العامة المتاحة للتبرع.',
+            en: 'Searching public heart donation programs.',
+          ),
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DonationsCenterScreen()),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.openWallet:
+      case VoiceCommandIntent.walletTopUp:
+        {
+          final profile =
+              context.read<ActiveProfileController>().activeProfile;
+          final pid = profile?.profileId ?? '';
+          await reply(
+            VoiceReply(
+              ar: pid.isEmpty
+                  ? 'لا يوجد ملف نشط. أنشئ ملفاً ثم افتح المحفظة.'
+                  : (command.intent == VoiceCommandIntent.walletTopUp
+                      ? 'أفتح المحفظة لشحن الرصيد. المسار: مبلغ ثم وسيلة ثم رسوم ثم تأكيد.'
+                      : 'أفتح محفظتك.'),
+              en: 'Opening wallet.',
+            ),
+            thenOpen: pid.isEmpty
+                ? null
+                : () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => WalletScreen(profileId: pid),
+                      ),
+                    );
+                  },
+          );
+        }
+        break;
+      case VoiceCommandIntent.walletBalance:
+        {
+          final profile =
+              context.read<ActiveProfileController>().activeProfile;
+          final pid = profile?.profileId;
+          if (pid == null) {
+            await reply(
+              const VoiceReply(
+                ar: 'لا يوجد ملف نشط لعرض الرصيد.',
+                en: 'No active profile for balance.',
+              ),
+            );
+            break;
+          }
+          final bal = context.read<WalletManager>().balancesFor(pid);
+          await reply(
+            VoiceReply(
+              ar:
+                  'الرصيد المتاح ${(bal.availableMinor / 100).toStringAsFixed(2)} دولار. '
+                  'المعلّق ${(bal.pendingMinor / 100).toStringAsFixed(2)}. '
+                  'المزوّد Sandbox إن لم يُربط مزود إنتاجي.',
+              en:
+                  'Available ${(bal.availableMinor / 100).toStringAsFixed(2)}. '
+                  'Pending ${(bal.pendingMinor / 100).toStringAsFixed(2)}.',
+            ),
+          );
+        }
+        break;
       case VoiceCommandIntent.unknown:
         await reply(
           const VoiceReply(
-            ar: 'لم أفهم الأمر. قل ليفكس ثم: ملفي الصحي، أدويتي، أو ما الموجود أمامي.',
-            en: 'I did not catch that. Say Lifex then: my health, medications, or what is in front of me.',
+            ar: 'لم أفهم الأمر. قل ليفكس ثم: ملفي الصحي، أدويتي، مركز الأجهزة، أو أظهر الكرسي.',
+            en: 'I did not catch that. Say Lifex then: my health, medications, devices, or show wheelchair.',
           ),
         );
         break;
