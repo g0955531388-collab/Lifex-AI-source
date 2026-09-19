@@ -103,6 +103,31 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "lifex_ai/emergency_sms")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "openSmsDraft" -> {
+                        val args = call.arguments as? Map<*, *>
+                        val phone = args?.get("phone") as? String ?: ""
+                        val body = args?.get("body") as? String ?: ""
+                        if (phone.isBlank()) {
+                            result.success(false)
+                            return@setMethodCallHandler
+                        }
+                        try {
+                            val uri = Uri.parse("smsto:$phone")
+                            val intent = Intent(Intent.ACTION_SENDTO, uri).apply {
+                                putExtra("sms_body", body)
+                            }
+                            startActivity(intent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.success(false)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
     }
 
     @Deprecated("Deprecated in Java")

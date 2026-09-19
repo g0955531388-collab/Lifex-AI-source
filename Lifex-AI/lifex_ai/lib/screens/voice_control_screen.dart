@@ -929,7 +929,9 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
           thenOpen: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const DonationsCenterScreen()),
+              MaterialPageRoute(
+                builder: (_) => const DonationsCenterScreen(),
+              ),
             );
           },
         );
@@ -943,7 +945,11 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
           thenOpen: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const DonationsCenterScreen()),
+              MaterialPageRoute(
+                builder: (_) => const DonationsCenterScreen(
+                  initialQuery: 'أريد التبرع لمرضى السرطان',
+                ),
+              ),
             );
           },
         );
@@ -957,7 +963,11 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
           thenOpen: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const DonationsCenterScreen()),
+              MaterialPageRoute(
+                builder: (_) => const DonationsCenterScreen(
+                  initialQuery: 'أريد التبرع لمرضى القلب',
+                ),
+              ),
             );
           },
         );

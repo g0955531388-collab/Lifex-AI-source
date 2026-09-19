@@ -18,7 +18,10 @@ import '../widgets/accessible_widgets.dart';
 import '../widgets/honesty_banner.dart';
 
 class DonationsCenterScreen extends StatefulWidget {
-  const DonationsCenterScreen({super.key});
+  const DonationsCenterScreen({super.key, this.initialQuery});
+
+  /// من الصوت أو الاختصارات — يُنفَّذ بحثاً عاماً موافقاً فوراً.
+  final String? initialQuery;
 
   @override
   State<DonationsCenterScreen> createState() => _DonationsCenterScreenState();
@@ -26,7 +29,7 @@ class DonationsCenterScreen extends StatefulWidget {
 
 class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
   late final LifexDonationApplicationService _service;
-  final _search = TextEditingController();
+  late final TextEditingController _search;
   final _amount = TextEditingController(text: '10000');
   List<DonationBeneficiaryProfile> _results = [];
   DonationBeneficiaryProfile? _selected;
@@ -39,7 +42,16 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
     super.initState();
     final wallet = context.read<WalletManager>();
     _service = LifexDonationApplicationService(wallet: wallet);
-    _results = _service.directory.search(const DonationSearchQuery());
+    final seed = widget.initialQuery?.trim() ?? '';
+    _search = TextEditingController(text: seed);
+    if (seed.isEmpty) {
+      _results = _service.directory.search(const DonationSearchQuery());
+    } else {
+      _results = _service.searchByVoiceOrText(seed);
+      _statusAr = _results.isEmpty
+          ? 'لا نتائج عامة موافقة للتبرع.'
+          : 'عُثر على ${_results.length} نتيجة عامة. ليست قائمة مرضى.';
+    }
   }
 
   @override

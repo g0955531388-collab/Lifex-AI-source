@@ -419,17 +419,8 @@ class CommandParser {
       'confirm motion',
       'confirm movement',
     ]),
-    _CommandRule(VoiceCommandIntent.openDonations, [
-      'التبرعات',
-      'أريد التبرع',
-      'افتح التبرعات',
-      'أظهر الحملات',
-      'الحملات المتاحة',
-      'donations',
-      'i want to donate',
-      'open donations',
-    ]),
     _CommandRule(VoiceCommandIntent.donateSearchCancer, [
+      'أريد التبرع لمرضى السرطان',
       'تبرع لمرضى السرطان',
       'مرضى السرطان',
       'donate cancer',
@@ -458,10 +449,22 @@ class CommandParser {
       'charge wallet',
     ]),
     _CommandRule(VoiceCommandIntent.donateSearchHeart, [
+      'أريد التبرع لمرضى القلب',
       'تبرع لمرضى القلب',
       'مرضى القلب',
       'donate heart',
       'heart donation',
+    ]),
+    _CommandRule(VoiceCommandIntent.openDonations, [
+      'أظهر الحملات المتاحة للتبرع',
+      'التبرعات',
+      'أريد التبرع',
+      'افتح التبرعات',
+      'أظهر الحملات',
+      'الحملات المتاحة',
+      'donations',
+      'i want to donate',
+      'open donations',
     ]),
   ];
 
