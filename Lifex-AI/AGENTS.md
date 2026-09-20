@@ -24,5 +24,9 @@ Lifex owns the contracts. ChatGPT / Cursor / Gemini / Copilot are **swappable to
   Remote tools return `TOOL_UNAVAILABLE` (never fake success). Do **not** start Knowledge/RAG in the same wave.
 - **CI Evidence Verifier** (`lib/core/lio/ci_evidence/`):  
   `MCP Gateway → GitHub READ → CiEvidence → LifexClaimVerifier → VERIFIED|FAILED|NOT_VERIFIED|TOOL_UNAVAILABLE → Audit`.  
-  Never treat agent report as CI proof. READ ONLY. No Knowledge/RAG in this wave.
+  Never treat agent report as CI proof. READ ONLY.
+- **Knowledge Engine + Hybrid RAG Foundation** (`lib/core/lio/knowledge_engine/`):  
+  `Source → Ingestion/Index → Keyword|Vector*|Metadata|Graph|SQL* → Rerank → Evidence Pack → LIO → Verifier`.  
+  LLM is **not** source of truth. Knowledge ≠ Clinical ≠ AI Memory. No diagnose/prescribe.  
+  `*` Vector/SQL adapters may be `TOOL_UNAVAILABLE` until a live engine is wired.
 - Reuse existing `AgentOrchestrator` / engines. Do not invent medical facts. Do not force-push `main`. Package name stays `lifex_ai`.
