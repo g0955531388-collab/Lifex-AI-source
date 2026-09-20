@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/lio/lifex_intelligence_fabric.dart';
+import 'package:lifex_ai/core/lio/lio_types.dart';
 import 'package:lifex_ai/core/lio/mcp_live/mcp_errors.dart';
 import 'package:lifex_ai/core/lio/mcp_live/mcp_live_gateway.dart';
 import 'package:lifex_ai/core/lio/mcp_live/mcp_live_types.dart';
 import 'package:lifex_ai/core/lio/mcp_live/mcp_request_context.dart';
 import 'package:lifex_ai/core/lio/mcp_live/mcp_tool_adapters.dart';
 import 'package:lifex_ai/core/lio/mcp_live/mcp_transport.dart';
-import 'package:lifex_ai/core/lio/lio_types.dart';
 
 void main() {
   late LifexIntelligenceFabric fabric;
@@ -22,7 +22,10 @@ void main() {
     final state = await live.connect();
     expect(state, McpLiveSessionState.ready);
     expect(live.foundationReport()['phase'], 'MCP_LIVE_GATEWAY_FOUNDATION');
-    expect(live.foundationReport()['nextPhasesExcluded'], contains('KNOWLEDGE_ENGINE'));
+    expect(
+      live.foundationReport()['nextPhasesExcluded'],
+      contains('KNOWLEDGE_ENGINE'),
+    );
   });
 
   test('بدون connect → sessionNotReady', () async {
@@ -115,7 +118,7 @@ void main() {
     expect(r.status, McpLiveInvokeStatus.deniedByPolicy);
   });
 
-  test('HTTP/SSE بدون endpoint → degraded + adapter files ما زال يعمل عبر Hub', () async {
+  test('HTTP/SSE degraded — Files adapter يبقى حيًا', () async {
     final httpLive = LifexMcpLiveGateway(
       registry: fabric.mcp,
       lio: fabric.lio,
@@ -123,7 +126,6 @@ void main() {
     );
     await httpLive.connect();
     expect(httpLive.state, McpLiveSessionState.degraded);
-    // النقل HTTP غير موصول؛ المحوّل In-Process للملفات يبقى الأساس الحي.
     final report = await httpLive.execute(
       McpGatewayRequest(
         requestId: 'h1',
@@ -147,7 +149,7 @@ void main() {
     expect(report.result.success, isTrue);
   });
 
-  test('GitHub عبر HTTP adapter يعلن TOOL_UNAVAILABLE', () async {
+  test('GitHub قراءة → TOOL_UNAVAILABLE', () async {
     await live.connect();
     live.adapters.replace('mcp.github', GitHubMcpToolAdapter());
     final report = await live.execute(
