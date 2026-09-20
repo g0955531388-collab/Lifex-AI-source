@@ -32,7 +32,8 @@ Lifex owns the contracts. ChatGPT / Cursor / Gemini / Copilot are **swappable to
 - **Knowledge Source Registry + Ingestion** (`lib/core/lio/knowledge_engine/ingestion/`):  
   `Registry → Validate → Acquire → Normalize → Segment → Provenance → Duplicate/Conflict → Quarantine|Corpus → Knowledge Engine`.  
   No clinical/patient data. No silent overwrite. Existence ≠ authority.  
-  **Agent `KnowledgeRetriever`** is a Compatibility Facade only →  
-  `ProductionKnowledgeComposition` → Bridge → Knowledge Engine (no Stub/Legacy fallback in production).  
+  **Unified Production Composition** (`lib/core/lio/lifex_production_composition.dart`): sole production root  
+  `LifexProductionComposition → Fabric → AgentCore → ProductionKnowledgeComposition → Bridge → Knowledge Engine`.  
+  Agent `KnowledgeRetriever` is a Compatibility Facade only — no Stub/Legacy fallback in production.  
   Test doubles live under `test/support/` and must be injected explicitly.
 - Reuse existing `AgentOrchestrator` / engines. Do not invent medical facts. Do not force-push `main`. Package name stays `lifex_ai`.

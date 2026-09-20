@@ -28,7 +28,6 @@ import 'agents/medical_agent.dart';
 import 'agents/report_agent.dart';
 import 'agents/vision_agent.dart';
 import 'knowledge/knowledge_retriever.dart';
-import 'knowledge/production_knowledge_composition.dart';
 import 'tools/agent_tool_registry.dart';
 import 'tools/calculator_tool.dart';
 import 'tools/document_reader_tool.dart';
@@ -66,38 +65,43 @@ class AgentCoreBundle {
   final CoordinatorAgent coordinator;
 }
 
-/// نقطة التجميع (composition root) لطبقة الوكيل — يُستدعى مرة واحدة من
-/// main.dart._bootstrapLifexAi()، بعد تهيئة aiModuleBundle مباشرة (يحتاج
-/// الوكيل الطبي HealthAnalysisEngine وDoctorGuidanceEngine الجاهزين).
+/// تجميع طبقة الوكيل — يُستدعى من [LifexProductionComposition] في الإنتاج
+/// (بعد تهيئة aiModuleBundle). لا يبني Knowledge Retriever بنفسه؛ يجب حقن
+/// مسار إنتاجي من ProductionKnowledgeComposition عبر جذر الإنتاج الموحّد.
 ///
 /// لا يُنشئ أي خدمة أساسية جديدة بنفسه — كل الاعتماديات (medicalDatabaseManager،
-/// aiModuleBundle، ocrReader، visionEngine) تُمرَّر إليه جاهزة من main.dart
+/// aiModuleBundle، ocrReader، visionEngine، knowledgeRetriever) تُمرَّر جاهزة
 /// (بند 35/37: إعادة استخدام الخدمات الحالية، لا تكرارها).
 class AgentCore {
   AgentCore._();
 
+  /// يتطلب [knowledgeRetriever] إنتاجياً صريحاً — لا fallback ولا nullable.
   static AgentCoreBundle initialize({
     required MedicalDatabaseManager medicalDatabaseManager,
     required AiModuleBundle aiModuleBundle,
     required AiServiceRouter aiServiceRouter,
+    required KnowledgeRetriever knowledgeRetriever,
     MedicalOcrReader? ocrReader,
     OcrTextExtractor? ocrTextExtractor,
     SmartVisionEngine? visionEngine,
     RiskLevelEngine? riskLevelEngine,
   }) {
+    if (!knowledgeRetriever.isProductionKnowledgePath) {
+      throw ArgumentError.value(
+        knowledgeRetriever,
+        'knowledgeRetriever',
+        'Production AgentCore requires a production KnowledgeRetriever '
+            '(from ProductionKnowledgeComposition / LifexProductionComposition). '
+            'Inject test doubles only in test composition.',
+      );
+    }
+
     final logger = AgentLogger.instance;
     final validator = AgentValidator();
     const safetyPolicy = AgentSafetyPolicy();
     const planner = AgentPlanner();
 
     final memory = AgentMemory();
-    final knowledgeRetriever = ProductionKnowledgeComposition.createRetriever(
-      databaseManager: medicalDatabaseManager,
-    );
-    assert(
-      knowledgeRetriever.isProductionKnowledgePath,
-      'Production AgentCore must not inject test doubles.',
-    );
 
     // --- تسجيل الأدوات (بند 8) ---
     final toolRegistry = AgentToolRegistry(logger: logger);

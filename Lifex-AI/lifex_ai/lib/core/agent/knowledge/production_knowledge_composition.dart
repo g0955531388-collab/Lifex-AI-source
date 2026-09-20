@@ -10,7 +10,10 @@ import 'knowledge_engine_bridge.dart';
 import 'knowledge_retriever.dart';
 import 'medical_bundle_corpus_seeder.dart';
 
-/// نقطة التركيب الإنتاجية — لا تستورد أي test doubles.
+/// مساعد تركيب معرفة إنتاجي — يُستدعى فقط من [LifexProductionComposition]
+/// (جذر الإنتاج الموحّد). لا يستورد أي test doubles.
+///
+/// ليس Composition Root مستقلاً لـ Fabric/AgentCore.
 class ProductionKnowledgeComposition {
   const ProductionKnowledgeComposition._();
 

@@ -18,6 +18,10 @@ import 'source_reliability.dart';
 import 'unified_memory.dart';
 
 /// نسيج الذكاء: LIO + MCP + Memory + Provenance + Registry + Verifier (+ Knowledge).
+///
+/// مسار الإنتاج لـ Agent Knowledge يُبنى عبر [LifexProductionComposition] فقط،
+/// باستخدام [LifexIntelligenceFabric.forProduction] مع Orchestrator و KE مشتركين.
+/// البناء الحر هنا مسموح للاختبارات/LIO المنفصل — وليس بديلاً عن جذر الإنتاج.
 class LifexIntelligenceFabric {
   LifexIntelligenceFabric({
     this.existingOrchestrator,
@@ -28,6 +32,25 @@ class LifexIntelligenceFabric {
     this.ingestionPipeline,
   })  : canon = canon ?? const LifexLioCanon(),
         lio = lio ?? LifexIntelligenceOrchestrator();
+
+  /// تركيب إنتاجي صريح — يحقن Orchestrator و Knowledge Engine من جذر الإنتاج.
+  factory LifexIntelligenceFabric.forProduction({
+    required AgentOrchestrator existingOrchestrator,
+    LifexKnowledgeEngine? knowledgeEngine,
+    KnowledgeIngestionPipeline? ingestionPipeline,
+    LifexMcpLiveGateway? liveMcp,
+    LifexIntelligenceOrchestrator? lio,
+    LifexLioCanon? canon,
+  }) {
+    return LifexIntelligenceFabric(
+      existingOrchestrator: existingOrchestrator,
+      knowledgeEngine: knowledgeEngine,
+      ingestionPipeline: ingestionPipeline,
+      liveMcp: liveMcp,
+      lio: lio,
+      canon: canon,
+    );
+  }
 
   final LifexLioCanon canon;
 

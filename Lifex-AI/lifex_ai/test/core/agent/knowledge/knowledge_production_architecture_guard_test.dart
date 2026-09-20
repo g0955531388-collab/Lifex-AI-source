@@ -93,10 +93,11 @@ void main() {
     expect(safety.llmIsSourceOfTruth, isFalse);
   });
 
-  test('AgentCore production composition uses ProductionKnowledgeComposition',
+  test('AgentCore production requires injected production KnowledgeRetriever',
       () {
     final text = File('lib/core/agent/agent_core.dart').readAsStringSync();
-    expect(text.contains('ProductionKnowledgeComposition.createRetriever'), isTrue);
+    expect(text.contains('required KnowledgeRetriever knowledgeRetriever'), isTrue);
+    expect(text.contains('ProductionKnowledgeComposition.createRetriever'), isFalse);
     expect(text.contains('FakeKnowledgeRetriever'), isFalse);
     expect(text.contains('StubKnowledgeRetriever'), isFalse);
   });

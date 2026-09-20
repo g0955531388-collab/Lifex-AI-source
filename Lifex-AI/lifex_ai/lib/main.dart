@@ -26,6 +26,7 @@ import 'core/app_config.dart';
 import 'core/error_handler.dart';
 import 'core/agent/agent_core.dart';
 import 'core/agent/adapters/placeholder_ocr_extractor.dart';
+import 'core/lio/lifex_production_composition.dart';
 import 'l10n/generated/app_localizations.dart';
 
 import 'data/medical_data_loader.dart';
@@ -315,7 +316,8 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   final medicalOcrReader = MedicalOcrReader(ocrExtractor: ocrTextExtractor);
   medicalOcrReader.registerWithVisionEngine(smartVisionEngine);
 
-  final agentCoreBundle = AgentCore.initialize(
+  // جذر الإنتاج الموحّد: Fabric + AgentCore + Knowledge Engine معاً.
+  final productionBundle = LifexProductionComposition.assemble(
     medicalDatabaseManager: medicalDatabaseManager,
     aiModuleBundle: aiModuleBundle,
     aiServiceRouter: aiServiceRouter,
@@ -324,6 +326,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     visionEngine: smartVisionEngine,
     riskLevelEngine: riskLevelEngine,
   );
+  final agentCoreBundle = productionBundle.agentCore;
 
   // 5) الطاقة — مراقب البطارية + وضع البقاء + منسّق الطاقة العالمي.
   // منسّق الطاقة لا يدّعي نسب توفير ثابتة بلا قياسين فعليين.
