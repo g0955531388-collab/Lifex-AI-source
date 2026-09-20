@@ -19,4 +19,5 @@ Lifex owns the contracts. ChatGPT / Cursor / Gemini / Copilot are **swappable to
 - **Clinical / personal health data** never enters general AI memory.
 - High-risk actions need **Verifier evidence** (analyze/test/build/SHA) then **human approval**.
 - First executable slice lives under `lifex_ai/lib/core/lio/`: LIO, MCP Gateway, Unified Memory, Source/Provenance, Agent Registry, Verifier.
+- **MCP Live Gateway Foundation** (`lib/core/lio/mcp_live/`): live session + In-Process transport + LIO policy gate. Remote tools return `REQUIRES_EXTERNAL_SETUP`. Do **not** start Browser Agent / Verifier-CI / Knowledge / RAG in the same wave.
 - Reuse existing `AgentOrchestrator` / engines. Do not invent medical facts. Do not force-push `main`. Package name stays `lifex_ai`.

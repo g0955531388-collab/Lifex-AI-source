@@ -10,6 +10,7 @@ import 'claim_verifier.dart';
 import 'lio_canon.dart';
 import 'lio_orchestrator.dart';
 import 'mcp_gateway.dart';
+import 'mcp_live/mcp_live_gateway.dart';
 import 'source_reliability.dart';
 import 'unified_memory.dart';
 
@@ -19,8 +20,10 @@ class LifexIntelligenceFabric {
     this.existingOrchestrator,
     LifexIntelligenceOrchestrator? lio,
     LifexLioCanon? canon,
+    LifexMcpLiveGateway? liveMcp,
   })  : canon = canon ?? const LifexLioCanon(),
-        lio = lio ?? LifexIntelligenceOrchestrator();
+        lio = lio ?? LifexIntelligenceOrchestrator(),
+        liveMcp = liveMcp;
 
   final LifexLioCanon canon;
 
@@ -30,11 +33,19 @@ class LifexIntelligenceFabric {
   /// منسّق المهام الحالي داخل التطبيق — يُعاد استخدامه، لا يُستبدل صامتاً.
   final AgentOrchestrator? existingOrchestrator;
 
+  /// بوابة MCP الحيّة (Foundation) — اختيارية حتى تُبنى صراحة.
+  final LifexMcpLiveGateway? liveMcp;
+
   LifexMcpGateway get mcp => lio.mcp;
   LifexUnifiedMemory get memory => lio.memory;
   LifexAgentControlRegistry get agents => lio.agents;
   LifexClaimVerifier get verifier => lio.verifier;
   LifexSourceReliabilityEngine get reliability => lio.reliability;
+
+  /// ينشئ Live Gateway فوق نفس سجل العقود و LIO.
+  LifexMcpLiveGateway attachLiveMcpGateway() {
+    return LifexMcpLiveGateway(registry: mcp, lio: lio);
+  }
 
   /// هل المسار يمنع AI→SQL؟
   bool get enforcesAiDataPath => !canon.aiMayTalkSqlDirectly;
@@ -51,5 +62,7 @@ class LifexIntelligenceFabric {
         'agentProfileCount': agents.all.length,
         'enforcesAiDataPath': enforcesAiDataPath,
         'isolatesClinicalMemory': isolatesClinicalMemory,
+        'mcpLiveAttached': liveMcp != null,
+        'mcpLivePhase': 'MCP_LIVE_GATEWAY_FOUNDATION',
       };
 }
