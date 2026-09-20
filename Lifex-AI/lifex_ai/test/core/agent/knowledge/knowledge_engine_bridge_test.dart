@@ -12,7 +12,6 @@ import 'package:lifex_ai/core/lio/lio_types.dart';
 import 'package:lifex_ai/core/lio/source_reliability.dart';
 import 'package:lifex_ai/data/medical_database_manager.dart';
 
-/// MedicalDatabaseManager وهمي — لا IO.
 class _FakeDb implements MedicalDatabaseManager {
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
@@ -105,17 +104,12 @@ void main() {
     expect(ctx.retrievalStatus, 'EMPTY');
   });
 
-  test('retrieval unavailable adapter', () async {
-    final offline = KnowledgeEngineBridgedRetriever(
-      databaseManager: _FakeDb(),
-      knowledgeEngine: engine,
-      corpus: corpus,
-      engineAvailable: false,
-    );
+  test('retrieval unavailable adapter (explicit injection)', () async {
+    const offline = KnowledgeEngineUnavailableRetriever();
     final ctx = await offline.retrieve('hydration');
     expect(ctx.matches, isEmpty);
     expect(ctx.retrievalStatus, 'TOOL_UNAVAILABLE');
-    expect(offline.engineRetrieveCalls, 0);
+    expect(offline.isProductionKnowledgePath, isTrue);
   });
 
   test('conflict handling preserved', () async {
@@ -217,31 +211,21 @@ void main() {
     expect(retriever.engineRetrieveCalls, greaterThan(0));
   });
 
-  test('factory KnowledgeRetriever constructs bridged facade', () {
-    final r = KnowledgeRetriever(
+  test('factory KnowledgeRetriever.production constructs bridged facade', () {
+    final r = KnowledgeRetriever.production(
       databaseManager: _FakeDb(),
       knowledgeEngine: engine,
       corpus: corpus,
     );
     expect(r, isA<KnowledgeEngineBridgedRetriever>());
-    expect(
-      (r as KnowledgeEngineBridgedRetriever).delegatesToKnowledgeEngine,
-      isTrue,
-    );
+    expect(r.isProductionKnowledgePath, isTrue);
   });
 
   test('Architecture Guard — no parallel independent retrieval path', () async {
-    // الاسترجاع يمر عبر engine.retrieve فقط؛ لا نتائج عند engineUnavailable.
-    final offline = KnowledgeRetriever(
-      databaseManager: _FakeDb(),
-      knowledgeEngine: engine,
-      corpus: corpus,
-      engineAvailable: false,
-    ) as KnowledgeEngineBridgedRetriever;
+    const offline = KnowledgeEngineUnavailableRetriever();
     final ctx = await offline.retrieve('hydration fluid');
     expect(ctx.matches, isEmpty);
     expect(ctx.retrievalStatus, 'TOOL_UNAVAILABLE');
-    // حتى مع corpus ممتلئ — ممنوع fallback موازٍ
     expect(corpus.records, isNotEmpty);
   });
 }

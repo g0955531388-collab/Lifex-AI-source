@@ -28,6 +28,7 @@ import 'agents/medical_agent.dart';
 import 'agents/report_agent.dart';
 import 'agents/vision_agent.dart';
 import 'knowledge/knowledge_retriever.dart';
+import 'knowledge/production_knowledge_composition.dart';
 import 'tools/agent_tool_registry.dart';
 import 'tools/calculator_tool.dart';
 import 'tools/document_reader_tool.dart';
@@ -90,8 +91,13 @@ class AgentCore {
     const planner = AgentPlanner();
 
     final memory = AgentMemory();
-    final knowledgeRetriever =
-        KnowledgeRetriever(databaseManager: medicalDatabaseManager);
+    final knowledgeRetriever = ProductionKnowledgeComposition.createRetriever(
+      databaseManager: medicalDatabaseManager,
+    );
+    assert(
+      knowledgeRetriever.isProductionKnowledgePath,
+      'Production AgentCore must not inject test doubles.',
+    );
 
     // --- تسجيل الأدوات (بند 8) ---
     final toolRegistry = AgentToolRegistry(logger: logger);
