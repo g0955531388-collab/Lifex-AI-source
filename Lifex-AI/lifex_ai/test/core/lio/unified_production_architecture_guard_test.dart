@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lifex_ai/core/lio/knowledge_engine/knowledge_engine.dart';
 import 'package:lifex_ai/core/lio/lifex_production_composition.dart';
 import 'package:lifex_ai/core/lio/lio_canon.dart';
+import 'package:lifex_ai/core/lio/knowledge_engine/knowledge_engine.dart';
 
 void main() {
   final libRoot = Directory('lib');
@@ -64,6 +64,49 @@ void main() {
     final text = File('lib/main.dart').readAsStringSync();
     expect(text.contains('LifexProductionComposition.assemble'), isTrue);
     expect(RegExp(r'AgentCore\.initialize\s*\(').hasMatch(text), isFalse);
+    expect(text.contains('LifexIntelligenceFabric.forProduction'), isFalse);
+    expect(text.contains('ProductionKnowledgeComposition.createRetriever'), isFalse);
+  });
+
+  test('AppContext does not create Fabric / AgentCore / ProductionKnowledge', () {
+    final text =
+        File('lib/core/lio/lifex_app_context.dart').readAsStringSync();
+    expect(text.contains('LifexIntelligenceFabric('), isFalse);
+    expect(text.contains('LifexIntelligenceFabric.forProduction'), isFalse);
+    expect(text.contains('AgentCore.initialize'), isFalse);
+    expect(text.contains('ProductionKnowledgeComposition.createRetriever'), isFalse);
+    expect(text.contains('final LifexProductionBundle production'), isTrue);
+    expect(text.contains('production.fabric'), isTrue);
+    expect(text.contains('production.agentCore'), isTrue);
+  });
+
+  test('No second production Fabric factory outside Composition', () {
+    final offenders = <String>[];
+    for (final f in _dartFilesUnder(libRoot)) {
+      final path = _norm(f.path);
+      if (path.endsWith('lifex_intelligence_fabric.dart')) continue;
+      if (path.endsWith('lifex_production_composition.dart')) continue;
+      final text = f.readAsStringSync();
+      if (text.contains('LifexIntelligenceFabric.forProduction')) {
+        offenders.add(path);
+      }
+    }
+    expect(offenders, isEmpty, reason: offenders.join('\n'));
+  });
+
+  test('ProductionKnowledgeComposition.createRetriever only from Composition Root',
+      () {
+    final offenders = <String>[];
+    for (final f in _dartFilesUnder(libRoot)) {
+      final path = _norm(f.path);
+      if (path.endsWith('production_knowledge_composition.dart')) continue;
+      if (path.endsWith('lifex_production_composition.dart')) continue;
+      final text = f.readAsStringSync();
+      if (text.contains('ProductionKnowledgeComposition.createRetriever')) {
+        offenders.add(path);
+      }
+    }
+    expect(offenders, isEmpty, reason: offenders.join('\n'));
   });
 
   test('No Fake/Stub KnowledgeRetriever classes in lib/', () {
@@ -108,6 +151,7 @@ void main() {
   test('No production Stub fallback markers in Agent Knowledge path', () {
     final files = [
       'lib/core/lio/lifex_production_composition.dart',
+      'lib/core/lio/lifex_app_context.dart',
       'lib/core/agent/knowledge/production_knowledge_composition.dart',
       'lib/core/agent/knowledge/knowledge_retriever.dart',
       'lib/core/agent/agent_core.dart',

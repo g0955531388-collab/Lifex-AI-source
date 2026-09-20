@@ -26,6 +26,8 @@ import 'core/app_config.dart';
 import 'core/error_handler.dart';
 import 'core/agent/agent_core.dart';
 import 'core/agent/adapters/placeholder_ocr_extractor.dart';
+import 'core/lio/lifex_app_context.dart';
+import 'core/lio/lifex_intelligence_fabric.dart';
 import 'core/lio/lifex_production_composition.dart';
 import 'l10n/generated/app_localizations.dart';
 
@@ -91,64 +93,6 @@ Future<void> main() async {
   final appContext = await _bootstrapLifexAi();
 
   runApp(LifexAiApp(appContext: appContext));
-}
-
-/// حزمة تحمل كل المديرين المركزيين الجاهزين بعد التهيئة، لتُمرَّر
-/// لشجرة الـ Providers دفعة واحدة.
-class LifexAppContext {
-  const LifexAppContext({
-    required this.multiProfileEngine,
-    required this.aiModuleBundle,
-    required this.emergencyManager,
-    required this.energyManager,
-    required this.powerCoordinator,
-    required this.healthAlertDispatcher,
-    required this.medicalDatabaseManager,
-    required this.walletManager,
-    required this.paymentController,
-    required this.transactionService,
-    required this.subscriptionBillingManager,
-    required this.unifiedAiHubGateway,
-    required this.aiServiceRouter,
-    required this.cloudSyncManager,
-    required this.translationService,
-    required this.healthDeviceReader,
-    required this.terminologyConnector,
-    required this.multiSensoryAlertManager,
-    required this.activeProfileController,
-    required this.agentCoreBundle,
-    required this.emergencyPhoneContactsRegistry,
-    required this.trialManager,
-    required this.localKnowledge,
-    required this.lastingSearchIndex,
-    required this.deviceRuntime,
-  });
-
-  final MultiProfileEngine multiProfileEngine;
-  final ActiveProfileController activeProfileController;
-  final AiModuleBundle aiModuleBundle;
-  final EmergencyManager emergencyManager;
-  final EnergyManager energyManager;
-  final LifexPowerCoordinator powerCoordinator;
-  final HealthAlertDispatcher healthAlertDispatcher;
-  final MedicalDatabaseManager medicalDatabaseManager;
-  final WalletManager walletManager;
-  final PaymentController paymentController;
-  final TransactionService transactionService;
-  final SubscriptionBillingManager subscriptionBillingManager;
-  final UnifiedAiHubGateway unifiedAiHubGateway;
-  final AiServiceRouter aiServiceRouter;
-  final CloudSyncManager cloudSyncManager;
-  final TranslationService translationService;
-  final HealthDeviceReader healthDeviceReader;
-  final TerminologyConnector terminologyConnector;
-  final MultiSensoryAlertManager multiSensoryAlertManager;
-  final AgentCoreBundle agentCoreBundle;
-  final EmergencyPhoneContactsRegistry emergencyPhoneContactsRegistry;
-  final TrialManager trialManager;
-  final LocalKnowledge localKnowledge;
-  final LastingSearchIndex lastingSearchIndex;
-  final LifexDeviceRuntime deviceRuntime;
 }
 
 /// ⚠️ تنفيذ مؤقت (In-memory) لتخزين بيانات الاعتماد — **غير آمن** لأي
@@ -317,6 +261,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   medicalOcrReader.registerWithVisionEngine(smartVisionEngine);
 
   // جذر الإنتاج الموحّد: Fabric + AgentCore + Knowledge Engine معاً.
+  // AppContext يعرّض نفس الـbundle — بلا Fabric ثانية.
   final productionBundle = LifexProductionComposition.assemble(
     medicalDatabaseManager: medicalDatabaseManager,
     aiModuleBundle: aiModuleBundle,
@@ -326,7 +271,6 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     visionEngine: smartVisionEngine,
     riskLevelEngine: riskLevelEngine,
   );
-  final agentCoreBundle = productionBundle.agentCore;
 
   // 5) الطاقة — مراقب البطارية + وضع البقاء + منسّق الطاقة العالمي.
   // منسّق الطاقة لا يدّعي نسب توفير ثابتة بلا قياسين فعليين.
@@ -437,7 +381,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     terminologyConnector: terminologyConnector,
     multiSensoryAlertManager: multiSensoryAlertManager,
     activeProfileController: activeProfileController,
-    agentCoreBundle: agentCoreBundle,
+    production: productionBundle,
     emergencyPhoneContactsRegistry: emergencyPhoneContactsRegistry,
     trialManager: trialManager,
     localKnowledge: localKnowledge,
@@ -493,7 +437,10 @@ class LifexAiApp extends StatelessWidget {
         Provider<AssistiveVisionEngine>.value(
           value: AssistiveVisionEngine.instance,
         ),
-        Provider<AgentCoreBundle>.value(value: appContext.agentCoreBundle),
+        // نفس instances من LifexProductionComposition — لا Fabric/AgentCore ثانية.
+        Provider<LifexProductionBundle>.value(value: appContext.production),
+        Provider<LifexIntelligenceFabric>.value(value: appContext.fabric),
+        Provider<AgentCoreBundle>.value(value: appContext.agentCore),
         Provider<EmergencyPhoneContactsRegistry>.value(
           value: appContext.emergencyPhoneContactsRegistry,
         ),
