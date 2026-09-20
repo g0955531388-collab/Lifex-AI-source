@@ -135,6 +135,11 @@ class HealthIdentityManager {
     return candidate;
   }
 
+  /// كل الهويات المحلية المعروفة على الجهاز — للبحث في دليل Lifex فقط.
+  /// لا يمنح أي وصول لبيانات صحية.
+  List<HealthIdentity> get allIdentities =>
+      List.unmodifiable(_identitiesByLifexId.values);
+
   /// استرجاع الهوية عبر معرّف Lifex-ID.
   HealthIdentity? getByLifexId(String lifexId) =>
       _identitiesByLifexId[lifexId];
@@ -174,14 +179,48 @@ class HealthIdentityManager {
     return true;
   }
 
-  /// هل الهوية موثوقة بما يكفي لعمليات حساسة (مثل التبرع بالدم أو
-  /// الوصول لبيانات طبية مشتركة)؟
-  bool isTrustedForSensitiveActions(String lifexId) {
+  /// تحديث بريد/هاتف الهوية وإعادة محاولة تفعيل دور المخترع/المالك.
+  /// الاسم وحده لا يكفي — يجب تطابق بريد أو هاتف المالك المسجَّلين.
+  HealthIdentity? updateContactAndReactivateOwner({
+    required String lifexId,
+    String? email,
+    String? phoneNumber,
+  }) {
     final identity = _identitiesByLifexId[lifexId];
-    if (identity == null) return false;
-    return identity.verificationLevel ==
-            IdentityVerificationLevel.documentVerified ||
-        identity.verificationLevel == IdentityVerificationLevel.fullyVerified;
+    if (identity == null) return null;
+    if (email != null) identity.email = email.trim().isEmpty ? null : email.trim();
+    if (phoneNumber != null) {
+      identity.phoneNumber =
+          phoneNumber.trim().isEmpty ? null : phoneNumber.trim();
+    }
+    GlobalAdminManager.instance.autoActivateOwnerIfMatches(
+      lifexId: lifexId,
+      email: identity.email,
+      phoneNumber: identity.phoneNumber,
+    );
+    return identity;
+  }
+
+  /// إنشاء هوية إن لزم، ثم تفعيل المالك إن طابق البريد/الهاتف.
+  HealthIdentity ensureIdentityAndMaybeActivateOwner({
+    required String profileId,
+    String? phoneNumber,
+    String? email,
+  }) {
+    final existing = getByProfileId(profileId);
+    if (existing != null) {
+      return updateContactAndReactivateOwner(
+            lifexId: existing.lifexId,
+            email: email ?? existing.email,
+            phoneNumber: phoneNumber ?? existing.phoneNumber,
+          ) ??
+          existing;
+    }
+    return createIdentity(
+      profileId: profileId,
+      phoneNumber: phoneNumber,
+      email: email,
+    );
   }
 
   /// إعادة كل الهويات لحالته الأولية — للاختبارات فقط.

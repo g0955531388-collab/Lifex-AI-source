@@ -55,6 +55,7 @@ class TransactionService {
       switch (t.type) {
         case TransactionType.topUp:
         case TransactionType.refund:
+        case TransactionType.transferIn:
           totalTopUps += t.amountInSmallestUnit;
           break;
         case TransactionType.hospitalPayment:
@@ -63,6 +64,8 @@ class TransactionService {
         case TransactionType.appStoreSale:
         case TransactionType.platformFee:
         case TransactionType.extraService:
+        case TransactionType.transferOut:
+        case TransactionType.withdrawal:
           totalPayments += t.amountInSmallestUnit;
           break;
       }
