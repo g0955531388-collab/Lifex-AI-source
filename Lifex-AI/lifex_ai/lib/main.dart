@@ -33,6 +33,7 @@ import 'data/medical_database_manager.dart';
 
 import 'features/accessibility/assistive_vision_engine.dart';
 import 'features/accessibility/multi_sensory_alert_manager.dart';
+import 'features/devices/lifex_device_runtime.dart';
 import 'features/ai/ai_bridge.dart';
 import 'features/ai/ai_service_router.dart';
 import 'features/ai/unified_ai_hub_gateway.dart';
@@ -40,6 +41,7 @@ import 'core/admin/admin_manager.dart';
 import 'core/local_knowledge.dart';
 import 'core/lasting_search_index.dart';
 import 'core/trial_manager.dart';
+import 'features/emergency/device_emergency_sms_handoff.dart';
 import 'features/emergency/emergency_manager.dart';
 import 'features/emergency/emergency_message_manager.dart';
 import 'features/emergency/emergency_phone_contacts_registry.dart';
@@ -47,6 +49,7 @@ import 'features/emergency/risk_level_engine.dart';
 import 'features/emergency/silent_emergency_signal_controller.dart';
 import 'features/energy/battery_monitor.dart';
 import 'features/energy/energy_manager.dart';
+import 'features/energy/lifex_power_coordinator.dart';
 import 'features/energy/survival_energy_mode.dart';
 import 'features/finance/billing_exemption_policy.dart';
 import 'features/finance/payment_controller.dart';
@@ -97,6 +100,7 @@ class LifexAppContext {
     required this.aiModuleBundle,
     required this.emergencyManager,
     required this.energyManager,
+    required this.powerCoordinator,
     required this.healthAlertDispatcher,
     required this.medicalDatabaseManager,
     required this.walletManager,
@@ -116,6 +120,7 @@ class LifexAppContext {
     required this.trialManager,
     required this.localKnowledge,
     required this.lastingSearchIndex,
+    required this.deviceRuntime,
   });
 
   final MultiProfileEngine multiProfileEngine;
@@ -123,6 +128,7 @@ class LifexAppContext {
   final AiModuleBundle aiModuleBundle;
   final EmergencyManager emergencyManager;
   final EnergyManager energyManager;
+  final LifexPowerCoordinator powerCoordinator;
   final HealthAlertDispatcher healthAlertDispatcher;
   final MedicalDatabaseManager medicalDatabaseManager;
   final WalletManager walletManager;
@@ -141,6 +147,7 @@ class LifexAppContext {
   final TrialManager trialManager;
   final LocalKnowledge localKnowledge;
   final LastingSearchIndex lastingSearchIndex;
+  final LifexDeviceRuntime deviceRuntime;
 }
 
 /// ⚠️ تنفيذ مؤقت (In-memory) لتخزين بيانات الاعتماد — **غير آمن** لأي
@@ -262,8 +269,12 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   // 4) الطوارئ — يعتمد على محرك تقييم الخطر ومدير الرسائل.
   final riskLevelEngine = RiskLevelEngine();
   final emergencyPhoneContactsRegistry = EmergencyPhoneContactsRegistry();
+  final emergencySmsHandoff = DeviceEmergencySmsHandoff();
   final emergencyMessageManager = EmergencyMessageManager(
     emergencyContactsRegistry: emergencyPhoneContactsRegistry,
+    // مسودة SMS على الجهاز فقط — ليست إرسالاً تلقائياً ولا Push.
+    draftHandoffFunction: (phone, message) =>
+        emergencySmsHandoff.openDraft(phoneNumber: phone, messageAr: message),
   );
 
   // 4-ب) التنبيهات متعددة الحواس (اهتزاز + ومضة) لضمان وصول تنبيهات
@@ -314,14 +325,22 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     riskLevelEngine: riskLevelEngine,
   );
 
-  // 5) الطاقة — يربط مراقب البطارية بوضع البقاء.
+  // 5) الطاقة — مراقب البطارية + وضع البقاء + منسّق الطاقة العالمي.
+  // منسّق الطاقة لا يدّعي نسب توفير ثابتة بلا قياسين فعليين.
   final batteryMonitor = BatteryMonitor();
   final survivalEnergyMode = SurvivalEnergyMode();
   final energyManager = EnergyManager(
     batteryMonitor: batteryMonitor,
     survivalMode: survivalEnergyMode,
   );
+  final powerCoordinator = LifexPowerCoordinator(
+    batteryMonitor: batteryMonitor,
+    survivalMode: survivalEnergyMode,
+  );
   batteryMonitor.startMonitoring();
+
+  // 5-ب) منظومة الأجهزة العالمية — Hub + Control Center (محاكاة + مسار آمن).
+  final deviceRuntime = LifexDeviceRuntime();
 
   // 6) المراقبة عن بعد وتنبيهات الصحة.
   final trustedContactsManagers = <String, TrustedContactsManager>{};
@@ -340,10 +359,13 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   // 7) المحفظة الرقمية والمعاملات المالية.
   final transactionLedger = TransactionLedger();
   final walletManager = WalletManager(
-    // ⚠️ يتطلب مفتاح Stripe حقيقي قبل قبول أي دفعة فعلية — راجع
-    // REGULATORY_COMPLIANCE_NOTES.md أولاً.
-    gatewayClient: StripePaymentGatewayClient(publishableKey: 'pk_test_placeholder'),
+    // الإنتاج غير موصول: Sandbox صريح حتى يوجد مزود مرخّص حقيقي.
+    // لا تُخلط حركات Sandbox بأموال Production.
+    gatewayClient: SandboxPaymentGatewayClient(
+      feePolicy: const TopUpFeePolicy(fixedMinor: 200),
+    ),
     ledger: transactionLedger,
+    topUpFeePolicy: const TopUpFeePolicy(fixedMinor: 200),
   );
   final paymentController = PaymentController(walletManager: walletManager);
   final transactionService = TransactionService(ledger: transactionLedger);
@@ -397,6 +419,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     aiModuleBundle: aiModuleBundle,
     emergencyManager: emergencyManager,
     energyManager: energyManager,
+    powerCoordinator: powerCoordinator,
     healthAlertDispatcher: healthAlertDispatcher,
     medicalDatabaseManager: medicalDatabaseManager,
     walletManager: walletManager,
@@ -416,6 +439,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     trialManager: trialManager,
     localKnowledge: localKnowledge,
     lastingSearchIndex: lastingSearchIndex,
+    deviceRuntime: deviceRuntime,
   );
 }
 
@@ -434,6 +458,9 @@ class LifexAiApp extends StatelessWidget {
         Provider<AiModuleBundle>.value(value: appContext.aiModuleBundle),
         Provider<EmergencyManager>.value(value: appContext.emergencyManager),
         Provider<EnergyManager>.value(value: appContext.energyManager),
+        Provider<LifexPowerCoordinator>.value(
+          value: appContext.powerCoordinator,
+        ),
         Provider<HealthAlertDispatcher>.value(
           value: appContext.healthAlertDispatcher,
         ),
@@ -470,6 +497,7 @@ class LifexAiApp extends StatelessWidget {
         Provider<TrialManager>.value(value: appContext.trialManager),
         Provider<LocalKnowledge>.value(value: appContext.localKnowledge),
         Provider<LastingSearchIndex>.value(value: appContext.lastingSearchIndex),
+        Provider<LifexDeviceRuntime>.value(value: appContext.deviceRuntime),
       ],
       child: MaterialApp(
         navigatorKey: LifexNavigator.key,
