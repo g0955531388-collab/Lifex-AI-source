@@ -8,3 +8,18 @@ When executing tasks or modifying code in this repository, agents must strictly 
 4. **Simplify**: Eliminate code redundancy, refactor long functions, and keep the codebase lean.
 5. **Verify**: Run builds, tests, and static checks to ensure zero errors remain.
 6. **Report**: Summarize completed tasks and changes clearly.
+
+## Lifex Intelligence Orchestrator (LIO)
+
+Lifex owns the contracts. ChatGPT / Cursor / Gemini / Copilot are **swappable tools**, not the sole brain.
+
+- Path for AI data access (never AI → SQL):  
+  `AI → AI Gateway → Identity → Authorization → Consent → Purpose → Scope → Sanitization → Repository → Result`
+- **Memory ≠ Source of Truth.** Git, DB, documents, clinical records, and audit are SoT. Memory is index/cache/context only.
+- **Clinical / personal health data** never enters general AI memory.
+- High-risk actions need **Verifier evidence** (analyze/test/build/SHA) then **human approval**.
+- First executable slice lives under `lifex_ai/lib/core/lio/`: LIO, MCP Gateway, Unified Memory, Source/Provenance, Agent Registry, Verifier.
+- **MCP Live Gateway Foundation** (`lib/core/lio/mcp_live/`): sole path  
+  `Identity→Auth→Consent→Purpose→Scope→Policy→Gateway→Adapter→Result→Verifier→Audit`.  
+  Remote tools return `TOOL_UNAVAILABLE` (never fake success). Do **not** start Knowledge/RAG in the same wave.
+- Reuse existing `AgentOrchestrator` / engines. Do not invent medical facts. Do not force-push `main`. Package name stays `lifex_ai`.
