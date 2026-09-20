@@ -163,11 +163,13 @@ class LicenseManager {
   }
 
   String appendEn(String body) {
-    const stamp =
-        'Lifex-AI — invented by Ghazi Salim Bakfalawi with Rabab Alhayek.';
+    const stamp = AppConstants.ownershipStatementShortEn;
     final trimmed = body.trim();
     if (trimmed.isEmpty) return stamp;
-    if (trimmed.contains(stamp) || trimmed.contains('Bakfalawi')) {
+    if (trimmed.contains(stamp) ||
+        trimmed.contains(AppConstants.ownershipStatementEn) ||
+        trimmed.contains('Ghazi Salim Bekfalawi') ||
+        trimmed.contains('Bakfalawi')) {
       return trimmed;
     }
     return '$trimmed $stamp';

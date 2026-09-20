@@ -1,0 +1,16 @@
+{
+  "schema_id": "LIFEX-POWER-MANAGEMENT",
+  "version": "1.0",
+  "pack": 81,
+  "powerSavingIsNotEmergencyShutdown": true,
+  "thresholdsAreConfigurable": true,
+  "doesNotInventOsBatteryFields": true,
+  "doesNotClaimOsRadioControl": true,
+  "noSilentCameraOrMicrophone": true,
+  "emergencyReserveIsSoftwarePolicy": true,
+  "runtimeEstimateIsNotGuarantee": true,
+  "survivalDoesNotClaimFixedPercentSavings": true,
+  "aiFindingIsNotHardwareFault": true,
+  "doesNotAutoChangeMedicalDeviceSettings": true,
+  "doesNotStopCriticalMonitoringToSavePower": true
+}
