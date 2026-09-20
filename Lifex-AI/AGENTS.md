@@ -29,4 +29,7 @@ Lifex owns the contracts. ChatGPT / Cursor / Gemini / Copilot are **swappable to
   `Source → Ingestion/Index → Keyword|Vector*|Metadata|Graph|SQL* → Rerank → Evidence Pack → LIO → Verifier`.  
   LLM is **not** source of truth. Knowledge ≠ Clinical ≠ AI Memory. No diagnose/prescribe.  
   `*` Vector/SQL adapters may be `TOOL_UNAVAILABLE` until a live engine is wired.
+- **Knowledge Source Registry + Ingestion** (`lib/core/lio/knowledge_engine/ingestion/`):  
+  `Registry → Validate → Acquire → Normalize → Segment → Provenance → Duplicate/Conflict → Quarantine|Corpus → Knowledge Engine`.  
+  No clinical/patient data. No silent overwrite. Existence ≠ authority. Agent `KnowledgeRetriever` remains a future bridge consumer — do not duplicate the engine.
 - Reuse existing `AgentOrchestrator` / engines. Do not invent medical facts. Do not force-push `main`. Package name stays `lifex_ai`.

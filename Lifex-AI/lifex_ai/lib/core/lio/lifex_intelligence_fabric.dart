@@ -7,6 +7,7 @@ library lifex_ai.core.lio.lifex_intelligence_fabric;
 import '../agent/agent_orchestrator.dart';
 import 'agent_control_registry.dart';
 import 'claim_verifier.dart';
+import 'knowledge_engine/ingestion/ingestion_pipeline.dart';
 import 'knowledge_engine/knowledge_engine.dart';
 import 'knowledge_engine/retrieval_adapters.dart';
 import 'lio_canon.dart';
@@ -24,6 +25,7 @@ class LifexIntelligenceFabric {
     LifexLioCanon? canon,
     this.liveMcp,
     this.knowledgeEngine,
+    this.ingestionPipeline,
   })  : canon = canon ?? const LifexLioCanon(),
         lio = lio ?? LifexIntelligenceOrchestrator();
 
@@ -40,6 +42,9 @@ class LifexIntelligenceFabric {
 
   /// Knowledge Engine Foundation — اختياري؛ ليس SoT بذاته.
   final LifexKnowledgeEngine? knowledgeEngine;
+
+  /// مسار Registry → Ingestion → Corpus (لا يتجاوز provenance).
+  final KnowledgeIngestionPipeline? ingestionPipeline;
 
   LifexMcpGateway get mcp => lio.mcp;
   LifexUnifiedMemory get memory => lio.memory;
@@ -76,6 +81,8 @@ class LifexIntelligenceFabric {
         'mcpLivePhase': 'MCP_LIVE_GATEWAY_FOUNDATION',
         'knowledgeEngineAttached': knowledgeEngine != null,
         'knowledgePhase': 'KNOWLEDGE_ENGINE_HYBRID_RAG_FOUNDATION',
+        'ingestionPipelineAttached': ingestionPipeline != null,
+        'ingestionPhase': 'KNOWLEDGE_SOURCE_REGISTRY_INGESTION',
         'llmIsSourceOfTruth':
             knowledgeEngine?.safety.llmIsSourceOfTruth ?? false,
       };
