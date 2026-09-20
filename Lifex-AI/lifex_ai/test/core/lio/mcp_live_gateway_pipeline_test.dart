@@ -232,7 +232,7 @@ void main() {
     expect(report.result.errorCode, McpErrorCode.approvalRequired);
   });
 
-  test('بعد الموافقة الكتابة ما زالت TOOL_UNAVAILABLE (صادق)', () async {
+  test('بعد الموافقة الكتابة GitHub → FORBIDDEN (READ ONLY / CI Evidence)', () async {
     final report = await live.execute(
       _req(
         toolId: 'mcp.github',
@@ -243,6 +243,7 @@ void main() {
         risk: LioRiskLevel.high,
       ),
     );
-    expect(report.result.errorCode, McpErrorCode.toolUnavailable);
+    expect(report.result.errorCode, McpErrorCode.forbidden);
+    expect(report.result.success, isFalse);
   });
 }

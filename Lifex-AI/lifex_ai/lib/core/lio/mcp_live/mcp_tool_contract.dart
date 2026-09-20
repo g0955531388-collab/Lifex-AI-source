@@ -87,6 +87,7 @@ class McpLiveToolRegistry {
         'read_workflow_status',
         'read_workflow_jobs',
         'read_artifacts',
+        'read_ci_evidence',
         'ping',
       ],
       writeOperations: const [

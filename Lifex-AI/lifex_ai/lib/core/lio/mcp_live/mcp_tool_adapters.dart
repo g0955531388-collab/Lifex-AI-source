@@ -8,6 +8,7 @@ import 'mcp_errors.dart';
 import 'mcp_live_handlers.dart';
 import 'mcp_request_context.dart';
 import 'mcp_tool_contract.dart';
+import '../ci_evidence/github_ci_evidence_reader.dart';
 
 class McpAdapterOutcome {
   const McpAdapterOutcome({
@@ -79,8 +80,15 @@ class FilesMcpToolAdapter implements McpToolAdapter {
   }
 }
 
-/// GitHub: قراءة غير موصولة بخادم حي → TOOL_UNAVAILABLE (صادق).
+/// GitHub: قراءة CI عبر [GitHubCiEvidenceReader] — بلا كتابة.
 class GitHubMcpToolAdapter implements McpToolAdapter {
+  GitHubMcpToolAdapter({
+    GitHubCiEvidenceReader? evidenceReader,
+  }) : evidenceReader =
+            evidenceReader ?? const UnavailableGitHubCiEvidenceReader();
+
+  final GitHubCiEvidenceReader evidenceReader;
+
   @override
   String get toolId => 'mcp.github';
 
@@ -89,24 +97,130 @@ class GitHubMcpToolAdapter implements McpToolAdapter {
     required McpGatewayRequest request,
     required McpToolContract contract,
   }) async {
-    if (request.requestedAction == 'ping') {
-      return const McpAdapterOutcome(
-        ok: true,
-        status: 'OK',
-        messageAr: 'محوّل GitHub مسجّل — الخادم الحي غير موصول.',
-        data: {'connected': false, 'adapterReady': true},
-        provenance: {'adapter': 'mcp.github', 'liveRemote': false},
+    if (contract.isWrite(request.requestedAction)) {
+      return McpAdapterOutcome(
+        ok: false,
+        status: McpErrorCode.forbidden.wireName,
+        messageAr: 'FORBIDDEN — محوّل GitHub في هذه المرحلة READ ONLY.',
+        errorCode: McpErrorCode.forbidden,
       );
     }
+
+    if (request.requestedAction == 'ping') {
+      return McpAdapterOutcome(
+        ok: true,
+        status: 'OK',
+        messageAr: evidenceReader.isAvailable
+            ? 'محوّل GitHub جاهز للقراءة.'
+            : 'محوّل GitHub مسجّل — الخادم الحي غير موصول.',
+        data: {
+          'connected': evidenceReader.isAvailable,
+          'adapterReady': true,
+          'allowsWrite': evidenceReader.allowsWrite,
+        },
+        provenance: {
+          'adapter': toolId,
+          'liveRemote': evidenceReader.isAvailable,
+        },
+      );
+    }
+
+    const readOps = {
+      'read_ci_evidence',
+      'read_workflow_status',
+      'read_workflow_jobs',
+      'read_artifacts',
+      'read_repository',
+      'read_branches',
+      'read_commits',
+      'read_files',
+    };
+
+    if (!readOps.contains(request.requestedAction)) {
+      return McpAdapterOutcome(
+        ok: false,
+        status: McpErrorCode.toolValidationFailed.wireName,
+        messageAr: 'عملية غير مدعومة للقراءة: ${request.requestedAction}',
+        errorCode: McpErrorCode.toolValidationFailed,
+      );
+    }
+
+    if (!evidenceReader.isAvailable) {
+      return McpAdapterOutcome(
+        ok: false,
+        status: McpErrorCode.toolUnavailable.wireName,
+        messageAr:
+            'TOOL_UNAVAILABLE — GitHub CI غير موصول. لا يُدّعى نجاح قراءة الأدلة.',
+        errorCode: McpErrorCode.toolUnavailable,
+      );
+    }
+
+    final repo = (request.arguments['repository'] as String?) ??
+        request.resource;
+    if (repo.trim().isEmpty) {
+      return McpAdapterOutcome(
+        ok: false,
+        status: McpErrorCode.invalidRequest.wireName,
+        messageAr: 'repository مطلوب لقراءة أدلة CI.',
+        errorCode: McpErrorCode.invalidRequest,
+      );
+    }
+
+    final fetch = await evidenceReader.fetchCiEvidence(
+      repository: repo,
+      workflowRunId: request.arguments['workflowRunId'] as String?,
+      commitSha: request.arguments['commitSha'] as String?,
+      branch: request.arguments['branch'] as String?,
+    );
+
+    if (fetch.status == GitHubEvidenceFetchStatus.unavailable) {
+      return McpAdapterOutcome(
+        ok: false,
+        status: McpErrorCode.toolUnavailable.wireName,
+        messageAr: fetch.messageAr ?? 'TOOL_UNAVAILABLE',
+        errorCode: McpErrorCode.toolUnavailable,
+      );
+    }
+
+    if (!fetch.isOk || fetch.evidence == null) {
+      return McpAdapterOutcome(
+        ok: false,
+        status: McpErrorCode.executionFailed.wireName,
+        messageAr: fetch.messageAr ?? 'تعذّر جلب أدلة CI.',
+        errorCode: McpErrorCode.executionFailed,
+        data: {'found': false},
+      );
+    }
+
+    final e = fetch.evidence!;
     return McpAdapterOutcome(
-      ok: false,
-      status: McpErrorCode.toolUnavailable.wireName,
-      messageAr:
-          'TOOL_UNAVAILABLE — GitHub MCP غير موصول بخادم حي. لا يُدّعى نجاح قراءة CI/Repo.',
-      errorCode: McpErrorCode.toolUnavailable,
+      ok: true,
+      status: 'OK',
+      messageAr: 'أُحضرت أدلة CI (READ ONLY).',
       data: {
-        'requestedAction': request.requestedAction,
-        'supportedWhenLive': contract.allowedOperations,
+        'repository': e.repository,
+        'workflowRunId': e.workflowRunId,
+        'workflowName': e.workflowName,
+        'workflowStatus': e.workflowStatus,
+        'conclusion': e.conclusion,
+        'branch': e.branch,
+        'commitSha': e.commitSha,
+        'event': e.event,
+        'jobNames': e.jobNames,
+        'jobStatuses': e.jobStatuses,
+        'analyzeResult': e.analyzeResult.name,
+        'testResult': e.testResult.name,
+        'apkBuildResult': e.apkBuildResult.name,
+        'artifactName': e.artifact?.name,
+        'artifactId': e.artifact?.id,
+        'artifactDigest': e.artifact?.digestOrSha256,
+        'source': e.source,
+      },
+      provenance: {
+        'adapter': toolId,
+        'readOnly': true,
+        'allowsWrite': false,
+        ...e.provenance,
       },
     );
   }

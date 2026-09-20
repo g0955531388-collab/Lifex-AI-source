@@ -22,4 +22,7 @@ Lifex owns the contracts. ChatGPT / Cursor / Gemini / Copilot are **swappable to
 - **MCP Live Gateway Foundation** (`lib/core/lio/mcp_live/`): sole path  
   `Identity→Auth→Consent→Purpose→Scope→Policy→Gateway→Adapter→Result→Verifier→Audit`.  
   Remote tools return `TOOL_UNAVAILABLE` (never fake success). Do **not** start Knowledge/RAG in the same wave.
+- **CI Evidence Verifier** (`lib/core/lio/ci_evidence/`):  
+  `MCP Gateway → GitHub READ → CiEvidence → LifexClaimVerifier → VERIFIED|FAILED|NOT_VERIFIED|TOOL_UNAVAILABLE → Audit`.  
+  Never treat agent report as CI proof. READ ONLY. No Knowledge/RAG in this wave.
 - Reuse existing `AgentOrchestrator` / engines. Do not invent medical facts. Do not force-push `main`. Package name stays `lifex_ai`.
