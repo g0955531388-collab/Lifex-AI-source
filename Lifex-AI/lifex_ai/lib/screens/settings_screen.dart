@@ -13,8 +13,10 @@ import 'package:provider/provider.dart';
 
 import '../core/admin/admin_manager.dart';
 import '../core/admin/admin_permissions.dart';
+import '../core/admin/owner_identity_policy.dart';
 import '../core/app_config.dart';
 import '../core/app_constants.dart';
+import '../core/attribution/project_attribution.dart';
 import '../core/lasting_search_index.dart';
 import '../core/local_knowledge.dart';
 import '../core/search_refresh_engine.dart';
@@ -130,11 +132,96 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return HealthIdentityManager.instance.getByProfileId(activeProfileId)?.lifexId;
   }
 
+  Future<void> _showInventorActivationDialog(String profileId) async {
+    final emailCtrl = TextEditingController(text: AppConstants.ownerEmail);
+    final phoneCtrl = TextEditingController(text: AppConstants.ownerPhoneNumber);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('تفعيل حساب المخترع / المالك'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(ProjectAttribution.officialStatementShortAr),
+              const SizedBox(height: 12),
+              const Text(
+                'أدخل البريد أو الهاتف المسجَّلين للمالك فقط. '
+                'الاسم وحده لا يفعّل الصلاحيات.',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'البريد',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: phoneCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'الهاتف',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('تفعيل'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final identity =
+        HealthIdentityManager.instance.ensureIdentityAndMaybeActivateOwner(
+      profileId: profileId,
+      email: emailCtrl.text.trim(),
+      phoneNumber: phoneCtrl.text.trim(),
+    );
+    final role = GlobalAdminManager.instance.roleOf(identity.lifexId);
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          role == GlobalAdminRole.owner
+              ? 'تم تفعيل دور المالك التشغيلي. يمكنك الآن تعيين أدمنز ومشرفين.'
+              : const OwnerIdentityPolicy().activationHintAr(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeLifexId = _activeLifexId(context);
+    final activeProfile =
+        Provider.of<ActiveProfileController>(context).activeProfile;
+    // إعادة محاولة التفعيل إن كانت الهوية تحمل بريد/هاتف المالك مسبقاً.
+    if (activeLifexId != null) {
+      final id = HealthIdentityManager.instance.getByLifexId(activeLifexId);
+      if (id != null) {
+        GlobalAdminManager.instance.autoActivateOwnerIfMatches(
+          lifexId: activeLifexId,
+          email: id.email,
+          phoneNumber: id.phoneNumber,
+        );
+      }
+    }
     final hasAdminRole = activeLifexId != null &&
         GlobalAdminManager.instance.roleOf(activeLifexId) != GlobalAdminRole.none;
+    final isOwner = activeLifexId != null &&
+        GlobalAdminManager.instance.isOwner(activeLifexId);
 
     return Scaffold(
       appBar: AppBar(title: const Text('الإعدادات')),
@@ -419,9 +506,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (hasAdminRole) ...[
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.admin_panel_settings_outlined),
-              title: const Text('لوحة تحكم الأدمن'),
-              subtitle: const Text('إدارة الأدوار ومفاتيح الأحداث الدقيقة'),
+              leading: Icon(
+                isOwner ? Icons.star : Icons.admin_panel_settings_outlined,
+              ),
+              title: Text(
+                isOwner
+                    ? 'لوحة المالك / المخترع'
+                    : 'لوحة تحكم الأدمن',
+              ),
+              subtitle: Text(
+                isOwner
+                    ? 'تعيين أدمنز ومشرفين + كل الصلاحيات التشغيلية'
+                    : 'إدارة الأدوار ومفاتيح الأحداث الدقيقة',
+              ),
               trailing: const Icon(Icons.chevron_left),
               onTap: () {
                 Navigator.of(context).push(
@@ -430,6 +527,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         AdminDashboardScreen(currentUserLifexId: activeLifexId),
                   ),
                 );
+              },
+            ),
+          ] else ...[
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.vpn_key_outlined),
+              title: const Text('تفعيل حساب المخترع / المالك'),
+              subtitle: Text(
+                'الإسناد: ${ProjectAttribution.inventorOwnerAr}. '
+                'فعّل بالبريد أو الهاتف الرسميين لتعيين أدمنز.',
+              ),
+              trailing: const Icon(Icons.chevron_left),
+              onTap: () {
+                final profileId = activeProfile?.profileId;
+                if (profileId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('أنشئ ملفاً صحياً أولاً ثم فعّل الهوية.'),
+                    ),
+                  );
+                  return;
+                }
+                _showInventorActivationDialog(profileId);
               },
             ),
           ],

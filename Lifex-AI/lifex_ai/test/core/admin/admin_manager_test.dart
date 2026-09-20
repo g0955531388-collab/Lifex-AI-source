@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/admin/admin_manager.dart';
 import 'package:lifex_ai/core/admin/admin_permissions.dart';
 import 'package:lifex_ai/core/app_constants.dart';
+import 'package:lifex_ai/features/profile/health_identity_manager.dart';
 
 void main() {
   setUp(() {
@@ -182,6 +183,51 @@ void main() {
 
       expect(result.success, isFalse);
       expect(admin.isEventEnabled('ai_gateway_enabled'), isTrue);
+    });
+  });
+
+  group('صلاحيات المخترع الكاملة وتعيين الأدمنز', () {
+    test('المالك يملك grantAdminRole وجميع صلاحيات الدور', () {
+      final admin = GlobalAdminManager.instance;
+      admin.autoActivateOwnerIfMatches(
+        lifexId: 'LFX-full',
+        email: AppConstants.officialContactEmail,
+      );
+      expect(admin.roleOf('LFX-full'), GlobalAdminRole.owner);
+      expect(
+        admin.permissionsOf('LFX-full'),
+        defaultGlobalRolePermissions[GlobalAdminRole.owner],
+      );
+      expect(
+        admin.hasPermission('LFX-full', GlobalAdminPermission.grantAdminRole),
+        isTrue,
+      );
+      expect(
+        admin.hasPermission(
+          'LFX-full',
+          GlobalAdminPermission.grantModeratorRole,
+        ),
+        isTrue,
+      );
+    });
+
+    test('تحديث الاتصال لاحقاً يفعّل المالك', () {
+      final ids = HealthIdentityManager.instance;
+      ids.resetForTesting();
+      GlobalAdminManager.instance.resetForTesting();
+      final created = ids.createIdentity(profileId: 'p-owner');
+      expect(
+        GlobalAdminManager.instance.roleOf(created.lifexId),
+        GlobalAdminRole.none,
+      );
+      ids.updateContactAndReactivateOwner(
+        lifexId: created.lifexId,
+        email: AppConstants.ownerEmail,
+      );
+      expect(
+        GlobalAdminManager.instance.roleOf(created.lifexId),
+        GlobalAdminRole.owner,
+      );
     });
   });
 }

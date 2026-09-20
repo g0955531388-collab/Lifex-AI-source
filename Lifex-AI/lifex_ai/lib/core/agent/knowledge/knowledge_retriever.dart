@@ -1,141 +1,142 @@
 /// =============================================================
-/// Lifex-AI — طبقة الوكيل الذكي (AI Agent Layer)
-/// الملف: knowledge_retriever.dart
-/// المسار: lib/core/agent/knowledge/knowledge_retriever.dart
-/// الوصف: طبقة استرجاع مستقلة فوق MedicalDatabaseManager الموجود فعلاً
-/// (بند 9: "لا تقم بتغيير البيانات الأصلية دون ضرورة... أنشئ طبقة
-/// Retrieval مستقلة"). تبني فهرساً في الذاكرة مرة واحدة فقط عند أول
-/// استخدام (بند 33: عدم إعادة تحميل قاعدة المعرفة في كل طلب)، ثم تجيب
-/// عن كل استعلام لاحق من الفهرس المبني مسبقاً دون قراءة JSON مجدداً.
+/// Lifex-AI — KnowledgeRetriever = Compatibility Facade فقط
+/// المسار: Agent → Bridge → Knowledge Engine → Evidence Pack
+/// ممنوع: محرك استرجاع موازٍ أو تجاوز Knowledge Engine.
 /// =============================================================
+library lifex_ai.core.agent.knowledge.knowledge_retriever;
 
 import '../../../data/medical_database_manager.dart';
+import '../../lio/knowledge_engine/evidence_pack.dart';
+import '../../lio/knowledge_engine/knowledge_engine.dart';
+import '../../lio/knowledge_engine/retrieval_adapters.dart';
 import 'knowledge_context.dart';
-import 'knowledge_document.dart';
+import 'knowledge_engine_bridge.dart';
+import 'medical_bundle_corpus_seeder.dart';
 
-class KnowledgeRetriever {
-  KnowledgeRetriever({required MedicalDatabaseManager databaseManager})
-      : _databaseManager = databaseManager;
-
-  final MedicalDatabaseManager _databaseManager;
-
-  List<KnowledgeDocument>? _index;
-
-  /// يبني الفهرس مرة واحدة فقط، ثم يُعاد استخدامه لكل الاستعلامات
-  /// التالية. لا يُعاد البناء إلا عبر [invalidateCache] الصريح (مثلاً
-  /// بعد تحديث الحزمة الطبية من الخادم).
-  Future<List<KnowledgeDocument>> _ensureIndex() async {
-    if (_index != null) return _index!;
-
-    final bundle = await _databaseManager.readFullBundle();
-    final documents = <KnowledgeDocument>[];
-
-    documents.addAll(_indexEntityFile(
-      bundle[MedicalBundleFiles.diseases],
-      listKey: 'diseases',
-      category: 'disease',
-      sourceFile: MedicalBundleFiles.diseases,
-    ));
-    documents.addAll(_indexEntityFile(
-      bundle[MedicalBundleFiles.symptoms],
-      listKey: 'symptoms',
-      category: 'symptom',
-      sourceFile: MedicalBundleFiles.symptoms,
-    ));
-    documents.addAll(_indexEntityFile(
-      bundle[MedicalBundleFiles.medications],
-      listKey: 'medications',
-      category: 'medication',
-      sourceFile: MedicalBundleFiles.medications,
-    ));
-    documents.addAll(_indexEntityFile(
-      bundle[MedicalBundleFiles.tests],
-      listKey: 'tests',
-      category: 'test',
-      sourceFile: MedicalBundleFiles.tests,
-    ));
-
-    _index = documents;
-    return documents;
-  }
-
-  List<KnowledgeDocument> _indexEntityFile(
-    Map<String, dynamic>? json, {
-    required String listKey,
-    required String category,
-    required String sourceFile,
+/// عقد الاسترجاع للمستهلكين (أدوات/وكلاء/اختبارات وهمية).
+abstract class KnowledgeRetriever {
+  /// الواجهة الإنتاجية الافتراضية — تفوّض حصراً إلى Knowledge Engine.
+  factory KnowledgeRetriever({
+    required MedicalDatabaseManager databaseManager,
+    LifexKnowledgeEngine? knowledgeEngine,
+    InMemoryKnowledgeCorpus? corpus,
+    AgentKnowledgeBridge? bridge,
+    MedicalBundleCorpusSeeder? seeder,
+    bool engineAvailable = true,
   }) {
-    if (json == null) return const [];
-    final list = json[listKey] as List<dynamic>? ?? const [];
-
-    return list.map((entry) {
-      final map = entry as Map<String, dynamic>;
-      final id = (map['id'] as String?) ?? '';
-      final nameAr = (map['nameAr'] as String?) ?? '';
-      final nameEn = (map['nameEn'] as String?) ?? '';
-      // ملاحظة: ملفات JSON الحالية لا تحتوي حقل synonymsAr فعلياً (تم
-      // التحقق من البنية الفعلية) — هذا السطر يبقى متسامحاً (null-safe)
-      // حتى يعمل تلقائياً إن أُضيف الحقل مستقبلاً دون تعديل هذا الملف.
-      final synonyms = (map['synonymsAr'] as List<dynamic>?)
-              ?.map((s) => s.toString())
-              .join(' ') ??
-          '';
-
-      return KnowledgeDocument(
-        id: id,
-        sourceFile: sourceFile,
-        category: category,
-        searchableText: _normalize('$nameAr $nameEn $synonyms'),
-        raw: map,
-      );
-    }).toList();
-  }
-
-  /// تطبيع بسيط للنص العربي للمطابقة (إزالة تشكيل بسيطة، توحيد مسافات،
-  /// أحرف صغيرة للنصوص اللاتينية). ليس معالجة لغوية كاملة عمداً —
-  /// الهدف مطابقة كلمات مفتاحية موثوقة، وليس فهماً لغوياً عميقاً (ذاك
-  /// يبقى دور المحرك اللغوي الخارجي إن استُدعي).
-  String _normalize(String input) {
-    return input
-        .trim()
-        .replaceAll(RegExp(r'[\u064B-\u0652]'), '') // تشكيل عربي
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .toLowerCase();
-  }
-
-  /// الاسترجاع الفعلي: تطبيع الاستعلام، ثم مطابقة نصية بسيطة وشفافة
-  /// (وليس بحثاً دلالياً معقداً) ضد الفهرس. يُرجع فقط الوحدات ذات
-  /// الصلة، وليس القاعدة كاملة (بند 9).
-  Future<KnowledgeContext> retrieve(String query, {int maxResults = 8}) async {
-    final normalizedQuery = _normalize(query);
-    if (normalizedQuery.isEmpty) {
-      return KnowledgeContext(query: query, matches: const []);
-    }
-
-    final index = await _ensureIndex();
-    final terms = normalizedQuery.split(' ').where((t) => t.length >= 2);
-
-    final scored = <MapEntry<KnowledgeDocument, int>>[];
-    for (final doc in index) {
-      int score = 0;
-      for (final term in terms) {
-        if (doc.searchableText.contains(term)) score++;
-      }
-      if (score > 0) scored.add(MapEntry(doc, score));
-    }
-
-    scored.sort((a, b) => b.value.compareTo(a.value));
-
-    return KnowledgeContext(
-      query: query,
-      matches: scored.take(maxResults).map((e) => e.key).toList(),
+    return KnowledgeEngineBridgedRetriever(
+      databaseManager: databaseManager,
+      knowledgeEngine: knowledgeEngine,
+      corpus: corpus,
+      bridge: bridge,
+      seeder: seeder,
+      engineAvailable: engineAvailable,
     );
   }
 
-  /// إبطال الفهرس المبني — يُستدعى فقط بعد تحديث فعلي للحزمة الطبية
-  /// (مثال: بعد نجاح MedicalDatabaseManager.updateFromServer() أو ما
-  /// يعادلها)، حتى لا تُستخدم بيانات قديمة صامتة.
+  Future<KnowledgeContext> retrieve(String query, {int maxResults = 8});
+
+  void invalidateCache();
+}
+
+/// Facade: لا يحتوي منطق بحث مستقل — Knowledge Engine وحده يسترجع.
+class KnowledgeEngineBridgedRetriever implements KnowledgeRetriever {
+  KnowledgeEngineBridgedRetriever({
+    required MedicalDatabaseManager databaseManager,
+    LifexKnowledgeEngine? knowledgeEngine,
+    InMemoryKnowledgeCorpus? corpus,
+    AgentKnowledgeBridge? bridge,
+    MedicalBundleCorpusSeeder? seeder,
+    this.engineAvailable = true,
+  })  : _databaseManager = databaseManager,
+        _corpus = corpus ?? InMemoryKnowledgeCorpus(),
+        _bridge = bridge ?? const AgentKnowledgeBridge(),
+        _seeder = seeder ?? const MedicalBundleCorpusSeeder() {
+    _engine = knowledgeEngine ??
+        LifexKnowledgeEngine(
+          corpus: _corpus,
+          safety: const KnowledgeEngineSafety(),
+        );
+  }
+
+  final MedicalDatabaseManager _databaseManager;
+  final InMemoryKnowledgeCorpus _corpus;
+  final AgentKnowledgeBridge _bridge;
+  final MedicalBundleCorpusSeeder _seeder;
+  late final LifexKnowledgeEngine _engine;
+  final bool engineAvailable;
+
+  bool _seeded = false;
+  int _engineRetrieveCalls = 0;
+
+  /// للاختبارات/الحراسة: يثبت التفويض الفعلي.
+  int get engineRetrieveCalls => _engineRetrieveCalls;
+
+  bool get delegatesToKnowledgeEngine => true;
+
+  LifexKnowledgeEngine get knowledgeEngine => _engine;
+
+  @override
+  Future<KnowledgeContext> retrieve(String query, {int maxResults = 8}) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
+      return KnowledgeContext(
+        query: query,
+        matches: const [],
+        retrievalStatus: 'EMPTY_QUERY',
+        llmIsSourceOfTruth: false,
+      );
+    }
+
+    if (!engineAvailable) {
+      return KnowledgeContext(
+        query: query,
+        matches: const [],
+        retrievalStatus: 'TOOL_UNAVAILABLE',
+        notesAr: const [
+          'TOOL_UNAVAILABLE — Knowledge Engine غير متاح؛ لا fallback موازٍ.',
+        ],
+        llmIsSourceOfTruth: false,
+      );
+    }
+
+    try {
+      await _ensureSeeded();
+      final engineQuery = _bridge.toEngineQuery(
+        trimmed,
+        maxResults: maxResults,
+      );
+      _engineRetrieveCalls++;
+      final KnowledgeEvidencePack pack = await _engine.retrieve(engineQuery);
+      return _bridge.toAgentContext(
+        originalQuery: query,
+        pack: pack,
+        maxResults: maxResults,
+      );
+    } catch (e) {
+      return KnowledgeContext(
+        query: query,
+        matches: const [],
+        retrievalStatus: 'ENGINE_ERROR',
+        notesAr: ['ENGINE_ERROR — $e'],
+        llmIsSourceOfTruth: false,
+      );
+    }
+  }
+
+  Future<void> _ensureSeeded() async {
+    if (_seeded) return;
+    // البذر ≠ استرجاع: يملأ Corpus فقط ثم يبحث المحرك القانوني.
+    if (_corpus.records.isEmpty) {
+      await _seeder.seedInto(_corpus, _databaseManager);
+    }
+    _seeded = true;
+  }
+
+  @override
   void invalidateCache() {
-    _index = null;
+    _seeded = false;
+    // لا نفرّغ corpus المحقون من الخارج؛ إعادة البذر عند الحاجة فقط إن كان فارغاً
+    // بعد إبطال صريح عبر استبدال المحرك — هنا نسمح بإعادة محاولة البذر.
   }
 }
