@@ -6,7 +6,6 @@ import 'package:lifex_ai/core/lio/ci_evidence/ci_evidence_verification.dart';
 import 'package:lifex_ai/core/lio/ci_evidence/github_ci_evidence_reader.dart';
 import 'package:lifex_ai/core/lio/lifex_intelligence_fabric.dart';
 import 'package:lifex_ai/core/lio/lio_types.dart';
-import 'package:lifex_ai/core/lio/mcp_live/mcp_live_gateway.dart';
 import 'package:lifex_ai/core/lio/mcp_live/mcp_request_context.dart';
 import 'package:lifex_ai/core/lio/mcp_live/mcp_tool_adapters.dart';
 
