@@ -133,7 +133,7 @@ extension CiVerificationStatusX on CiVerificationStatus {
       case CiVerificationStatus.verified:
         return 'VERIFIED';
       case CiVerificationStatus.failed:
-        return 'FAILED';
+        return 'VERIFICATION_FAILED';
       case CiVerificationStatus.notVerified:
         return 'NOT_VERIFIED';
       case CiVerificationStatus.toolUnavailable:

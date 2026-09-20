@@ -208,7 +208,7 @@ class CiEvidenceVerificationService {
       return _finish(
         claim: claim,
         status: CiVerificationStatus.failed,
-        reason: 'FAILED — فحوصات متناقضة أو فاشلة: ${failed.join(", ")}',
+        reason: 'VERIFICATION_FAILED — فحوصات متناقضة أو فاشلة: ${failed.join(", ")}',
         at: now,
         actor: actor,
         agent: agent,
@@ -296,7 +296,7 @@ class CiEvidenceVerificationService {
       return _finish(
         claim: claim,
         status: CiVerificationStatus.failed,
-        reason: 'FAILED — LifexClaimVerifier: ${report.reasonAr}',
+        reason: 'VERIFICATION_FAILED — LifexClaimVerifier: ${report.reasonAr}',
         at: now,
         actor: actor,
         agent: agent,
