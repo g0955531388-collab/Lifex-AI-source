@@ -16,6 +16,7 @@ class _FakeSucceedingGateway implements PaymentGatewayClient {
     required int amountInSmallestUnit,
     required String currencyCode,
     required String description,
+    String? idempotencyKey,
   }) async {
     return const PaymentResult(
       status: PaymentStatus.succeeded,
