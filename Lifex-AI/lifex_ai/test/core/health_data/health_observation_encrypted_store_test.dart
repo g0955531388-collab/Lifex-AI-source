@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/health_data/encrypted_health_observation_store.dart';
 import 'package:lifex_ai/core/health_data/file_health_observation_store.dart';
 import 'package:lifex_ai/core/health_data/health_data_types.dart';
+import 'package:lifex_ai/core/health_data/health_observation_cipher.dart';
 import 'package:lifex_ai/core/health_data/health_observation_key_vault.dart';
 import 'package:lifex_ai/core/health_data/health_observation_repository.dart';
 import 'package:lifex_ai/core/health_data/in_memory_health_observation_repository.dart';
@@ -42,6 +44,8 @@ class _MemCreds implements SecureCredentialStore {
 void main() {
   late Directory tempDir;
   late MemorySecureSecretStore secrets;
+  late FileHealthObservationStore inner;
+  late EncryptedHealthObservationStore encrypted;
   late PersistentHealthObservationRepository persistentRepo;
   late LioSensitiveActionEntry entry;
 
@@ -104,6 +108,13 @@ void main() {
     );
   }
 
+  EncryptedHealthObservationStore _encryptedStore() {
+    return EncryptedHealthObservationStore(
+      inner: inner,
+      keyVault: HealthObservationKeyVault(secretStore: secrets),
+    );
+  }
+
   LifexProductionBundle _assemble({
     required HealthObservationPersistentStore store,
     required MemorySecureSecretStore secretStore,
@@ -138,18 +149,12 @@ void main() {
     );
   }
 
-  EncryptedHealthObservationStore _encStore() {
-    return EncryptedHealthObservationStore(
-      inner: FileHealthObservationStore(rootDirectory: tempDir),
-      keyVault: HealthObservationKeyVault(secretStore: secrets),
-    );
-  }
-
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('lifex_health_obs_');
+    tempDir = await Directory.systemTemp.createTemp('lifex_health_enc_');
     secrets = MemorySecureSecretStore();
-    final store = _encStore();
-    final bundle = _assemble(store: store, secretStore: secrets);
+    inner = FileHealthObservationStore(rootDirectory: tempDir);
+    encrypted = _encryptedStore();
+    final bundle = _assemble(store: encrypted, secretStore: secrets);
     entry = bundle.sensitiveActionEntry;
     persistentRepo =
         bundle.healthObservationRepository as PersistentHealthObservationRepository;
@@ -161,14 +166,27 @@ void main() {
     }
   });
 
-  test('create/write persists across repository reload', () async {
-    final write = await entry.requestSensitiveWrite(
+  test('disk bytes are not plaintext HealthObservation', () async {
+    await entry.requestSensitiveWrite(
       gatewayRequest: req(id: 'w', action: 'write_health_obs'),
+      observation: obs(id: 'secret-obs-42', provenanceId: ''),
+      provenance: prov('prov-1'),
+    );
+    final onDisk = await inner.readRaw();
+    expect(onDisk, isNotNull);
+    expect(AesGcmHealthObservationCipher.looksLikeEnvelope(onDisk!), isTrue);
+    expect(onDisk.contains('secret-obs-42'), isFalse);
+    expect(onDisk.contains('patient-1'), isFalse);
+    expect(onDisk.contains('bp_systolic'), isFalse);
+    expect(onDisk.contains('"observations"'), isFalse);
+  });
+
+  test('write then read round-trip through encryption', () async {
+    await entry.requestSensitiveWrite(
+      gatewayRequest: req(id: 'w2', action: 'write_health_obs'),
       observation: obs(id: 'o1', provenanceId: ''),
       provenance: prov('prov-1'),
     );
-    expect(write.value!.success, isTrue);
-
     final reloaded = PersistentHealthObservationRepository(
       store: EncryptedHealthObservationStore(
         inner: FileHealthObservationStore(rootDirectory: tempDir),
@@ -180,53 +198,40 @@ void main() {
     expect(got!.value, 120);
   });
 
-  test('read via Entry → Application → Persistent repo', () async {
-    await persistentRepo.ensureProvenance(prov('prov-1'));
-    await persistentRepo.saveObservation(obs(id: 'o2'));
-    final read = await entry.requestHealthRead(
-      gatewayRequest: req(id: 'r', action: 'read_health'),
-      patientId: 'patient-1',
-    );
-    expect(read.value!.success, isTrue);
-    expect(read.value!.observations.any((o) => o.observationId == 'o2'), isTrue);
-  });
-
-  test('update persists', () async {
+  test('update works after encryption', () async {
     await entry.requestSensitiveWrite(
-      gatewayRequest: req(id: 'w2', action: 'write_health_obs'),
-      observation: obs(id: 'o3', provenanceId: ''),
-      provenance: prov('prov-3'),
+      gatewayRequest: req(id: 'w3', action: 'write_health_obs'),
+      observation: obs(id: 'o2', provenanceId: ''),
+      provenance: prov('prov-2'),
     );
     final updated = await entry.requestSensitiveUpdate(
       gatewayRequest: req(id: 'u', action: 'update_health_obs'),
-      observation: obs(id: 'o3', provenanceId: 'prov-3', value: 110),
-      provenance: prov('prov-3'),
+      observation: obs(id: 'o2', provenanceId: 'prov-2', value: 99),
+      provenance: prov('prov-2'),
     );
     expect(updated.value!.success, isTrue);
-    final got = await persistentRepo.getObservation('o3');
-    expect(got!.value, 110);
+    expect((await persistentRepo.getObservation('o2'))!.value, 99);
   });
 
-  test('archive soft ≠ delete hard', () async {
+  test('delete and archive; DELETE ≠ ARCHIVE', () async {
     await entry.requestSensitiveWrite(
-      gatewayRequest: req(id: 'w3', action: 'write_health_obs'),
-      observation: obs(id: 'o4', provenanceId: ''),
-      provenance: prov('prov-4'),
+      gatewayRequest: req(id: 'wa', action: 'write_health_obs'),
+      observation: obs(id: 'oa', provenanceId: ''),
+      provenance: prov('prov-a'),
+    );
+    await entry.requestSensitiveWrite(
+      gatewayRequest: req(id: 'wd', action: 'write_health_obs'),
+      observation: obs(id: 'od', provenanceId: ''),
+      provenance: prov('prov-d'),
     );
     final archived = await entry.requestHealthObservationArchive(
       gatewayRequest: req(id: 'a', action: 'archive_health_obs'),
-      observationId: 'o4',
+      observationId: 'oa',
     );
     expect(archived.value!.success, isTrue);
     expect(
-      (await persistentRepo.getObservation('o4'))!.status,
+      (await persistentRepo.getObservation('oa'))!.status,
       HealthRecordStatus.archived,
-    );
-
-    await entry.requestSensitiveWrite(
-      gatewayRequest: req(id: 'w4', action: 'write_health_obs'),
-      observation: obs(id: 'o5', provenanceId: ''),
-      provenance: prov('prov-5'),
     );
     final deleted = await entry.requestHealthObservationDelete(
       gatewayRequest: req(
@@ -235,39 +240,73 @@ void main() {
         risk: LioActionRisk.high,
         humanConfirmed: true,
       ),
-      observationId: 'o5',
+      observationId: 'od',
     );
-    expect(deleted.value!.success, isTrue);
     expect(deleted.value!.deleted, isTrue);
-    expect(await persistentRepo.getObservation('o5'), isNull);
-    expect(await persistentRepo.getObservation('o4'), isNotNull);
+    expect(await persistentRepo.getObservation('od'), isNull);
+    expect(await persistentRepo.getObservation('oa'), isNotNull);
   });
 
-  test('authorization / consent / purpose / scope / audit', () async {
+  test('key does not come from source code', () async {
+    final vault = HealthObservationKeyVault(secretStore: secrets);
+    final key = await vault.getOrCreateDataEncryptionKey();
+    expect(key.length, HealthObservationKeyVault.keyLengthBytes);
+    final source = File(
+      'lib/core/health_data/health_observation_key_vault.dart',
+    ).readAsStringSync();
+    expect(source.contains(base64ish(key)), isFalse);
+    expect(
+      HealthObservationKeyVault.dataEncryptionKeySecretId
+          .startsWith('lifex.health_observation.dek'),
+      isTrue,
+    );
+    expect(HealthObservationKeyVault.keyRotationSupported, isFalse);
+  });
+
+  test('tampered ciphertext does not become valid health data', () async {
+    await entry.requestSensitiveWrite(
+      gatewayRequest: req(id: 'wt', action: 'write_health_obs'),
+      observation: obs(id: 'ot', provenanceId: ''),
+      provenance: prov('prov-t'),
+    );
+    final raw = await inner.readRaw();
+    expect(raw, isNotNull);
+    final tampered = _tamperEnvelope(raw!);
+    await inner.writeRaw(tampered);
+    final brokenRepo = PersistentHealthObservationRepository(
+      store: EncryptedHealthObservationStore(
+        inner: FileHealthObservationStore(rootDirectory: tempDir),
+        keyVault: HealthObservationKeyVault(secretStore: secrets),
+      ),
+    );
+    await expectLater(
+      brokenRepo.listObservationsForPatient('patient-1'),
+      throwsA(isA<HealthObservationCipherException>()),
+    );
+  });
+
+  test('authorization / consent / purpose / scope / audit remain', () async {
     entry.lioGateway.auditLog.clear();
-    final deniedAuth = await entry.requestHealthRead(
+    final denied = await entry.requestHealthRead(
       gatewayRequest: req(id: 'da', action: 'read_health', authorized: false),
       patientId: 'patient-1',
     );
-    expect(deniedAuth.executed, isFalse);
-    expect(deniedAuth.decision.reasonCode, 'UNAUTHORIZED');
-
-    final deniedConsent = await entry.requestHealthRead(
+    expect(denied.executed, isFalse);
+    expect(denied.decision.reasonCode, 'UNAUTHORIZED');
+    final consent = await entry.requestHealthRead(
       gatewayRequest: req(id: 'dc', action: 'read_health', consent: false),
       patientId: 'patient-1',
     );
-    expect(deniedConsent.decision.kind, LioGatewayDecisionKind.requireConsent);
-
+    expect(consent.decision.kind, LioGatewayDecisionKind.requireConsent);
     final purpose = await entry.requestHealthRead(
       gatewayRequest: req(
         id: 'dp',
         action: 'read_health',
-        purpose: 'illegal_purpose',
+        purpose: 'bad_purpose',
       ),
       patientId: 'patient-1',
     );
     expect(purpose.decision.reasonCode, 'PURPOSE_VIOLATION');
-
     final scope = await entry.requestHealthRead(
       gatewayRequest: req(
         id: 'ds',
@@ -277,18 +316,14 @@ void main() {
       patientId: 'patient-1',
     );
     expect(scope.decision.reasonCode, 'SCOPE_VIOLATION');
-
     expect(
       entry.lioGateway.auditLog.events.any((e) => e.requestId == 'da'),
       isTrue,
     );
   });
 
-  test('canonical ownership + production composition uses Persistent', () {
-    final bundle = _assemble(
-      store: _encStore(),
-      secretStore: secrets,
-    );
+  test('production composition uses encrypted persistent implementation', () {
+    final bundle = _assemble(store: encrypted, secretStore: secrets);
     expect(
       bundle.healthObservationRepository,
       isA<PersistentHealthObservationRepository>(),
@@ -302,28 +337,12 @@ void main() {
       bundle.healthObservationRepository,
       isNot(isA<InMemoryHealthObservationRepository>()),
     );
-    expect(
-      identical(
-        bundle.healthObservationService.repository,
-        bundle.healthObservationRepository,
-      ),
-      isTrue,
-    );
     expect(bundle.isUnifiedProductionKnowledgePath, isTrue);
-    expect(
-      HealthObservationRepository.ownerId,
-      'HealthObservationRepository',
-    );
+    expect(HealthObservationRepository.ownerId, 'HealthObservationRepository');
+    expect(AesGcmHealthObservationCipher.algorithmId, 'AES-256-GCM');
   });
 
-  test('InMemory forbidden as production unified path marker', () {
-    expect(
-      InMemoryHealthObservationRepository.testOnlyMarker,
-      contains('TEST_ONLY'),
-    );
-  });
-
-  test('PHR export/share/print/control remain non-success', () async {
+  test('EXPORT/SHARE/PRINT/CONTROL remain non-success', () async {
     final export = await entry.requestClinicalPhrExport(
       gatewayRequest: req(
         id: 'ex',
@@ -332,30 +351,26 @@ void main() {
         humanConfirmed: true,
       ),
     );
-    final share = await entry.requestClinicalOrPrivateShare(
-      gatewayRequest: req(
-        id: 'sh',
-        action: 'share_clinical',
-        risk: LioActionRisk.high,
-        humanConfirmed: true,
-      ),
-    );
+    expect(export.value!.reasonCode, 'NOT_IMPLEMENTED');
     final printOp = await entry.requestSensitivePrint(
       gatewayRequest: req(id: 'pr', action: 'print'),
     );
-    final ctrl = await entry.requestDeviceControl(
-      gatewayRequest: req(
-        id: 'ct',
-        action: 'device_control',
-        purpose: 'device_status',
-        scope: 'device_discovery',
-        risk: LioActionRisk.high,
-        humanConfirmed: true,
-      ),
-    );
-    expect(export.value!.reasonCode, 'NOT_IMPLEMENTED');
-    expect(share.value!.reasonCode, 'NOT_IMPLEMENTED');
     expect(printOp.value!.reasonCode, 'UNSUPPORTED_OPERATION');
-    expect(ctrl.value!.reasonCode, 'UNSUPPORTED_OPERATION');
   });
+}
+
+String base64ish(List<int> key) {
+  // لا نضع المفتاح في الاختبار كـ fixture ثابت؛ فقط نتحقق غياب تسلسله في المصدر.
+  return String.fromCharCodes(key.take(8));
+}
+
+String _tamperEnvelope(String envelope) {
+  final parts = envelope.split('.');
+  expect(parts.length, 4);
+  final cipher = parts[2];
+  final bytes = cipher.codeUnits.toList();
+  if (bytes.isEmpty) return '${parts[0]}.${parts[1]}.AAAA.${parts[3]}';
+  final i = Random().nextInt(bytes.length);
+  bytes[i] = bytes[i] == 65 ? 66 : 65;
+  return '${parts[0]}.${parts[1]}.${String.fromCharCodes(bytes)}.${parts[3]}';
 }

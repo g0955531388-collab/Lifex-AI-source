@@ -15,11 +15,16 @@ import '../agent/knowledge/knowledge_engine_bridge.dart';
 import '../agent/knowledge/knowledge_retriever.dart';
 import '../agent/knowledge/medical_bundle_corpus_seeder.dart';
 import '../agent/knowledge/production_knowledge_composition.dart';
+import '../health_data/encrypted_health_observation_store.dart';
 import '../health_data/file_health_observation_store.dart';
 import '../health_data/health_observation_application_service.dart';
+import '../health_data/health_observation_key_vault.dart';
 import '../health_data/health_observation_repository.dart';
 import '../health_data/in_memory_health_observation_repository.dart';
 import '../health_data/persistent_health_observation_repository.dart';
+import '../security/flutter_secure_secret_store.dart';
+import '../security/memory_secure_secret_store.dart';
+import '../security/secure_secret_store.dart';
 import 'knowledge_engine/ingestion/ingestion_pipeline.dart';
 import 'knowledge_engine/knowledge_engine.dart';
 import 'knowledge_engine/retrieval_adapters.dart';
@@ -102,6 +107,11 @@ class LifexProductionBundle {
     if (healthObservationRepository is! PersistentHealthObservationRepository) {
       return false;
     }
+    final persistent =
+        healthObservationRepository as PersistentHealthObservationRepository;
+    if (persistent.store is! EncryptedHealthObservationStore) {
+      return false;
+    }
     if (knowledgeRetriever is KnowledgeEngineUnavailableRetriever) {
       return knowledgeEngine == null;
     }
@@ -154,6 +164,7 @@ class LifexProductionComposition {
     LifexClock? clock,
     ProductionLioGateway? lioGateway,
     HealthObservationPersistentStore? healthObservationStore,
+    SecureSecretStore? healthSecretStore,
   }) {
     final sharedCorpus = corpus ?? InMemoryKnowledgeCorpus();
     final LifexKnowledgeEngine? sharedEngine = !knowledgeEngineConnected
@@ -212,7 +223,19 @@ class LifexProductionComposition {
       );
     }
 
-    final store = healthObservationStore ?? FileHealthObservationStore();
+    final SecureSecretStore secrets = healthSecretStore ??
+        FlutterSecureSecretStore();
+    if (identical(healthSecretStore, null) &&
+        secrets is MemorySecureSecretStore) {
+      throw StateError(
+        'LifexProductionComposition: MemorySecureSecretStore is test-only.',
+      );
+    }
+    final store = healthObservationStore ??
+        EncryptedHealthObservationStore(
+          inner: FileHealthObservationStore(),
+          keyVault: HealthObservationKeyVault(secretStore: secrets),
+        );
     final healthRepo = PersistentHealthObservationRepository(store: store);
     final healthSvc =
         HealthObservationApplicationService(repository: healthRepo);

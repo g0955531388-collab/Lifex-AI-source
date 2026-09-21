@@ -92,6 +92,7 @@ void main() {
         'lib/core/lio/lifex_production_composition.dart',
       ).readAsStringSync();
       expect(text.contains('PersistentHealthObservationRepository'), isTrue);
+      expect(text.contains('EncryptedHealthObservationStore'), isTrue);
       expect(text.contains('FileHealthObservationStore'), isTrue);
       expect(
         text.contains('InMemoryHealthObservationRepository('),
@@ -99,6 +100,11 @@ void main() {
       );
       expect(
         text.contains('InMemoryHealthRepository('),
+        isFalse,
+      );
+      expect(
+        RegExp(r'healthObservationStore\s*\?\?\s*FileHealthObservationStore\s*\(')
+            .hasMatch(text),
         isFalse,
       );
     });

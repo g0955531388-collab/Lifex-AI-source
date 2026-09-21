@@ -7,6 +7,7 @@ library lifex_ai.core.health_data.persistent_health_observation_repository;
 import 'dart:convert';
 
 import 'health_data_types.dart';
+import 'health_observation_cipher.dart';
 import 'health_observation_codecs.dart';
 import 'health_observation_repository.dart';
 
@@ -25,19 +26,26 @@ class PersistentHealthObservationRepository
 
   Future<void> _ensureLoaded() async {
     if (_loaded) return;
-    final raw = await store.readRaw();
+    final String? raw;
+    try {
+      raw = await store.readRaw();
+    } on HealthObservationCipherException {
+      // لا تُحوَّل ciphertext تالفة إلى سجل صحي فارغ/صالح بصمت.
+      rethrow;
+    }
     if (raw == null) {
       _observations = {};
       _provenance = {};
       _loaded = true;
       return;
     }
+    // Plaintext JSON على القرص ممنوع في الإنتاج؛ إن وصلت بيانات غير صالحة
+    // بعد فك التشفير نرفضها بدل اختلاق ملاحظات.
     final decoded = jsonDecode(raw);
     if (decoded is! Map) {
-      _observations = {};
-      _provenance = {};
-      _loaded = true;
-      return;
+      throw StateError(
+        'HealthObservation store payload is not a valid map after decrypt.',
+      );
     }
     final map = Map<String, dynamic>.from(decoded);
     final obsRaw = map['observations'];

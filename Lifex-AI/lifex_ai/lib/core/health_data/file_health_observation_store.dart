@@ -10,10 +10,10 @@ import 'package:path_provider/path_provider.dart';
 
 import 'health_observation_repository.dart';
 
-/// مخزن دائم على نظام الملفات — التنفيذ الإنتاجي الافتراضي.
+/// مخزن دائم على نظام الملفات — طبقة داخلية للـ ciphertext (أو اختبارات).
 class FileHealthObservationStore implements HealthObservationPersistentStore {
   FileHealthObservationStore({
-    this.fileName = 'health_observations.json',
+    this.fileName = 'health_observations.lifexenc',
     Directory? rootDirectory,
     Future<Directory> Function()? resolveDocumentsDirectory,
   })  : _rootDirectory = rootDirectory,
