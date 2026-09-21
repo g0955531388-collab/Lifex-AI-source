@@ -6,6 +6,7 @@ library lifex_ai.core.health_data.encrypted_health_observation_store;
 
 import 'health_observation_cipher.dart';
 import 'health_observation_key_lifecycle.dart';
+import 'health_observation_key_retention_policy.dart';
 import 'health_observation_key_vault.dart';
 import 'health_observation_repository.dart';
 
@@ -53,5 +54,24 @@ class EncryptedHealthObservationStore
   /// دوران مفتاح آمن مع استعادة عند الفشل.
   Future<HealthObservationKeyRotationResult> rotateKeys() {
     return lifecycle.rotateEncryptedStore(inner: inner, cipher: cipher);
+  }
+
+  Future<HealthObservationKeyMetadata> retirePreviousKey(String keyId) {
+    return lifecycle.retireKey(keyId);
+  }
+
+  Future<HealthObservationKeyMetadata> revokeKey(String keyId) {
+    return lifecycle.revokeKey(keyId: keyId, inner: inner);
+  }
+
+  Future<HealthObservationKeyMetadata> archiveKey(
+    String keyId, {
+    String? note,
+  }) {
+    return lifecycle.archiveKey(keyId: keyId, inner: inner, note: note);
+  }
+
+  Future<HealthObservationKeyRetentionDecision> attemptPurgeKey(String keyId) {
+    return lifecycle.attemptPurgeKeyMaterial(keyId: keyId, inner: inner);
   }
 }
