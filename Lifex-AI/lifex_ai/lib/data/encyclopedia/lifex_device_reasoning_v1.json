@@ -1,0 +1,11 @@
+{
+  "schema_id": "LIFEX-DEVICE-REASONING",
+  "version": "1.0",
+  "observationNotFactNotHypothesisNotDecision": true,
+  "reasoningDoesNotExecute": true,
+  "missingInformationNotAllowOrDeny": true,
+  "unknownRiskIsNotSafe": true,
+  "controlNotVerifiedIsBlocked": true,
+  "deviceReasoningNotMedicalDiagnosis": true,
+  "safetyGateBeforeControlCenter": true
+}

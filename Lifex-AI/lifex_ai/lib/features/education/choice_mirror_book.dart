@@ -55,7 +55,7 @@ class ChoiceMirrorBook {
 
   static const titleAr = 'مَرآةُ الاختيار';
   static const authorsAr =
-      'المرشدة رباب محمود الحايك | الكاتب غازي سليم بكفلاوي';
+      'المرشدة رباب الحايك | الكاتب غازي سليم بكفلاوي';
   static const imprintAr =
       'AlrohAcademy999 – Lifex-AI. صياغة توعوية داخل رواق المعرفة.';
 
