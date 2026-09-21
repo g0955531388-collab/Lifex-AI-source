@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/scheduling/user_appointment_store.dart';
 import '../features/voice/voice_engine.dart';
@@ -96,9 +98,39 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   }
 
   Future<void> _remove(UserAppointment a) async {
-    final action = _store.removeOrCancel(a.id);
+    final profileId =
+        context.read<ActiveProfileController>().activeProfileId ?? 'local';
+    final entry = context.read<LioSensitiveActionEntry>();
+    final outcome = await entry.authorizeThenRun<String>(
+      request: LioGatewayRequest(
+        requestId: 'appt_del_${a.id}_${DateTime.now().millisecondsSinceEpoch}',
+        correlationId: 'appt_$profileId',
+        identityAccountId: profileId,
+        purpose: 'scheduling',
+        requestedAction: 'delete_local_appointment',
+        dataScope: 'profile_basic',
+        sensitivity: LioDataSensitivity.personal,
+        consent: const LioConsentContext(
+          consentGranted: true,
+          purposeAligned: true,
+        ),
+        riskLevel: LioActionRisk.medium,
+        timestamp: DateTime.now().toUtc(),
+        authenticated: true,
+        authorized: true,
+        minimumNecessarySatisfied: true,
+      ),
+      run: () async => _store.removeOrCancel(a.id),
+    );
+    if (!outcome.executed) {
+      await _announce(
+        'توقف حذف الموعد عند LIO (${outcome.decision.wireDecision}).',
+      );
+      return;
+    }
     setState(() {});
     _persist();
+    final action = outcome.value;
     if (action == 'deleted') {
       await _announce('تم حذف الموعد.');
     } else if (action == 'cancelled_request') {

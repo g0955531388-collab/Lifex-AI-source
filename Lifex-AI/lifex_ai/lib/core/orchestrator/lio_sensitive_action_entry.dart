@@ -33,6 +33,7 @@ import '../local_knowledge.dart';
 import '../search_refresh_engine.dart';
 import 'lio_gateway.dart';
 import 'lio_gateway_contracts.dart';
+import 'lio_sensitive_lifecycle_contracts.dart';
 
 /// نتيجة عبور البوابة ثم التنفيذ (أو التوقف).
 class LioSensitiveActionOutcome<T> {
@@ -569,6 +570,160 @@ class LioSensitiveActionEntry {
             profileId: profileId,
             reasonAr: reasonAr,
             context: context,
+          ),
+    );
+  }
+
+  // —— دورة حياة البيانات: عقود صريحة بلا نجاح وهمي ——
+
+  /// DELETE حسّاس — منفصل عن ARCHIVE. لا محرك حذف آمن بعد.
+  Future<LioSensitiveActionOutcome<LioLifecycleResult>> requestSensitiveDelete({
+    required LioGatewayRequest gatewayRequest,
+    LioSensitiveDataDomain domain = LioSensitiveDataDomain.patientPhr,
+  }) {
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => LioLifecycleResult.notImplemented(
+            opKind: LioLifecycleOpKind.delete,
+            domain: domain,
+            messageAr:
+                'DELETE غير منفَّذ: لا طبقة حذف آمنة لبيانات المريض/PHR في هذا البناء. '
+                'DELETE ≠ ARCHIVE.',
+          ),
+    );
+  }
+
+  /// ARCHIVE حسّاس — منفصل عن DELETE. لا مخزن أرشفة بعد.
+  Future<LioSensitiveActionOutcome<LioLifecycleResult>> requestSensitiveArchive({
+    required LioGatewayRequest gatewayRequest,
+    LioSensitiveDataDomain domain = LioSensitiveDataDomain.patientPhr,
+  }) {
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => LioLifecycleResult.notImplemented(
+            opKind: LioLifecycleOpKind.archive,
+            domain: domain,
+            messageAr:
+                'ARCHIVE غير منفَّذ: لا مخزن أرشفة آمن بعد. '
+                'ARCHIVE ≠ DELETE.',
+          ),
+    );
+  }
+
+  /// EXPORT سريري/PHR — ليس SHARE عاماً. بلا نجاح وهمي.
+  Future<LioSensitiveActionOutcome<LioLifecycleResult>>
+      requestClinicalPhrExport({
+    required LioGatewayRequest gatewayRequest,
+  }) {
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => LioLifecycleResult.notImplemented(
+            opKind: LioLifecycleOpKind.export,
+            domain: LioSensitiveDataDomain.patientPhr,
+            messageAr:
+                'EXPORT Clinical/PHR غير منفَّذ: لا مسار تصدير آمن بعد. '
+                'EXPORT ≠ SHARE العام. لا نجاح وهمي.',
+          ),
+    );
+  }
+
+  /// SHARE لبيانات سريرية/خاصة — منفصل عن الموسوعة العامة.
+  Future<LioSensitiveActionOutcome<LioLifecycleResult>>
+      requestClinicalOrPrivateShare({
+    required LioGatewayRequest gatewayRequest,
+    LioSensitiveDataDomain domain = LioSensitiveDataDomain.clinical,
+  }) {
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => LioLifecycleResult.notImplemented(
+            opKind: LioLifecycleOpKind.share,
+            domain: domain,
+            messageAr:
+                'SHARE لبيانات سريرية/خاصة غير منفَّذ. '
+                'المشاركة العامة للموسوعة مسار منفصل فقط.',
+          ),
+    );
+  }
+
+  /// PRINT حسّاس — لا مسار طباعة آمن.
+  Future<LioSensitiveActionOutcome<LioLifecycleResult>> requestSensitivePrint({
+    required LioGatewayRequest gatewayRequest,
+    LioSensitiveDataDomain domain = LioSensitiveDataDomain.medicalDocument,
+  }) {
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => LioLifecycleResult.unsupported(
+            opKind: LioLifecycleOpKind.printOp,
+            domain: domain,
+            messageAr:
+                'PRINT غير مدعوم في هذا البناء (UNSUPPORTED_OPERATION). '
+                'لا مسار طباعة آمن لبيانات حساسة.',
+          ),
+    );
+  }
+
+  /// CONTROL جهاز — عقد/سياسة فقط، بلا تنفيذ سائق.
+  Future<LioSensitiveActionOutcome<LioLifecycleResult>> requestDeviceControl({
+    required LioGatewayRequest gatewayRequest,
+  }) {
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => LioLifecycleResult.unsupported(
+            opKind: LioLifecycleOpKind.control,
+            domain: LioSensitiveDataDomain.deviceControl,
+            messageAr:
+                'Device CONTROL غير منفَّذ: سياسة/عقد فقط بلا تشغيل سائق حقيقي. '
+                'DISCOVERED ≠ CONTROLABLE.',
+          ),
+    );
+  }
+
+  /// READ_HEALTH عبر بوابة — بلا وصول UI→Repository مباشر.
+  Future<LioSensitiveActionOutcome<LioLifecycleResult>> requestHealthRead({
+    required LioGatewayRequest gatewayRequest,
+  }) {
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => LioLifecycleResult.notImplemented(
+            opKind: LioLifecycleOpKind.readHealth,
+            domain: LioSensitiveDataDomain.healthObservation,
+            messageAr:
+                'READ_HEALTH عبر Repository غير موصول بواجهة آمنة بعد. '
+                'لا تجاوز LIO إلى HealthRepository من UI.',
+          ),
+    );
+  }
+
+  /// WRITE حسّاس عام — عقد حتى تُربط طبقة الكتابة الآمنة.
+  Future<LioSensitiveActionOutcome<LioLifecycleResult>> requestSensitiveWrite({
+    required LioGatewayRequest gatewayRequest,
+    LioSensitiveDataDomain domain = LioSensitiveDataDomain.healthObservation,
+  }) {
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => LioLifecycleResult.notImplemented(
+            opKind: LioLifecycleOpKind.write,
+            domain: domain,
+            messageAr:
+                'WRITE الحساس غير موصول بمسار Repository آمن بعد لهذا النطاق. '
+                'لا نجاح وهمي.',
+          ),
+    );
+  }
+
+  /// UPDATE حسّاس عام — منفصل عن WRITE في الجرد.
+  Future<LioSensitiveActionOutcome<LioLifecycleResult>> requestSensitiveUpdate({
+    required LioGatewayRequest gatewayRequest,
+    LioSensitiveDataDomain domain = LioSensitiveDataDomain.medicationRecord,
+  }) {
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => LioLifecycleResult.notImplemented(
+            opKind: LioLifecycleOpKind.update,
+            domain: domain,
+            messageAr:
+                'UPDATE الحساس غير موصول بمسار آمن بعد لهذا النطاق. '
+                'لا نجاح وهمي.',
           ),
     );
   }

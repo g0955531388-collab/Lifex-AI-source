@@ -239,8 +239,40 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                                 ),
                                 trailing: IconButton(
                                   icon: const Icon(Icons.delete_outline),
-                                  onPressed: () {
-                                    profile.currentMedicationNames.remove(name);
+                                  onPressed: () async {
+                                    final entry =
+                                        Provider.of<LioSensitiveActionEntry>(
+                                      context,
+                                      listen: false,
+                                    );
+                                    final outcome =
+                                        await entry.authorizeThenRun<void>(
+                                      request: LioGatewayRequest(
+                                        requestId:
+                                            'med_del_${widget.profileId}_${DateTime.now().millisecondsSinceEpoch}',
+                                        correlationId: 'med_${widget.profileId}',
+                                        identityAccountId: widget.profileId,
+                                        purpose: 'care_support',
+                                        requestedAction:
+                                            'delete_local_medication_name',
+                                        dataScope: 'profile_basic',
+                                        sensitivity: LioDataSensitivity.personal,
+                                        consent: const LioConsentContext(
+                                          consentGranted: true,
+                                          purposeAligned: true,
+                                        ),
+                                        riskLevel: LioActionRisk.medium,
+                                        timestamp: DateTime.now().toUtc(),
+                                        authenticated: true,
+                                        authorized: true,
+                                        minimumNecessarySatisfied: true,
+                                      ),
+                                      run: () async {
+                                        profile.currentMedicationNames
+                                            .remove(name);
+                                      },
+                                    );
+                                    if (!outcome.executed || !mounted) return;
                                     Provider.of<ActiveProfileController>(
                                       context,
                                       listen: false,
