@@ -91,7 +91,7 @@ void main() {
         EncryptedHealthObservationStore.storeName,
         'EncryptedHealthObservationStore',
       );
-      expect(HealthObservationKeyVault.keyRotationSupported, isFalse);
+      expect(HealthObservationKeyVault.keyRotationSupported, isTrue);
 
       final secretOffenders = <String>[];
       for (final dir in [

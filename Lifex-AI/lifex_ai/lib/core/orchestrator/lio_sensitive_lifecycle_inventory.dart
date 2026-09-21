@@ -235,6 +235,21 @@ class LioSensitiveLifecycleInventory {
           notes: 'Production via LifexProductionComposition only',
         ),
         LioSensitiveLifecycleRecord(
+          path: 'lib/core/health_data/health_observation_key_lifecycle.dart',
+          classOrFunction: 'HealthObservationKeyLifecycle',
+          callerSurface: 'Infrastructure',
+          operation: 'key rotation + recovery',
+          dataDomain: LioSensitiveDataDomain.healthObservation,
+          classification: LioLifecycleOpKind.write,
+          risk: 'high',
+          canonicalOwner: 'HealthObservationRepository',
+          passesLioEntry: true,
+          hasRealExecution: true,
+          notes:
+              'DEK versions in SecureSecretStore; rotate decrypt→validate→'
+              're-encrypt→verify then promote; no plaintext fallback',
+        ),
+        LioSensitiveLifecycleRecord(
           path: 'lib/core/health_data/encrypted_health_observation_store.dart',
           classOrFunction: 'EncryptedHealthObservationStore',
           callerSurface: 'Infrastructure',
@@ -246,7 +261,7 @@ class LioSensitiveLifecycleInventory {
           passesLioEntry: true,
           hasRealExecution: true,
           notes:
-              'DEK via HealthObservationKeyVault + SecureSecretStore; '
+              'LIFEXHOB2 + keyId; DEK via HealthObservationKeyLifecycle; '
               'no plaintext HealthObservation on disk',
         ),
         LioSensitiveLifecycleRecord(

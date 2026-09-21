@@ -260,7 +260,7 @@ void main() {
           .startsWith('lifex.health_observation.dek'),
       isTrue,
     );
-    expect(HealthObservationKeyVault.keyRotationSupported, isFalse);
+    expect(HealthObservationKeyVault.keyRotationSupported, isTrue);
   });
 
   test('tampered ciphertext does not become valid health data', () async {
@@ -366,11 +366,19 @@ String base64ish(List<int> key) {
 
 String _tamperEnvelope(String envelope) {
   final parts = envelope.split('.');
-  expect(parts.length, 4);
-  final cipher = parts[2];
+  expect(parts.length, anyOf(4, 5));
+  final cipherIndex = parts.length == 5 ? 3 : 2;
+  final macIndex = parts.length == 5 ? 4 : 3;
+  final cipher = parts[cipherIndex];
   final bytes = cipher.codeUnits.toList();
-  if (bytes.isEmpty) return '${parts[0]}.${parts[1]}.AAAA.${parts[3]}';
+  if (bytes.isEmpty) {
+    parts[cipherIndex] = 'AAAA';
+    return parts.join('.');
+  }
   final i = Random().nextInt(bytes.length);
   bytes[i] = bytes[i] == 65 ? 66 : 65;
-  return '${parts[0]}.${parts[1]}.${String.fromCharCodes(bytes)}.${parts[3]}';
+  parts[cipherIndex] = String.fromCharCodes(bytes);
+  // keep mac as-is so auth fails
+  expect(parts[macIndex], isNotEmpty);
+  return parts.join('.');
 }

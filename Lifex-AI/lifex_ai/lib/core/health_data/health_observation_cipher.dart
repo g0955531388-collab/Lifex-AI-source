@@ -1,5 +1,7 @@
 /// =============================================================
 /// Lifex-AI — AES-256-GCM لـ HealthObservation at-rest
+/// LIFEXHOB1 = legacy بلا key id
+/// LIFEXHOB2 = مع key identifier
 /// =============================================================
 library lifex_ai.core.health_data.health_observation_cipher;
 
@@ -17,22 +19,49 @@ class HealthObservationCipherException implements Exception {
   String toString() => 'HealthObservationCipherException: $message';
 }
 
+/// مغلف مفكوك — metadata فقط بلا مفتاح.
+class HealthObservationCipherEnvelope {
+  const HealthObservationCipherEnvelope({
+    required this.format,
+    required this.nonce,
+    required this.cipherText,
+    required this.mac,
+    this.keyId,
+  });
+
+  final String format;
+  final String? keyId;
+  final List<int> nonce;
+  final List<int> cipherText;
+  final List<int> mac;
+
+  bool get isLegacyHob1 => format == AesGcmHealthObservationCipher.formatHob1;
+}
+
 /// تشفير/فك AES-256-GCM.
 class AesGcmHealthObservationCipher {
   AesGcmHealthObservationCipher({AesGcm? algorithm})
       : _algorithm = algorithm ?? AesGcm.with256bits();
 
   static const algorithmId = 'AES-256-GCM';
-  static const envelopeVersion = 'LIFEXHOB1';
+  static const formatHob1 = 'LIFEXHOB1';
+  static const formatHob2 = 'LIFEXHOB2';
+
+  /// التوافق الخلفي.
+  static const envelopeVersion = formatHob1;
 
   final AesGcm _algorithm;
 
   Future<String> encrypt({
     required String plaintext,
     required Uint8List keyBytes,
+    required String keyId,
   }) async {
     if (keyBytes.length != 32) {
       throw HealthObservationCipherException('AES-256 key must be 32 bytes');
+    }
+    if (keyId.trim().isEmpty || keyId.contains('.')) {
+      throw HealthObservationCipherException('Invalid keyId for envelope');
     }
     final secretKey = SecretKey(keyBytes);
     final box = await _algorithm.encrypt(
@@ -42,30 +71,72 @@ class AesGcmHealthObservationCipher {
     final nonce = base64Url.encode(box.nonce);
     final cipherText = base64Url.encode(box.cipherText);
     final mac = base64Url.encode(box.mac.bytes);
-    return '$envelopeVersion.$nonce.$cipherText.$mac';
+    return '$formatHob2.$keyId.$nonce.$cipherText.$mac';
   }
 
-  Future<String> decrypt({
-    required String envelope,
+  HealthObservationCipherEnvelope parse(String envelope) {
+    final parts = envelope.trim().split('.');
+    if (parts.isEmpty) {
+      throw HealthObservationCipherException('Empty ciphertext envelope');
+    }
+    final format = parts[0];
+    if (format == formatHob2) {
+      if (parts.length != 5) {
+        throw HealthObservationCipherException(
+          'Unrecognized or tampered LIFEXHOB2 envelope',
+        );
+      }
+      try {
+        return HealthObservationCipherEnvelope(
+          format: formatHob2,
+          keyId: parts[1],
+          nonce: base64Url.decode(parts[2]),
+          cipherText: base64Url.decode(parts[3]),
+          mac: base64Url.decode(parts[4]),
+        );
+      } catch (e) {
+        throw HealthObservationCipherException(
+          'Tampered LIFEXHOB2 envelope encoding: $e',
+        );
+      }
+    }
+    if (format == formatHob1) {
+      if (parts.length != 4) {
+        throw HealthObservationCipherException(
+          'Unrecognized or tampered LIFEXHOB1 envelope',
+        );
+      }
+      try {
+        return HealthObservationCipherEnvelope(
+          format: formatHob1,
+          keyId: null,
+          nonce: base64Url.decode(parts[1]),
+          cipherText: base64Url.decode(parts[2]),
+          mac: base64Url.decode(parts[3]),
+        );
+      } catch (e) {
+        throw HealthObservationCipherException(
+          'Tampered LIFEXHOB1 envelope encoding: $e',
+        );
+      }
+    }
+    throw HealthObservationCipherException(
+      'Unsupported ciphertext format: $format',
+    );
+  }
+
+  Future<String> decryptEnvelope({
+    required HealthObservationCipherEnvelope envelope,
     required Uint8List keyBytes,
   }) async {
     if (keyBytes.length != 32) {
       throw HealthObservationCipherException('AES-256 key must be 32 bytes');
     }
-    final parts = envelope.trim().split('.');
-    if (parts.length != 4 || parts[0] != envelopeVersion) {
-      throw HealthObservationCipherException(
-        'Unrecognized or tampered ciphertext envelope',
-      );
-    }
     try {
-      final nonce = base64Url.decode(parts[1]);
-      final cipherText = base64Url.decode(parts[2]);
-      final macBytes = base64Url.decode(parts[3]);
       final box = SecretBox(
-        cipherText,
-        nonce: nonce,
-        mac: Mac(macBytes),
+        envelope.cipherText,
+        nonce: envelope.nonce,
+        mac: Mac(envelope.mac),
       );
       final clear = await _algorithm.decrypt(
         box,
@@ -84,9 +155,16 @@ class AesGcmHealthObservationCipher {
     }
   }
 
-  /// كشف سريع: هل المحتوى يبدو كمغلف مشفّر؟
+  Future<String> decrypt({
+    required String envelope,
+    required Uint8List keyBytes,
+  }) async {
+    final parsed = parse(envelope);
+    return decryptEnvelope(envelope: parsed, keyBytes: keyBytes);
+  }
+
   static bool looksLikeEnvelope(String raw) {
     final t = raw.trim();
-    return t.startsWith('$envelopeVersion.');
+    return t.startsWith('$formatHob1.') || t.startsWith('$formatHob2.');
   }
 }
