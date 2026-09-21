@@ -6,6 +6,7 @@ import 'package:lifex_ai/core/health_data/file_health_observation_store.dart';
 import 'package:lifex_ai/core/health_data/health_data_types.dart';
 import 'package:lifex_ai/core/health_data/health_observation_cipher.dart';
 import 'package:lifex_ai/core/health_data/health_observation_key_lifecycle.dart';
+import 'package:lifex_ai/core/health_data/health_observation_key_reference_index.dart';
 import 'package:lifex_ai/core/health_data/health_observation_key_retention_policy.dart';
 import 'package:lifex_ai/core/health_data/health_observation_key_vault.dart';
 import 'package:lifex_ai/core/health_data/health_observation_repository.dart';
@@ -328,10 +329,10 @@ void main() {
     await expectLater(
       encrypted.revokeKey(rot.previousKeyId),
       throwsA(
-        isA<HealthObservationKeyPolicyException>().having(
+        isA<HealthObservationKeyIndexInconsistentException>().having(
           (e) => e.reasonCode,
           'code',
-          HealthObservationKeyRetentionDecision.keyStillReferenced,
+          HealthObservationKeyIndexInconsistentException.reasonCodeValue,
         ),
       ),
     );
@@ -339,10 +340,7 @@ void main() {
     expect(purge.allowed, isFalse);
     expect(
       purge.reasonCode,
-      anyOf(
-        HealthObservationKeyRetentionDecision.keyStillReferenced,
-        HealthObservationKeyRetentionDecision.retentionRequired,
-      ),
+      HealthObservationKeyRetentionDecision.indexInconsistent,
     );
   });
 
@@ -402,6 +400,7 @@ void main() {
       await lifecycle.rotateEncryptedStore(
         inner: _FailAfterWriteStore(inner, failVerifyRead: true),
         cipher: cipher,
+        referenceIndex: encrypted.referenceIndex,
       );
       fail('expected rotation failure');
     } catch (_) {}

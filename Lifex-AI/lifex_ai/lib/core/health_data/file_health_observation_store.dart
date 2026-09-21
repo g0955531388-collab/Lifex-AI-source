@@ -54,4 +54,10 @@ class FileHealthObservationStore implements HealthObservationPersistentStore {
     final file = await _file();
     await file.writeAsString(contents, flush: true);
   }
+
+  /// ملف جانبي بجانب ciphertext (فهرس اعتماد المفاتيح وغيره) — بلا أسرار.
+  Future<File> siblingFile(String name) async {
+    final file = await _file();
+    return File('${file.parent.path}/$name');
+  }
 }

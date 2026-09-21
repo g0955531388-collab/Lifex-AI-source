@@ -349,6 +349,7 @@ void main() {
       await lifecycle.rotateEncryptedStore(
         inner: _FailAfterWriteStore(inner, failVerifyRead: true),
         cipher: AesGcmHealthObservationCipher(),
+        referenceIndex: encrypted.referenceIndex,
       );
       fail('expected rotation failure');
     } catch (_) {

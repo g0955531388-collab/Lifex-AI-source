@@ -235,6 +235,21 @@ class LioSensitiveLifecycleInventory {
           notes: 'Production via LifexProductionComposition only',
         ),
         LioSensitiveLifecycleRecord(
+          path: 'lib/core/health_data/health_observation_key_reference_index.dart',
+          classOrFunction: 'HealthObservationKeyReferenceIndex',
+          callerSurface: 'Infrastructure',
+          operation: 'key reference index + consistency',
+          dataDomain: LioSensitiveDataDomain.healthObservation,
+          classification: LioLifecycleOpKind.write,
+          risk: 'high',
+          canonicalOwner: 'HealthObservationRepository',
+          passesLioEntry: true,
+          hasRealExecution: true,
+          notes:
+              'keyId→envelope/record metadata only; INDEX_INCONSISTENT blocks '
+              'REVOKE/ARCHIVE/PURGE; rebuild from store without logging secrets',
+        ),
+        LioSensitiveLifecycleRecord(
           path: 'lib/core/health_data/health_observation_key_retention_policy.dart',
           classOrFunction: 'HealthObservationKeyRetentionPolicy',
           callerSurface: 'Infrastructure',

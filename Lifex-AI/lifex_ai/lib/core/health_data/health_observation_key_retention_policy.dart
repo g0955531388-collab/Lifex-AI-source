@@ -124,6 +124,7 @@ class HealthObservationKeyRetentionDecision {
   static const keyArchivedUnavailable = 'KEY_ARCHIVED_UNAVAILABLE';
   static const keyNotCurrent = 'KEY_NOT_CURRENT';
   static const keyStillReferenced = 'KEY_STILL_REFERENCED';
+  static const indexInconsistent = 'INDEX_INCONSISTENT';
   static const encryptDenied = 'ENCRYPT_DENIED';
   static const decryptDenied = 'DECRYPT_DENIED';
 }

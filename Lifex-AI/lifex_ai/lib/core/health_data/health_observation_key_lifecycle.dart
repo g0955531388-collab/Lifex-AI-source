@@ -11,6 +11,7 @@ import 'dart:typed_data';
 
 import '../security/secure_secret_store.dart';
 import 'health_observation_cipher.dart';
+import 'health_observation_key_reference_index.dart';
 import 'health_observation_key_retention_policy.dart';
 import 'health_observation_repository.dart';
 
@@ -256,11 +257,18 @@ class HealthObservationKeyLifecycle {
     return updated;
   }
 
-  /// إلغاء: يمنع التشفير والفك.
+  /// إلغاء: يمنع التشفير والفك — يعتمد على Reference Index + اتساق.
   Future<HealthObservationKeyMetadata> revokeKey({
     required String keyId,
     required HealthObservationPersistentStore inner,
+    required HealthObservationKeyReferenceIndex referenceIndex,
+    AesGcmHealthObservationCipher? cipher,
   }) async {
+    final aes = cipher ?? AesGcmHealthObservationCipher();
+    await referenceIndex.requireConsistent(
+      cipherTextInner: inner,
+      cipher: aes,
+    );
     final meta = await requireMetadata(keyId);
     if (meta.status == HealthObservationKeyStatus.current) {
       throw HealthObservationKeyPolicyException(
@@ -269,13 +277,13 @@ class HealthObservationKeyLifecycle {
         message: 'لا يُلغى المفتاح الحالي وهو CURRENT.',
       );
     }
-    final referenced = await isKeyReferencedByStore(inner: inner, keyId: keyId);
-    if (referenced) {
+    if (await referenceIndex.hasReferences(keyId)) {
       throw HealthObservationKeyPolicyException(
         keyId: keyId,
         reasonCode: HealthObservationKeyRetentionDecision.keyStillReferenced,
         message:
-            'لا يُلغى المفتاح بينما ciphertext يعتمد عليه — أعد التشفير أولاً.',
+            'لا يُلغى المفتاح بينما Reference Index يثبت اعتماداً — '
+            'أعد التشفير أولاً.',
       );
     }
     final updated = meta.copyWith(
@@ -286,12 +294,19 @@ class HealthObservationKeyLifecycle {
     return updated;
   }
 
-  /// أرشفة: غير متاح للعمليات (ليس حذفاً).
+  /// أرشفة مفتاح: غير متاح للعمليات (ليس حذفاً).
   Future<HealthObservationKeyMetadata> archiveKey({
     required String keyId,
     required HealthObservationPersistentStore inner,
+    required HealthObservationKeyReferenceIndex referenceIndex,
+    AesGcmHealthObservationCipher? cipher,
     String? note,
   }) async {
+    final aes = cipher ?? AesGcmHealthObservationCipher();
+    await referenceIndex.requireConsistent(
+      cipherTextInner: inner,
+      cipher: aes,
+    );
     final meta = await requireMetadata(keyId);
     if (meta.status == HealthObservationKeyStatus.current) {
       throw HealthObservationKeyPolicyException(
@@ -300,13 +315,13 @@ class HealthObservationKeyLifecycle {
         message: 'لا تُؤرشف المفتاح الحالي.',
       );
     }
-    final referenced = await isKeyReferencedByStore(inner: inner, keyId: keyId);
-    if (referenced) {
+    if (await referenceIndex.hasReferences(keyId)) {
       throw HealthObservationKeyPolicyException(
         keyId: keyId,
         reasonCode: HealthObservationKeyRetentionDecision.keyStillReferenced,
         message:
-            'لا تُؤرشف المفتاح بينما ciphertext يعتمد عليه — أعد التشفير أولاً.',
+            'لا تُؤرشف المفتاح بينما Reference Index يثبت اعتماداً — '
+            'أعد التشفير أولاً.',
       );
     }
     final updated = meta.copyWith(
@@ -322,9 +337,25 @@ class HealthObservationKeyLifecycle {
   Future<HealthObservationKeyRetentionDecision> attemptPurgeKeyMaterial({
     required String keyId,
     required HealthObservationPersistentStore inner,
+    required HealthObservationKeyReferenceIndex referenceIndex,
+    AesGcmHealthObservationCipher? cipher,
   }) async {
+    final aes = cipher ?? AesGcmHealthObservationCipher();
+    try {
+      await referenceIndex.requireConsistent(
+        cipherTextInner: inner,
+        cipher: aes,
+      );
+    } on HealthObservationKeyIndexInconsistentException {
+      return const HealthObservationKeyRetentionDecision(
+        allowed: false,
+        reasonCode: HealthObservationKeyRetentionDecision.indexInconsistent,
+        messageAr:
+            'ممنوع PURGE: فهرس الاعتماد غير متسق (INDEX_INCONSISTENT).',
+      );
+    }
     final meta = await requireMetadata(keyId);
-    final referenced = await isKeyReferencedByStore(inner: inner, keyId: keyId);
+    final referenced = await referenceIndex.hasReferences(keyId);
     final decision = retentionPolicy.evaluatePurge(
       meta: meta,
       stillReferencedByCiphertext: referenced,
@@ -337,6 +368,21 @@ class HealthObservationKeyLifecycle {
     return decision;
   }
 
+  /// فحص اعتماد عبر الفهرس بعد التحقق من الاتساق (للاختبارات/التشخيص).
+  Future<bool> isKeyReferencedByIndex({
+    required HealthObservationKeyReferenceIndex referenceIndex,
+    required HealthObservationPersistentStore inner,
+    required String keyId,
+    AesGcmHealthObservationCipher? cipher,
+  }) async {
+    await referenceIndex.requireConsistent(
+      cipherTextInner: inner,
+      cipher: cipher ?? AesGcmHealthObservationCipher(),
+    );
+    return referenceIndex.hasReferences(keyId);
+  }
+
+  /// توافق خلفي: فحص مباشر للمغلف الحالي — يُفضّل Reference Index.
   Future<bool> isKeyReferencedByStore({
     required HealthObservationPersistentStore inner,
     required String keyId,
@@ -359,10 +405,11 @@ class HealthObservationKeyLifecycle {
   }
 
   /// Rotation: decrypt → validate → re-encrypt → persist → re-read → verify
-  /// ثم promote. المفتاح السابق → ACTIVE_FOR_DECRYPTION (لا حذف).
+  /// ثم نقل المراجع old→new ثم promote.
   Future<HealthObservationKeyRotationResult> rotateEncryptedStore({
     required HealthObservationPersistentStore inner,
     required AesGcmHealthObservationCipher cipher,
+    required HealthObservationKeyReferenceIndex referenceIndex,
   }) async {
     final previous = await ensureCurrentKey();
     final next = await mintNewKey();
@@ -370,6 +417,9 @@ class HealthObservationKeyLifecycle {
     final backupEnvelope = await inner.readRaw();
     if (backupEnvelope == null || backupEnvelope.trim().isEmpty) {
       await promoteCurrent(next.keyId);
+      await referenceIndex.clearEnvelopeReferences(
+        HealthObservationKeyReferenceIndex.canonicalEnvelopeId,
+      );
       return HealthObservationKeyRotationResult(
         previousKeyId: previous.keyId,
         newKeyId: next.keyId,
@@ -406,6 +456,15 @@ class HealthObservationKeyLifecycle {
       if (parsed.keyId != next.keyId) {
         throw StateError('Rotation verify failed: keyId not updated');
       }
+      // نقل المراجع فقط بعد نجاح verify الكامل.
+      await referenceIndex.moveEnvelopeReference(
+        envelopeId: HealthObservationKeyReferenceIndex.canonicalEnvelopeId,
+        fromKeyId: previous.keyId,
+        toKeyId: next.keyId,
+        formatVersion: parsed.format,
+        contentFingerprint:
+            HealthObservationKeyReferenceIndexSupport.fingerprintOf(reread),
+      );
       await promoteCurrent(next.keyId);
       return HealthObservationKeyRotationResult(
         previousKeyId: previous.keyId,
@@ -414,7 +473,7 @@ class HealthObservationKeyLifecycle {
       );
     } catch (e) {
       await inner.writeRaw(backupEnvelope);
-      // لا promote — الحالة تبقى متسقة.
+      // لا نقل مراجع ولا promote — الفهرس يبقى على الحالة الفعلية السابقة.
       rethrow;
     }
   }
