@@ -11,8 +11,8 @@ import 'package:lifex_ai/core/lio/knowledge_engine/knowledge_engine.dart';
 import 'package:lifex_ai/core/lio/lifex_production_composition.dart';
 import 'package:lifex_ai/core/lio/lio_canon.dart';
 
-/// Architecture Guards A–Y for HealthObservation Key Reference Index.
-/// Static file-scanning — same style as prior Lifex guards.
+/// Canonical Architecture Guards for HealthObservation Key Reference Index.
+/// Path: test/core/health/ — sole guard file for Reference Index rules (A–R).
 void main() {
   List<File> dartFiles(Directory dir) {
     if (!dir.existsSync()) return const [];
@@ -25,17 +25,12 @@ void main() {
 
   String norm(String p) => p.replaceAll('\\', '/');
 
-  bool mentions(String text, List<String> needles) =>
-      needles.any(text.contains);
-
-  final keyInfraNeedles = [
-    'HealthObservationKeyReferenceIndex',
-    'HealthObservationKeyLifecycle',
-    'HealthObservationKeyVault',
-    'EncryptedHealthObservationStore',
-    'FlutterSecureSecretStore',
-    'SecureSecretStore',
-    'MemorySecureSecretStore',
+  final lioPaths = [
+    'lib/core/orchestrator/lio_gateway.dart',
+    'lib/core/orchestrator/lio_sensitive_action_entry.dart',
+    'lib/core/orchestrator/lio_gateway_contracts.dart',
+    'lib/core/lio/lio_orchestrator.dart',
+    'lib/core/lio/lifex_intelligence_fabric.dart',
   ];
 
   test('A UI → ReferenceIndex forbidden', () {
@@ -59,13 +54,7 @@ void main() {
   });
 
   test('C LIO → ReferenceIndex forbidden', () {
-    for (final path in [
-      'lib/core/orchestrator/lio_gateway.dart',
-      'lib/core/orchestrator/lio_sensitive_action_entry.dart',
-      'lib/core/orchestrator/lio_gateway_contracts.dart',
-      'lib/core/lio/lio_orchestrator.dart',
-      'lib/core/lio/lifex_intelligence_fabric.dart',
-    ]) {
+    for (final path in lioPaths) {
       final f = File(path);
       if (!f.existsSync()) continue;
       expect(
@@ -76,32 +65,17 @@ void main() {
     }
   });
 
-  test('D UI → KeyLifecycle forbidden', () {
-    for (final f in dartFiles(Directory('lib/screens'))) {
-      expect(
-        f.readAsStringSync().contains('HealthObservationKeyLifecycle'),
-        isFalse,
-        reason: f.path,
-      );
+  test('D UI/Agent/LIO → KeyLifecycle forbidden', () {
+    for (final dir in [Directory('lib/screens'), Directory('lib/core/agent')]) {
+      for (final f in dartFiles(dir)) {
+        expect(
+          f.readAsStringSync().contains('HealthObservationKeyLifecycle'),
+          isFalse,
+          reason: f.path,
+        );
+      }
     }
-  });
-
-  test('E Agent → KeyLifecycle forbidden', () {
-    for (final f in dartFiles(Directory('lib/core/agent'))) {
-      expect(
-        f.readAsStringSync().contains('HealthObservationKeyLifecycle'),
-        isFalse,
-        reason: f.path,
-      );
-    }
-  });
-
-  test('F LIO → KeyLifecycle forbidden', () {
-    for (final path in [
-      'lib/core/orchestrator/lio_gateway.dart',
-      'lib/core/orchestrator/lio_sensitive_action_entry.dart',
-      'lib/core/lio/lio_orchestrator.dart',
-    ]) {
+    for (final path in lioPaths) {
       final f = File(path);
       if (!f.existsSync()) continue;
       expect(
@@ -112,32 +86,17 @@ void main() {
     }
   });
 
-  test('G UI → KeyVault forbidden', () {
-    for (final f in dartFiles(Directory('lib/screens'))) {
-      expect(
-        f.readAsStringSync().contains('HealthObservationKeyVault'),
-        isFalse,
-        reason: f.path,
-      );
+  test('E UI/Agent/LIO → KeyVault forbidden', () {
+    for (final dir in [Directory('lib/screens'), Directory('lib/core/agent')]) {
+      for (final f in dartFiles(dir)) {
+        expect(
+          f.readAsStringSync().contains('HealthObservationKeyVault'),
+          isFalse,
+          reason: f.path,
+        );
+      }
     }
-  });
-
-  test('H Agent → KeyVault forbidden', () {
-    for (final f in dartFiles(Directory('lib/core/agent'))) {
-      expect(
-        f.readAsStringSync().contains('HealthObservationKeyVault'),
-        isFalse,
-        reason: f.path,
-      );
-    }
-  });
-
-  test('I LIO → KeyVault forbidden', () {
-    for (final path in [
-      'lib/core/orchestrator/lio_gateway.dart',
-      'lib/core/orchestrator/lio_sensitive_action_entry.dart',
-      'lib/core/lio/lio_orchestrator.dart',
-    ]) {
+    for (final path in lioPaths) {
       final f = File(path);
       if (!f.existsSync()) continue;
       expect(
@@ -148,28 +107,16 @@ void main() {
     }
   });
 
-  test('J UI → SecureSecretStore forbidden', () {
-    for (final f in dartFiles(Directory('lib/screens'))) {
-      final t = f.readAsStringSync();
-      expect(t.contains('SecureSecretStore'), isFalse, reason: f.path);
-      expect(t.contains('FlutterSecureSecretStore'), isFalse, reason: f.path);
+  test('F UI/Agent/LIO → SecureSecretStore forbidden', () {
+    for (final dir in [Directory('lib/screens'), Directory('lib/core/agent')]) {
+      for (final f in dartFiles(dir)) {
+        final t = f.readAsStringSync();
+        expect(t.contains('SecureSecretStore'), isFalse, reason: f.path);
+        expect(t.contains('FlutterSecureSecretStore'), isFalse, reason: f.path);
+        expect(t.contains('MemorySecureSecretStore'), isFalse, reason: f.path);
+      }
     }
-  });
-
-  test('K Agent → SecureSecretStore forbidden', () {
-    for (final f in dartFiles(Directory('lib/core/agent'))) {
-      final t = f.readAsStringSync();
-      expect(t.contains('SecureSecretStore'), isFalse, reason: f.path);
-      expect(t.contains('FlutterSecureSecretStore'), isFalse, reason: f.path);
-    }
-  });
-
-  test('L LIO → SecureSecretStore forbidden', () {
-    for (final path in [
-      'lib/core/orchestrator/lio_gateway.dart',
-      'lib/core/orchestrator/lio_sensitive_action_entry.dart',
-      'lib/core/lio/lio_orchestrator.dart',
-    ]) {
+    for (final path in lioPaths) {
       final f = File(path);
       if (!f.existsSync()) continue;
       expect(
@@ -180,11 +127,8 @@ void main() {
     }
   });
 
-  test('M UI/Agent/LIO → EncryptedHealthObservationStore forbidden', () {
-    for (final dir in [
-      Directory('lib/screens'),
-      Directory('lib/core/agent'),
-    ]) {
+  test('G UI/Agent/LIO → EncryptedHealthObservationStore forbidden', () {
+    for (final dir in [Directory('lib/screens'), Directory('lib/core/agent')]) {
       for (final f in dartFiles(dir)) {
         expect(
           f.readAsStringSync().contains('EncryptedHealthObservationStore'),
@@ -193,19 +137,56 @@ void main() {
         );
       }
     }
-    for (final path in [
-      'lib/core/orchestrator/lio_gateway.dart',
-      'lib/core/orchestrator/lio_sensitive_action_entry.dart',
-    ]) {
+    for (final path in lioPaths) {
+      final f = File(path);
+      if (!f.existsSync()) continue;
       expect(
-        File(path).readAsStringSync().contains('EncryptedHealthObservationStore'),
+        f.readAsStringSync().contains('EncryptedHealthObservationStore'),
         isFalse,
         reason: path,
       );
     }
   });
 
-  test('N single ReferenceIndex abstraction (no duplicate)', () {
+  test('H UI/Agent/LIO → Repository forbidden', () {
+    for (final dir in [Directory('lib/screens'), Directory('lib/core/agent')]) {
+      for (final f in dartFiles(dir)) {
+        final t = f.readAsStringSync();
+        expect(
+          t.contains('PersistentHealthObservationRepository'),
+          isFalse,
+          reason: f.path,
+        );
+        expect(
+          t.contains('implements HealthObservationRepository'),
+          isFalse,
+          reason: f.path,
+        );
+      }
+    }
+    for (final path in [
+      'lib/core/orchestrator/lio_gateway.dart',
+      'lib/core/orchestrator/lio_gateway_contracts.dart',
+      'lib/core/lio/lio_orchestrator.dart',
+      'lib/core/orchestrator/lio_sensitive_action_entry.dart',
+    ]) {
+      final f = File(path);
+      if (!f.existsSync()) continue;
+      final t = f.readAsStringSync();
+      expect(
+        t.contains('PersistentHealthObservationRepository'),
+        isFalse,
+        reason: path,
+      );
+      expect(
+        t.contains('implements HealthObservationRepository'),
+        isFalse,
+        reason: path,
+      );
+    }
+  });
+
+  test('I duplicate ReferenceIndex forbidden', () {
     final hits = <String>[];
     for (final f in dartFiles(Directory('lib'))) {
       if (f.readAsStringSync().contains(
@@ -221,7 +202,7 @@ void main() {
     );
   });
 
-  test('O single EncryptedHealthObservationStore class', () {
+  test('J duplicate Encrypted Store forbidden', () {
     final hits = <String>[];
     for (final f in dartFiles(Directory('lib'))) {
       if (f
@@ -237,7 +218,7 @@ void main() {
     );
   });
 
-  test('P single KeyLifecycle class', () {
+  test('K duplicate KeyLifecycle forbidden', () {
     final hits = <String>[];
     for (final f in dartFiles(Directory('lib'))) {
       if (f
@@ -253,7 +234,7 @@ void main() {
     );
   });
 
-  test('Q single KeyVault class', () {
+  test('L duplicate KeyVault forbidden', () {
     final hits = <String>[];
     for (final f in dartFiles(Directory('lib'))) {
       if (f.readAsStringSync().contains('class HealthObservationKeyVault')) {
@@ -264,24 +245,21 @@ void main() {
     expect(HealthObservationKeyVault.vaultId, 'HealthObservationKeyVault');
   });
 
-  test('R ReferenceIndex is not HealthObservation Canonical Owner', () {
+  test('M ReferenceIndex is not Canonical Owner', () {
     for (final f in dartFiles(Directory('lib/core/health_data'))) {
       final n = norm(f.path);
       if (!n.contains('key_reference_index')) continue;
       final t = f.readAsStringSync();
       expect(t.contains('implements HealthObservationRepository'), isFalse);
       expect(
-        t.contains('abstract class HealthObservationRepository'),
+        RegExp(r"'value'\s*:|'unit'\s*:|'patientId'\s*:").hasMatch(t),
         isFalse,
+        reason: n,
       );
     }
-    expect(
-      HealthObservationRepository.ownerId,
-      'HealthObservationRepository',
-    );
   });
 
-  test('S no plaintext HealthObservation as production default store', () {
+  test('N plaintext HealthObservation production persistence forbidden', () {
     final text = File(
       'lib/core/lio/lifex_production_composition.dart',
     ).readAsStringSync();
@@ -293,11 +271,10 @@ void main() {
     );
   });
 
-  test('T no embedded secrets/keys in ReferenceIndex source', () {
-    final f = File(
+  test('O secrets/keys inside ReferenceIndex source forbidden', () {
+    final t = File(
       'lib/core/health_data/health_observation_key_reference_index.dart',
-    );
-    final t = f.readAsStringSync();
+    ).readAsStringSync();
     expect(
       RegExp(
         r'''(?:dek|aesKey|encryptionKey|apiKey|secret)\s*=\s*['\"][A-Za-z0-9+/=_-]{16,}['\"]''',
@@ -305,10 +282,9 @@ void main() {
       ).hasMatch(t),
       isFalse,
     );
-    expect(RegExp(r"'value'\s*:|'patientId'\s*:").hasMatch(t), isFalse);
   });
 
-  test('U no Fake/Stub doubles inside lib/', () {
+  test('P Fake/Stub inside lib/ forbidden', () {
     final offenders = <String>[];
     for (final f in dartFiles(Directory('lib'))) {
       final t = f.readAsStringSync();
@@ -321,75 +297,14 @@ void main() {
     expect(offenders, isEmpty, reason: offenders.join('\n'));
   });
 
-  test('V LLM is not Source of Truth', () {
+  test('Q LLM ≠ Source of Truth', () {
     const canon = LifexLioCanon();
     const safety = KnowledgeEngineSafety();
     expect(canon.memoryIsNotSourceOfTruth, isTrue);
     expect(safety.llmIsSourceOfTruth, isFalse);
   });
 
-  test('W direct UI → Repository forbidden', () {
-    for (final f in dartFiles(Directory('lib/screens'))) {
-      final t = f.readAsStringSync();
-      expect(
-        t.contains('implements HealthObservationRepository'),
-        isFalse,
-        reason: f.path,
-      );
-      expect(
-        t.contains('PersistentHealthObservationRepository'),
-        isFalse,
-        reason: f.path,
-      );
-      expect(mentions(t, keyInfraNeedles), isFalse, reason: f.path);
-    }
-  });
-
-  test('X direct Agent → Repository forbidden', () {
-    for (final f in dartFiles(Directory('lib/core/agent'))) {
-      final t = f.readAsStringSync();
-      expect(
-        t.contains('PersistentHealthObservationRepository'),
-        isFalse,
-        reason: f.path,
-      );
-      expect(
-        t.contains('implements HealthObservationRepository'),
-        isFalse,
-        reason: f.path,
-      );
-    }
-  });
-
-  test('Y direct LIO → Repository forbidden', () {
-    for (final path in [
-      'lib/core/orchestrator/lio_gateway.dart',
-      'lib/core/orchestrator/lio_gateway_contracts.dart',
-      'lib/core/lio/lio_orchestrator.dart',
-    ]) {
-      final f = File(path);
-      if (!f.existsSync()) continue;
-      final t = f.readAsStringSync();
-      expect(
-        t.contains('PersistentHealthObservationRepository'),
-        isFalse,
-        reason: path,
-      );
-      expect(
-        t.contains('implements HealthObservationRepository'),
-        isFalse,
-        reason: path,
-      );
-    }
-    // Entry may import ApplicationService only — not Repository implementation.
-    final entry = File(
-      'lib/core/orchestrator/lio_sensitive_action_entry.dart',
-    ).readAsStringSync();
-    expect(entry.contains('PersistentHealthObservationRepository'), isFalse);
-    expect(entry.contains('EncryptedHealthObservationStore'), isFalse);
-  });
-
-  test('Ownership: Repository owner; Index=refs; Lifecycle=keys', () {
+  test('R HealthObservationRepository is sole Canonical Owner', () {
     expect(
       HealthObservationRepository.ownerId,
       'HealthObservationRepository',
@@ -409,6 +324,24 @@ void main() {
     expect(
       LifexProductionComposition.compositionRootId,
       'LifexProductionComposition',
+    );
+    // AI features must not implement the repository.
+    for (final f in dartFiles(Directory('lib/features/ai'))) {
+      expect(
+        f.readAsStringSync().contains('implements HealthObservationRepository'),
+        isFalse,
+        reason: f.path,
+      );
+    }
+    final owners = <String>[];
+    for (final f in dartFiles(Directory('lib'))) {
+      if (f.readAsStringSync().contains('implements HealthObservationRepository')) {
+        owners.add(norm(f.path));
+      }
+    }
+    expect(
+      owners.where((p) => p.contains('persistent_health_observation')).length,
+      1,
     );
   });
 }

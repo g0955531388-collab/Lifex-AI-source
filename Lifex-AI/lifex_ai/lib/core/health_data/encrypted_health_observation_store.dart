@@ -200,6 +200,10 @@ class DeferredFileHealthObservationKeyReferenceIndex
       (await _ensure()).hasReferences(keyId);
 
   @override
+  Future<bool> hasLiveRecordReferences(String keyId) async =>
+      (await _ensure()).hasLiveRecordReferences(keyId);
+
+  @override
   Future<void> upsertAfterPersist({
     required String keyId,
     required String envelopeId,

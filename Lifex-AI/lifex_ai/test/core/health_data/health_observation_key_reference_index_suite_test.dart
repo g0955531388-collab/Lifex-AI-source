@@ -272,19 +272,168 @@ void main() {
       );
     });
 
-    test('after last record deleted, envelope still references keyId', () async {
-      // Model: envelope dependency remains until clear/rotation — not unused.
+    test('after last record deleted: record ref gone; envelope ACTIVE live',
+        () async {
+      // Ciphertext envelope remains after last DELETE → key still live-dependent.
+      // Deleted record must NOT remain as a live record reference.
       final h = await openHarness();
       addTearDown(h.dispose);
       await h.write(obs('last'));
       final keyId = await h.lifecycle.peekCurrentKeyId();
       await h.repo.deleteObservation('last');
+      expect(await h.index.hasLiveRecordReferences(keyId!), isFalse);
       expect(
-        (await h.index.referencesFor(keyId!)).any((r) => r.recordId == 'last'),
+        (await h.index.referencesFor(keyId)).any((r) => r.recordId == 'last'),
         isFalse,
       );
+      final envRefs = (await h.index.referencesFor(keyId))
+          .where((r) => r.isEnvelopeReference)
+          .toList();
+      expect(envRefs, hasLength(1));
+      expect(envRefs.single.status, HealthObservationKeyReferenceStatus.active);
+      expect(envRefs.single.status.wireName, 'ACTIVE_REFERENCE');
       expect(await h.index.hasReferences(keyId), isTrue,
-          reason: 'envelope metadata still depends on keyId');
+          reason: 'live envelope ciphertext still depends on keyId');
+      // PURGE/REVOKE must not treat key as unused while envelope lives.
+      final minted = await h.lifecycle.mintNewKey();
+      await h.lifecycle.promoteCurrent(minted.keyId);
+      final purge = await h.encrypted.attemptPurgeKey(keyId);
+      expect(purge.allowed, isFalse);
+      expect(
+        purge.reasonCode,
+        HealthObservationKeyRetentionDecision.keyStillReferenced,
+      );
+    });
+
+    test('last-reference semantics: single DELETE makes record ref non-live',
+        () async {
+      final h = await openHarness();
+      addTearDown(h.dispose);
+      await h.write(obs('solo'));
+      final keyId = await h.lifecycle.peekCurrentKeyId();
+      expect(await h.index.hasLiveRecordReferences(keyId!), isTrue);
+      await h.repo.deleteObservation('solo');
+      expect(await h.index.hasLiveRecordReferences(keyId), isFalse);
+      expect(
+        (await h.index.referencesFor(keyId))
+            .where((r) => r.isRecordReference),
+        isEmpty,
+      );
+    });
+
+    test('multi-record DELETE keeps sibling live record references', () async {
+      final h = await openHarness();
+      addTearDown(h.dispose);
+      await h.write(obs('a'));
+      await h.write(obs('b'));
+      final keyId = await h.lifecycle.peekCurrentKeyId();
+      await h.repo.deleteObservation('a');
+      expect(await h.index.hasLiveRecordReferences(keyId!), isTrue);
+      expect(
+        (await h.index.referencesFor(keyId)).any((r) => r.recordId == 'b'),
+        isTrue,
+      );
+      expect(
+        (await h.index.referencesFor(keyId)).any((r) => r.recordId == 'a'),
+        isFalse,
+      );
+    });
+
+    test('ARCHIVE keeps ARCHIVED_REFERENCE; not treated as DELETE', () async {
+      final h = await openHarness();
+      addTearDown(h.dispose);
+      await h.write(obs('arc'));
+      final keyId = await h.lifecycle.peekCurrentKeyId();
+      await h.repo.archiveObservation('arc');
+      final ref = (await h.index.referencesFor(keyId!))
+          .firstWhere((r) => r.recordId == 'arc');
+      expect(ref.status, HealthObservationKeyReferenceStatus.archivedRecord);
+      expect(ref.status.wireName, 'ARCHIVED_REFERENCE');
+      expect(ref.isLiveDependency, isTrue);
+      expect(await h.index.hasLiveRecordReferences(keyId), isTrue);
+      expect(await h.index.hasReferences(keyId), isTrue);
+      expect(await h.repo.getObservation('arc'), isNotNull);
+    });
+
+    test('stale envelope fingerprint → INDEX_INCONSISTENT not unused',
+        () async {
+      final h = await openHarness();
+      addTearDown(h.dispose);
+      await h.write(obs('stale-rec'));
+      final keyId = await h.lifecycle.peekCurrentKeyId();
+      await h.index.upsertAfterPersist(
+        keyId: keyId!,
+        envelopeId: HealthObservationKeyReferenceIndex.canonicalEnvelopeId,
+        formatVersion: 'LIFEXHOB2',
+        contentFingerprint: 'stale-fp-only',
+        recordStatuses: const {
+          'stale-rec': HealthObservationKeyReferenceStatus.active,
+        },
+      );
+      // Key still has refs in index — must not look "unused".
+      expect(await h.index.hasReferences(keyId), isTrue);
+      await expectLater(
+        h.index.requireConsistent(cipherTextInner: h.inner),
+        throwsA(
+          isA<HealthObservationKeyIndexInconsistentException>().having(
+            (e) => e.reasonCode,
+            'code',
+            'INDEX_INCONSISTENT',
+          ),
+        ),
+      );
+      final report =
+          await h.index.verifyConsistency(cipherTextInner: h.inner);
+      expect(
+        report.issues.any(
+          (i) =>
+              i.kind ==
+              HealthObservationKeyIndexInconsistencyKind.staleReference,
+        ),
+        isTrue,
+      );
+    });
+
+    test('purge/revoke ignore deleted record refs; use live deps only',
+        () async {
+      final h = await openHarness();
+      addTearDown(h.dispose);
+      await h.write(obs('gone'));
+      await h.write(obs('stay'));
+      final keyId = await h.lifecycle.peekCurrentKeyId();
+      await h.repo.deleteObservation('gone');
+      expect(
+        (await h.index.referencesFor(keyId!)).any((r) => r.recordId == 'gone'),
+        isFalse,
+      );
+      final minted = await h.lifecycle.mintNewKey();
+      await h.lifecycle.promoteCurrent(minted.keyId);
+      // Still live via stay + envelope — not based on deleted 'gone'.
+      expect(await h.index.hasReferences(keyId), isTrue);
+      await expectLater(
+        h.encrypted.revokeKey(keyId),
+        throwsA(
+          isA<HealthObservationKeyPolicyException>().having(
+            (e) => e.reasonCode,
+            'code',
+            HealthObservationKeyRetentionDecision.keyStillReferenced,
+          ),
+        ),
+      );
+    });
+
+    test('clearing ciphertext clears envelope refs → hasReferences false',
+        () async {
+      final h = await openHarness();
+      addTearDown(h.dispose);
+      await h.write(obs('clr'));
+      final keyId = await h.lifecycle.peekCurrentKeyId();
+      await h.inner.writeRaw('');
+      await h.index.clearEnvelopeReferences(
+        HealthObservationKeyReferenceIndex.canonicalEnvelopeId,
+      );
+      expect(await h.index.hasReferences(keyId!), isFalse);
+      expect(await h.index.hasLiveRecordReferences(keyId), isFalse);
     });
 
     test('keyId with multiple records must not be treated as unused', () async {
@@ -312,6 +461,7 @@ void main() {
       await h.write(obs('gone-old'));
       final rot = await h.encrypted.rotateKeys();
       expect(await h.index.hasReferences(rot.previousKeyId), isFalse);
+      expect(await h.index.hasLiveRecordReferences(rot.previousKeyId), isFalse);
     });
   });
 

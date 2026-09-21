@@ -11,13 +11,32 @@ import 'health_observation_cipher.dart';
 import 'health_observation_key_lifecycle.dart';
 import 'health_observation_repository.dart';
 
-/// حالة مرجع صريحة.
+/// حالة مرجع صريحة — كل الحالات المدرجة هنا اعتماد حي على المفتاح.
+/// المراجع المحذوفة تُزال من الفهرس ولا تُخزَّن كـ "unused" صامت.
 enum HealthObservationKeyReferenceStatus {
-  /// Envelope أو سجل يعتمد على المفتاح.
+  /// ACTIVE_REFERENCE — مغلف/سجل حي يعتمد على المفتاح (بما فيها مغلف
+  /// بحمولة ملاحظات فارغة ما دام ciphertext موجوداً على القرص).
   active,
 
-  /// سجل مؤرشف — ما زال يعتمد على المفتاح (ARCHIVE ≠ حذف مرجع).
+  /// ARCHIVED_REFERENCE — سجل مؤرشف ما زال يعتمد على المفتاح.
+  /// ARCHIVE ≠ DELETE: المرجع يبقى حيّاً حتى يُحذف السجل فعلياً.
   archivedRecord,
+}
+
+extension HealthObservationKeyReferenceStatusX
+    on HealthObservationKeyReferenceStatus {
+  /// كل حالات الفهرس الحالية اعتماد حي — لا توجد حالة "محذوف مخزَّن".
+  bool get isLiveDependency => true;
+
+  /// اسم عقد للاختبارات/التقارير.
+  String get wireName {
+    switch (this) {
+      case HealthObservationKeyReferenceStatus.active:
+        return 'ACTIVE_REFERENCE';
+      case HealthObservationKeyReferenceStatus.archivedRecord:
+        return 'ARCHIVED_REFERENCE';
+    }
+  }
 }
 
 /// Metadata إثبات اعتماد — بلا DEK / plaintext / ciphertext كامل.
@@ -39,6 +58,18 @@ class HealthObservationKeyReference {
   final HealthObservationKeyReferenceStatus status;
   final String? contentFingerprint;
   final DateTime updatedAt;
+
+  /// مرجع مغلف (لا recordId) — يمثّل اعتماد ciphertext الحي.
+  bool get isEnvelopeReference {
+    final r = recordId;
+    return r == null || r.isEmpty;
+  }
+
+  /// مرجع سجل ملاحظة — يُزال بعد DELETE ناجح فقط.
+  bool get isRecordReference => !isEnvelopeReference;
+
+  /// اعتماد حي على المفتاح وفق الحالة.
+  bool get isLiveDependency => status.isLiveDependency;
 
   String get referenceKey {
     final r = recordId;
@@ -145,13 +176,21 @@ abstract class HealthObservationKeyReferenceIndex {
   static const indexId = 'HealthObservationKeyReferenceIndex';
   static const canonicalEnvelopeId = 'canonical_store_envelope';
 
+  /// true إذا وُجد أي اعتماد حي (مغلف ciphertext و/أو سجل) على [keyId].
+  /// السجلات المحذوفة تُزال من الفهرس ولا تُحتسب.
+  /// مغلف بحمولة فارغة مع ciphertext موجود = اعتماد حي (ليس unused).
   Future<bool> hasReferences(String keyId);
+
+  /// true إذا وُجد اعتماد سجل حي فقط (بلا عدّ مرجع المغلف وحده).
+  Future<bool> hasLiveRecordReferences(String keyId);
 
   Future<List<HealthObservationKeyReference>> referencesFor(String keyId);
 
   Future<List<HealthObservationKeyReference>> allReferences();
 
-  /// بعد WRITE / UPDATE ناجح — envelope + سجلات (معرفات فقط).
+  /// بعد WRITE / UPDATE / DELETE ناجح — envelope + سجلات (معرفات فقط).
+  /// عند فراغ [recordStatuses] يبقى مرجع المغلف ACTIVE طالما استُدعي بعد
+  /// نجاح كتابة ciphertext؛ لا يُحذف مرجع المغلف قبل اختفاء الـenvelope.
   Future<void> upsertAfterPersist({
     required String keyId,
     required String envelopeId,
@@ -169,13 +208,13 @@ abstract class HealthObservationKeyReferenceIndex {
     required String contentFingerprint,
   });
 
-  /// حذف مرجع سجل بعد DELETE ناجح للبيانات.
+  /// حذف مرجع سجل بعد DELETE ناجح للبيانات — لا يمس مرجع المغلف.
   Future<void> removeRecordReference({
     required String envelopeId,
     required String recordId,
   });
 
-  /// حذف كل مراجع المغلف عند اختفاء ciphertext.
+  /// حذف كل مراجع المغلف عند اختفاء ciphertext فعلياً.
   Future<void> clearEnvelopeReferences(String envelopeId);
 
   Future<HealthObservationKeyIndexConsistencyReport> verifyConsistency({
@@ -219,7 +258,15 @@ class InMemoryHealthObservationKeyReferenceIndex
 
   @override
   Future<bool> hasReferences(String keyId) async {
-    return _byRefKey.values.any((r) => r.keyId == keyId);
+    // فقط إدخالات الفهرس الحالية = اعتماد حي. المحذوف أُزيل ولا يُخزَّن.
+    return _byRefKey.values.any((r) => r.keyId == keyId && r.isLiveDependency);
+  }
+
+  @override
+  Future<bool> hasLiveRecordReferences(String keyId) async {
+    return _byRefKey.values.any(
+      (r) => r.keyId == keyId && r.isRecordReference && r.isLiveDependency,
+    );
   }
 
   @override
@@ -231,6 +278,8 @@ class InMemoryHealthObservationKeyReferenceIndex
     required Map<String, HealthObservationKeyReferenceStatus> recordStatuses,
   }) async {
     final now = _clock();
+    // مرجع المغلف ACTIVE طالما نجحت كتابة ciphertext — حتى بحمولة فارغة.
+    // لا يُحذف هنا؛ clearEnvelopeReferences فقط بعد اختفاء الـenvelope فعلياً.
     final env = HealthObservationKeyReference(
       keyId: keyId,
       envelopeId: envelopeId,
@@ -241,7 +290,7 @@ class InMemoryHealthObservationKeyReferenceIndex
     );
     _byRefKey[env.referenceKey] = env;
 
-    // أزل سجلات لم تعد في الحمولة لهذا المغلف.
+    // أزل مراجع السجلات التي لم تعد في الحمولة (DELETE ناجح عبر persist).
     final obsolete = _byRefKey.entries
         .where(
           (e) =>
@@ -454,6 +503,12 @@ class FileHealthObservationKeyReferenceIndex
   Future<bool> hasReferences(String keyId) async {
     await _ensureLoaded();
     return _memory.hasReferences(keyId);
+  }
+
+  @override
+  Future<bool> hasLiveRecordReferences(String keyId) async {
+    await _ensureLoaded();
+    return _memory.hasLiveRecordReferences(keyId);
   }
 
   @override
