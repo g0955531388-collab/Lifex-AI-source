@@ -1,12 +1,6 @@
 /// =============================================================
-/// Lifex-AI — واجهات التطبيق
-/// الملف: admin_dashboard_screen.dart
-/// المسار: lib/screens/admin_dashboard_screen.dart
-/// الوصف: لوحة تحكم الأدمن العالمية — منح/سحب أدوار (أدمن/مشرف)، والتحكم
-/// بمفاتيح الأحداث الدقيقة على مستوى النظام. لا تظهر هذه الشاشة أصلاً في
-/// أي تنقل إلا لمستخدم يملك دوراً إدارياً فعلياً (انظر شرط الدخول في
-/// settings_screen.dart)، وحتى داخلها كل إجراء يمر عبر GlobalAdminManager
-/// الذي يرفض أي عملية تتجاوز صلاحية المستخدم الحالي.
+/// Lifex-AI — لوحة تحكم الأدمن العالمية
+/// المخترع/المالك التشغيلي يمنح أدمن ومشرف. الإسناد في ProjectAttribution.
 /// =============================================================
 library lifex_ai.screens.admin_dashboard_screen;
 
@@ -14,12 +8,12 @@ import 'package:flutter/material.dart';
 
 import '../core/admin/admin_manager.dart';
 import '../core/admin/admin_permissions.dart';
+import '../core/admin/owner_identity_policy.dart';
+import '../core/attribution/project_attribution.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key, required this.currentUserLifexId});
 
-  /// معرّف Lifex-ID للمستخدم الحالي — يُستخدم لتحديد ما يُعرض وما يُسمح
-  /// بفعله في هذه الشاشة تحديداً.
   final String currentUserLifexId;
 
   @override
@@ -54,6 +48,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       role: role,
     );
     _showStatus(result.messageAr);
+    setState(() {});
   }
 
   void _revoke() {
@@ -67,6 +62,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       targetLifexId: targetId,
     );
     _showStatus(result.messageAr);
+    setState(() {});
   }
 
   void _toggleEvent(String key, bool value) {
@@ -76,20 +72,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       enabled: value,
     );
     _showStatus(result.messageAr);
-    setState(() {}); // لإعادة قراءة القيمة الفعلية من المدير بعد الرفض/القبول
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final myRole = _admin.roleOf(widget.currentUserLifexId);
-    final canGrantAdmin =
-        _admin.hasPermission(widget.currentUserLifexId, GlobalAdminPermission.grantAdminRole);
-    final canGrantModerator =
-        _admin.hasPermission(widget.currentUserLifexId, GlobalAdminPermission.grantModeratorRole);
+    final myPerms = _admin.permissionsOf(widget.currentUserLifexId);
+    final canGrantAdmin = _admin.hasPermission(
+      widget.currentUserLifexId,
+      GlobalAdminPermission.grantAdminRole,
+    );
+    final canGrantModerator = _admin.hasPermission(
+      widget.currentUserLifexId,
+      GlobalAdminPermission.grantModeratorRole,
+    );
     final canManageToggles = _admin.hasPermission(
       widget.currentUserLifexId,
       GlobalAdminPermission.manageSystemEventToggles,
     );
+    final staff = _admin.listStaffRoles();
+    const policy = OwnerIdentityPolicy();
 
     return Scaffold(
       appBar: AppBar(title: const Text('لوحة تحكم الأدمن')),
@@ -97,15 +100,68 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           Card(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    ProjectAttribution.officialStatementShortAr,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    myRole == GlobalAdminRole.owner
+                        ? 'أنت مفعَّل كـ مالك تشغيلي (Owner) — كل صلاحيات الإدارة العالمية، '
+                            'بما فيها تعيين أدمن ومشرفين.'
+                        : 'دورك: ${_roleLabelAr(myRole)}',
+                  ),
+                  Text(
+                    'Lifex-ID: ${widget.currentUserLifexId}',
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
             child: ListTile(
               leading: const Icon(Icons.verified_user_outlined),
               title: const Text('دورك الحالي'),
               subtitle: Text(_roleLabelAr(myRole)),
             ),
           ),
+          const SizedBox(height: 8),
+          Text('صلاحياتك (${myPerms.length})',
+              style: Theme.of(context).textTheme.titleMedium),
+          ...myPerms.map(
+            (p) => ListTile(
+              dense: true,
+              leading: const Icon(Icons.check_circle_outline, size: 20),
+              title: Text(_permissionLabelAr(p)),
+            ),
+          ),
+          if (myRole != GlobalAdminRole.owner) ...[
+            const SizedBox(height: 8),
+            Text(
+              policy.activationHintAr(),
+              style: const TextStyle(fontSize: 12, color: Colors.orange),
+            ),
+          ],
           const SizedBox(height: 16),
           if (canGrantAdmin || canGrantModerator) ...[
-            Text('إدارة أدوار المستخدمين', style: Theme.of(context).textTheme.titleMedium),
+            Text('تعيين أدمن ومشرفين',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              canGrantAdmin
+                  ? 'كمالك مخترع: يمكنك منح أدمن كامل أو مشرف، وسحب أدوارهم. '
+                      'دور المالك نفسه لا يُمنح يدوياً.'
+                  : 'كأدمن: يمكنك منح مشرفين فقط. منح أدمن جديد حصري للمالك.',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: _targetIdController,
@@ -141,12 +197,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const Divider(height: 32),
           ],
+          Text('الطاقم الإداري الحالي',
+              style: Theme.of(context).textTheme.titleMedium),
+          if (staff.isEmpty)
+            const ListTile(
+              title: Text('لا أدوار إدارية أخرى على هذا الجهاز بعد.'),
+            )
+          else
+            ...staff.entries.map(
+              (e) => ListTile(
+                leading: Icon(
+                  e.value == GlobalAdminRole.owner
+                      ? Icons.star
+                      : Icons.person_outline,
+                ),
+                title: Text(e.key),
+                subtitle: Text(_roleLabelAr(e.value)),
+              ),
+            ),
+          const Divider(height: 32),
           if (canManageToggles) ...[
-            Text('مفاتيح الأحداث الدقيقة', style: Theme.of(context).textTheme.titleMedium),
+            Text('مفاتيح الأحداث الدقيقة',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
             const Text(
-              'تفعيل أو تعطيل ميزات على مستوى النظام كاملاً دون الحاجة '
-              'لتحديث التطبيق.',
+              'تفعيل أو تعطيل ميزات على مستوى النظام كاملاً دون تحديث التطبيق.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 8),
@@ -170,13 +245,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   String _roleLabelAr(GlobalAdminRole role) {
     switch (role) {
       case GlobalAdminRole.owner:
-        return 'المالك المؤسس';
+        return 'مالك تشغيلي / مخترع مفعَّل (Owner)';
       case GlobalAdminRole.admin:
         return 'أدمن';
       case GlobalAdminRole.moderator:
         return 'مشرف';
       case GlobalAdminRole.none:
         return 'مستخدم عادي';
+    }
+  }
+
+  String _permissionLabelAr(GlobalAdminPermission p) {
+    switch (p) {
+      case GlobalAdminPermission.grantModeratorRole:
+        return 'تعيين / سحب مشرفين';
+      case GlobalAdminPermission.grantAdminRole:
+        return 'تعيين / سحب أدمنز';
+      case GlobalAdminPermission.manageSystemEventToggles:
+        return 'مفاتيح أحداث النظام';
+      case GlobalAdminPermission.manageUsers:
+        return 'إدارة المستخدمين';
+      case GlobalAdminPermission.moderateContent:
+        return 'إشراف المحتوى';
+      case GlobalAdminPermission.viewSectorStatistics:
+        return 'إحصاءات القطاع';
+      case GlobalAdminPermission.manageBilling:
+        return 'إدارة الفوترة على مستوى المنصة';
+      case GlobalAdminPermission.manageEmergencyPolicy:
+        return 'سياسات الطوارئ العامة';
     }
   }
 
