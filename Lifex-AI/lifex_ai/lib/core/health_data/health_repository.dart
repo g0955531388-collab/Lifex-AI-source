@@ -44,6 +44,14 @@ abstract class HealthDataRepository {
   Future<void> rebuildSearchIndex();
   List<HealthGraphNode> graphNodes();
   List<String> searchIds(String query);
+
+  /// —— HealthObservation (canonical patient-record ownership) ——
+  Future<void> ensureProvenance(ProvenanceRecord provenance);
+  Future<HealthObservation?> saveObservation(HealthObservation observation);
+  Future<HealthObservation?> getObservation(String observationId);
+  Future<List<HealthObservation>> listObservationsForPatient(String patientId);
+  Future<HealthObservation?> updateObservation(HealthObservation observation);
+  Future<HealthObservation?> archiveObservation(String observationId);
 }
 
 class InMemoryHealthRepository implements HealthDataRepository {
@@ -167,6 +175,88 @@ class InMemoryHealthRepository implements HealthDataRepository {
       if (term.contains(q)) ids.addAll(set);
     });
     return ids.toList();
+  }
+
+  @override
+  Future<void> ensureProvenance(ProvenanceRecord provenance) async {
+    store.provenance[provenance.sourceId] = provenance;
+  }
+
+  @override
+  Future<HealthObservation?> saveObservation(HealthObservation observation) async {
+    if (observation.provenanceId.isEmpty ||
+        !store.provenance.containsKey(observation.provenanceId)) {
+      return null;
+    }
+    store.observations[observation.observationId] = observation;
+    if (observation.supersedesId != null) {
+      final old = store.observations[observation.supersedesId];
+      if (old != null && old.status == HealthRecordStatus.active) {
+        store.observations[old.observationId] = HealthObservation(
+          observationId: old.observationId,
+          patientId: old.patientId,
+          conceptId: old.conceptId,
+          value: old.value,
+          unit: old.unit,
+          observedAt: old.observedAt,
+          sourceType: old.sourceType,
+          sourceId: old.sourceId,
+          provenanceId: old.provenanceId,
+          method: old.method,
+          quality: old.quality,
+          status: HealthRecordStatus.superseded,
+          supersedesId: old.supersedesId,
+        );
+      }
+    }
+    return store.observations[observation.observationId];
+  }
+
+  @override
+  Future<HealthObservation?> getObservation(String observationId) async =>
+      store.observations[observationId];
+
+  @override
+  Future<List<HealthObservation>> listObservationsForPatient(
+    String patientId,
+  ) async {
+    return store.observations.values
+        .where((o) => o.patientId == patientId)
+        .toList()
+      ..sort((a, b) => a.observedAt.compareTo(b.observedAt));
+  }
+
+  @override
+  Future<HealthObservation?> updateObservation(
+    HealthObservation observation,
+  ) async {
+    if (!store.observations.containsKey(observation.observationId)) {
+      return null;
+    }
+    return saveObservation(observation);
+  }
+
+  @override
+  Future<HealthObservation?> archiveObservation(String observationId) async {
+    final old = store.observations[observationId];
+    if (old == null) return null;
+    final archived = HealthObservation(
+      observationId: old.observationId,
+      patientId: old.patientId,
+      conceptId: old.conceptId,
+      value: old.value,
+      unit: old.unit,
+      observedAt: old.observedAt,
+      sourceType: old.sourceType,
+      sourceId: old.sourceId,
+      provenanceId: old.provenanceId,
+      method: old.method,
+      quality: old.quality,
+      status: HealthRecordStatus.archived,
+      supersedesId: old.supersedesId,
+    );
+    store.observations[observationId] = archived;
+    return archived;
   }
 
   /// Mutating the projection must not change relational truth.

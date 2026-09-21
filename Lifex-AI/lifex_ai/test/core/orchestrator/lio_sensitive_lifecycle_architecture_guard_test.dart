@@ -36,12 +36,16 @@ void main() {
   });
 
   group('A UI→Repository sensitive', () {
-    test('screens must not Provider HealthRepository', () {
+    test('screens must not Provider HealthRepository/HealthDataRepository', () {
       final offenders = <String>[];
       for (final f in dartFiles(Directory('lib/screens'))) {
         final text = f.readAsStringSync();
-        if (RegExp(r'Provider\.of<\s*HealthRepository\s*>').hasMatch(text) ||
-            RegExp(r'context\.read<\s*HealthRepository\s*>').hasMatch(text)) {
+        if (RegExp(r'Provider\.of<\s*Health(Data)?Repository\s*>')
+                .hasMatch(text) ||
+            RegExp(r'context\.read<\s*Health(Data)?Repository\s*>')
+                .hasMatch(text) ||
+            RegExp(r'InMemoryHealthRepository\s*\(').hasMatch(text) ||
+            RegExp(r'HealthObservationApplicationService\s*\(').hasMatch(text)) {
           offenders.add(norm(f.path));
         }
       }
@@ -65,10 +69,23 @@ void main() {
   });
 
   group('C UI→DELETE', () {
-    test('appointment delete uses Entry; no raw removeOrCancel without Entry', () {
-      final text = File('lib/screens/appointments_screen.dart').readAsStringSync();
-      expect(text.contains('LioSensitiveActionEntry'), isTrue);
-      expect(text.contains('authorizeThenRun'), isTrue);
+    test('all remaining UI delete paths use Entry', () {
+      const gatedDeletes = {
+        'lib/screens/appointments_screen.dart': 'removeOrCancel',
+        'lib/screens/medications_screen.dart': 'currentMedicationNames',
+        'lib/screens/medication_alarm_screen.dart': '_ledger.remove',
+        'lib/screens/emergency_contacts_screen.dart': '_contacts.removeAt',
+        'lib/screens/personal_shelf_screen.dart': 'store.drop',
+        'lib/screens/thumbnail_manage_screen.dart': 'store.removeAt',
+        'lib/screens/booking_workspace_screen.dart': 'bookings.removeAt',
+        'lib/screens/unit_branch_records_screen.dart': 'store.removeAt',
+      };
+      for (final entry in gatedDeletes.entries) {
+        final text = File(entry.key).readAsStringSync();
+        expect(text.contains('LioSensitiveActionEntry'), isTrue,
+            reason: entry.key);
+        expect(text.contains('authorizeThenRun'), isTrue, reason: entry.key);
+      }
       final offenders = <String>[];
       for (final f in dartFiles(Directory('lib/screens'))) {
         final t = f.readAsStringSync();
@@ -154,12 +171,17 @@ void main() {
   });
 
   group('J Application→Database', () {
-    test('Entry does not embed SQL', () {
-      final text = File(
+    test('Entry and LIO do not embed SQL or call repository as owner', () {
+      final entryText = File(
         'lib/core/orchestrator/lio_sensitive_action_entry.dart',
       ).readAsStringSync();
-      expect(text.contains('sqflite'), isFalse);
-      expect(text.contains('SELECT '), isFalse);
+      expect(entryText.contains('sqflite'), isFalse);
+      expect(entryText.contains('SELECT '), isFalse);
+      expect(entryText.contains('HealthObservationApplicationService'), isTrue);
+      final gw = File('lib/core/orchestrator/lio_gateway.dart').readAsStringSync();
+      expect(gw.contains('sqflite'), isFalse);
+      expect(gw.contains('InMemoryHealthRepository'), isFalse);
+      expect(RegExp(r'\.saveObservation\s*\(').hasMatch(gw), isFalse);
     });
   });
 

@@ -12,6 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/permission_transparency.dart';
 import '../features/identity/thumbnail_ledger.dart';
 import '../features/network_box/profile_box_store.dart';
@@ -158,8 +160,36 @@ class _ThumbnailManageScreenState extends State<ThumbnailManageScreen> {
                       subtitle: Text(notes[i]['detail']?.toString() ?? ''),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
-                        onPressed: () {
-                          store.removeAt(BoxKeys.cameraNotes, i);
+                        onPressed: () async {
+                          final profileId =
+                              controller.activeProfileId ?? 'local';
+                          final entry =
+                              context.read<LioSensitiveActionEntry>();
+                          final outcome = await entry.authorizeThenRun<void>(
+                            request: LioGatewayRequest(
+                              requestId:
+                                  'thumb_del_${i}_${DateTime.now().millisecondsSinceEpoch}',
+                              correlationId: 'thumb_$profileId',
+                              identityAccountId: profileId,
+                              purpose: 'settings',
+                              requestedAction: 'delete_camera_note_thumbnail',
+                              dataScope: 'settings_local',
+                              sensitivity: LioDataSensitivity.personal,
+                              consent: const LioConsentContext(
+                                consentGranted: true,
+                                purposeAligned: true,
+                              ),
+                              riskLevel: LioActionRisk.medium,
+                              timestamp: DateTime.now().toUtc(),
+                              authenticated: true,
+                              authorized: true,
+                              minimumNecessarySatisfied: true,
+                            ),
+                            run: () async {
+                              store.removeAt(BoxKeys.cameraNotes, i);
+                            },
+                          );
+                          if (!outcome.executed || !mounted) return;
                           controller.saveActiveProfileChanges();
                         },
                       ),

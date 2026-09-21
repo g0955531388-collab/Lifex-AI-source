@@ -1,4 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifex_ai/core/health_data/health_data_types.dart';
+import 'package:lifex_ai/core/health_data/health_observation_application_service.dart';
+import 'package:lifex_ai/core/health_data/health_repository.dart';
 import 'package:lifex_ai/core/lio/knowledge_engine/knowledge_engine.dart';
 import 'package:lifex_ai/core/lio/knowledge_engine/retrieval_adapters.dart';
 import 'package:lifex_ai/core/lio/lifex_production_composition.dart';
@@ -141,6 +144,9 @@ void main() {
         ),
       ),
       encyclopediaShareBridge: EncyclopediaShareBridge(copy: (_) async {}),
+      healthObservationService: HealthObservationApplicationService(
+        repository: InMemoryHealthRepository(),
+      ),
     );
   });
 
@@ -158,7 +164,7 @@ void main() {
     expect(o.executed, isTrue);
   });
 
-  test('2 READ_HEALTH — explicit non-success without fake repo', () async {
+  test('2 READ_HEALTH — real Application path', () async {
     final o = await entry.requestHealthRead(
       gatewayRequest: req(
         id: '2',
@@ -167,10 +173,10 @@ void main() {
         scope: 'profile_basic',
         sensitivity: LioDataSensitivity.personal,
       ),
+      patientId: 'patient-1',
     );
     expect(o.executed, isTrue);
-    expect(o.value!.succeeded, isFalse);
-    expect(o.value!.reasonCode, 'NOT_IMPLEMENTED');
+    expect(o.value!.success, isTrue);
   });
 
   test('3 READ_MEDICAL', () async {
@@ -187,7 +193,7 @@ void main() {
     expect(o.executed, isTrue);
   });
 
-  test('4 WRITE — contract non-success', () async {
+  test('4 WRITE — HealthObservation real execution', () async {
     final o = await entry.requestSensitiveWrite(
       gatewayRequest: req(
         id: '4',
@@ -196,24 +202,85 @@ void main() {
         scope: 'profile_basic',
         sensitivity: LioDataSensitivity.personal,
       ),
+      observation: HealthObservation(
+        observationId: 'obs-4',
+        patientId: 'patient-1',
+        conceptId: 'hr',
+        value: 72,
+        unit: 'bpm',
+        observedAt: DateTime.utc(2026, 1, 2),
+        sourceType: 'manual',
+        sourceId: 'test',
+        provenanceId: '',
+      ),
+      provenance: ProvenanceRecord(
+        sourceId: 'prov-4',
+        sourceName: 'test',
+        sourceType: 'manual',
+        version: '1',
+        retrievedAt: DateTime.utc(2026, 1, 1),
+      ),
     );
     expect(o.executed, isTrue);
-    expect(o.value!.succeeded, isFalse);
-    expect(o.value!.opKind, LioLifecycleOpKind.write);
+    expect(o.value!.success, isTrue);
   });
 
-  test('5 UPDATE — contract non-success', () async {
-    final o = await entry.requestSensitiveUpdate(
+  test('5 UPDATE — HealthObservation real execution', () async {
+    await entry.requestSensitiveWrite(
       gatewayRequest: req(
-        id: '5',
-        action: 'update_medication',
+        id: '5w',
+        action: 'write_health_obs',
         purpose: 'care_support',
         scope: 'profile_basic',
         sensitivity: LioDataSensitivity.personal,
       ),
+      observation: HealthObservation(
+        observationId: 'obs-5',
+        patientId: 'patient-1',
+        conceptId: 'hr',
+        value: 70,
+        unit: 'bpm',
+        observedAt: DateTime.utc(2026, 1, 2),
+        sourceType: 'manual',
+        sourceId: 'test',
+        provenanceId: '',
+      ),
+      provenance: ProvenanceRecord(
+        sourceId: 'prov-5',
+        sourceName: 'test',
+        sourceType: 'manual',
+        version: '1',
+        retrievedAt: DateTime.utc(2026, 1, 1),
+      ),
     );
-    expect(o.value!.succeeded, isFalse);
-    expect(o.value!.opKind, LioLifecycleOpKind.update);
+    final o = await entry.requestSensitiveUpdate(
+      gatewayRequest: req(
+        id: '5',
+        action: 'update_health_obs',
+        purpose: 'care_support',
+        scope: 'profile_basic',
+        sensitivity: LioDataSensitivity.personal,
+      ),
+      observation: HealthObservation(
+        observationId: 'obs-5',
+        patientId: 'patient-1',
+        conceptId: 'hr',
+        value: 74,
+        unit: 'bpm',
+        observedAt: DateTime.utc(2026, 1, 2),
+        sourceType: 'manual',
+        sourceId: 'test',
+        provenanceId: 'prov-5',
+      ),
+      provenance: ProvenanceRecord(
+        sourceId: 'prov-5',
+        sourceName: 'test',
+        sourceType: 'manual',
+        version: '1',
+        retrievedAt: DateTime.utc(2026, 1, 1),
+      ),
+    );
+    expect(o.value!.success, isTrue);
   });
 
   test('6 DELETE — NOT_IMPLEMENTED and ≠ ARCHIVE', () async {

@@ -28,6 +28,8 @@ import '../agent/agent_core.dart';
 import '../agent/agent_orchestrator.dart';
 import '../agent/agent_result.dart';
 import '../agent/agent_state.dart';
+import '../health_data/health_data_types.dart';
+import '../health_data/health_observation_application_service.dart';
 import '../lasting_search_index.dart';
 import '../local_knowledge.dart';
 import '../search_refresh_engine.dart';
@@ -84,6 +86,7 @@ class LioSensitiveActionEntry {
     this.lastingSearchIndex,
     this.emergencyManager,
     this.encyclopediaShareBridge,
+    this.healthObservationService,
   });
 
   static const String entryId = 'LioSensitiveActionEntry';
@@ -102,6 +105,7 @@ class LioSensitiveActionEntry {
   final LastingSearchIndex? lastingSearchIndex;
   final EmergencyManager? emergencyManager;
   final EncyclopediaShareBridge? encyclopediaShareBridge;
+  final HealthObservationApplicationService? healthObservationService;
 
   /// يربط عمليات Application الحساسة دون إنشاء Gateway/Entry ثانٍ.
   LioSensitiveActionEntry bindApplicationOps({
@@ -114,6 +118,7 @@ class LioSensitiveActionEntry {
     LastingSearchIndex? lastingSearchIndex,
     EmergencyManager? emergencyManager,
     EncyclopediaShareBridge? encyclopediaShareBridge,
+    HealthObservationApplicationService? healthObservationService,
   }) {
     return LioSensitiveActionEntry(
       lioGateway: lioGateway,
@@ -132,6 +137,8 @@ class LioSensitiveActionEntry {
       emergencyManager: emergencyManager ?? this.emergencyManager,
       encyclopediaShareBridge:
           encyclopediaShareBridge ?? this.encyclopediaShareBridge,
+      healthObservationService:
+          healthObservationService ?? this.healthObservationService,
     );
   }
 
@@ -678,26 +685,96 @@ class LioSensitiveActionEntry {
     );
   }
 
-  /// READ_HEALTH عبر بوابة — بلا وصول UI→Repository مباشر.
-  Future<LioSensitiveActionOutcome<LioLifecycleResult>> requestHealthRead({
+  /// READ_HEALTH — عبر Application Service → Repository (ليس LIO→DB).
+  Future<LioSensitiveActionOutcome<HealthObservationOpResult>> requestHealthRead({
     required LioGatewayRequest gatewayRequest,
+    required String patientId,
   }) {
+    final svc = healthObservationService;
+    if (svc == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => HealthObservationOpResult.failed(
+              'HealthObservationApplicationService unbound',
+            ),
+      );
+    }
     return authorizeThenRun(
       request: gatewayRequest,
-      run: () async => LioLifecycleResult.notImplemented(
-            opKind: LioLifecycleOpKind.readHealth,
-            domain: LioSensitiveDataDomain.healthObservation,
-            messageAr:
-                'READ_HEALTH عبر Repository غير موصول بواجهة آمنة بعد. '
-                'لا تجاوز LIO إلى HealthRepository من UI.',
-          ),
+      run: () => svc.readForPatient(patientId: patientId),
     );
   }
 
-  /// WRITE حسّاس عام — عقد حتى تُربط طبقة الكتابة الآمنة.
-  Future<LioSensitiveActionOutcome<LioLifecycleResult>> requestSensitiveWrite({
+  /// WRITE HealthObservation — Application → Repository.
+  Future<LioSensitiveActionOutcome<HealthObservationOpResult>>
+      requestSensitiveWrite({
     required LioGatewayRequest gatewayRequest,
-    LioSensitiveDataDomain domain = LioSensitiveDataDomain.healthObservation,
+    required HealthObservation observation,
+    required ProvenanceRecord provenance,
+  }) {
+    final svc = healthObservationService;
+    if (svc == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => HealthObservationOpResult.failed(
+              'HealthObservationApplicationService unbound',
+            ),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => svc.write(observation: observation, provenance: provenance),
+    );
+  }
+
+  /// UPDATE HealthObservation — Application → Repository.
+  Future<LioSensitiveActionOutcome<HealthObservationOpResult>>
+      requestSensitiveUpdate({
+    required LioGatewayRequest gatewayRequest,
+    required HealthObservation observation,
+    required ProvenanceRecord provenance,
+  }) {
+    final svc = healthObservationService;
+    if (svc == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => HealthObservationOpResult.failed(
+              'HealthObservationApplicationService unbound',
+            ),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => svc.update(observation: observation, provenance: provenance),
+    );
+  }
+
+  /// ARCHIVE ملاحظة صحية — منفصل عن DELETE PHR.
+  Future<LioSensitiveActionOutcome<HealthObservationOpResult>>
+      requestHealthObservationArchive({
+    required LioGatewayRequest gatewayRequest,
+    required String observationId,
+  }) {
+    final svc = healthObservationService;
+    if (svc == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => HealthObservationOpResult.failed(
+              'HealthObservationApplicationService unbound',
+            ),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => svc.archive(observationId: observationId),
+    );
+  }
+
+  /// WRITE حسّاس عام لنطاق بلا خدمة — عقد NOT_IMPLEMENTED.
+  Future<LioSensitiveActionOutcome<LioLifecycleResult>>
+      requestUnsupportedSensitiveWrite({
+    required LioGatewayRequest gatewayRequest,
+    LioSensitiveDataDomain domain = LioSensitiveDataDomain.patientPhr,
   }) {
     return authorizeThenRun(
       request: gatewayRequest,
@@ -706,23 +783,6 @@ class LioSensitiveActionEntry {
             domain: domain,
             messageAr:
                 'WRITE الحساس غير موصول بمسار Repository آمن بعد لهذا النطاق. '
-                'لا نجاح وهمي.',
-          ),
-    );
-  }
-
-  /// UPDATE حسّاس عام — منفصل عن WRITE في الجرد.
-  Future<LioSensitiveActionOutcome<LioLifecycleResult>> requestSensitiveUpdate({
-    required LioGatewayRequest gatewayRequest,
-    LioSensitiveDataDomain domain = LioSensitiveDataDomain.medicationRecord,
-  }) {
-    return authorizeThenRun(
-      request: gatewayRequest,
-      run: () async => LioLifecycleResult.notImplemented(
-            opKind: LioLifecycleOpKind.update,
-            domain: domain,
-            messageAr:
-                'UPDATE الحساس غير موصول بمسار آمن بعد لهذا النطاق. '
                 'لا نجاح وهمي.',
           ),
     );
