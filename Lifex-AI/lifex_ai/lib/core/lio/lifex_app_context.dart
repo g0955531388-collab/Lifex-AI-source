@@ -34,6 +34,7 @@ import '../trial_manager.dart';
 import 'lifex_intelligence_fabric.dart';
 import 'lifex_production_composition.dart';
 import '../orchestrator/lio_gateway.dart';
+import '../orchestrator/lio_sensitive_action_entry.dart';
 
 /// حزمة المديرين المركزيين بعد التهيئة — تعرّض Fabric الإنتاجي نفسه
 /// الذي أنشأه [LifexProductionComposition.assemble] دون نسخة ثانية.
@@ -116,4 +117,8 @@ class LifexAppContext {
 
   /// بوابة LIO الإنتاجية — نفس instance من Composition Root.
   ProductionLioGateway get lioGateway => production.lioGateway;
+
+  /// نقطة دخول UI/Application الحساسة — إلزامية قبل Agent/Tool/MCP.
+  LioSensitiveActionEntry get sensitiveActionEntry =>
+      production.sensitiveActionEntry;
 }

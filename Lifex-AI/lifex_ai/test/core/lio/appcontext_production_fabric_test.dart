@@ -332,6 +332,7 @@ void main() {
       knowledgeRetriever: bundle.knowledgeRetriever,
       corpus: corpus,
       lioGateway: bundle.lioGateway,
+      sensitiveActionEntry: bundle.sensitiveActionEntry,
     );
     await expectLater(
       _appContextFrom(broken),

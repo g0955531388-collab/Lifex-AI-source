@@ -24,6 +24,7 @@ import 'lio_orchestrator.dart';
 import 'mcp_live/mcp_live_gateway.dart';
 import '../orchestrator/clock.dart';
 import '../orchestrator/lio_gateway.dart';
+import '../orchestrator/lio_sensitive_action_entry.dart';
 
 /// حزمة الإنتاج الموحّدة — Fabric و AgentCore يشتركان في نفس Knowledge Engine.
 class LifexProductionBundle {
@@ -34,6 +35,7 @@ class LifexProductionBundle {
     required this.knowledgeRetriever,
     required this.corpus,
     required this.lioGateway,
+    required this.sensitiveActionEntry,
   });
 
   final LifexIntelligenceFabric fabric;
@@ -47,6 +49,9 @@ class LifexProductionBundle {
   /// بوابة LIO الإنتاجية — نفس Orchestrator من Fabric (لا بوابة ثانية مستقلة).
   final ProductionLioGateway lioGateway;
 
+  /// نقطة دخول Application الإلزامية قبل Agent/Tool/MCP.
+  final LioSensitiveActionEntry sensitiveActionEntry;
+
   /// مسار معرفة إنتاجي موحّد (لا Stub / لا مسار ثانٍ).
   bool get isUnifiedProductionKnowledgePath {
     if (!knowledgeRetriever.isProductionKnowledgePath) return false;
@@ -58,6 +63,8 @@ class LifexProductionBundle {
       return false;
     }
     if (!identical(lioGateway.orchestrator, fabric.lio)) return false;
+    if (!identical(sensitiveActionEntry.lioGateway, lioGateway)) return false;
+    if (!identical(sensitiveActionEntry.agentCore, agentCore)) return false;
     if (knowledgeRetriever is KnowledgeEngineUnavailableRetriever) {
       return knowledgeEngine == null;
     }
@@ -167,6 +174,11 @@ class LifexProductionComposition {
       );
     }
 
+    final entry = LioSensitiveActionEntry(
+      lioGateway: gateway,
+      agentCore: agentCore,
+    );
+
     return LifexProductionBundle(
       fabric: fabric,
       agentCore: agentCore,
@@ -174,6 +186,7 @@ class LifexProductionComposition {
       knowledgeRetriever: knowledgeRetriever,
       corpus: sharedCorpus,
       lioGateway: gateway,
+      sensitiveActionEntry: entry,
     );
   }
 }

@@ -29,6 +29,7 @@ import 'core/agent/adapters/placeholder_ocr_extractor.dart';
 import 'core/lio/lifex_app_context.dart';
 import 'core/lio/lifex_intelligence_fabric.dart';
 import 'core/lio/lifex_production_composition.dart';
+import 'core/orchestrator/lio_sensitive_action_entry.dart';
 import 'l10n/generated/app_localizations.dart';
 
 import 'data/medical_data_loader.dart';
@@ -441,6 +442,9 @@ class LifexAiApp extends StatelessWidget {
         Provider<LifexProductionBundle>.value(value: appContext.production),
         Provider<LifexIntelligenceFabric>.value(value: appContext.fabric),
         Provider<AgentCoreBundle>.value(value: appContext.agentCore),
+        Provider<LioSensitiveActionEntry>.value(
+          value: appContext.sensitiveActionEntry,
+        ),
         Provider<EmergencyPhoneContactsRegistry>.value(
           value: appContext.emergencyPhoneContactsRegistry,
         ),
