@@ -33,6 +33,7 @@ import '../local_knowledge.dart';
 import '../trial_manager.dart';
 import 'lifex_intelligence_fabric.dart';
 import 'lifex_production_composition.dart';
+import '../orchestrator/lio_gateway.dart';
 
 /// حزمة المديرين المركزيين بعد التهيئة — تعرّض Fabric الإنتاجي نفسه
 /// الذي أنشأه [LifexProductionComposition.assemble] دون نسخة ثانية.
@@ -112,4 +113,7 @@ class LifexAppContext {
 
   /// KnowledgeRetriever الإنتاجي المرتبط بنفس المسار.
   KnowledgeRetriever get knowledgeRetriever => production.knowledgeRetriever;
+
+  /// بوابة LIO الإنتاجية — نفس instance من Composition Root.
+  ProductionLioGateway get lioGateway => production.lioGateway;
 }

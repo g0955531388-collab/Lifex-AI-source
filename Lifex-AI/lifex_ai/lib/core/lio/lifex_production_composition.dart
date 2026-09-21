@@ -22,6 +22,8 @@ import 'lifex_intelligence_fabric.dart';
 import 'lio_canon.dart';
 import 'lio_orchestrator.dart';
 import 'mcp_live/mcp_live_gateway.dart';
+import '../orchestrator/clock.dart';
+import '../orchestrator/lio_gateway.dart';
 
 /// حزمة الإنتاج الموحّدة — Fabric و AgentCore يشتركان في نفس Knowledge Engine.
 class LifexProductionBundle {
@@ -31,6 +33,7 @@ class LifexProductionBundle {
     required this.knowledgeEngine,
     required this.knowledgeRetriever,
     required this.corpus,
+    required this.lioGateway,
   });
 
   final LifexIntelligenceFabric fabric;
@@ -40,6 +43,9 @@ class LifexProductionBundle {
   final LifexKnowledgeEngine? knowledgeEngine;
   final KnowledgeRetriever knowledgeRetriever;
   final InMemoryKnowledgeCorpus corpus;
+
+  /// بوابة LIO الإنتاجية — نفس Orchestrator من Fabric (لا بوابة ثانية مستقلة).
+  final ProductionLioGateway lioGateway;
 
   /// مسار معرفة إنتاجي موحّد (لا Stub / لا مسار ثانٍ).
   bool get isUnifiedProductionKnowledgePath {
@@ -51,6 +57,7 @@ class LifexProductionBundle {
     if (!identical(agentCore.knowledgeRetriever, knowledgeRetriever)) {
       return false;
     }
+    if (!identical(lioGateway.orchestrator, fabric.lio)) return false;
     if (knowledgeRetriever is KnowledgeEngineUnavailableRetriever) {
       return knowledgeEngine == null;
     }
@@ -100,6 +107,8 @@ class LifexProductionComposition {
     LifexLioCanon? canon,
     LifexMcpLiveGateway? liveMcp,
     KnowledgeIngestionPipeline? ingestionPipeline,
+    LifexClock? clock,
+    ProductionLioGateway? lioGateway,
   }) {
     final sharedCorpus = corpus ?? InMemoryKnowledgeCorpus();
     final LifexKnowledgeEngine? sharedEngine = !knowledgeEngineConnected
@@ -146,12 +155,25 @@ class LifexProductionComposition {
       canon: canon,
     );
 
+    final gateway = lioGateway ??
+        ProductionLioGateway(
+          orchestrator: fabric.lio,
+          clock: clock,
+        );
+    if (!identical(gateway.orchestrator, fabric.lio)) {
+      throw StateError(
+        'LifexProductionComposition: lioGateway.orchestrator must be the '
+        'same instance as fabric.lio — no second LIO.',
+      );
+    }
+
     return LifexProductionBundle(
       fabric: fabric,
       agentCore: agentCore,
       knowledgeEngine: sharedEngine,
       knowledgeRetriever: knowledgeRetriever,
       corpus: sharedCorpus,
+      lioGateway: gateway,
     );
   }
 }

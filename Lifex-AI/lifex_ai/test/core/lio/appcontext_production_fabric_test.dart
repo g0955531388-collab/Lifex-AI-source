@@ -331,6 +331,7 @@ void main() {
       knowledgeEngine: engine,
       knowledgeRetriever: bundle.knowledgeRetriever,
       corpus: corpus,
+      lioGateway: bundle.lioGateway,
     );
     await expectLater(
       _appContextFrom(broken),
