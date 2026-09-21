@@ -1,16 +1,15 @@
 /// =============================================================
 /// Lifex-AI — واجهات التطبيق
 /// الملف: ai_hub_screen.dart
-/// المسار: lib/screens/ai_hub_screen.dart
-/// الوصف: يسمح للمستخدم بربط حسابه الشخصي بمحرك ذكاء اصطناعي خارجي
-/// (Gemini/ChatGPT/Claude) بمفتاحه الخاص، عبر UnifiedAiHubGateway،
-/// دون أن يلمس التطبيق أو خوادمنا هذا المفتاح بشكل غير آمن.
+/// ربط حسابات AI الخارجية يمر عبر LioSensitiveActionEntry → LIO فقط.
 /// =============================================================
 library lifex_ai.screens.ai_hub_screen;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/ai/unified_ai_hub_gateway.dart';
 import 'ai_agent_screen.dart';
 import 'partner_sign_in_screen.dart';
@@ -27,6 +26,7 @@ class AiHubScreen extends StatefulWidget {
 class _AiHubScreenState extends State<AiHubScreen> {
   bool _isConnecting = false;
   String? _statusMessageAr;
+  List<ConnectedAiAccount> _connected = const [];
 
   static const Map<ExternalAiProvider, String> _providerLabelsAr = {
     ExternalAiProvider.gemini: 'Gemini',
@@ -34,6 +34,54 @@ class _AiHubScreenState extends State<AiHubScreen> {
     ExternalAiProvider.claude: 'Claude',
     ExternalAiProvider.custom: 'محرك آخر',
   };
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshConnected());
+  }
+
+  LioGatewayRequest _req({
+    required String action,
+    LioActionRisk risk = LioActionRisk.medium,
+  }) {
+    return LioGatewayRequest(
+      requestId: 'hub_${widget.profileId}_${DateTime.now().millisecondsSinceEpoch}',
+      correlationId: 'hub_${widget.profileId}',
+      identityAccountId: widget.profileId,
+      purpose: 'settings',
+      requestedAction: action,
+      dataScope: 'settings_local',
+      sensitivity: LioDataSensitivity.operational,
+      consent: const LioConsentContext(
+        consentGranted: true,
+        purposeAligned: true,
+      ),
+      riskLevel: risk,
+      timestamp: DateTime.now().toUtc(),
+      authenticated: true,
+      authorized: true,
+      minimumNecessarySatisfied: true,
+    );
+  }
+
+  Future<void> _refreshConnected() async {
+    final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
+    final outcome = await entry.listConnectedAiAccounts(
+      gatewayRequest: _req(action: 'ai_hub_list_accounts', risk: LioActionRisk.low),
+      profileId: widget.profileId,
+    );
+    if (!mounted) return;
+    if (!outcome.executed) {
+      setState(() {
+        _statusMessageAr =
+            'توقف عرض الحسابات عند LIO (${outcome.decision.wireDecision}).';
+        _connected = const [];
+      });
+      return;
+    }
+    setState(() => _connected = outcome.value ?? const []);
+  }
 
   Future<void> _showConnectDialog(ExternalAiProvider provider) async {
     final keyController = TextEditingController();
@@ -86,8 +134,9 @@ class _AiHubScreenState extends State<AiHubScreen> {
       _statusMessageAr = null;
     });
 
-    final gateway = Provider.of<UnifiedAiHubGateway>(context, listen: false);
-    final success = await gateway.connectAccount(
+    final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
+    final outcome = await entry.connectExternalAiAccount(
+      gatewayRequest: _req(action: 'ai_hub_connect_account'),
       profileId: widget.profileId,
       provider: provider,
       accountLabel: 'حسابي الشخصي',
@@ -97,30 +146,39 @@ class _AiHubScreenState extends State<AiHubScreen> {
     if (!mounted) return;
     setState(() {
       _isConnecting = false;
-      _statusMessageAr = success
-          ? 'حُفظ مفتاح ${_providerLabelsAr[provider]} على هذا الجهاز. '
-              'لم يُختبر مع المحرك بعد. التخزين الحالي في الذاكرة وليس خزنة مشفّرة.'
-          : 'تعذّر حفظ المفتاح على هذا الجهاز.';
+      if (!outcome.executed) {
+        _statusMessageAr =
+            'توقف الربط عند LIO (${outcome.decision.wireDecision}): ${outcome.decision.reasonAr}';
+      } else if (outcome.value == true) {
+        _statusMessageAr =
+            'حُفظ مفتاح ${_providerLabelsAr[provider]} على هذا الجهاز. '
+            'لم يُختبر مع المحرك بعد. التخزين الحالي في الذاكرة وليس خزنة مشفّرة.';
+      } else {
+        _statusMessageAr = 'تعذّر حفظ المفتاح على هذا الجهاز.';
+      }
     });
+    await _refreshConnected();
   }
 
   Future<void> _disconnect(ExternalAiProvider provider) async {
-    final gateway = Provider.of<UnifiedAiHubGateway>(context, listen: false);
-    await gateway.disconnectAccount(
+    final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
+    final outcome = await entry.disconnectExternalAiAccount(
+      gatewayRequest: _req(action: 'ai_hub_disconnect_account'),
       profileId: widget.profileId,
       provider: provider,
     );
     if (!mounted) return;
     setState(() {
-      _statusMessageAr = 'تم فصل حساب ${_providerLabelsAr[provider]}.';
+      _statusMessageAr = outcome.executed
+          ? 'تم فصل حساب ${_providerLabelsAr[provider]}.'
+          : 'توقف الفصل عند LIO (${outcome.decision.wireDecision}).';
     });
+    await _refreshConnected();
   }
 
   @override
   Widget build(BuildContext context) {
-    final gateway = Provider.of<UnifiedAiHubGateway>(context, listen: false);
-    final connectedAccounts = gateway.connectedAccountsFor(widget.profileId);
-    final connectedProviders = connectedAccounts.map((a) => a.provider).toSet();
+    final connectedProviders = _connected.map((a) => a.provider).toSet();
 
     return Scaffold(
       appBar: AppBar(title: const Text('مركز الذكاء الاصطناعي')),
@@ -178,9 +236,7 @@ class _AiHubScreenState extends State<AiHubScreen> {
                   leading: const Icon(Icons.smart_toy_outlined),
                   title: Text(_providerLabelsAr[provider]!),
                   subtitle: Text(
-                    connectedProviders.contains(provider)
-                        ? 'متصل'
-                        : 'غير متصل',
+                    connectedProviders.contains(provider) ? 'متصل' : 'غير متصل',
                     style: TextStyle(
                       color: connectedProviders.contains(provider)
                           ? Colors.green
