@@ -24,7 +24,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/app_config.dart';
 import 'core/error_handler.dart';
-import 'core/agent/agent_core.dart';
 import 'core/agent/adapters/placeholder_ocr_extractor.dart';
 import 'core/lio/lifex_app_context.dart';
 import 'core/lio/lifex_intelligence_fabric.dart';
@@ -421,8 +420,8 @@ class LifexAiApp extends StatelessWidget {
           value: appContext.subscriptionBillingManager,
         ),
         Provider<TransactionService>.value(value: appContext.transactionService),
-        Provider<UnifiedAiHubGateway>.value(value: appContext.unifiedAiHubGateway),
-        Provider<AiServiceRouter>.value(value: appContext.aiServiceRouter),
+        // UnifiedAiHubGateway / AiServiceRouter غير معروضين للـ UI —
+        // الوصول الحساس عبر LioSensitiveActionEntry فقط.
         Provider<CloudSyncManager>.value(value: appContext.cloudSyncManager),
         Provider<TranslationService>.value(value: appContext.translationService),
         Provider<HealthDeviceReader>.value(value: appContext.healthDeviceReader),
@@ -438,10 +437,10 @@ class LifexAiApp extends StatelessWidget {
         Provider<AssistiveVisionEngine>.value(
           value: AssistiveVisionEngine.instance,
         ),
-        // نفس instances من LifexProductionComposition — لا Fabric/AgentCore ثانية.
+        // نفس instances من LifexProductionComposition — لا Fabric ثانية.
+        // AgentCore غير معروض للـ UI؛ التنفيذ عبر LioSensitiveActionEntry فقط.
         Provider<LifexProductionBundle>.value(value: appContext.production),
         Provider<LifexIntelligenceFabric>.value(value: appContext.fabric),
-        Provider<AgentCoreBundle>.value(value: appContext.agentCore),
         Provider<LioSensitiveActionEntry>.value(
           value: appContext.sensitiveActionEntry,
         ),

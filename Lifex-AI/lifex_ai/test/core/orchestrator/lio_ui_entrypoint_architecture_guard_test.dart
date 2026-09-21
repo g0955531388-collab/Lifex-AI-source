@@ -46,9 +46,20 @@ void main() {
   test('UI must use LioSensitiveActionEntry for sensitive agent/chat', () {
     final text = File('lib/screens/ai_agent_screen.dart').readAsStringSync();
     expect(text.contains('LioSensitiveActionEntry'), isTrue);
-    expect(text.contains('authorizeThenRun'), isTrue);
+    expect(text.contains('runAiChatQuery'), isTrue);
     expect(text.contains('runAgentRequest'), isTrue);
     expect(text.contains('coordinator.handleUserRequest'), isFalse);
+    expect(text.contains('AiServiceRouter'), isFalse);
+    expect(text.contains('AgentCoreBundle'), isFalse);
+  });
+
+  test('UI hub must use LioSensitiveActionEntry for credential ops', () {
+    final text = File('lib/screens/ai_hub_screen.dart').readAsStringSync();
+    expect(text.contains('LioSensitiveActionEntry'), isTrue);
+    expect(text.contains('connectExternalAiAccount'), isTrue);
+    expect(text.contains('disconnectExternalAiAccount'), isTrue);
+    expect(text.contains('listConnectedAiAccounts'), isTrue);
+    expect(text.contains('Provider.of<UnifiedAiHubGateway>'), isFalse);
   });
 
   test('Application entry does not create a second ProductionLioGateway', () {
@@ -66,8 +77,9 @@ void main() {
       final path = norm(f.path);
       if (path.endsWith('lio_gateway.dart')) continue;
       if (path.endsWith('lifex_production_composition.dart')) continue;
+      if (path.endsWith('lio_sensitive_entry_inventory.dart')) continue;
       final text = f.readAsStringSync();
-      if (text.contains('ProductionLioGateway(')) {
+      if (RegExp(r'ProductionLioGateway\s*\(').hasMatch(text)) {
         offenders.add(path);
       }
     }

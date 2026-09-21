@@ -96,8 +96,9 @@ void main() {
       final path = norm(f.path);
       if (path.contains('/orchestrator/lio_gateway.dart')) continue;
       if (path.contains('lifex_production_composition.dart')) continue;
+      if (path.contains('lio_sensitive_entry_inventory.dart')) continue;
       final text = f.readAsStringSync();
-      if (text.contains('ProductionLioGateway(')) {
+      if (RegExp(r'ProductionLioGateway\s*\(').hasMatch(text)) {
         offenders.add(path);
       }
     }

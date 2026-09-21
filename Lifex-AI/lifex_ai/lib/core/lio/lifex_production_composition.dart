@@ -65,6 +65,12 @@ class LifexProductionBundle {
     if (!identical(lioGateway.orchestrator, fabric.lio)) return false;
     if (!identical(sensitiveActionEntry.lioGateway, lioGateway)) return false;
     if (!identical(sensitiveActionEntry.agentCore, agentCore)) return false;
+    if (!identical(
+      sensitiveActionEntry.aiServiceRouter.hubGateway,
+      sensitiveActionEntry.aiHubGateway,
+    )) {
+      return false;
+    }
     if (knowledgeRetriever is KnowledgeEngineUnavailableRetriever) {
       return knowledgeEngine == null;
     }
@@ -177,6 +183,8 @@ class LifexProductionComposition {
     final entry = LioSensitiveActionEntry(
       lioGateway: gateway,
       agentCore: agentCore,
+      aiServiceRouter: aiServiceRouter,
+      aiHubGateway: aiServiceRouter.hubGateway,
     );
 
     return LifexProductionBundle(

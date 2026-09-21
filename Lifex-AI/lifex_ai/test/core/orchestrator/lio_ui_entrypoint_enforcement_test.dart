@@ -147,6 +147,7 @@ void main() {
     // Contract: UI must use entry; entry is the only app gate.
     expect(identical(entry.lioGateway, bundle.lioGateway), isTrue);
     expect(identical(entry.agentCore, bundle.agentCore), isTrue);
+    expect(identical(entry.aiHubGateway, entry.aiServiceRouter.hubGateway), isTrue);
     expect(LioSensitiveActionEntry.entryId, 'LioSensitiveActionEntry');
   });
 

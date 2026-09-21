@@ -1,12 +1,14 @@
 /// =============================================================
 /// Lifex-AI — نقطة دخول Application الإلزامية قبل Agent/Tool/MCP
 /// UI → AppContext → LioSensitiveActionEntry → ProductionLioGateway
-/// → (ALLOW/EMERGENCY_LIMITED) → Agent/Tool callback → Audit
+/// → (ALLOW/EMERGENCY_LIMITED) → Agent/Tool/AI callback → Audit
 ///
 /// ممنوع إنشاء Gateway ثانٍ. ممنوع UI→Agent أو UI→MCP مباشرة.
 /// =============================================================
 library lifex_ai.core.orchestrator.lio_sensitive_action_entry;
 
+import '../../features/ai/ai_service_router.dart';
+import '../../features/ai/unified_ai_hub_gateway.dart';
 import '../agent/agent_confidence.dart';
 import '../agent/agent_context.dart';
 import '../agent/agent_core.dart';
@@ -49,11 +51,13 @@ class LioSensitiveActionOutcome<T> {
   bool get wasAllowedThroughLio => decision.mayProceedToMcp;
 }
 
-/// عقد Application: كل طلب حساس يمر عبر LIO قبل أي Agent/Tool/MCP.
+/// عقد Application: كل طلب حساس يمر عبر LIO قبل أي Agent/Tool/MCP/AI hub.
 class LioSensitiveActionEntry {
   const LioSensitiveActionEntry({
     required this.lioGateway,
     required this.agentCore,
+    required this.aiServiceRouter,
+    required this.aiHubGateway,
   });
 
   static const String entryId = 'LioSensitiveActionEntry';
@@ -63,6 +67,12 @@ class LioSensitiveActionEntry {
 
   /// نفس AgentCore من Composition Root.
   final AgentCoreBundle agentCore;
+
+  /// نفس AiServiceRouter من bootstrap — لا يُستدعى من UI مباشرة.
+  final AiServiceRouter aiServiceRouter;
+
+  /// نفس UnifiedAiHubGateway — عمليات الاعتماد عبر LIO فقط من UI.
+  final UnifiedAiHubGateway aiHubGateway;
 
   /// يقيّم عبر LIO ثم ينفّذ [run] فقط عند ALLOW / EMERGENCY_LIMITED.
   Future<LioSensitiveActionOutcome<T>> authorizeThenRun<T>({
@@ -96,6 +106,67 @@ class LioSensitiveActionEntry {
         emergencyTriggerContext: emergencyTriggerContext,
         onProgress: onProgress,
       ),
+    );
+  }
+
+  /// محادثة AI خارجية — LIO ثم AiServiceRouter (بلا UI→Router مباشر).
+  Future<LioSensitiveActionOutcome<ExternalAiResponse>> runAiChatQuery({
+    required LioGatewayRequest gatewayRequest,
+    required String profileId,
+    required String userQuery,
+  }) {
+    return authorizeThenRun<ExternalAiResponse>(
+      request: gatewayRequest,
+      run: () => aiServiceRouter.query(
+        profileId: profileId,
+        userQuery: userQuery,
+      ),
+    );
+  }
+
+  /// ربط مفتاح AI خارجي — حسّاس: يمر عبر LIO.
+  Future<LioSensitiveActionOutcome<bool>> connectExternalAiAccount({
+    required LioGatewayRequest gatewayRequest,
+    required String profileId,
+    required ExternalAiProvider provider,
+    required String accountLabel,
+    required String apiKeyOrToken,
+  }) {
+    return authorizeThenRun<bool>(
+      request: gatewayRequest,
+      run: () => aiHubGateway.connectAccount(
+        profileId: profileId,
+        provider: provider,
+        accountLabel: accountLabel,
+        apiKeyOrToken: apiKeyOrToken,
+      ),
+    );
+  }
+
+  /// فصل حساب AI — يمر عبر LIO.
+  Future<LioSensitiveActionOutcome<void>> disconnectExternalAiAccount({
+    required LioGatewayRequest gatewayRequest,
+    required String profileId,
+    required ExternalAiProvider provider,
+  }) {
+    return authorizeThenRun<void>(
+      request: gatewayRequest,
+      run: () => aiHubGateway.disconnectAccount(
+        profileId: profileId,
+        provider: provider,
+      ),
+    );
+  }
+
+  /// قراءة حالة الربط (عرض فقط) — ما زالت عبر البوابة لفرض الهوية/الغرض.
+  Future<LioSensitiveActionOutcome<List<ConnectedAiAccount>>>
+      listConnectedAiAccounts({
+    required LioGatewayRequest gatewayRequest,
+    required String profileId,
+  }) {
+    return authorizeThenRun<List<ConnectedAiAccount>>(
+      request: gatewayRequest,
+      run: () async => aiHubGateway.connectedAccountsFor(profileId),
     );
   }
 
