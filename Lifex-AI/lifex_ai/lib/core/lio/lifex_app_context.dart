@@ -118,7 +118,21 @@ class LifexAppContext {
   /// بوابة LIO الإنتاجية — نفس instance من Composition Root.
   ProductionLioGateway get lioGateway => production.lioGateway;
 
-  /// نقطة دخول UI/Application الحساسة — إلزامية قبل Agent/Tool/MCP.
-  LioSensitiveActionEntry get sensitiveActionEntry =>
-      production.sensitiveActionEntry;
+  /// نقطة دخول UI/Application الحساسة — إلزامية قبل العمليات الحساسة.
+  /// تربط مديري Application دون إنشاء Gateway/Entry/Fabric ثانية.
+  LioSensitiveActionEntry get sensitiveActionEntry {
+    return _boundSensitiveEntry ??= production.sensitiveActionEntry
+        .bindApplicationOps(
+      walletManager: walletManager,
+      transactionService: transactionService,
+      paymentController: paymentController,
+      subscriptionBillingManager: subscriptionBillingManager,
+      medicalDatabaseManager: medicalDatabaseManager,
+      localKnowledge: localKnowledge,
+      lastingSearchIndex: lastingSearchIndex,
+      emergencyManager: emergencyManager,
+    );
+  }
+
+  LioSensitiveActionEntry? _boundSensitiveEntry;
 }

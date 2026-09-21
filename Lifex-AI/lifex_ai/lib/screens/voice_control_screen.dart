@@ -11,8 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/permission_transparency.dart';
-import '../features/emergency/emergency_manager.dart';
 import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/medications/medication_alarm_engine.dart';
 import '../features/medications/medication_alarm_ledger.dart';
@@ -38,7 +39,6 @@ import 'device_center_screen.dart';
 import 'donations_center_screen.dart';
 import 'wallet_screen.dart';
 import 'accessibility_assistant_screen.dart';
-import '../features/finance/wallet_manager.dart';
 import 'appointments_screen.dart';
 import 'camera_notes_screen.dart';
 import 'clinical_watch_screen.dart';
@@ -428,14 +428,39 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                   profiles.activeProfile?.questionnaireData['trustedContacts'],
                 ),
               );
-          final outcome =
-              await context.read<EmergencyManager>().triggerEmergency(
-                    profileId: profileId,
-                    reasonAr: 'أمر صوتي مؤكَّد من شاشة التحكم الصوتي.',
-                  );
+          final outcome = await context
+              .read<LioSensitiveActionEntry>()
+              .triggerEmergencyLimited(
+                gatewayRequest: LioGatewayRequest(
+                  requestId:
+                      'emg_voice_${profileId}_${DateTime.now().millisecondsSinceEpoch}',
+                  correlationId: 'emg_voice_$profileId',
+                  identityAccountId: profileId,
+                  purpose: 'emergency_signal',
+                  requestedAction: 'signal_trusted_contacts',
+                  dataScope: 'emergency_contacts_min',
+                  sensitivity: LioDataSensitivity.personal,
+                  consent: const LioConsentContext(
+                    consentGranted: true,
+                    purposeAligned: true,
+                  ),
+                  riskLevel: LioActionRisk.high,
+                  timestamp: DateTime.now().toUtc(),
+                  authenticated: true,
+                  authorized: true,
+                  emergencyLimitedMode: true,
+                  humanConfirmed: true,
+                  minimumNecessarySatisfied: true,
+                ),
+                profileId: profileId,
+                reasonAr: 'أمر صوتي مؤكَّد من شاشة التحكم الصوتي.',
+              );
           if (!mounted) return;
-          announceForScreenReader(context, outcome.messageAr);
-          await reply(VoiceReply(ar: outcome.messageAr, en: outcome.messageAr));
+          final msg = outcome.executed
+              ? (outcome.value?.messageAr ?? 'أُرسلت إشارة الطوارئ المحدودة.')
+              : 'توقفت الطوارئ عند LIO (${outcome.decision.wireDecision}).';
+          announceForScreenReader(context, msg);
+          await reply(VoiceReply(ar: msg, en: msg));
         } else if (confirmed != true && mounted) {
           await reply(VoiceReply(
             ar: _emergencyVoice.cancelAr(),
@@ -1014,7 +1039,41 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
             );
             break;
           }
-          final bal = context.read<WalletManager>().balancesFor(pid);
+          final balOutcome = await context
+              .read<LioSensitiveActionEntry>()
+              .readWalletBalances(
+                gatewayRequest: LioGatewayRequest(
+                  requestId:
+                      'voice_bal_${pid}_${DateTime.now().millisecondsSinceEpoch}',
+                  correlationId: 'voice_wallet_$pid',
+                  identityAccountId: pid,
+                  purpose: 'wallet_ops',
+                  requestedAction: 'read_wallet_balances',
+                  dataScope: 'wallet_balance_view',
+                  sensitivity: LioDataSensitivity.personal,
+                  consent: const LioConsentContext(
+                    consentGranted: true,
+                    purposeAligned: true,
+                  ),
+                  riskLevel: LioActionRisk.low,
+                  timestamp: DateTime.now().toUtc(),
+                  authenticated: true,
+                  authorized: true,
+                  minimumNecessarySatisfied: true,
+                ),
+                profileId: pid,
+              );
+          if (!balOutcome.executed || balOutcome.value == null) {
+            await reply(
+              VoiceReply(
+                ar:
+                    'توقف عرض الرصيد عند LIO (${balOutcome.decision.wireDecision}).',
+                en: 'Balance blocked by LIO.',
+              ),
+            );
+            break;
+          }
+          final bal = balOutcome.value!;
           await reply(
             VoiceReply(
               ar:

@@ -9,9 +9,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/global_donations/donation_types.dart';
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/donations/donation_application_service.dart';
 import '../features/donations/donation_beneficiary_directory.dart';
-import '../features/finance/wallet_manager.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/accessible_widgets.dart';
@@ -28,7 +29,7 @@ class DonationsCenterScreen extends StatefulWidget {
 }
 
 class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
-  late final LifexDonationApplicationService _service;
+  LifexDonationApplicationService? _service;
   late final TextEditingController _search;
   final _amount = TextEditingController(text: '10000');
   List<DonationBeneficiaryProfile> _results = [];
@@ -36,22 +37,75 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
   DonationFeeQuote? _quote;
   String _statusAr = '';
   DonationPartySource _donorSource = DonationPartySource.selfAccount;
+  int _walletBalanceMinor = 0;
+
+  LioSensitiveActionEntry get _entry =>
+      Provider.of<LioSensitiveActionEntry>(context, listen: false);
+
+  LifexDonationApplicationService get _svc {
+    final wallet = _entry.walletManager;
+    if (wallet == null) {
+      throw StateError('walletManager unbound on LioSensitiveActionEntry');
+    }
+    return _service ??= LifexDonationApplicationService(wallet: wallet);
+  }
 
   @override
   void initState() {
     super.initState();
-    final wallet = context.read<WalletManager>();
-    _service = LifexDonationApplicationService(wallet: wallet);
     final seed = widget.initialQuery?.trim() ?? '';
     _search = TextEditingController(text: seed);
-    if (seed.isEmpty) {
-      _results = _service.directory.search(const DonationSearchQuery());
-    } else {
-      _results = _service.searchByVoiceOrText(seed);
-      _statusAr = _results.isEmpty
-          ? 'لا نتائج عامة موافقة للتبرع.'
-          : 'عُثر على ${_results.length} نتيجة عامة. ليست قائمة مرضى.';
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (seed.isEmpty) {
+        setState(() {
+          _results = _svc.directory.search(const DonationSearchQuery());
+        });
+      } else {
+        setState(() {
+          _results = _svc.searchByVoiceOrText(seed);
+          _statusAr = _results.isEmpty
+              ? 'لا نتائج عامة موافقة للتبرع.'
+              : 'عُثر على ${_results.length} نتيجة عامة. ليست قائمة مرضى.';
+        });
+      }
+      await _refreshBalance();
+    });
+  }
+
+  Future<void> _refreshBalance() async {
+    final profile = context.read<ActiveProfileController>().activeProfile;
+    if (profile == null) {
+      setState(() => _walletBalanceMinor = 0);
+      return;
     }
+    final outcome = await _entry.readWalletBalances(
+      gatewayRequest: LioGatewayRequest(
+        requestId:
+            'don_bal_${profile.profileId}_${DateTime.now().millisecondsSinceEpoch}',
+        correlationId: 'don_${profile.profileId}',
+        identityAccountId: profile.profileId,
+        purpose: 'wallet_ops',
+        requestedAction: 'read_wallet_balances',
+        dataScope: 'wallet_balance_view',
+        sensitivity: LioDataSensitivity.personal,
+        consent: const LioConsentContext(
+          consentGranted: true,
+          purposeAligned: true,
+        ),
+        riskLevel: LioActionRisk.low,
+        timestamp: DateTime.now().toUtc(),
+        authenticated: true,
+        authorized: true,
+        minimumNecessarySatisfied: true,
+      ),
+      profileId: profile.profileId,
+    );
+    if (!mounted) return;
+    setState(() {
+      _walletBalanceMinor =
+          outcome.executed ? (outcome.value?.availableMinor ?? 0) : 0;
+    });
   }
 
   @override
@@ -71,8 +125,8 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
     final q = _search.text.trim();
     setState(() {
       _results = q.isEmpty
-          ? _service.directory.search(const DonationSearchQuery())
-          : _service.searchByVoiceOrText(q);
+          ? _svc.directory.search(const DonationSearchQuery())
+          : _svc.searchByVoiceOrText(q);
       _selected = null;
       _quote = null;
     });
@@ -85,7 +139,7 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
 
   void _previewFee() {
     final amount = int.tryParse(_amount.text.trim()) ?? 0;
-    final q = _service.quoteFinancial(donationAmountMinor: amount);
+    final q = _svc.quoteFinancial(donationAmountMinor: amount);
     setState(() => _quote = q);
     _speak(q.spokenAr());
   }
@@ -101,17 +155,45 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
       return;
     }
     final amount = int.tryParse(_amount.text.trim()) ?? 0;
-    final outcome = await _service.donateFinancialFromWallet(
-      donorProfileId: profile.profileId,
-      beneficiaryId: _selected!.beneficiaryId,
-      donationAmountMinor: amount,
-      idempotencyKey:
-          'don_${profile.profileId}_${DateTime.now().millisecondsSinceEpoch}',
-      userConfirmedQuote: true,
-      needCategory: _selected!.needCategory,
+    final gated = await _entry.authorizeThenRun(
+      request: LioGatewayRequest(
+        requestId:
+            'don_pay_${profile.profileId}_${DateTime.now().millisecondsSinceEpoch}',
+        correlationId: 'don_${profile.profileId}',
+        identityAccountId: profile.profileId,
+        purpose: 'donation_public',
+        requestedAction: 'donate_from_wallet',
+        dataScope: 'donation_public_search',
+        sensitivity: LioDataSensitivity.personal,
+        consent: const LioConsentContext(
+          consentGranted: true,
+          purposeAligned: true,
+        ),
+        riskLevel: LioActionRisk.high,
+        timestamp: DateTime.now().toUtc(),
+        authenticated: true,
+        authorized: true,
+        humanConfirmed: true,
+        minimumNecessarySatisfied: true,
+      ),
+      run: () => _svc.donateFinancialFromWallet(
+            donorProfileId: profile.profileId,
+            beneficiaryId: _selected!.beneficiaryId,
+            donationAmountMinor: amount,
+            idempotencyKey:
+                'don_${profile.profileId}_${DateTime.now().millisecondsSinceEpoch}',
+            userConfirmedQuote: true,
+            needCategory: _selected!.needCategory,
+          ),
     );
-    await _speak(outcome.messageAr);
-    setState(() {});
+    if (!gated.executed) {
+      await _speak(
+        'توقف التبرع عند LIO (${gated.decision.wireDecision}): ${gated.decision.reasonAr}',
+      );
+      return;
+    }
+    await _speak(gated.value!.messageAr);
+    await _refreshBalance();
   }
 
   Future<void> _inKindWheelchair() async {
@@ -120,7 +202,7 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
       return;
     }
     final profile = context.read<ActiveProfileController>().activeProfile;
-    final outcome = await _service.acceptInKindDevice(
+    final outcome = await _svc.acceptInKindDevice(
       donorId: profile?.profileId ?? 'anonymous_donor',
       beneficiaryId: _selected!.beneficiaryId,
       category: InKindCategory.wheelchair,
@@ -132,11 +214,8 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final balance = context.watch<ActiveProfileController>().activeProfile == null
-        ? 0
-        : context.read<WalletManager>().balanceFor(
-              context.read<ActiveProfileController>().activeProfile!.profileId,
-            );
+    context.watch<ActiveProfileController>();
+    final balance = _walletBalanceMinor;
 
     return Scaffold(
       appBar: AppBar(title: const Text('التبرعات الصحية')),

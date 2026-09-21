@@ -1,20 +1,36 @@
 /// =============================================================
-/// Lifex-AI — نقطة دخول Application الإلزامية قبل Agent/Tool/MCP
+/// Lifex-AI — نقطة دخول Application الإلزامية قبل العمليات الحساسة
 /// UI → AppContext → LioSensitiveActionEntry → ProductionLioGateway
-/// → (ALLOW/EMERGENCY_LIMITED) → Agent/Tool/AI callback → Audit
+/// → (ALLOW/EMERGENCY_LIMITED) → Application callback → Audit
 ///
-/// ممنوع إنشاء Gateway ثانٍ. ممنوع UI→Agent أو UI→MCP مباشرة.
+/// LIO يحكم ويصرّح فقط — لا ينفّذ العملية ولا يلمس SQL/DB.
+/// ممنوع إنشاء Gateway ثانٍ.
 /// =============================================================
 library lifex_ai.core.orchestrator.lio_sensitive_action_entry;
 
+import '../../data/medical_database_manager.dart';
 import '../../features/ai/ai_service_router.dart';
 import '../../features/ai/unified_ai_hub_gateway.dart';
+import '../../features/emergency/emergency_manager.dart';
+import '../../features/emergency/emergency_message_manager.dart';
+import '../../features/finance/payment_controller.dart';
+import '../../features/finance/subscription_billing_manager.dart';
+import '../../features/finance/topup_session.dart';
+import '../../features/finance/transaction_ledger.dart';
+import '../../features/finance/transaction_service.dart';
+import '../../features/finance/wallet_account.dart';
+import '../../features/finance/wallet_manager.dart';
+import '../../features/outreach/encyclopedia_share_bridge.dart';
+import '../../features/profile/health_profile.dart';
 import '../agent/agent_confidence.dart';
 import '../agent/agent_context.dart';
 import '../agent/agent_core.dart';
 import '../agent/agent_orchestrator.dart';
 import '../agent/agent_result.dart';
 import '../agent/agent_state.dart';
+import '../lasting_search_index.dart';
+import '../local_knowledge.dart';
+import '../search_refresh_engine.dart';
 import 'lio_gateway.dart';
 import 'lio_gateway_contracts.dart';
 
@@ -51,28 +67,72 @@ class LioSensitiveActionOutcome<T> {
   bool get wasAllowedThroughLio => decision.mayProceedToMcp;
 }
 
-/// عقد Application: كل طلب حساس يمر عبر LIO قبل أي Agent/Tool/MCP/AI hub.
+/// عقد Application: كل طلب حساس يمر عبر LIO قبل التنفيذ.
 class LioSensitiveActionEntry {
   const LioSensitiveActionEntry({
     required this.lioGateway,
     required this.agentCore,
     required this.aiServiceRouter,
     required this.aiHubGateway,
+    this.walletManager,
+    this.transactionService,
+    this.paymentController,
+    this.subscriptionBillingManager,
+    this.medicalDatabaseManager,
+    this.localKnowledge,
+    this.lastingSearchIndex,
+    this.emergencyManager,
+    this.encyclopediaShareBridge,
   });
 
   static const String entryId = 'LioSensitiveActionEntry';
 
-  /// نفس Gateway من Composition Root — لا نسخة ثانية.
   final ProductionLioGateway lioGateway;
-
-  /// نفس AgentCore من Composition Root.
   final AgentCoreBundle agentCore;
-
-  /// نفس AiServiceRouter من bootstrap — لا يُستدعى من UI مباشرة.
   final AiServiceRouter aiServiceRouter;
-
-  /// نفس UnifiedAiHubGateway — عمليات الاعتماد عبر LIO فقط من UI.
   final UnifiedAiHubGateway aiHubGateway;
+
+  final WalletManager? walletManager;
+  final TransactionService? transactionService;
+  final PaymentController? paymentController;
+  final SubscriptionBillingManager? subscriptionBillingManager;
+  final MedicalDatabaseManager? medicalDatabaseManager;
+  final LocalKnowledge? localKnowledge;
+  final LastingSearchIndex? lastingSearchIndex;
+  final EmergencyManager? emergencyManager;
+  final EncyclopediaShareBridge? encyclopediaShareBridge;
+
+  /// يربط عمليات Application الحساسة دون إنشاء Gateway/Entry ثانٍ.
+  LioSensitiveActionEntry bindApplicationOps({
+    WalletManager? walletManager,
+    TransactionService? transactionService,
+    PaymentController? paymentController,
+    SubscriptionBillingManager? subscriptionBillingManager,
+    MedicalDatabaseManager? medicalDatabaseManager,
+    LocalKnowledge? localKnowledge,
+    LastingSearchIndex? lastingSearchIndex,
+    EmergencyManager? emergencyManager,
+    EncyclopediaShareBridge? encyclopediaShareBridge,
+  }) {
+    return LioSensitiveActionEntry(
+      lioGateway: lioGateway,
+      agentCore: agentCore,
+      aiServiceRouter: aiServiceRouter,
+      aiHubGateway: aiHubGateway,
+      walletManager: walletManager ?? this.walletManager,
+      transactionService: transactionService ?? this.transactionService,
+      paymentController: paymentController ?? this.paymentController,
+      subscriptionBillingManager:
+          subscriptionBillingManager ?? this.subscriptionBillingManager,
+      medicalDatabaseManager:
+          medicalDatabaseManager ?? this.medicalDatabaseManager,
+      localKnowledge: localKnowledge ?? this.localKnowledge,
+      lastingSearchIndex: lastingSearchIndex ?? this.lastingSearchIndex,
+      emergencyManager: emergencyManager ?? this.emergencyManager,
+      encyclopediaShareBridge:
+          encyclopediaShareBridge ?? this.encyclopediaShareBridge,
+    );
+  }
 
   /// يقيّم عبر LIO ثم ينفّذ [run] فقط عند ALLOW / EMERGENCY_LIMITED.
   Future<LioSensitiveActionOutcome<T>> authorizeThenRun<T>({
@@ -90,7 +150,8 @@ class LioSensitiveActionEntry {
     );
   }
 
-  /// مسار وكيل حسّاس: LIO ثم CoordinatorAgent فقط.
+  // —— AI / Agent (موجود) ——
+
   Future<LioSensitiveActionOutcome<AgentResult>> runAgentRequest({
     required LioGatewayRequest gatewayRequest,
     required AgentContext agentContext,
@@ -109,7 +170,6 @@ class LioSensitiveActionEntry {
     );
   }
 
-  /// محادثة AI خارجية — LIO ثم AiServiceRouter (بلا UI→Router مباشر).
   Future<LioSensitiveActionOutcome<ExternalAiResponse>> runAiChatQuery({
     required LioGatewayRequest gatewayRequest,
     required String profileId,
@@ -124,7 +184,6 @@ class LioSensitiveActionEntry {
     );
   }
 
-  /// ربط مفتاح AI خارجي — حسّاس: يمر عبر LIO.
   Future<LioSensitiveActionOutcome<bool>> connectExternalAiAccount({
     required LioGatewayRequest gatewayRequest,
     required String profileId,
@@ -143,7 +202,6 @@ class LioSensitiveActionEntry {
     );
   }
 
-  /// فصل حساب AI — يمر عبر LIO.
   Future<LioSensitiveActionOutcome<void>> disconnectExternalAiAccount({
     required LioGatewayRequest gatewayRequest,
     required String profileId,
@@ -158,7 +216,6 @@ class LioSensitiveActionEntry {
     );
   }
 
-  /// قراءة حالة الربط (عرض فقط) — ما زالت عبر البوابة لفرض الهوية/الغرض.
   Future<LioSensitiveActionOutcome<List<ConnectedAiAccount>>>
       listConnectedAiAccounts({
     required LioGatewayRequest gatewayRequest,
@@ -170,12 +227,10 @@ class LioSensitiveActionEntry {
     );
   }
 
-  /// إلغاء مهمة سبق أن عُبرت LIO — لا يطلق أدوات جديدة.
   void cancelAgentTask(String taskId) {
     agentCore.coordinator.cancelTask(taskId);
   }
 
-  /// نتيجة توقف عندما ترفض LIO التنفيذ.
   AgentResult blockedAgentResult({
     required String taskId,
     required LioGatewayDecision decision,
@@ -187,6 +242,334 @@ class LioSensitiveActionEntry {
       confidence: AgentConfidence.unknown,
       disclaimerAr: kAgentDefaultDisclaimerAr,
       errorMessageAr: decision.reasonAr,
+    );
+  }
+
+  // —— READ_MEDICAL / DOWNLOAD ——
+
+  Future<LioSensitiveActionOutcome<Map<String, dynamic>>> readMedicalBundle({
+    required LioGatewayRequest gatewayRequest,
+    required String fileName,
+  }) {
+    final db = medicalDatabaseManager;
+    if (db == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('medicalDatabaseManager unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => db.readBundleFile(fileName),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<String?>> checkMedicalDbVersion({
+    required LioGatewayRequest gatewayRequest,
+  }) {
+    final db = medicalDatabaseManager;
+    if (db == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('medicalDatabaseManager unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => db.checkForNewerVersion(),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<SearchRefreshReport>> refreshMedicalKnowledge({
+    required LioGatewayRequest gatewayRequest,
+  }) {
+    final db = medicalDatabaseManager;
+    final knowledge = localKnowledge;
+    final lasting = lastingSearchIndex;
+    if (db == null || knowledge == null || lasting == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('medical refresh deps unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => const SearchRefreshEngine().refresh(
+            knowledge: knowledge,
+            lasting: lasting,
+            database: db,
+          ),
+    );
+  }
+
+  // —— FINANCIAL / WALLET ——
+
+  Future<LioSensitiveActionOutcome<WalletBalances>> readWalletBalances({
+    required LioGatewayRequest gatewayRequest,
+    required String profileId,
+  }) {
+    final wallet = walletManager;
+    if (wallet == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('walletManager unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => wallet.balancesFor(profileId),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<List<WalletTransaction>>>
+      readWalletStatement({
+    required LioGatewayRequest gatewayRequest,
+    required String profileId,
+  }) {
+    final txs = transactionService;
+    if (txs == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('transactionService unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => txs.statementFor(profileId),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<String>> readWalletGatewayName({
+    required LioGatewayRequest gatewayRequest,
+  }) {
+    final wallet = walletManager;
+    if (wallet == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('walletManager unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => wallet.gatewayName,
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<List<PaymentMethodOption>>>
+      listWalletPaymentMethods({
+    required LioGatewayRequest gatewayRequest,
+  }) {
+    final wallet = walletManager;
+    if (wallet == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('walletManager unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => wallet.availablePaymentMethods(),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<TopUpSession?>> resumeWalletTopUp({
+    required LioGatewayRequest gatewayRequest,
+    required String sessionId,
+  }) {
+    final wallet = walletManager;
+    if (wallet == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('walletManager unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => wallet.resumeTopUp(sessionId),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<TopUpSession>> beginWalletTopUp({
+    required LioGatewayRequest gatewayRequest,
+    required String profileId,
+    String? idempotencyKey,
+  }) {
+    final payment = paymentController;
+    if (payment == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('paymentController unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => payment.beginTopUp(
+            profileId: profileId,
+            idempotencyKey: idempotencyKey,
+          ),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<TopUpFeePreview>> previewWalletTopUpFee({
+    required LioGatewayRequest gatewayRequest,
+    required int amountInSmallestUnit,
+  }) {
+    final payment = paymentController;
+    if (payment == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('paymentController unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => payment.previewTopUpFee(
+            amountInSmallestUnit: amountInSmallestUnit,
+          ),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<WalletOperationResult>> confirmWalletTopUp({
+    required LioGatewayRequest gatewayRequest,
+    required TopUpSession session,
+  }) {
+    final payment = paymentController;
+    if (payment == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('paymentController unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => payment.confirmTopUpSession(session),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<WalletOperationResult>> transferWalletFunds({
+    required LioGatewayRequest gatewayRequest,
+    required String fromProfileId,
+    required String toProfileId,
+    required int amountMinor,
+    required String currencyCode,
+    int feeMinor = 0,
+  }) {
+    final payment = paymentController;
+    if (payment == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('paymentController unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => payment.handleTransfer(
+            fromProfileId: fromProfileId,
+            toProfileId: toProfileId,
+            amountMinor: amountMinor,
+            currencyCode: currencyCode,
+            feeMinor: feeMinor,
+          ),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<WalletOperationResult>> withdrawWallet({
+    required LioGatewayRequest gatewayRequest,
+    required String profileId,
+    required int amountMinor,
+    required String currencyCode,
+  }) {
+    final wallet = walletManager;
+    if (wallet == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('walletManager unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => wallet.withdraw(
+            profileId: profileId,
+            amountMinor: amountMinor,
+            currencyCode: currencyCode,
+          ),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<BillingOutcome>> chargeAnnualSubscription({
+    required LioGatewayRequest gatewayRequest,
+    required HealthProfile profile,
+    required String gatewayName,
+  }) {
+    final billing = subscriptionBillingManager;
+    if (billing == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('subscriptionBillingManager unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => billing.chargeAnnualSubscription(
+            profile: profile,
+            gatewayName: gatewayName,
+          ),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<List<String>>> listBillingGateways({
+    required LioGatewayRequest gatewayRequest,
+    required String countryCode,
+  }) {
+    final billing = subscriptionBillingManager;
+    if (billing == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('subscriptionBillingManager unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => billing.availableGatewaysForCountry(countryCode),
+    );
+  }
+
+  // —— SHARE ——
+
+  Future<LioSensitiveActionOutcome<EncyclopediaShareResult>>
+      sharePublicEncyclopedia({
+    required LioGatewayRequest gatewayRequest,
+  }) {
+    final bridge = encyclopediaShareBridge ?? EncyclopediaShareBridge();
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => bridge.shareEncyclopedia(),
+    );
+  }
+
+  // —— EMERGENCY_ACCESS ——
+
+  Future<LioSensitiveActionOutcome<EmergencyDispatchOutcome>>
+      triggerEmergencyLimited({
+    required LioGatewayRequest gatewayRequest,
+    required String profileId,
+    required String reasonAr,
+    Map<String, dynamic>? context,
+  }) {
+    final emergency = emergencyManager;
+    if (emergency == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('emergencyManager unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => emergency.triggerEmergency(
+            profileId: profileId,
+            reasonAr: reasonAr,
+            context: context,
+          ),
     );
   }
 }

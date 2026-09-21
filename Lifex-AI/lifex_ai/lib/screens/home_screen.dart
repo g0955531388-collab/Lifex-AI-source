@@ -12,8 +12,9 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/trial_manager.dart';
-import '../features/emergency/emergency_manager.dart';
 import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/finance/billing_exemption_policy.dart';
 import '../features/location/gps_priority_monitor.dart';
@@ -512,23 +513,51 @@ class HomeScreen extends StatelessWidget {
                   profile?.questionnaireData['trustedContacts'],
                 ),
               );
-              final outcome =
-                  await context.read<EmergencyManager>().triggerEmergency(
-                        profileId: profileId,
-                        reasonAr:
-                            'تفعيل يدوي من الشاشة الرئيسية بواسطة المستخدم.',
-                      );
+              final outcome = await context
+                  .read<LioSensitiveActionEntry>()
+                  .triggerEmergencyLimited(
+                    gatewayRequest: LioGatewayRequest(
+                      requestId:
+                          'emg_home_${profileId}_${DateTime.now().millisecondsSinceEpoch}',
+                      correlationId: 'emg_$profileId',
+                      identityAccountId: profileId,
+                      purpose: 'emergency_signal',
+                      requestedAction: 'signal_trusted_contacts',
+                      dataScope: 'emergency_contacts_min',
+                      sensitivity: LioDataSensitivity.personal,
+                      consent: const LioConsentContext(
+                        consentGranted: true,
+                        purposeAligned: true,
+                      ),
+                      riskLevel: LioActionRisk.high,
+                      timestamp: DateTime.now().toUtc(),
+                      authenticated: true,
+                      authorized: true,
+                      emergencyLimitedMode: true,
+                      humanConfirmed: true,
+                      minimumNecessarySatisfied: true,
+                    ),
+                    profileId: profileId,
+                    reasonAr:
+                        'تفعيل يدوي من الشاشة الرئيسية بواسطة المستخدم.',
+                  );
 
               if (!context.mounted) return;
               Navigator.of(dialogContext).pop();
 
-              announceForScreenReader(context, outcome.messageAr);
+              final msg = outcome.executed
+                  ? (outcome.value?.messageAr ?? 'أُرسلت إشارة الطوارئ المحدودة.')
+                  : 'توقفت الطوارئ عند LIO (${outcome.decision.wireDecision}): ${outcome.decision.reasonAr}';
+
+              announceForScreenReader(context, msg);
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(outcome.messageAr),
-                  backgroundColor:
-                      outcome.outboundSent ? Colors.red : Colors.orange,
+                  content: Text(msg),
+                  backgroundColor: outcome.executed &&
+                          (outcome.value?.outboundSent ?? false)
+                      ? Colors.red
+                      : Colors.orange,
                 ),
               );
             },

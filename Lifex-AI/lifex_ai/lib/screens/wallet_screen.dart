@@ -1,21 +1,20 @@
 /// =============================================================
 /// Lifex-AI — مركز المحفظة
-/// شحن متعدد الخطوات: مبلغ → وسيلة → رسوم → تأكيد → نتيجة.
-/// لا زر «متابعة» ينهي المسار بلا حالة نهائية.
+/// كل عملية مالية حساسة تمر عبر LioSensitiveActionEntry → LIO.
 /// =============================================================
 library lifex_ai.screens.wallet_screen;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/trial_manager.dart';
 import '../features/finance/billing_exemption_policy.dart';
-import '../features/finance/payment_controller.dart';
-import '../features/finance/subscription_billing_manager.dart';
 import '../features/finance/subscription_catalog.dart';
 import '../features/finance/topup_session.dart';
 import '../features/finance/transaction_ledger.dart';
-import '../features/finance/transaction_service.dart';
+import '../features/finance/wallet_account.dart';
 import '../features/finance/wallet_manager.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
@@ -33,16 +32,93 @@ class _WalletScreenState extends State<WalletScreen> {
   bool _isProcessing = false;
   String? _statusMessageAr;
   String? _lastSessionId;
+  WalletBalances? _balances;
+  List<WalletTransaction> _statement = const [];
+  String _gatewayName = '';
+  String? _feePreviewHintAr;
+
+  LioSensitiveActionEntry get _entry =>
+      Provider.of<LioSensitiveActionEntry>(context, listen: false);
+
+  LioGatewayRequest _req({
+    required String action,
+    LioActionRisk risk = LioActionRisk.medium,
+    bool humanConfirmed = false,
+  }) {
+    return LioGatewayRequest(
+      requestId:
+          'wallet_${action}_${widget.profileId}_${DateTime.now().millisecondsSinceEpoch}',
+      correlationId: 'wallet_${widget.profileId}',
+      identityAccountId: widget.profileId,
+      purpose: 'wallet_ops',
+      requestedAction: action,
+      dataScope: 'wallet_balance_view',
+      sensitivity: LioDataSensitivity.personal,
+      consent: const LioConsentContext(
+        consentGranted: true,
+        purposeAligned: true,
+      ),
+      riskLevel: risk,
+      timestamp: DateTime.now().toUtc(),
+      authenticated: true,
+      authorized: true,
+      humanConfirmed: humanConfirmed,
+      minimumNecessarySatisfied: true,
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshWalletView());
+  }
+
+  Future<void> _refreshWalletView() async {
+    final entry = _entry;
+    final bal = await entry.readWalletBalances(
+      gatewayRequest: _req(action: 'read_wallet_balances', risk: LioActionRisk.low),
+      profileId: widget.profileId,
+    );
+    final stmt = await entry.readWalletStatement(
+      gatewayRequest: _req(action: 'read_wallet_statement', risk: LioActionRisk.low),
+      profileId: widget.profileId,
+    );
+    final gw = await entry.readWalletGatewayName(
+      gatewayRequest: _req(action: 'read_wallet_gateway', risk: LioActionRisk.low),
+    );
+    final fee = await entry.previewWalletTopUpFee(
+      gatewayRequest: _req(action: 'preview_topup_fee', risk: LioActionRisk.low),
+      amountInSmallestUnit: 10000,
+    );
+    if (!mounted) return;
+    setState(() {
+      if (bal.executed) _balances = bal.value;
+      if (stmt.executed) _statement = stmt.value ?? const [];
+      if (gw.executed) _gatewayName = gw.value ?? '';
+      if (fee.executed) _feePreviewHintAr = fee.value?.summaryAr();
+    });
+  }
 
   Future<void> _showTopUpWizard({int? initialDollars}) async {
-    final wallet = context.read<WalletManager>();
-    final controller = context.read<PaymentController>();
+    final entry = _entry;
+    final methodsOutcome = await entry.listWalletPaymentMethods(
+      gatewayRequest: _req(action: 'list_payment_methods', risk: LioActionRisk.low),
+    );
+    if (!mounted) return;
+    final methods = methodsOutcome.executed
+        ? (methodsOutcome.value ?? const <PaymentMethodOption>[])
+        : const <PaymentMethodOption>[];
+    if (methods.isEmpty) {
+      setState(() => _statusMessageAr = 'توقفت قائمة وسائل الدفع عند LIO.');
+      return;
+    }
+
     final amountController = TextEditingController(
       text: initialDollars != null && initialDollars > 0
           ? '$initialDollars'
           : '',
     );
-    var step = 0; // 0 مبلغ 1 وسيلة 2 رسوم/تأكيد 3 نتيجة
+    var step = 0;
     var methodId = 'sandbox';
     TopUpSession? session;
     TopUpFeePreview? preview;
@@ -54,7 +130,6 @@ class _WalletScreenState extends State<WalletScreen> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setLocal) {
-            final methods = wallet.availablePaymentMethods();
             Widget body;
             switch (step) {
               case 0:
@@ -146,13 +221,26 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                 if (step == 0)
                   FilledButton(
-                    onPressed: () {
+                    onPressed: () async {
                       final dollars =
                           int.tryParse(amountController.text.trim());
                       if (dollars == null || dollars <= 0) return;
-                      session = controller.beginTopUp(
+                      final begin = await entry.beginWalletTopUp(
+                        gatewayRequest: _req(
+                          action: 'begin_wallet_topup',
+                          risk: LioActionRisk.medium,
+                        ),
                         profileId: widget.profileId,
                       );
+                      if (!begin.executed || begin.value == null) {
+                        setLocal(() {
+                          resultMessage =
+                              'توقف الشحن عند LIO (${begin.decision.wireDecision}).';
+                          step = 3;
+                        });
+                        return;
+                      }
+                      session = begin.value;
                       session!.advanceFromDraft(
                         amountMinor: dollars * 100,
                         currency: 'USD',
@@ -164,7 +252,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                 if (step == 1)
                   FilledButton(
-                    onPressed: () {
+                    onPressed: () async {
                       final method = methods.firstWhere(
                         (m) => m.id == methodId,
                         orElse: () => methods.first,
@@ -178,9 +266,21 @@ class _WalletScreenState extends State<WalletScreen> {
                         });
                         return;
                       }
-                      preview = controller.previewTopUpFee(
+                      final fee = await entry.previewWalletTopUpFee(
+                        gatewayRequest: _req(
+                          action: 'preview_topup_fee',
+                          risk: LioActionRisk.low,
+                        ),
                         amountInSmallestUnit: session!.amountMinor,
                       );
+                      if (!fee.executed || fee.value == null) {
+                        setLocal(() {
+                          resultMessage = 'توقفت معاينة الرسوم عند LIO.';
+                          step = 3;
+                        });
+                        return;
+                      }
+                      preview = fee.value;
                       session!.applyFeePreview(
                         feeMinor: preview!.feeMinor,
                         totalDebitedMinor: preview!.totalDebitedMinor,
@@ -195,25 +295,44 @@ class _WalletScreenState extends State<WalletScreen> {
                         ? null
                         : () async {
                             if (session == null) return;
-                            setLocal(() {});
                             setState(() {
                               _isProcessing = true;
                               _statusMessageAr = 'PROCESSING…';
                             });
-                            final result =
-                                await controller.confirmTopUpSession(session!);
+                            final result = await entry.confirmWalletTopUp(
+                              gatewayRequest: _req(
+                                action: 'confirm_wallet_topup',
+                                risk: LioActionRisk.high,
+                                humanConfirmed: true,
+                              ),
+                              session: session!,
+                            );
                             if (!mounted) return;
+                            if (!result.executed) {
+                              setState(() {
+                                _isProcessing = false;
+                                _statusMessageAr =
+                                    'توقف التأكيد عند LIO (${result.decision.wireDecision}).';
+                              });
+                              setLocal(() {
+                                resultMessage = _statusMessageAr!;
+                                step = 3;
+                              });
+                              return;
+                            }
+                            final r = result.value!;
                             setState(() {
                               _isProcessing = false;
-                              _statusMessageAr = result.success
-                                  ? 'COMPLETED — ${result.messageAr}'
-                                  : 'FAILED — ${result.messageAr}';
+                              _statusMessageAr = r.success
+                                  ? 'COMPLETED — ${r.messageAr}'
+                                  : 'FAILED — ${r.messageAr}';
                             });
                             setLocal(() {
-                              resultMessage = result.receipt?.summaryAr() ??
-                                  result.messageAr;
+                              resultMessage =
+                                  r.receipt?.summaryAr() ?? r.messageAr;
                               step = 3;
                             });
+                            await _refreshWalletView();
                           },
                     child: const Text('تأكيد الشحن'),
                   ),
@@ -227,7 +346,6 @@ class _WalletScreenState extends State<WalletScreen> {
     if (mounted) setState(() {});
   }
 
-  /// مسار سريع: مبلغ جاهز → وسيلة → رسوم (يتجاوز إدخال المبلغ يدوياً).
   Future<void> _quickSandboxTopUp(int dollars) async {
     await _showTopUpWizard(initialDollars: dollars);
   }
@@ -284,10 +402,11 @@ class _WalletScreenState extends State<WalletScreen> {
       setState(() => _statusMessageAr = 'بيانات التحويل غير صالحة.');
       return;
     }
-    final feePreview = context.read<PaymentController>().previewTopUpFee(
-          amountInSmallestUnit: dollars * 100,
-        );
-    // رسوم تحويل منفصلة اختيارية — هنا 0 حتى تُنشر سياسة تحويل.
+    final feePreview = await _entry.previewWalletTopUpFee(
+      gatewayRequest: _req(action: 'preview_topup_fee', risk: LioActionRisk.low),
+      amountInSmallestUnit: dollars * 100,
+    );
+    final policyId = feePreview.value?.policyId ?? 'n/a';
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -296,7 +415,7 @@ class _WalletScreenState extends State<WalletScreen> {
           'إلى: $toId\n'
           'المبلغ: ${dollars.toStringAsFixed(2)}\n'
           'رسوم التحويل: 0.00 (لا سياسة تحويل منشورة غير الصفر)\n'
-          'ملاحظة معاينة شحن منفصلة: ${feePreview.policyId}',
+          'ملاحظة معاينة شحن منفصلة: $policyId',
         ),
         actions: [
           TextButton(
@@ -311,18 +430,30 @@ class _WalletScreenState extends State<WalletScreen> {
       ),
     );
     if (ok != true || !mounted) return;
-    final result = context.read<PaymentController>().handleTransfer(
-          fromProfileId: widget.profileId,
-          toProfileId: toId,
-          amountMinor: dollars * 100,
-          currencyCode: 'USD',
-          feeMinor: 0,
-        );
+    final result = await _entry.transferWalletFunds(
+      gatewayRequest: _req(
+        action: 'transfer_wallet_funds',
+        risk: LioActionRisk.high,
+        humanConfirmed: true,
+      ),
+      fromProfileId: widget.profileId,
+      toProfileId: toId,
+      amountMinor: dollars * 100,
+      currencyCode: 'USD',
+      feeMinor: 0,
+    );
     setState(() {
-      _statusMessageAr = result.success
-          ? 'COMPLETED — ${result.messageAr}'
-          : 'FAILED — ${result.messageAr}';
+      if (!result.executed) {
+        _statusMessageAr =
+            'توقف التحويل عند LIO (${result.decision.wireDecision}).';
+      } else {
+        final r = result.value!;
+        _statusMessageAr = r.success
+            ? 'COMPLETED — ${r.messageAr}'
+            : 'FAILED — ${r.messageAr}';
+      }
     });
+    await _refreshWalletView();
   }
 
   Future<void> _chargeAnnual(HealthProfile profile) async {
@@ -330,11 +461,13 @@ class _WalletScreenState extends State<WalletScreen> {
       _isProcessing = true;
       _statusMessageAr = null;
     });
-    final billing = context.read<SubscriptionBillingManager>();
-    final gateways = billing.availableGatewaysForCountry(
-      profile.accountCountry.trim().isEmpty ? 'US' : profile.accountCountry,
+    final entry = _entry;
+    final gateways = await entry.listBillingGateways(
+      gatewayRequest: _req(action: 'list_billing_gateways', risk: LioActionRisk.low),
+      countryCode:
+          profile.accountCountry.trim().isEmpty ? 'US' : profile.accountCountry,
     );
-    if (gateways.isEmpty) {
+    if (!gateways.executed || (gateways.value?.isEmpty ?? true)) {
       setState(() {
         _isProcessing = false;
         _statusMessageAr =
@@ -343,17 +476,57 @@ class _WalletScreenState extends State<WalletScreen> {
       });
       return;
     }
-    final outcome = await billing.chargeAnnualSubscription(
+    final outcome = await entry.chargeAnnualSubscription(
+      gatewayRequest: _req(
+        action: 'charge_annual_subscription',
+        risk: LioActionRisk.high,
+        humanConfirmed: true,
+      ),
       profile: profile,
-      gatewayName: gateways.first,
+      gatewayName: gateways.value!.first,
     );
     if (!mounted) return;
-    if (outcome.success) {
+    if (outcome.executed && (outcome.value?.success ?? false)) {
       context.read<TrialManager>().activatePaidYear();
     }
     setState(() {
       _isProcessing = false;
-      _statusMessageAr = outcome.messageAr;
+      _statusMessageAr = outcome.executed
+          ? outcome.value!.messageAr
+          : 'توقف الاشتراك عند LIO (${outcome.decision.wireDecision}).';
+    });
+  }
+
+  Future<void> _withdraw() async {
+    final r = await _entry.withdrawWallet(
+      gatewayRequest: _req(
+        action: 'withdraw_wallet',
+        risk: LioActionRisk.high,
+        humanConfirmed: true,
+      ),
+      profileId: widget.profileId,
+      amountMinor: 100,
+      currencyCode: 'USD',
+    );
+    setState(() {
+      _statusMessageAr = r.executed
+          ? r.value!.messageAr
+          : 'توقف السحب عند LIO (${r.decision.wireDecision}).';
+    });
+  }
+
+  Future<void> _resumeLastSession() async {
+    if (_lastSessionId == null) return;
+    final s = await _entry.resumeWalletTopUp(
+      gatewayRequest: _req(action: 'resume_wallet_topup', risk: LioActionRisk.low),
+      sessionId: _lastSessionId!,
+    );
+    setState(() {
+      _statusMessageAr = !s.executed
+          ? 'توقف الاستئناف عند LIO.'
+          : (s.value == null
+              ? 'لا جلسة لاستئنافها.'
+              : 'استئناف: ${s.value!.spokenStatusAr()}');
     });
   }
 
@@ -366,16 +539,12 @@ class _WalletScreenState extends State<WalletScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('تفاصيل العملية', style: Theme.of(ctx).textTheme.titleLarge),
-            const SizedBox(height: 12),
-            Text('المعرّف: ${tx.transactionId}'),
-            Text('النوع: ${_transactionLabelAr(tx.type)}'),
+            Text(_transactionLabelAr(tx.type),
+                style: Theme.of(ctx).textTheme.titleMedium),
             Text('الحالة: ${tx.status.name}'),
             Text(
-              'المبلغ: ${(tx.amountInSmallestUnit / 100).toStringAsFixed(2)} '
-              '${tx.currencyCode}',
+              'المبلغ: \$${(tx.amountInSmallestUnit / 100).toStringAsFixed(2)}',
             ),
-            Text('الرسوم: ${(tx.feeInSmallestUnit / 100).toStringAsFixed(2)}'),
             if (tx.relatedGatewayTransactionId != null)
               Text('مرجع المزود: ${tx.relatedGatewayTransactionId}'),
             if (tx.counterpartyProfileId != null)
@@ -390,9 +559,6 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final walletManager = Provider.of<WalletManager>(context, listen: false);
-    final transactionService =
-        Provider.of<TransactionService>(context, listen: false);
     final profile = context.watch<ActiveProfileController>().activeProfile;
     final catalog = const SubscriptionCatalog();
     final seat = catalog.parseSeat(profile?.billingSeat ?? 'individual');
@@ -401,8 +567,14 @@ class _WalletScreenState extends State<WalletScreen> {
         ? const BillingExemptionResult.notExempt()
         : const BillingExemptionPolicy().evaluate(profile);
 
-    final balances = walletManager.balancesFor(widget.profileId);
-    final statement = transactionService.statementFor(widget.profileId);
+    final balances = _balances ??
+        const WalletBalances(
+          availableMinor: 0,
+          pendingMinor: 0,
+          reservedMinor: 0,
+          currencyCode: 'USD',
+        );
+    final statement = _statement;
 
     return Scaffold(
       appBar: AppBar(
@@ -411,14 +583,7 @@ class _WalletScreenState extends State<WalletScreen> {
           if (_lastSessionId != null)
             IconButton(
               tooltip: 'استئناف آخر جلسة شحن',
-              onPressed: () {
-                final s = walletManager.resumeTopUp(_lastSessionId!);
-                setState(() {
-                  _statusMessageAr = s == null
-                      ? 'لا جلسة لاستئنافها.'
-                      : 'استئناف: ${s.spokenStatusAr()}';
-                });
-              },
+              onPressed: _resumeLastSession,
               icon: const Icon(Icons.restore),
             ),
         ],
@@ -460,7 +625,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'المزوّد: ${walletManager.gatewayName}',
+                        'المزوّد: $_gatewayName',
                         style:
                             const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
@@ -519,14 +684,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             label: const Text('تحويل'),
                           ),
                           OutlinedButton.icon(
-                            onPressed: () async {
-                              final r = await walletManager.withdraw(
-                                profileId: widget.profileId,
-                                amountMinor: 100,
-                                currencyCode: 'USD',
-                              );
-                              setState(() => _statusMessageAr = r.messageAr);
-                            },
+                            onPressed: _isProcessing ? null : _withdraw,
                             icon: const Icon(Icons.account_balance),
                             label: const Text('سحب'),
                           ),
@@ -613,14 +771,12 @@ class _WalletScreenState extends State<WalletScreen> {
                           onPressed:
                               _isProcessing ? null : _showTopUpWizard,
                           icon: const Icon(Icons.add_card),
-                          label: const Text('بدء شحن كامل — مبلغ ثم وسيلة ثم رسوم'),
+                          label: const Text(
+                              'بدء شحن كامل — مبلغ ثم وسيلة ثم رسوم'),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          context
-                              .read<PaymentController>()
-                              .previewTopUpFee(amountInSmallestUnit: 10000)
-                              .summaryAr(),
+                          _feePreviewHintAr ?? '',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 12,

@@ -17,11 +17,9 @@ import '../core/admin/owner_identity_policy.dart';
 import '../core/app_config.dart';
 import '../core/app_constants.dart';
 import '../core/attribution/project_attribution.dart';
-import '../core/lasting_search_index.dart';
-import '../core/local_knowledge.dart';
-import '../core/search_refresh_engine.dart';
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/trial_manager.dart';
-import '../data/medical_database_manager.dart';
 import '../features/finance/billing_exemption_policy.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_identity_manager.dart';
@@ -76,49 +74,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _checkForMedicalUpdate(
-    MedicalDatabaseManager databaseManager,
-  ) async {
+  LioGatewayRequest _medicalReq(String action, {LioActionRisk risk = LioActionRisk.low}) {
+    final profileId =
+        Provider.of<ActiveProfileController>(context, listen: false)
+                .activeProfileId ??
+            'settings_local';
+    return LioGatewayRequest(
+      requestId: 'settings_${action}_${DateTime.now().millisecondsSinceEpoch}',
+      correlationId: 'settings_$profileId',
+      identityAccountId: profileId,
+      purpose: 'settings',
+      requestedAction: action,
+      dataScope: 'settings_local',
+      sensitivity: LioDataSensitivity.operational,
+      consent: const LioConsentContext(
+        consentGranted: true,
+        purposeAligned: true,
+      ),
+      riskLevel: risk,
+      timestamp: DateTime.now().toUtc(),
+      authenticated: true,
+      authorized: true,
+      minimumNecessarySatisfied: true,
+    );
+  }
+
+  Future<void> _checkForMedicalUpdate() async {
     setState(() {
       _isCheckingForUpdate = true;
       _updateStatusMessageAr = null;
     });
 
-    final newVersion = await databaseManager.checkForNewerVersion();
+    final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
+    final outcome = await entry.checkMedicalDbVersion(
+      gatewayRequest: _medicalReq('check_medical_db_version'),
+    );
 
     if (!mounted) return;
     setState(() {
       _isCheckingForUpdate = false;
-      _updateStatusMessageAr = newVersion != null
-          ? 'يتوفر إصدار جديد ($newVersion) لقاعدة البيانات الطبية.'
-          : 'قاعدة بياناتك الطبية محدَّثة بالفعل.';
+      if (!outcome.executed) {
+        _updateStatusMessageAr =
+            'توقف التحقق عند LIO (${outcome.decision.wireDecision}): ${outcome.decision.reasonAr}';
+      } else {
+        final newVersion = outcome.value;
+        _updateStatusMessageAr = newVersion != null
+            ? 'يتوفر إصدار جديد ($newVersion) لقاعدة البيانات الطبية.'
+            : 'قاعدة بياناتك الطبية محدَّثة بالفعل.';
+      }
     });
   }
 
-  Future<void> _downloadMedicalUpdate(
-    MedicalDatabaseManager databaseManager,
-  ) async {
+  Future<void> _downloadMedicalUpdate() async {
     setState(() {
       _isDownloadingUpdate = true;
       _updateStatusMessageAr = null;
     });
 
-    final result = await const SearchRefreshEngine().refresh(
-      knowledge: context.read<LocalKnowledge>(),
-      lasting: context.read<LastingSearchIndex>(),
-      database: databaseManager,
+    final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
+    final outcome = await entry.refreshMedicalKnowledge(
+      gatewayRequest: _medicalReq(
+        'download_medical_bundle',
+        risk: LioActionRisk.medium,
+      ),
     );
 
     if (!mounted) return;
     setState(() {
       _isDownloadingUpdate = false;
-      _updateStatusMessageAr = result.messageAr;
+      if (!outcome.executed) {
+        _updateStatusMessageAr =
+            'توقف التحديث عند LIO (${outcome.decision.wireDecision}): ${outcome.decision.reasonAr}';
+      } else {
+        _updateStatusMessageAr = outcome.value?.messageAr;
+      }
     });
 
+    final msg = _updateStatusMessageAr ?? 'تعذّر التحديث.';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(result.messageAr),
-        backgroundColor: result.remoteOk ? null : Colors.orange,
+        content: Text(msg),
+        backgroundColor:
+            outcome.executed && (outcome.value?.remoteOk ?? false)
+                ? null
+                : Colors.orange,
       ),
     );
   }
@@ -606,11 +645,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// إصدار أحدث لقاعدة البيانات الطبية وتحميله بأمان، مع إبقاء النسخة
   /// الحالية تعمل بلا انقطاع في حال فشل أو تأجيل التحديث.
   Widget _buildMedicalUpdateSection(BuildContext context) {
-    final databaseManager = Provider.of<MedicalDatabaseManager>(
-      context,
-      listen: false,
-    );
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
@@ -646,7 +680,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 label: const Text('التحقق من وجود تحديثات'),
                 onPressed: _isCheckingForUpdate || _isDownloadingUpdate
                     ? null
-                    : () => _checkForMedicalUpdate(databaseManager),
+                    : _checkForMedicalUpdate,
               ),
               const SizedBox(width: 12),
               FilledButton.icon(
@@ -663,7 +697,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 label: const Text('ابحث وجُلب للقواعد الداخلية'),
                 onPressed: _isCheckingForUpdate || _isDownloadingUpdate
                     ? null
-                    : () => _downloadMedicalUpdate(databaseManager),
+                    : _downloadMedicalUpdate,
               ),
             ],
           ),
