@@ -1,0 +1,259 @@
+/// =============================================================
+/// Lifex-AI — جرد دورة حياة البيانات الحساسة (Production)
+/// =============================================================
+library lifex_ai.core.orchestrator.lio_sensitive_lifecycle_inventory;
+
+import 'lio_sensitive_lifecycle_contracts.dart';
+
+/// سجل نقطة دخول لدورة حياة بيانات حساسة.
+class LioSensitiveLifecycleRecord {
+  const LioSensitiveLifecycleRecord({
+    required this.path,
+    required this.classOrFunction,
+    required this.callerSurface,
+    required this.operation,
+    required this.dataDomain,
+    required this.classification,
+    required this.risk,
+    required this.canonicalOwner,
+    required this.passesLioEntry,
+    required this.hasRealExecution,
+    required this.notes,
+  });
+
+  final String path;
+  final String classOrFunction;
+  final String callerSurface;
+  final String operation;
+  final LioSensitiveDataDomain dataDomain;
+  final LioLifecycleOpKind classification;
+  final String risk;
+  final String canonicalOwner;
+  final bool passesLioEntry;
+  final bool hasRealExecution;
+  final String notes;
+}
+
+/// الجرد الموحّد لدورة حياة البيانات الحساسة قبل MCP الحقيقي.
+class LioSensitiveLifecycleInventory {
+  const LioSensitiveLifecycleInventory();
+
+  static const inventoryId = 'LioSensitiveLifecycleInventory';
+
+  static const legalFlow = [
+    'Presentation/UI',
+    'LifexAppContext',
+    'LioSensitiveActionEntry',
+    'ProductionLioGateway',
+    'Identity',
+    'Authentication',
+    'Authorization',
+    'Consent',
+    'Purpose',
+    'DataScope/Minimization',
+    'SecurityPolicy',
+    'Risk/ActionClassification',
+    'Application operation',
+    'Verification',
+    'Audit',
+  ];
+
+  /// مالك منطقي معتمد لكل نطاق — ليس SQL.
+  static const canonicalOwners = {
+    LioSensitiveDataDomain.patientPhr: 'ProfileVault / PersonalHealthRepository',
+    LioSensitiveDataDomain.clinical: 'ClinicalWatchPolicy (no export engine)',
+    LioSensitiveDataDomain.healthObservation: 'HealthDataEngine / HealthRepository',
+    LioSensitiveDataDomain.medicalDocument: 'MedicalDocument store (gap)',
+    LioSensitiveDataDomain.appointment: 'UserAppointmentStore',
+    LioSensitiveDataDomain.medicationRecord: 'HealthProfile medication fields',
+    LioSensitiveDataDomain.emergencyRecord: 'EmergencyManager',
+    LioSensitiveDataDomain.familyPrivate: 'ActiveProfileController family links',
+    LioSensitiveDataDomain.walletFinancial: 'WalletManager / TransactionLedger',
+    LioSensitiveDataDomain.publicEducation: 'EncyclopediaShareBridge',
+    LioSensitiveDataDomain.deviceControl: 'DeviceControlCenter (policy only)',
+    LioSensitiveDataDomain.medicalCatalog: 'MedicalDatabaseManager (54-ref)',
+  };
+
+  List<LioSensitiveLifecycleRecord> get productionEntries => const [
+        LioSensitiveLifecycleRecord(
+          path: 'lib/screens/medications_screen.dart',
+          classOrFunction: '_loadCatalog',
+          callerSurface: 'UI',
+          operation: 'READ_MEDICAL catalog',
+          dataDomain: LioSensitiveDataDomain.medicalCatalog,
+          classification: LioLifecycleOpKind.readMedical,
+          risk: 'low',
+          canonicalOwner: 'MedicalDatabaseManager',
+          passesLioEntry: true,
+          hasRealExecution: true,
+          notes: 'via readMedicalBundle',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/screens/settings_screen.dart',
+          classOrFunction: '_downloadMedicalUpdate',
+          callerSurface: 'UI',
+          operation: 'DOWNLOAD medical bundle',
+          dataDomain: LioSensitiveDataDomain.medicalCatalog,
+          classification: LioLifecycleOpKind.download,
+          risk: 'medium',
+          canonicalOwner: 'MedicalDatabaseManager + SearchRefreshEngine',
+          passesLioEntry: true,
+          hasRealExecution: true,
+          notes: 'via refreshMedicalKnowledge',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/screens/wallet_screen.dart',
+          classOrFunction: 'wallet ops',
+          callerSurface: 'UI',
+          operation: 'FINANCIAL READ/WRITE',
+          dataDomain: LioSensitiveDataDomain.walletFinancial,
+          classification: LioLifecycleOpKind.financial,
+          risk: 'high',
+          canonicalOwner: 'WalletManager',
+          passesLioEntry: true,
+          hasRealExecution: true,
+          notes: 'via Entry wallet methods',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/widgets/encyclopedia_share_bar.dart',
+          classOrFunction: '_share',
+          callerSurface: 'UI',
+          operation: 'SHARE public (≠ EXPORT PHR)',
+          dataDomain: LioSensitiveDataDomain.publicEducation,
+          classification: LioLifecycleOpKind.share,
+          risk: 'low',
+          canonicalOwner: 'EncyclopediaShareBridge',
+          passesLioEntry: true,
+          hasRealExecution: true,
+          notes: 'public brief only — not clinical export',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/screens/home_screen.dart',
+          classOrFunction: 'emergency confirm',
+          callerSurface: 'UI',
+          operation: 'EMERGENCY_ACCESS',
+          dataDomain: LioSensitiveDataDomain.emergencyRecord,
+          classification: LioLifecycleOpKind.emergencyAccess,
+          risk: 'high',
+          canonicalOwner: 'EmergencyManager',
+          passesLioEntry: true,
+          hasRealExecution: true,
+          notes: 'EMERGENCY_LIMITED only — not full PHR',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/core/orchestrator/lio_sensitive_action_entry.dart',
+          classOrFunction: 'requestClinicalPhrExport',
+          callerSurface: 'Application',
+          operation: 'EXPORT clinical/PHR',
+          dataDomain: LioSensitiveDataDomain.patientPhr,
+          classification: LioLifecycleOpKind.export,
+          risk: 'critical',
+          canonicalOwner: 'none — policy stub',
+          passesLioEntry: true,
+          hasRealExecution: false,
+          notes: 'NOT_IMPLEMENTED after LIO — no fake success',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/core/orchestrator/lio_sensitive_action_entry.dart',
+          classOrFunction: 'requestSensitiveDelete',
+          callerSurface: 'Application',
+          operation: 'DELETE sensitive record',
+          dataDomain: LioSensitiveDataDomain.patientPhr,
+          classification: LioLifecycleOpKind.delete,
+          risk: 'high',
+          canonicalOwner: 'none — policy stub (≠ ARCHIVE)',
+          passesLioEntry: true,
+          hasRealExecution: false,
+          notes: 'NOT_IMPLEMENTED — no hard-delete engine',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/core/orchestrator/lio_sensitive_action_entry.dart',
+          classOrFunction: 'requestSensitiveArchive',
+          callerSurface: 'Application',
+          operation: 'ARCHIVE sensitive record',
+          dataDomain: LioSensitiveDataDomain.patientPhr,
+          classification: LioLifecycleOpKind.archive,
+          risk: 'medium',
+          canonicalOwner: 'none — policy stub (≠ DELETE)',
+          passesLioEntry: true,
+          hasRealExecution: false,
+          notes: 'NOT_IMPLEMENTED — archive store absent',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/core/orchestrator/lio_sensitive_action_entry.dart',
+          classOrFunction: 'requestSensitivePrint',
+          callerSurface: 'Application',
+          operation: 'PRINT sensitive',
+          dataDomain: LioSensitiveDataDomain.medicalDocument,
+          classification: LioLifecycleOpKind.printOp,
+          risk: 'medium',
+          canonicalOwner: 'none — policy stub',
+          passesLioEntry: true,
+          hasRealExecution: false,
+          notes: 'UNSUPPORTED_OPERATION — no print pipeline',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/core/orchestrator/lio_sensitive_action_entry.dart',
+          classOrFunction: 'requestDeviceControl',
+          callerSurface: 'Application',
+          operation: 'CONTROL device',
+          dataDomain: LioSensitiveDataDomain.deviceControl,
+          classification: LioLifecycleOpKind.control,
+          risk: 'critical',
+          canonicalOwner: 'DeviceControlCenter policy only',
+          passesLioEntry: true,
+          hasRealExecution: false,
+          notes: 'UNSUPPORTED_OPERATION — no driver execution',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/core/health_data/health_repository.dart',
+          classOrFunction: 'HealthRepository',
+          callerSurface: 'Repository',
+          operation: 'READ_HEALTH / WRITE observations',
+          dataDomain: LioSensitiveDataDomain.healthObservation,
+          classification: LioLifecycleOpKind.readHealth,
+          risk: 'medium',
+          canonicalOwner: 'HealthRepository',
+          passesLioEntry: true,
+          hasRealExecution: false,
+          notes: 'UI must not call; Entry lifecycle gate required',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/screens/appointments_screen.dart',
+          classOrFunction: '_remove',
+          callerSurface: 'UI',
+          operation: 'DELETE local appointment',
+          dataDomain: LioSensitiveDataDomain.appointment,
+          classification: LioLifecycleOpKind.delete,
+          risk: 'medium',
+          canonicalOwner: 'UserAppointmentStore',
+          passesLioEntry: true,
+          hasRealExecution: true,
+          notes: 'via authorizeThenRun then store.removeOrCancel',
+        ),
+        LioSensitiveLifecycleRecord(
+          path: 'lib/features/scheduling/user_appointment_store.dart',
+          classOrFunction: 'UserAppointmentStore',
+          callerSurface: 'Application',
+          operation: 'WRITE/DELETE appointments',
+          dataDomain: LioSensitiveDataDomain.appointment,
+          classification: LioLifecycleOpKind.write,
+          risk: 'low',
+          canonicalOwner: 'UserAppointmentStore',
+          passesLioEntry: true,
+          hasRealExecution: true,
+          notes: 'mutations must authorize via Entry before store write',
+        ),
+      ];
+
+  static const uiForbiddenProviderTypes = [
+    'MedicalDatabaseManager',
+    'WalletManager',
+    'TransactionService',
+    'PaymentController',
+    'SubscriptionBillingManager',
+    'EmergencyManager',
+    'HealthRepository',
+    'DeviceControlCenter',
+  ];
+}
