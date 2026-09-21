@@ -29,7 +29,7 @@ import '../../services/translation/translation_service.dart';
 import '../agent/agent_core.dart';
 import '../agent/knowledge/knowledge_retriever.dart';
 import '../health_data/health_observation_application_service.dart';
-import '../health_data/health_repository.dart';
+import '../health_data/health_observation_repository.dart';
 import '../lasting_search_index.dart';
 import '../local_knowledge.dart';
 import '../trial_manager.dart';
@@ -120,19 +120,18 @@ class LifexAppContext {
   /// بوابة LIO الإنتاجية — نفس instance من Composition Root.
   ProductionLioGateway get lioGateway => production.lioGateway;
 
-  /// Canonical HealthObservation owner = HealthRepository / Data layer.
-  /// AI / LLM / UI / LIO ليست مالكة للبيانات الطبية.
-  HealthDataRepository get healthDataRepository =>
-      _healthDataRepository ??= InMemoryHealthRepository();
+  /// Canonical HealthObservation owner من Composition Root فقط.
+  /// ممنوع إنشاء InMemory هنا — الإنتاج = Persistent عبر Composition.
+  HealthObservationRepository get healthObservationRepository =>
+      production.healthObservationRepository;
 
-  /// المالك التشغيلي لعمليات الملاحظة — بعد تفويض LIO فقط.
+  /// المالك التشغيلي لعمليات الملاحظة — نفس instance من Composition.
   HealthObservationApplicationService get healthObservationService =>
-      _healthObservationService ??= HealthObservationApplicationService(
-        repository: healthDataRepository,
-      );
+      production.healthObservationService;
 
   /// نقطة دخول UI/Application الحساسة — إلزامية قبل العمليات الحساسة.
   /// تربط مديري Application دون إنشاء Gateway/Entry/Fabric ثانية.
+  /// healthObservationService يأتي مسبقاً من Composition (لا مسار ثانٍ).
   LioSensitiveActionEntry get sensitiveActionEntry {
     return _boundSensitiveEntry ??= production.sensitiveActionEntry
         .bindApplicationOps(
@@ -148,7 +147,5 @@ class LifexAppContext {
     );
   }
 
-  HealthDataRepository? _healthDataRepository;
-  HealthObservationApplicationService? _healthObservationService;
   LioSensitiveActionEntry? _boundSensitiveEntry;
 }

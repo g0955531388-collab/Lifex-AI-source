@@ -1,9 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifex_ai/core/health_data/file_health_observation_store.dart';
 import 'package:lifex_ai/core/health_data/health_data_types.dart';
 import 'package:lifex_ai/core/health_data/health_observation_application_service.dart';
-import 'package:lifex_ai/core/health_data/health_repository.dart';
+import 'package:lifex_ai/core/health_data/in_memory_health_observation_repository.dart';
 import 'package:lifex_ai/core/lio/knowledge_engine/knowledge_engine.dart';
 import 'package:lifex_ai/core/lio/knowledge_engine/retrieval_adapters.dart';
 import 'package:lifex_ai/core/lio/lifex_production_composition.dart';
@@ -37,7 +38,7 @@ class _MemCreds implements SecureCredentialStore {
 
 void main() {
   late LioSensitiveActionEntry entry;
-  late InMemoryHealthRepository repo;
+  late InMemoryHealthObservationRepository repo;
 
   LioGatewayRequest req({
     required String id,
@@ -129,7 +130,7 @@ void main() {
       corpus: corpus,
       clock: clock,
     );
-    repo = InMemoryHealthRepository();
+    repo = InMemoryHealthObservationRepository();
     entry = bundle.sensitiveActionEntry.bindApplicationOps(
       healthObservationService: HealthObservationApplicationService(
         repository: repo,
@@ -157,7 +158,7 @@ void main() {
     );
     expect(o.executed, isTrue);
     expect(o.value!.success, isTrue);
-    expect(repo.store.observations.containsKey('o2'), isTrue);
+    expect(repo.observations.containsKey('o2'), isTrue);
   });
 
   test('UPDATE HealthObservation real execution', () async {
@@ -169,7 +170,7 @@ void main() {
       provenance: prov('prov-1'),
     );
     expect(o.value!.success, isTrue);
-    expect(repo.store.observations['o3']!.value, 118);
+    expect(repo.observations['o3']!.value, 118);
   });
 
   test('ARCHIVE observation soft status ≠ DELETE PHR', () async {
@@ -181,7 +182,7 @@ void main() {
     );
     expect(archived.value!.success, isTrue);
     expect(
-      repo.store.observations['o4']!.status,
+      repo.observations['o4']!.status,
       HealthRecordStatus.archived,
     );
     final phrDelete = await entry.requestSensitiveDelete(
@@ -340,7 +341,7 @@ void main() {
         guidanceEngine: guidance,
       ),
     );
-    final unbound = LifexProductionComposition.assemble(
+    final bundle = LifexProductionComposition.assemble(
       medicalDatabaseManager: _FakeDb(),
       aiModuleBundle: ai,
       aiServiceRouter: AiServiceRouter(
@@ -349,7 +350,16 @@ void main() {
       knowledgeEngine: LifexKnowledgeEngine(corpus: corpus),
       corpus: corpus,
       clock: clock,
-    ).sensitiveActionEntry;
+      healthObservationStore: FileHealthObservationStore(
+        rootDirectory: Directory.systemTemp.createTempSync('lifex_unbound_'),
+      ),
+    );
+    final unbound = LioSensitiveActionEntry(
+      lioGateway: bundle.lioGateway,
+      agentCore: bundle.agentCore,
+      aiServiceRouter: bundle.sensitiveActionEntry.aiServiceRouter,
+      aiHubGateway: bundle.sensitiveActionEntry.aiHubGateway,
+    );
     final o = await unbound.requestHealthRead(
       gatewayRequest: req(id: 'ub', action: 'read_health'),
       patientId: 'patient-1',
@@ -375,7 +385,7 @@ void main() {
       final offenders = <String>[];
       for (final f in dartFiles(Directory('lib/screens'))) {
         final t = f.readAsStringSync();
-        if (RegExp(r'HealthDataRepository|InMemoryHealthRepository|sqflite')
+        if (RegExp(r'HealthDataRepository|InMemoryHealthRepository|sqflite|FileHealthObservationStore')
             .hasMatch(t)) {
           offenders.add(norm(f.path));
         }

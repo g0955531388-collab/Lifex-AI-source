@@ -333,6 +333,8 @@ void main() {
       corpus: corpus,
       lioGateway: bundle.lioGateway,
       sensitiveActionEntry: bundle.sensitiveActionEntry,
+      healthObservationRepository: bundle.healthObservationRepository,
+      healthObservationService: bundle.healthObservationService,
     );
     await expectLater(
       _appContextFrom(broken),

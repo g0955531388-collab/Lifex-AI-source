@@ -749,7 +749,7 @@ class LioSensitiveActionEntry {
     );
   }
 
-  /// ARCHIVE ملاحظة صحية — منفصل عن DELETE PHR.
+  /// ARCHIVE ملاحظة صحية — منفصل عن DELETE.
   Future<LioSensitiveActionOutcome<HealthObservationOpResult>>
       requestHealthObservationArchive({
     required LioGatewayRequest gatewayRequest,
@@ -767,6 +767,27 @@ class LioSensitiveActionEntry {
     return authorizeThenRun(
       request: gatewayRequest,
       run: () => svc.archive(observationId: observationId),
+    );
+  }
+
+  /// DELETE ملاحظة صحية — صلب، منفصل عن ARCHIVE وPHR DELETE.
+  Future<LioSensitiveActionOutcome<HealthObservationOpResult>>
+      requestHealthObservationDelete({
+    required LioGatewayRequest gatewayRequest,
+    required String observationId,
+  }) {
+    final svc = healthObservationService;
+    if (svc == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => HealthObservationOpResult.failed(
+              'HealthObservationApplicationService unbound',
+            ),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () => svc.delete(observationId: observationId),
     );
   }
 

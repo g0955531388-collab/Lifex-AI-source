@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/health_data/health_data_types.dart';
 import 'package:lifex_ai/core/health_data/health_observation_application_service.dart';
-import 'package:lifex_ai/core/health_data/health_repository.dart';
+import 'package:lifex_ai/core/health_data/in_memory_health_observation_repository.dart';
 import 'package:lifex_ai/core/lio/knowledge_engine/knowledge_engine.dart';
 import 'package:lifex_ai/core/lio/knowledge_engine/retrieval_adapters.dart';
 import 'package:lifex_ai/core/lio/lifex_production_composition.dart';
@@ -145,7 +145,7 @@ void main() {
       ),
       encyclopediaShareBridge: EncyclopediaShareBridge(copy: (_) async {}),
       healthObservationService: HealthObservationApplicationService(
-        repository: InMemoryHealthRepository(),
+        repository: InMemoryHealthObservationRepository(),
       ),
     );
   });

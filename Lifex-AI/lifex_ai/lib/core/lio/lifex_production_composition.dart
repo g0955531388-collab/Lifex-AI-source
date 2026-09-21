@@ -15,6 +15,11 @@ import '../agent/knowledge/knowledge_engine_bridge.dart';
 import '../agent/knowledge/knowledge_retriever.dart';
 import '../agent/knowledge/medical_bundle_corpus_seeder.dart';
 import '../agent/knowledge/production_knowledge_composition.dart';
+import '../health_data/file_health_observation_store.dart';
+import '../health_data/health_observation_application_service.dart';
+import '../health_data/health_observation_repository.dart';
+import '../health_data/in_memory_health_observation_repository.dart';
+import '../health_data/persistent_health_observation_repository.dart';
 import 'knowledge_engine/ingestion/ingestion_pipeline.dart';
 import 'knowledge_engine/knowledge_engine.dart';
 import 'knowledge_engine/retrieval_adapters.dart';
@@ -36,6 +41,8 @@ class LifexProductionBundle {
     required this.corpus,
     required this.lioGateway,
     required this.sensitiveActionEntry,
+    required this.healthObservationRepository,
+    required this.healthObservationService,
   });
 
   final LifexIntelligenceFabric fabric;
@@ -51,6 +58,12 @@ class LifexProductionBundle {
 
   /// نقطة دخول Application الإلزامية قبل Agent/Tool/MCP.
   final LioSensitiveActionEntry sensitiveActionEntry;
+
+  /// المالك القانوني لـ HealthObservation — Persistent فقط في الإنتاج.
+  final HealthObservationRepository healthObservationRepository;
+
+  /// Application Service للملاحظات — مربوط بنفس Entry.
+  final HealthObservationApplicationService healthObservationService;
 
   /// مسار معرفة إنتاجي موحّد (لا Stub / لا مسار ثانٍ).
   bool get isUnifiedProductionKnowledgePath {
@@ -69,6 +82,24 @@ class LifexProductionBundle {
       sensitiveActionEntry.aiServiceRouter.hubGateway,
       sensitiveActionEntry.aiHubGateway,
     )) {
+      return false;
+    }
+    if (!identical(
+      sensitiveActionEntry.healthObservationService,
+      healthObservationService,
+    )) {
+      return false;
+    }
+    if (!identical(
+      healthObservationService.repository,
+      healthObservationRepository,
+    )) {
+      return false;
+    }
+    if (healthObservationRepository is InMemoryHealthObservationRepository) {
+      return false;
+    }
+    if (healthObservationRepository is! PersistentHealthObservationRepository) {
       return false;
     }
     if (knowledgeRetriever is KnowledgeEngineUnavailableRetriever) {
@@ -122,6 +153,7 @@ class LifexProductionComposition {
     KnowledgeIngestionPipeline? ingestionPipeline,
     LifexClock? clock,
     ProductionLioGateway? lioGateway,
+    HealthObservationPersistentStore? healthObservationStore,
   }) {
     final sharedCorpus = corpus ?? InMemoryKnowledgeCorpus();
     final LifexKnowledgeEngine? sharedEngine = !knowledgeEngineConnected
@@ -180,11 +212,17 @@ class LifexProductionComposition {
       );
     }
 
+    final store = healthObservationStore ?? FileHealthObservationStore();
+    final healthRepo = PersistentHealthObservationRepository(store: store);
+    final healthSvc =
+        HealthObservationApplicationService(repository: healthRepo);
+
     final entry = LioSensitiveActionEntry(
       lioGateway: gateway,
       agentCore: agentCore,
       aiServiceRouter: aiServiceRouter,
       aiHubGateway: aiServiceRouter.hubGateway,
+      healthObservationService: healthSvc,
     );
 
     return LifexProductionBundle(
@@ -195,6 +233,8 @@ class LifexProductionComposition {
       corpus: sharedCorpus,
       lioGateway: gateway,
       sensitiveActionEntry: entry,
+      healthObservationRepository: healthRepo,
+      healthObservationService: healthSvc,
     );
   }
 }
