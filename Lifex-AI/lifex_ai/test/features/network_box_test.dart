@@ -50,7 +50,7 @@ void main() {
         unitId: 'hospital',
         title: 'مخبر',
         place: 'دمشق',
-        scheduledAt: DateTime.now().add(const Duration(hours: 2)),
+        scheduledAt: DateTime.now().add(const Duration(days: 1)),
       );
       expect(booking.accessCode, startsWith('LX'));
       expect(booking.status, 'awaitingServer');
