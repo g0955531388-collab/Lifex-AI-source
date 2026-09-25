@@ -8,6 +8,8 @@ library lifex_ai.screens.booking_workspace_screen;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/network_box/box_unit_catalog.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/network_box/unified_booking_service.dart';
@@ -63,8 +65,36 @@ class BookingWorkspaceScreen extends StatelessWidget {
                       trailing: IconButton(
                         tooltip: 'حذف الحجز',
                         icon: const Icon(Icons.delete_outline),
-                        onPressed: () {
-                          bookings.removeAt(i);
+                        onPressed: () async {
+                          final profileId =
+                              controller.activeProfileId ?? 'local';
+                          final entry =
+                              context.read<LioSensitiveActionEntry>();
+                          final outcome = await entry.authorizeThenRun<void>(
+                            request: LioGatewayRequest(
+                              requestId:
+                                  'booking_del_${i}_${DateTime.now().millisecondsSinceEpoch}',
+                              correlationId: 'booking_$profileId',
+                              identityAccountId: profileId,
+                              purpose: 'scheduling',
+                              requestedAction: 'delete_local_booking',
+                              dataScope: 'profile_basic',
+                              sensitivity: LioDataSensitivity.personal,
+                              consent: const LioConsentContext(
+                                consentGranted: true,
+                                purposeAligned: true,
+                              ),
+                              riskLevel: LioActionRisk.medium,
+                              timestamp: DateTime.now().toUtc(),
+                              authenticated: true,
+                              authorized: true,
+                              minimumNecessarySatisfied: true,
+                            ),
+                            run: () async {
+                              bookings.removeAt(i);
+                            },
+                          );
+                          if (!outcome.executed) return;
                           controller.saveActiveProfileChanges();
                         },
                       ),
