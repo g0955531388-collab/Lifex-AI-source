@@ -33,6 +33,7 @@ import 'data/medical_database_manager.dart';
 
 import 'features/accessibility/assistive_vision_engine.dart';
 import 'features/accessibility/multi_sensory_alert_manager.dart';
+import 'features/accessibility/platform_notification_adapter.dart';
 import 'features/ai/ai_bridge.dart';
 import 'features/ai/ai_service_router.dart';
 import 'features/ai/unified_ai_hub_gateway.dart';
@@ -47,6 +48,9 @@ import 'features/emergency/risk_level_engine.dart';
 import 'features/emergency/silent_emergency_signal_controller.dart';
 import 'features/energy/battery_monitor.dart';
 import 'features/energy/energy_manager.dart';
+import 'features/energy/platform_battery_reader.dart';
+import 'features/energy/platform_vibration_executor.dart';
+import 'features/energy/platform_visual_flash_executor.dart';
 import 'features/energy/survival_energy_mode.dart';
 import 'features/finance/billing_exemption_policy.dart';
 import 'features/finance/payment_controller.dart';
@@ -164,28 +168,6 @@ class _InMemoryCredentialStore implements SecureCredentialStore {
   }
 }
 
-/// ⚠️ تنفيذ مؤقت (No-op) لتنفيذ الاهتزاز والومضة البصرية — لا يفعل شيئاً
-/// فعلياً بعد. يجب استبداله بتنفيذ حقيقي عبر حزمة vibration وواجهة
-/// وميض شاشة حقيقية قبل الاعتماد عليه لتنبيه مستخدمين صم فعلياً.
-class _NoopVibrationExecutor implements VibrationExecutor {
-  @override
-  Future<void> vibrate({required List<int> patternMs}) async {
-    // TODO: ربط هذا بحزمة vibration الفعلية.
-  }
-}
-
-class _NoopVisualFlashExecutor implements VisualFlashExecutor {
-  @override
-  Future<void> flashScreen({required int repeatCount}) async {
-    // TODO: تنفيذ ومضة شاشة فعلية (Overlay بلون متغيّر بسرعة).
-  }
-
-  @override
-  Future<void> flashCameraLight({required int repeatCount}) async {
-    // TODO: ربط هذا بحزمة تتحكم بفلاش الكاميرا الخلفي.
-  }
-}
-
 /// تهيئة كل الأنظمة الأساسية بالترتيب الصحيح قبل تشغيل أي واجهة.
 Future<LifexAppContext> _bootstrapLifexAi() async {
   ErrorHandler.instance.report(
@@ -268,9 +250,12 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
 
   // 4-ب) التنبيهات متعددة الحواس (اهتزاز + ومضة) لضمان وصول تنبيهات
   // الطوارئ لمستخدمين صم أو ضعاف سمع، وليس صوتاً فقط.
+  // PHASE 11: استخدام تنفيذات حقيقية بدل no-op.
+  final vibrationExecutor = PlatformVibrationExecutor();
+  final visualFlashExecutor = PlatformVisualFlashExecutor();
   final multiSensoryAlertManager = MultiSensoryAlertManager(
-    vibrationExecutor: _NoopVibrationExecutor(), // ⚠️ راجع التحذير أعلاه
-    visualFlashExecutor: _NoopVisualFlashExecutor(),
+    vibrationExecutor: vibrationExecutor,
+    visualFlashExecutor: visualFlashExecutor,
   );
 
   // 4-ج) طبقة قرار "الطوارئ الصامتة" — ضوء فقط بدل صوت/اهتزاز، إلا إذا
@@ -284,6 +269,11 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     isSilentModeEnabledSystemWide: () => GlobalAdminManager.instance
         .isEventEnabled('emergency_silent_light_mode_enabled'),
   );
+
+  // PHASE 11: إعداد محول الإشعارات.
+  final notificationAdapter = PlatformNotificationAdapter();
+  await notificationAdapter.initialize();
+  await notificationAdapter.createEmergencyChannel();
 
   final emergencyManager = EmergencyManager(
     riskLevelEngine: riskLevelEngine,
@@ -315,7 +305,9 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   );
 
   // 5) الطاقة — يربط مراقب البطارية بوضع البقاء.
-  final batteryMonitor = BatteryMonitor();
+  // PHASE 11: استخدام قارئ البطارية الحقيقي بدلاً من عدم استخدام أي قارئ.
+  final batteryReader = PlatformBatteryReader();
+  final batteryMonitor = BatteryMonitor(reader: batteryReader);
   final survivalEnergyMode = SurvivalEnergyMode();
   final energyManager = EnergyManager(
     batteryMonitor: batteryMonitor,
@@ -333,7 +325,12 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
       );
     },
     sendFunction: (alert) async {
-      return false;
+      // PHASE 11: محول الإشعارات الحقيقي.
+      await notificationAdapter.showEmergencyAlert(
+        title: alert.title ?? 'Lifex Alert',
+        body: alert.body ?? 'Health alert',
+      );
+      return true;
     },
   );
 
@@ -383,7 +380,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   final terminologyConnector = TerminologyConnector()
     ..registerProvider(RxNormTerminologyProvider());
   // ملاحظة: مزوّد ICD-11 يحتاج clientId/clientSecret حقيقيين من
-  // icd.who.int/icdapi قبل تسجيله هنا — غير مُفعَّل افتراضياً.
+  // icd.who.int/icdapi قبل تسجيله هنا — غير مُفعَّل ا��تراضياً.
 
   ErrorHandler.instance.report(
     'APP_BOOTSTRAP_COMPLETED',
@@ -419,7 +416,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   );
 }
 
-/// جذر شجرة الواجهات — يوفّر كل المديرين المركزيين عبر Provider لكل
+/// جذر شجر�� الواجهات — يوفّر كل المديرين المركزيين عبر Provider لكل
 /// الشاشات دون الحاجة لتمريرهم يدوياً عبر كل مُنشئ (constructor).
 class LifexAiApp extends StatelessWidget {
   const LifexAiApp({super.key, required this.appContext});
