@@ -9,10 +9,10 @@
 /// 3) توفيرهم لشجرة الواجهات كاملة عبر Provider، بدلاً من إنشاء نسخ
 ///    متفرقة من كل مدير داخل كل شاشة على حدة.
 ///
-/// ⚠️ ملاحظة نطاق: بعض المديرين هنا (المحفظة، بوابة AI الموحدة،
+/// ملاحظة نطاق: بعض المديرين هنا (المحفظة، بوابة AI الموحدة،
 /// المزامنة السحابية) يحتاجون بيانات اعتماد حقيقية (مفاتيح API، خادم
 /// فعلي) قبل العمل الكامل. حتى ذلك الحين تُستخدم تنفيذات مؤقتة آمنة
-/// (No-op/In-memory) موضَّحة بتعليق ⚠️ عند كل واحدة، بحيث يبدأ التطبيق
+/// (No-op/In-memory) موضحة بتعليق عند كل واحدة، بحيث يبدأ التطبيق
 /// ويعمل دون كراش، بدل تعطيل الميزة بالكامل حتى توفر الاعتماديات.
 /// =============================================================
 library lifex_ai.main;
@@ -93,7 +93,7 @@ Future<void> main() async {
   runApp(LifexAiApp(appContext: appContext));
 }
 
-/// حزمة تحمل كل المديرين المركزيين الجاهزين بعد التهيئة، لتُمرَّر
+/// حزمة تحمل كل المديرين المركزيين الجاهزين بعد التهيئة، لتمرر
 /// لشجرة الـ Providers دفعة واحدة.
 class LifexAppContext {
   const LifexAppContext({
@@ -147,7 +147,7 @@ class LifexAppContext {
   final LastingSearchIndex lastingSearchIndex;
 }
 
-/// ⚠️ تنفيذ مؤقت (In-memory) لتخزين بيانات الاعتماد — **غير آمن** لأي
+/// تنفيذ مؤقت (In-memory) لتخزين بيانات الاعتماد — غير آمن لأي
 /// استخدام حقيقي. يجب استبداله بـ FlutterSecureStorageCredentialStore
 /// (يستخدم حزمة flutter_secure_storage الموجودة بالفعل في pubspec.yaml)
 /// قبل أي إطلاق فعلي للتطبيق.
@@ -189,7 +189,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   } catch (error) {
     ErrorHandler.instance.report(
       'PROFILE_VAULT_LOAD_FAILED',
-      'تعذّر استعادة الملفات المحفوظة: $error',
+      'تعذر استعادة الملفات المحفوظة: $error',
       severity: ErrorSeverity.warning,
       sourceModule: 'main',
     );
@@ -235,9 +235,9 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     symptomBodySystemMap: medicalKnowledge.symptomBodySystemMap,
   );
 
-  // 3) بوابة الذكاء الاصطناعي الخارجية الموحّدة (Gemini/ChatGPT/Claude).
+  // 3) بوابة الذكاء الاصطناعي الخارجية الموحدة (Gemini/ChatGPT/Claude).
   final unifiedAiHubGateway = UnifiedAiHubGateway(
-    credentialStore: _InMemoryCredentialStore(), // ⚠️ راجع التحذير أعلاه
+    credentialStore: _InMemoryCredentialStore(),
   );
   final aiServiceRouter = AiServiceRouter(hubGateway: unifiedAiHubGateway);
 
@@ -249,8 +249,8 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   );
 
   // 4-ب) التنبيهات متعددة الحواس (اهتزاز + ومضة) لضمان وصول تنبيهات
-  // الطوارئ لمستخدمين صم أو ضعاف سمع، وليس صوتاً فقط.
-  // PHASE 11: استخدام تنفيذات حقيقية بدل no-op.
+  // الطوارئ لمستخدمين صم أو ضعاف سمع.
+  // PHASE 11: استخدام تنفيذات حقيقية.
   final vibrationExecutor = PlatformVibrationExecutor();
   final visualFlashExecutor = PlatformVisualFlashExecutor();
   final multiSensoryAlertManager = MultiSensoryAlertManager(
@@ -258,11 +258,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     visualFlashExecutor: visualFlashExecutor,
   );
 
-  // 4-ج) طبقة قرار "الطوارئ الصامتة" — ضوء فقط بدل صوت/اهتزاز، إلا إذا
-  // وردت مكالمة من رقم موثوق. راجع silent_emergency_signal_controller.dart.
-  // مربوطة الآن فعلياً بمفتاح الحدث الدقيق في لوحة الأدمن
-  // (GlobalAdminManager)، فيمكن للأدمن تعطيل هذا الوضع مباشرة من
-  // AdminDashboardScreen دون الحاجة لتحديث التطبيق.
+  // 4-ج) طبقة قرار "الطوارئ الصامتة".
   final silentEmergencySignalController = SilentEmergencySignalController(
     multiSensoryAlertManager: multiSensoryAlertManager,
     emergencyContactsRegistry: emergencyPhoneContactsRegistry,
@@ -282,13 +278,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     silentSignalController: silentEmergencySignalController,
   );
 
-  // 4-ج) طبقة الوكيل الذكي متعدد الوكلاء (AI Agent Orchestration Layer).
-  // يُبنى بعد medicalDatabaseManager وaiModuleBundle وaiServiceRouter
-  // وriskLevelEngine مباشرة، لأنه يُعيد استخدامها جميعاً بدل تكرارها.
-  //
-  // ⚠️ راجع core/agent/adapters/placeholder_ocr_extractor.dart: OCR
-  // الفعلي غير موصول بعد في كامل المشروع (لم يكن موصولاً قبل هذه
-  // الطبقة أيضاً) — الأدوات المعتمدة عليه تفشل بأمان بدل قراءة نص وهمي.
+  // 4-د) طبقة الوكيل الذكي.
   final smartVisionEngine = SmartVisionEngine.instance;
   const ocrTextExtractor = PlaceholderOcrExtractor();
   final medicalOcrReader = MedicalOcrReader(ocrExtractor: ocrTextExtractor);
@@ -305,7 +295,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   );
 
   // 5) الطاقة — يربط مراقب البطارية بوضع البقاء.
-  // PHASE 11: استخدام قارئ البطارية الحقيقي بدلاً من عدم استخدام أي قارئ.
+  // PHASE 11: استخدام قارئ البطارية الحقيقي.
   final batteryReader = PlatformBatteryReader();
   final batteryMonitor = BatteryMonitor(reader: batteryReader);
   final survivalEnergyMode = SurvivalEnergyMode();
@@ -325,30 +315,29 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
       );
     },
     sendFunction: (alert) async {
-      // PHASE 11: محول الإشعارات الحقيقي.
+      // PHASE 11: عرض تنبيه محلي على الجهاز الحالي.
+      // ملاحظة: هذا ليس تسليماً إلى جهة الثقة؛ إنه تنبيه محلي فقط.
+      // إرسال حقيقي إلى جهات الثقة (SMS/Push/etc) يتطلب قنوات خارجية
+      // متصلة وموثقة، وهو غير متاح حالياً.
       await notificationAdapter.showEmergencyAlert(
-        title: alert.title ?? 'Lifex Alert',
-        body: alert.body ?? 'Health alert',
+        title: 'تنبيه صحي',
+        body: alert.messageAr,
       );
-      return true;
+      // إرجاع false لأن الإشعار المحلي لا يعني تسليماً خارجياً.
+      return false;
     },
   );
 
   // 7) المحفظة الرقمية والمعاملات المالية.
   final transactionLedger = TransactionLedger();
   final walletManager = WalletManager(
-    // ⚠️ يتطلب مفتاح Stripe حقيقي قبل قبول أي دفعة فعلية — راجع
-    // REGULATORY_COMPLIANCE_NOTES.md أولاً.
     gatewayClient: StripePaymentGatewayClient(publishableKey: 'pk_test_placeholder'),
     ledger: transactionLedger,
   );
   final paymentController = PaymentController(walletManager: walletManager);
   final transactionService = TransactionService(ledger: transactionLedger);
 
-  // 7-ب) فوترة الاشتراكات — فرد 100 دولار/سنة، وحدة صحية 300، مستشفى 600.
-  // الاشتراك عادي بلا إعلانات ولا خدمات خاصة. التحويل والخدمات الأخرى برسوم.
-  // المعفى: إعاقة ببطاقة من بلد الحساب، مرض دائم في الملف، مكفوفون.
-  // ⚠️ يتطلب Client ID فعلي من حساب PayPal تجاري حقيقي قبل أي دفعة حقيقية.
+  // 7-ب) فوترة الاشتراكات.
   final subscriptionBillingManager = SubscriptionBillingManager(
     ledger: transactionLedger,
     exemptionPolicy: const BillingExemptionPolicy(),
@@ -358,14 +347,12 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
 
   // 8) المزامنة السحابية.
   final cloudBackendClient = CloudBackendClient(
-    // TODO: استبدال هذا الرابط برابط خادم Lifex-AI الخلفي الفعلي.
     baseUrl: 'https://backend.lifex-ai.example.com',
   );
   final cloudSyncManager = CloudSyncManager(backendClient: cloudBackendClient);
 
-  // 9) خدمات الترجمة الديناميكية والمصطلحات الطبية الرسمية والأجهزة الذكية.
+  // 9) خدمات الترجمة والأجهزة الذكية.
   final translationService = TranslationService(
-    // TODO: استبدال هذا بمفتاح Google Cloud Translation حقيقي.
     provider: GoogleTranslationProvider(apiKey: 'placeholder-translation-key'),
   );
   SpeechToTextProcessor(
@@ -379,8 +366,6 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   final healthDeviceReader = HealthDeviceReader();
   final terminologyConnector = TerminologyConnector()
     ..registerProvider(RxNormTerminologyProvider());
-  // ملاحظة: مزوّد ICD-11 يحتاج clientId/clientSecret حقيقيين من
-  // icd.who.int/icdapi قبل تسجيله هنا — غير مُفعَّل ا��تراضياً.
 
   ErrorHandler.instance.report(
     'APP_BOOTSTRAP_COMPLETED',
@@ -416,8 +401,8 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   );
 }
 
-/// جذر شجر�� الواجهات — يوفّر كل المديرين المركزيين عبر Provider لكل
-/// الشاشات دون الحاجة لتمريرهم يدوياً عبر كل مُنشئ (constructor).
+/// جذر شجرة الواجهات — يوفر كل المديرين المركزيين عبر Provider
+/// للشاشات دون الحاجة لتمريرهم يدوياً عبر كل منشئ.
 class LifexAiApp extends StatelessWidget {
   const LifexAiApp({super.key, required this.appContext});
 
