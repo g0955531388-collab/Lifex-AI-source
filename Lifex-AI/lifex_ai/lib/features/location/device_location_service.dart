@@ -1,114 +1,107 @@
 /// =============================================================
-/// Lifex-AI — الموقع الجغرافي والطوارئ
+/// Lifex-AI — الموقع الجغرافي
 /// الملف: device_location_service.dart
-/// المسار: lib/features/location/device_location_service.dart
-/// الوصف: خدمة الموقع الحقيقية — تحصل على الموقع الجغرافي من
-/// نظام Android عبر حزمة geolocator: ^9.0.2. تميز بوضوح بين حالات
-/// الفشل المختلفة بدون اختلاق إحداثيات.
+/// الوصف: خدمة الموقع — تقرأ GPS الجهاز عبر [GeolocationGateway].
+/// لا تعرف شيئاً عن geolocator مباشرة. تميز بوضوح بين حالات
+/// الفشل (صلاحية، خدمات، إحداثيات غير صحيحة) بدون اختلاق.
 /// =============================================================
 
 import 'dart:async';
 
-import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
-
+import 'geolocation_gateway.dart';
 import 'location_result.dart';
 
-/// خدمة الموقع الحقيقية — تحصل على الموقع من GPS الجهاز.
 class DeviceLocationService {
-  DeviceLocationService({Geolocator? geolocator})
-      : _geolocator = geolocator ?? Geolocator();
+  DeviceLocationService({
+    GeolocationGateway? gateway,
+    Duration timeout = const Duration(seconds: 30),
+  })  : _gateway = gateway ?? const GeolocatorGateway(),
+        _timeout = timeout;
 
-  final Geolocator _geolocator;
+  final GeolocationGateway _gateway;
+  final Duration _timeout;
 
-  /// طلب صلاحية الموقع من المستخدم.
-  /// تعيد true إذا تم الموافقة، false إذا تم الرفض.
+  /// طلب صلاحية الموقع من المستخدم. true فقط إذا منحت فعلاً.
   Future<bool> requestLocationPermission() async {
     try {
-      final status = await Permission.location.request();
-      return status.isGranted;
+      return await _gateway.requestPermission() == GeoPerm.granted;
     } catch (_) {
       return false;
     }
   }
 
-  /// الحصول على الموقع الجغرافي الحالي.
-  /// تعيد نتيجة تحتوي على الإحداثيات (إن نجحت)
-  /// أو تفاصيل الفشل (إن فشلت).
   Future<LocationResult> getCurrentLocation() async {
     try {
-      final permission = await Permission.location.status;
-      if (permission.isDenied) {
-        return FailureLocationResult(
-          reason: LocationFailureReason.permissionDenied,
-          message: 'User denied location permission',
-        );
-      }
-      if (permission.isPermanentlyDenied) {
-        return FailureLocationResult(
-          reason: LocationFailureReason.permissionPermanentlyDenied,
-          message: 'User permanently denied location permission',
-        );
+      switch (await _gateway.checkPermission()) {
+        case GeoPerm.granted:
+          break;
+        case GeoPerm.denied:
+          return const FailureLocationResult(
+            reason: LocationFailureReason.permissionDenied,
+            message: 'Location permission not granted',
+          );
+        case GeoPerm.deniedForever:
+          return const FailureLocationResult(
+            reason: LocationFailureReason.permissionPermanentlyDenied,
+            message: 'Location permission permanently denied',
+          );
+        case GeoPerm.unknown:
+          return const FailureLocationResult(
+            reason: LocationFailureReason.unavailable,
+            message: 'Location permission state unknown',
+          );
       }
 
-      final serviceEnabled = await _geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        return FailureLocationResult(
+      if (!await _gateway.isLocationServiceEnabled()) {
+        return const FailureLocationResult(
           reason: LocationFailureReason.locationServicesDisabled,
           message: 'Location services are disabled',
         );
       }
 
-      final position = await _geolocator
-          .getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.best,
-            timeLimit: const Duration(seconds: 30),
-          )
-          .timeout(
-            const Duration(seconds: 35),
-            onTimeout: () => throw TimeoutException('Location acquisition timeout'),
-          );
+      final fix = await _gateway
+          .getCurrentFix(timeout: _timeout)
+          .timeout(_timeout + const Duration(seconds: 5));
 
-      if (position == null) {
+      // التحقق من صحة الإحداثيات.
+      if (fix.latitude.isNaN ||
+          fix.latitude < -90 ||
+          fix.latitude > 90) {
         return FailureLocationResult(
           reason: LocationFailureReason.invalidResult,
-          message: 'Position is null',
+          message: 'Invalid latitude: ${fix.latitude}',
         );
       }
-
-      if (position.latitude < -90 || position.latitude > 90) {
+      if (fix.longitude.isNaN ||
+          fix.longitude < -180 ||
+          fix.longitude > 180) {
         return FailureLocationResult(
           reason: LocationFailureReason.invalidResult,
-          message: 'Invalid latitude: ${position.latitude}',
-        );
-      }
-      if (position.longitude < -180 || position.longitude > 180) {
-        return FailureLocationResult(
-          reason: LocationFailureReason.invalidResult,
-          message: 'Invalid longitude: ${position.longitude}',
+          message: 'Invalid longitude: ${fix.longitude}',
         );
       }
 
       return SuccessLocationResult(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        accuracy: position.accuracy,
+        latitude: fix.latitude,
+        longitude: fix.longitude,
+        accuracy: fix.accuracy,
         timestamp: DateTime.now(),
       );
     } on TimeoutException {
       return FailureLocationResult(
         reason: LocationFailureReason.timeout,
-        message: 'Location acquisition timed out after 30 seconds',
+        message:
+            'Location acquisition timed out after ${_timeout.inSeconds} seconds',
       );
-    } on LocationServiceDisabledException {
-      return FailureLocationResult(
+    } on GeoServiceDisabled {
+      return const FailureLocationResult(
         reason: LocationFailureReason.locationServicesDisabled,
-        message: 'Location services disabled exception',
+        message: 'Location services disabled',
       );
-    } on PermissionDeniedException {
-      return FailureLocationResult(
+    } on GeoPermissionDenied {
+      return const FailureLocationResult(
         reason: LocationFailureReason.permissionDenied,
-        message: 'Permission denied exception',
+        message: 'Location permission denied',
       );
     } catch (e) {
       return FailureLocationResult(
@@ -117,12 +110,4 @@ class DeviceLocationService {
       );
     }
   }
-}
-
-class TimeoutException implements Exception {
-  TimeoutException(this.message);
-  final String message;
-
-  @override
-  String toString() => 'TimeoutException: $message';
 }
