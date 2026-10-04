@@ -1,0 +1,20 @@
+{
+  "schema_id": "LIFEX-GLOBAL-DONATIONS",
+  "version": "1.0",
+  "pack": 66,
+  "notABank": true,
+  "moneyMovesOnlyVia51": true,
+  "campaignIsNotDonation": true,
+  "donationIsNotPayment": true,
+  "paymentIsNotLedger": true,
+  "disbursementIsNotExpenditure": true,
+  "expenditureIsNotClinicalOutcome": true,
+  "noPanCvv": true,
+  "anonymousInternallyKnown": true,
+  "donationDoesNotGrantHealthRecord": true,
+  "taxDeductibleNotAssumed": true,
+  "emergencyDoesNotSkipControls": true,
+  "riskSignalIsNotGuilt": true,
+  "aiCannotApproveMoneyOrTreatment": true,
+  "integerMinorUnits": true
+}
