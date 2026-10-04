@@ -23,7 +23,7 @@ class PlatformBatteryReader implements BatteryReader {
       // تثبيت القيمة بين 0 و 100
       return level.clamp(0, 100);
     } catch (_) {
-      // عند الفشل، ��فترض البطارية على حالة جيدة (100%)
+      // عند الفشل، نفترض البطارية على حالة جيدة (100%)
       return 100;
     }
   }
@@ -58,6 +58,6 @@ class PlatformBatteryReader implements BatteryReader {
 
   /// تنظيف الموارد (اختياري في هذا السياق)
   void dispose() {
-    // لا توجد موارد قابلة للإطلاق من Battery نفسه
+    // لا تو��د موارد قابلة للإطلاق من Battery نفسه
   }
 }
