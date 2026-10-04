@@ -1,144 +1,142 @@
-/// =============================================================
-/// Lifex-AI — اختبارات ��لطاقة
-/// الملف: platform_battery_reader_test.dart
-/// الوصف: اختبارات وحدة لقارئ البطارية الحقيقي.
-/// =============================================================
+// =============================================================
+// Lifex-AI — اختبارات قارئ البطارية
+// يستخدم FakeSource عند حد المنصة فقط؛ منطق PlatformBatteryReader
+// و BatteryMonitor حقيقي.
+// =============================================================
+
+import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:battery_plus/battery_plus.dart';
-import 'package:mockito/mockito.dart';
-
 import 'package:lifex_ai/features/energy/battery_monitor.dart';
 import 'package:lifex_ai/features/energy/platform_battery_reader.dart';
 
-// توليد Mock للـ Battery plugin
-class MockBattery extends Mock implements Battery {}
+class FakeSource implements BatterySource {
+  int levelValue = 50;
+  bool charging = false;
+  Object? levelError;
+  Object? chargingError;
+  final StreamController<bool> controller = StreamController<bool>();
+
+  @override
+  Future<int> level() async {
+    if (levelError != null) throw levelError!;
+    return levelValue;
+  }
+
+  @override
+  Future<bool> isCharging() async {
+    if (chargingError != null) throw chargingError!;
+    return charging;
+  }
+
+  @override
+  Stream<bool> chargingChanges() => controller.stream;
+}
 
 void main() {
-  group('PlatformBatteryReader', () {
-    late MockBattery mockBattery;
-    late PlatformBatteryReader reader;
+  late FakeSource source;
+  late PlatformBatteryReader reader;
 
-    setUp(() {
-      mockBattery = MockBattery();
-      reader = PlatformBatteryReader(battery: mockBattery);
+  setUp(() {
+    source = FakeSource();
+    reader = PlatformBatteryReader(source: source);
+  });
+
+  tearDown(() => source.controller.close());
+
+  group('currentLevel', () {
+    test('returns the real level', () async {
+      source.levelValue = 75;
+      expect(await reader.currentLevel(), 75);
     });
 
-    test('currentLevel returns valid battery percentage', () async {
-      when(mockBattery.batteryLevel).thenAnswer((_) async => 75);
-      final level = await reader.currentLevel();
-      expect(level, 75);
-      expect(level, greaterThanOrEqualTo(0));
-      expect(level, lessThanOrEqualTo(100));
+    test('clamps below 0 and above 100', () async {
+      source.levelValue = -10;
+      expect(await reader.currentLevel(), 0);
+      source.levelValue = 150;
+      expect(await reader.currentLevel(), 100);
     });
 
-    test('currentLevel clamps value at 0', () async {
-      when(mockBattery.batteryLevel).thenAnswer((_) async => -10);
-      final level = await reader.currentLevel();
-      expect(level, 0);
+    test('failure is reported, never replaced by a made-up value', () async {
+      source.levelError = Exception('no battery');
+      expect(reader.currentLevel(), throwsA(isA<BatteryReadException>()));
+    });
+  });
+
+  group('isCharging', () {
+    test('reflects the source', () async {
+      source.charging = true;
+      expect(await reader.isCharging(), isTrue);
+      source.charging = false;
+      expect(await reader.isCharging(), isFalse);
     });
 
-    test('currentLevel clamps value at 100', () async {
-      when(mockBattery.batteryLevel).thenAnswer((_) async => 150);
-      final level = await reader.currentLevel();
-      expect(level, 100);
+    test('failure is reported, not defaulted', () async {
+      source.chargingError = Exception('no state');
+      expect(reader.isCharging(), throwsA(isA<BatteryReadException>()));
+    });
+  });
+
+  group('statusStream', () {
+    test('emits level + charging on each change', () async {
+      source.levelValue = 42;
+      final future = reader.statusStream().first;
+      source.controller.add(true);
+      final status = await future;
+      expect(status.level, 42);
+      expect(status.isCharging, isTrue);
     });
 
-    test('currentLevel defaults to 100 on error', () async {
-      when(mockBattery.batteryLevel).thenThrow(Exception('Test error'));
-      final level = await reader.currentLevel();
-      expect(level, 100);
+    test('event whose level read fails is skipped; stream continues',
+        () async {
+      final received = <BatteryStatus>[];
+      final sub = reader.statusStream().listen(received.add);
+
+      source.levelError = Exception('transient');
+      source.controller.add(true);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(received, isEmpty);
+
+      source.levelError = null;
+      source.levelValue = 30;
+      source.controller.add(false);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(received, hasLength(1));
+      expect(received.single.level, 30);
+      expect(received.single.isCharging, isFalse);
+      await sub.cancel();
     });
 
-    test('isCharging returns true when charging', () async {
-      when(mockBattery.batteryState).thenAnswer((_) async => BatteryState.charging);
-      final charging = await reader.isCharging();
-      expect(charging, true);
-    });
-
-    test('isCharging returns false when discharging', () async {
-      when(mockBattery.batteryState).thenAnswer((_) async => BatteryState.discharging);
-      final charging = await reader.isCharging();
-      expect(charging, false);
-    });
-
-    test('isCharging returns false when full', () async {
-      when(mockBattery.batteryState).thenAnswer((_) async => BatteryState.full);
-      final charging = await reader.isCharging();
-      expect(charging, false);
-    });
-
-    test('isCharging defaults to false on error', () async {
-      when(mockBattery.batteryState).thenThrow(Exception('Test error'));
-      final charging = await reader.isCharging();
-      expect(charging, false);
-    });
-
-    test('statusStream emits BatteryStatus correctly', () async {
-      when(mockBattery.batteryLevel).thenAnswer((_) async => 50);
-      when(mockBattery.batteryState).thenAnswer((_) async => BatteryState.discharging);
-      when(mockBattery.onBatteryStateChanged).thenAnswer(
-        (_) => Stream.value(BatteryState.discharging),
-      );
-
-      final statusFuture = reader.statusStream().first;
-      final status = await statusFuture;
-
-      expect(status.level, 50);
-      expect(status.isCharging, false);
-      expect(status.readAt, isNotNull);
-    });
-
-    test('dispose cancels subscription', () async {
-      reader.dispose();
-      // dispose should not throw
-      expect(reader.dispose, returnsNormally);
+    test('source stream errors do not end or crash the stream', () async {
+      final received = <BatteryStatus>[];
+      final sub = reader.statusStream().listen(received.add);
+      source.controller.addError(StateError('plugin'));
+      source.levelValue = 20;
+      source.controller.add(true);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(received.single.level, 20);
+      await sub.cancel();
     });
   });
 
   group('BatteryMonitor with PlatformBatteryReader', () {
-    late MockBattery mockBattery;
-    late PlatformBatteryReader reader;
-    late BatteryMonitor monitor;
+    test('startMonitoring forwards real stream updates to listeners', () async {
+      source.levelValue = 15;
+      final monitor = BatteryMonitor(reader: reader);
+      final seen = <BatteryStatus>[];
+      monitor.addListener(seen.add);
+      monitor.startMonitoring();
 
-    setUp(() {
-      mockBattery = MockBattery();
-      reader = PlatformBatteryReader(battery: mockBattery);
-      monitor = BatteryMonitor(reader: reader);
-    });
+      source.controller.add(false);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
 
-    test('monitor starts with default status', () {
-      expect(monitor.lastKnownStatus.level, 100);
-      expect(monitor.lastKnownStatus.isCharging, false);
-    });
-
-    test('monitor updates status via updateStatus', () {
-      final newStatus = BatteryStatus(level: 25, isCharging: true);
-      monitor.updateStatus(newStatus);
-      expect(monitor.lastKnownStatus.level, 25);
-      expect(monitor.lastKnownStatus.isCharging, true);
-    });
-
-    test('monitor notifies listeners on status update', () {
-      var notified = false;
-      monitor.addListener((_) {
-        notified = true;
-      });
-      final newStatus = BatteryStatus(level: 50, isCharging: false);
-      monitor.updateStatus(newStatus);
-      expect(notified, true);
-    });
-
-    test('monitor can remove listeners', () {
-      var notifiedCount = 0;
-      final listener = (_) {
-        notifiedCount++;
-      };
-      monitor.addListener(listener);
-      monitor.updateStatus(BatteryStatus(level: 50, isCharging: false));
-      monitor.removeListener(listener);
-      monitor.updateStatus(BatteryStatus(level: 40, isCharging: false));
-      expect(notifiedCount, 1);
+      expect(seen, hasLength(1));
+      expect(monitor.lastKnownStatus.level, 15);
+      expect(monitor.lastKnownStatus.isCharging, isFalse);
     });
   });
 }
