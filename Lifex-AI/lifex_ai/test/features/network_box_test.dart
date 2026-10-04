@@ -46,16 +46,30 @@ void main() {
   group('UnifiedBookingService', () {
     test('ينشئ حجزاً برمز محلي بانتظار الخادم', () {
       final service = UnifiedBookingService(ProfileBoxStore(profile()));
+      // تاريخ مستقبلي نسبي: publicQueue() يستبعد الحجوزات الأقدم من يوم،
+      // لذلك لا يجوز تثبيت تاريخ مطلق يصبح ماضياً مع الوقت.
       final booking = service.add(
         unitId: 'hospital',
         title: 'مخبر',
         place: 'دمشق',
-        scheduledAt: DateTime(2026, 9, 20),
+        scheduledAt: DateTime.now().add(const Duration(days: 30)),
       );
       expect(booking.accessCode, startsWith('LX'));
       expect(booking.status, 'awaitingServer');
       expect(service.all(), hasLength(1));
       expect(service.publicQueue().first['code'], booking.accessCode);
+    });
+
+    test('الحجز الماضي لا يظهر في الدور العام', () {
+      final service = UnifiedBookingService(ProfileBoxStore(profile()));
+      service.add(
+        unitId: 'hospital',
+        title: 'قديم',
+        place: 'دمشق',
+        scheduledAt: DateTime.now().subtract(const Duration(days: 30)),
+      );
+      expect(service.all(), hasLength(1));
+      expect(service.publicQueue(), isEmpty);
     });
   });
 
