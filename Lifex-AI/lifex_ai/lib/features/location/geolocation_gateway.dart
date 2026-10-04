@@ -12,7 +12,7 @@
 
 import 'package:geolocator/geolocator.dart';
 
-/// رقراءة حقيقية من GPS.
+/// قراءة حقيقية من GPS.
 class GeoFix {
   const GeoFix({
     required this.latitude,
@@ -25,7 +25,7 @@ class GeoFix {
   final double? accuracy;
 }
 
-/// الصلاحية (من geolocator).
+/// الص��احية (من geolocator).
 enum GeoPerm { denied, deniedForever, granted, unknown }
 
 /// خدمات الموقع معطلة.
