@@ -1,12 +1,8 @@
 /// =============================================================
 /// Lifex-AI — واجهات التطبيق
 /// الملف: ai_agent_screen.dart
-/// المسار: lib/screens/ai_agent_screen.dart
-/// الوصف: شاشة "Lifex-AI Agent" (بند 22). تعرض حالة المهمة الحالية
-/// كقائمة خطوات (✓/●/○) دون كشف أي تفكير داخلي للنموذج (بند 21)، مع
-/// زر إيقاف المهمة (بند 20)، وتبديل بين وضعي المحادثة والوكيل (بند 23).
-/// لا تتعامل هذه الشاشة مع Planner/Executor/ToolRegistry مباشرة أبداً؛
-/// كل تفاعل يمر عبر CoordinatorAgent.handleUserRequest فقط.
+/// لا تتعامل هذه الشاشة مع Planner/Executor/ToolRegistry أو Agent/Router مباشرة؛
+/// كل تفاعل حسّاس يمر عبر LioSensitiveActionEntry → ProductionLioGateway.
 /// =============================================================
 library lifex_ai.screens.ai_agent_screen;
 
@@ -14,12 +10,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/agent/agent_context.dart';
-import '../core/agent/agent_core.dart';
 import '../core/agent/agent_permissions.dart';
 import '../core/agent/agent_result.dart';
 import '../core/agent/agent_state.dart';
 import '../core/agent/agents/report_agent.dart';
-import '../features/ai/ai_service_router.dart';
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 
 enum _AppMode { chat, agent }
 
@@ -29,8 +25,6 @@ class _ProgressStep {
   final String labelAr;
 }
 
-/// ترتيب الخطوات المعروضة للمستخدم — تبسيط مقصود لآلة الحالة الكاملة
-/// في agent_state.dart، مطابق لمثال بند 22 في المواصفة تحديداً.
 const List<_ProgressStep> _displaySteps = [
   _ProgressStep(AgentTaskState.understanding, 'فهم الطلب'),
   _ProgressStep(AgentTaskState.planning, 'البحث في المعرفة'),
@@ -78,21 +72,34 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
     }
   }
 
-  /// وضع المحادثة (Chat Mode — بند 23): إجابة مباشرة عبر AiServiceRouter
-  /// الموجود فعلاً، دون تخطيط أو استدعاء أدوات متعدد الخطوات.
   Future<void> _submitChat(String text) async {
     setState(() {
       _isRunning = true;
       _chatReplyAr = null;
     });
 
-    final router = Provider.of<AiServiceRouter>(context, listen: false);
-    final response = await router.query(
+    final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
+    final outcome = await entry.runAiChatQuery(
+      gatewayRequest: _gatewayRequest(
+        action: 'chat_ai_query',
+        purpose: 'knowledge_lookup',
+        scope: 'knowledge_public',
+        risk: LioActionRisk.low,
+      ),
       profileId: widget.profileId,
       userQuery: text,
     );
 
     if (!mounted) return;
+    if (!outcome.executed) {
+      setState(() {
+        _isRunning = false;
+        _chatReplyAr =
+            'توقف عند LIO (${outcome.decision.wireDecision}): ${outcome.decision.reasonAr}';
+      });
+      return;
+    }
+    final response = outcome.value!;
     setState(() {
       _isRunning = false;
       _chatReplyAr = response.success
@@ -101,10 +108,8 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
     });
   }
 
-  /// وضع الوكيل (Agent Mode — بند 23): تخطيط تنفيذي متعدد الخطوات عبر
-  /// CoordinatorAgent — المسار الكامل الموصوف في المواصفة.
   Future<void> _submitAgentTask(String text) async {
-    final bundle = Provider.of<AgentCoreBundle>(context, listen: false);
+    final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
     final taskId = 'task_${widget.profileId}_${_taskCounter++}';
 
     setState(() {
@@ -119,9 +124,6 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
       taskId: taskId,
       profileId: widget.profileId,
       userRequest: text,
-      // صلاحيات افتراضية آمنة لهذه الشاشة: قراءة معرفة + توليد تقرير
-      // فقط. أي أداة تحتاج صلاحية أعلى (مثل إرسال إشعار) سترفض تلقائياً
-      // عبر AgentToolRegistry إلى أن تُضاف شاشة صلاحيات مخصصة لاحقاً.
       permissions: const AgentGrantedPermissions(
         granted: {
           AgentPermission.readKnowledgeBase,
@@ -132,8 +134,14 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
       ),
     );
 
-    final result = await bundle.coordinator.handleUserRequest(
-      context: agentContext,
+    final outcome = await entry.runAgentRequest(
+      gatewayRequest: _gatewayRequest(
+        action: 'agent_user_request',
+        purpose: 'knowledge_lookup',
+        scope: 'knowledge_public',
+        risk: LioActionRisk.medium,
+      ),
+      agentContext: agentContext,
       sessionId: taskId,
       onProgress: (state, stepLabelAr) {
         if (!mounted) return;
@@ -147,16 +155,47 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
     if (!mounted) return;
     setState(() {
       _isRunning = false;
-      _lastResult = result;
+      _lastResult = outcome.executed
+          ? outcome.value
+          : entry.blockedAgentResult(
+              taskId: taskId,
+              decision: outcome.decision,
+            );
     });
   }
 
   void _cancelTask() {
-    final bundle = Provider.of<AgentCoreBundle>(context, listen: false);
+    final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
     final taskId = _currentTaskId;
     if (taskId != null) {
-      bundle.coordinator.cancelTask(taskId);
+      entry.cancelAgentTask(taskId);
     }
+  }
+
+  LioGatewayRequest _gatewayRequest({
+    required String action,
+    required String purpose,
+    required String scope,
+    required LioActionRisk risk,
+  }) {
+    return LioGatewayRequest(
+      requestId: 'ui_${widget.profileId}_${DateTime.now().millisecondsSinceEpoch}',
+      correlationId: 'corr_${widget.profileId}',
+      identityAccountId: widget.profileId,
+      purpose: purpose,
+      requestedAction: action,
+      dataScope: scope,
+      sensitivity: LioDataSensitivity.public,
+      consent: const LioConsentContext(
+        consentGranted: true,
+        purposeAligned: true,
+      ),
+      riskLevel: risk,
+      timestamp: DateTime.now().toUtc(),
+      authenticated: true,
+      authorized: true,
+      minimumNecessarySatisfied: true,
+    );
   }
 
   @override
@@ -255,8 +294,7 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 12),
-                  for (final step in _displaySteps)
-                    _buildStepRow(step),
+                  for (final step in _displaySteps) _buildStepRow(step),
                   if (_isRunning) ...[
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
@@ -279,15 +317,14 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
   }
 
   Widget _buildStepRow(_ProgressStep step) {
-    final currentIndex = _displaySteps.indexWhere((s) => s.state == _currentState);
+    final currentIndex =
+        _displaySteps.indexWhere((s) => s.state == _currentState);
     final thisIndex = _displaySteps.indexOf(step);
 
     IconData icon;
     Color color;
     if (_lastResult != null && !_lastResult!.isSuccessful) {
-      icon = thisIndex <= currentIndex
-          ? Icons.circle
-          : Icons.circle_outlined;
+      icon = thisIndex <= currentIndex ? Icons.circle : Icons.circle_outlined;
       color = thisIndex <= currentIndex ? Colors.orange : Colors.grey;
     } else if (thisIndex < currentIndex ||
         (thisIndex == currentIndex && _lastResult?.isSuccessful == true)) {
@@ -406,7 +443,10 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
               ? const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : const Icon(Icons.send),
         ),

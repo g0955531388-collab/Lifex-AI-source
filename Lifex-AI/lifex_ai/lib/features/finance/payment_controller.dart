@@ -1,20 +1,14 @@
 /// =============================================================
-/// Lifex-AI — المعاملات المالية
-/// الملف: payment_controller.dart
-/// المسار: lib/features/finance/payment_controller.dart
-/// الوصف: طبقة واجهة (Controller) رقيقة تستقبل طلبات الدفع من الشاشات
-/// مباشرة، وتتحقق من صحة المدخلات، ثم تفوّضها لـ WalletManager الذي
-/// يحتوي المنطق الفعلي — هذا الملف لا يكرر أي منطق موجود، فقط يبسّط
-/// نقطة الدخول من الواجهة.
-///
-/// ⚠️ هذا الملف لا "يمتثل" تلقائياً لأي قانون بمجرد وجوده. الامتثال
-/// الفعلي لـ PCI-DSS/HIPAA/GDPR يتطلب مراجعة قانونية متخصصة خارج نطاق
-/// الكود، بالإضافة لضبط بنية تحتية حقيقية (تشفير، سجلات تدقيق، اتفاقيات
-/// مع مزوّدي الخدمة) لا يمكن لملف Dart واحد أن يوفرها بذاته.
+/// Lifex-AI — متحكم الدفع (واجهة رقيقة فوق WalletManager)
 /// =============================================================
+library lifex_ai.features.finance.payment_controller;
 
+import 'payment_gateway_client.dart';
+import 'topup_session.dart';
 import 'transaction_ledger.dart';
 import 'wallet_manager.dart';
+
+export 'wallet_manager.dart' show TopUpFeePreview, WalletOperationResult;
 
 /// نتيجة التحقق من صحة طلب دفع قبل إرساله لأي بوابة خارجية.
 class PaymentRequestValidation {
@@ -34,8 +28,6 @@ class PaymentController {
 
   final WalletManager walletManager;
 
-  /// التحقق الأساسي من صحة مبلغ الشحن قبل إرساله لبوابة الدفع — يمنع
-  /// إرسال مبالغ سالبة أو صفرية أو غير منطقية للبوابة الخارجية.
   PaymentRequestValidation validateTopUpRequest({
     required int amountInSmallestUnit,
     required String currencyCode,
@@ -53,11 +45,41 @@ class PaymentController {
     return const PaymentRequestValidation.valid();
   }
 
-  /// معالجة طلب شحن محفظة كامل: التحقق أولاً، ثم التفويض لـ WalletManager.
+  TopUpSession beginTopUp({
+    required String profileId,
+    String? idempotencyKey,
+  }) {
+    return walletManager.beginTopUp(
+      profileId: profileId,
+      idempotencyKey: idempotencyKey,
+    );
+  }
+
+  TopUpFeePreview previewTopUpFee({
+    required int amountInSmallestUnit,
+    TopUpFeePolicy? policy,
+  }) {
+    if (policy != null) {
+      final fee = policy.feeOn(amountInSmallestUnit);
+      final total = amountInSmallestUnit + (policy.payerPaysFee ? fee : 0);
+      return TopUpFeePreview(
+        amountMinor: amountInSmallestUnit,
+        feeMinor: fee,
+        totalDebitedMinor: total,
+        payerPaysFee: policy.payerPaysFee,
+        policyId: 'preview_${policy.fixedMinor}',
+      );
+    }
+    return walletManager.quoteTopUp(amountInSmallestUnit);
+  }
+
+  /// معالجة طلب شحن: تحقق → آلة حالات → بوابة → رصيد عند النجاح فقط.
   Future<WalletOperationResult> handleTopUpRequest({
     required String profileId,
     required int amountInSmallestUnit,
     required String currencyCode,
+    String paymentMethodId = 'sandbox',
+    String? idempotencyKey,
   }) async {
     final validation = validateTopUpRequest(
       amountInSmallestUnit: amountInSmallestUnit,
@@ -74,10 +96,15 @@ class PaymentController {
       profileId: profileId,
       amountInSmallestUnit: amountInSmallestUnit,
       currencyCode: currencyCode,
+      paymentMethodId: paymentMethodId,
+      idempotencyKey: idempotencyKey,
     );
   }
 
-  /// معالجة طلب دفع فاتورة (مستشفى/تبرع) من رصيد المحفظة الحالي.
+  Future<WalletOperationResult> confirmTopUpSession(TopUpSession session) {
+    return walletManager.executeTopUpSession(session);
+  }
+
   WalletOperationResult handleBalancePaymentRequest({
     required String profileId,
     required int amountInSmallestUnit,
@@ -97,6 +124,24 @@ class PaymentController {
       currencyCode: currencyCode,
       type: type,
       relatedEntityId: relatedEntityId,
+    );
+  }
+
+  WalletOperationResult handleTransfer({
+    required String fromProfileId,
+    required String toProfileId,
+    required int amountMinor,
+    required String currencyCode,
+    String? idempotencyKey,
+    int feeMinor = 0,
+  }) {
+    return walletManager.transferInternal(
+      fromProfileId: fromProfileId,
+      toProfileId: toProfileId,
+      amountMinor: amountMinor,
+      currencyCode: currencyCode,
+      idempotencyKey: idempotencyKey,
+      feeMinor: feeMinor,
     );
   }
 }
