@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/health_event_manager.dart';
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/medications/medication_alarm_engine.dart';
 import '../features/medications/medication_alarm_ledger.dart';
 import '../features/profile/active_profile_controller.dart';
@@ -209,10 +211,38 @@ class _MedicationAlarmScreenState extends State<MedicationAlarmScreen> {
                   subtitle: Text(alarm.clock),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: () {
+                    onPressed: () async {
                       final person = controller.profileById(alarm.profileId);
                       if (person == null) return;
-                      _ledger.remove(person, alarm.id);
+                      final profileId = controller.activeProfileId ??
+                          alarm.profileId;
+                      final entry =
+                          context.read<LioSensitiveActionEntry>();
+                      final outcome = await entry.authorizeThenRun<void>(
+                        request: LioGatewayRequest(
+                          requestId:
+                              'alarm_del_${alarm.id}_${DateTime.now().millisecondsSinceEpoch}',
+                          correlationId: 'alarm_$profileId',
+                          identityAccountId: profileId,
+                          purpose: 'care_support',
+                          requestedAction: 'delete_medication_alarm',
+                          dataScope: 'profile_basic',
+                          sensitivity: LioDataSensitivity.personal,
+                          consent: const LioConsentContext(
+                            consentGranted: true,
+                            purposeAligned: true,
+                          ),
+                          riskLevel: LioActionRisk.medium,
+                          timestamp: DateTime.now().toUtc(),
+                          authenticated: true,
+                          authorized: true,
+                          minimumNecessarySatisfied: true,
+                        ),
+                        run: () async {
+                          _ledger.remove(person, alarm.id);
+                        },
+                      );
+                      if (!outcome.executed || !mounted) return;
                       controller.saveActiveProfileChanges();
                       setState(() {});
                     },

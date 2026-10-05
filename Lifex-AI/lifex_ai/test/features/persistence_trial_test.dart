@@ -63,9 +63,18 @@ void main() {
         ),
         isTrue,
       );
+      // Module Access ≠ Entitlement: فتح الوحدة متاح؛ القيد على الميزة المدفوعة.
       expect(
         policy.canOpenUnit(
           'box',
+          phase: TrialPhase.reducedMonth,
+          feeExempt: false,
+        ),
+        isTrue,
+      );
+      expect(
+        policy.canUsePaidFeature(
+          'premium_booking',
           phase: TrialPhase.reducedMonth,
           feeExempt: false,
         ),
@@ -73,7 +82,7 @@ void main() {
       );
     });
 
-    test('بعد الشهر المجاني تبقى الإشعارات والتبرعات والإسعاف والدم', () async {
+    test('بعد الشهر المجاني تبقى الوحدات مفتوحة والقيود على المدفوع فقط', () async {
       SharedPreferences.setMockInitialValues({
         'lifex_installed_at': DateTime.now()
             .subtract(const Duration(days: AppConstants.trialPeriodDays + 1))
@@ -139,11 +148,19 @@ void main() {
           phase: TrialPhase.residual,
           feeExempt: false,
         ),
+        isTrue,
+      );
+      expect(
+        policy.canUsePaidFeature(
+          'premium_booking',
+          phase: TrialPhase.residual,
+          feeExempt: false,
+        ),
         isFalse,
       );
       expect(
-        policy.canOpenUnit(
-          'box',
+        policy.canUsePaidFeature(
+          'premium_booking',
           phase: TrialPhase.residual,
           feeExempt: true,
         ),

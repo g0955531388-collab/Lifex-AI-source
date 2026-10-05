@@ -1,0 +1,18 @@
+{
+  "schema_id": "LIFEX-DEVICE-PROTOCOL",
+  "version": "1.0",
+  "notWorldwideControl": true,
+  "transportIsNotProtocol": true,
+  "stages": [
+    "DISCOVERED",
+    "IDENTIFIED",
+    "CONNECTED",
+    "AUTHENTICATED",
+    "AUTHORIZED",
+    "CONTROLABLE"
+  ],
+  "denyByDefault": true,
+  "medicalReadIsNotMedicalControl": true,
+  "dddNote": " unrelated; this pack is devices not WHO DDD",
+  "encryption": "standard_libraries_only_when_bound"
+}

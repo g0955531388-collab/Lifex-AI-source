@@ -56,10 +56,13 @@
          الصم أو ضعاف السمع عبر حاسة اللمس بدلاً من الصوت فقط -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
-    <!-- الرسائل النصية — sms_fallback_channel.dart (طوارئ فقط) -->
+    <!-- الرسائل النصية — sms_fallback_channel.dart (إرسال طوارئ فقط).
+         لا READ_SMS ولا RECEIVE_SMS ولا READ_CALL_LOG: غير مؤهلة لـ Play
+         دون دور Phone/SMS/Assistant افتراضي معتمد. -->
     <uses-permission android:name="android.permission.SEND_SMS" />
 
-    <!-- Android 11+: السماح برؤية خدمات التعرّف والنطق على الجهاز -->
+    <!-- Android 11+: السماح برؤية خدمات التعرّف والنطق على الجهاز
+         ومنتقي جهات الاتصال النظامي (بدون READ_CONTACTS كامل). -->
     <queries>
         <intent>
             <action android:name="android.speech.RecognitionService" />
@@ -70,6 +73,10 @@
         <intent>
             <action android:name="android.intent.action.SEND" />
             <data android:mimeType="text/plain" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.PICK" />
+            <data android:mimeType="vnd.android.cursor.dir/phone_v2" />
         </intent>
     </queries>
 

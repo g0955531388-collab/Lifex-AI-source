@@ -1,0 +1,8 @@
+{
+  "schema_id": "LIFEX-DEVICE-SEMANTIC-GRAPH",
+  "version": "1.0",
+  "logicByUniversalCapabilityNotVendor": true,
+  "graphIsNotAuthorization": true,
+  "transportIsNotHardwareProof": true,
+  "example": "ECG service on device via BLE produces stream; display sink may render it"
+}
