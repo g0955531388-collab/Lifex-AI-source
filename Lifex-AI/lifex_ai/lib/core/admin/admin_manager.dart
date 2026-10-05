@@ -10,9 +10,9 @@
 /// =============================================================
 library lifex_ai.core.admin.admin_manager;
 
-import '../app_constants.dart';
 import '../error_handler.dart';
 import 'admin_permissions.dart';
+import 'owner_identity_policy.dart';
 
 /// نتيجة أي عملية منح/سحب دور — يوضّح النجاح أو سبب الرفض بدل إرجاع
 /// قيمة منطقية صامتة، بنفس أسلوب AddProfileResult في multi_profile_engine.
@@ -59,6 +59,27 @@ class GlobalAdminManager {
     return defaultGlobalRolePermissions[role]?.contains(permission) ?? false;
   }
 
+  /// كل صلاحيات الدور الحالي — للمالك = مجموعة كاملة من الخريطة.
+  Set<GlobalAdminPermission> permissionsOf(String lifexId) {
+    final role = roleOf(lifexId);
+    return Set.unmodifiable(
+      defaultGlobalRolePermissions[role] ?? const <GlobalAdminPermission>{},
+    );
+  }
+
+  bool get hasFullOperationalControlAsOwner => true;
+
+  bool isOwner(String lifexId) => roleOf(lifexId) == GlobalAdminRole.owner;
+
+  /// قائمة العاملين الإداريين المحليين (مالك/أدمن/مشرف).
+  Map<String, GlobalAdminRole> listStaffRoles() {
+    return Map.unmodifiable(
+      Map.fromEntries(
+        _rolesByLifexId.entries.where((e) => e.value != GlobalAdminRole.none),
+      ),
+    );
+  }
+
   /// يُستدعى مرة عند كل تسجيل دخول/إنشاء هوية — إن تطابق البريد أو
   /// الهاتف تماماً مع بيانات المالك الثابتة في AppConstants، يُفعَّل دور
   /// المالك تلقائياً دون أي تدخل بشري. لا يوجد أي مسار آخر للحصول على
@@ -68,19 +89,11 @@ class GlobalAdminManager {
     String? email,
     String? phoneNumber,
   }) {
-    final isOwnerEmail = email != null &&
-        AppConstants.ownerEmails
-            .map((e) => e.trim().toLowerCase())
-            .contains(email.trim().toLowerCase());
-    final normalizedPhone = phoneNumber?.replaceAll(RegExp(r'[\s-]'), '');
-    final ownerPhoneDigits =
-        AppConstants.ownerPhoneNumber.replaceAll(RegExp(r'[\s-]'), '');
-    final isOwnerPhone = normalizedPhone != null &&
-        (normalizedPhone == ownerPhoneDigits ||
-            normalizedPhone == ownerPhoneDigits.replaceFirst('+963', '0') ||
-            normalizedPhone == ownerPhoneDigits.replaceFirst('+963', ''));
-
-    if (isOwnerEmail || isOwnerPhone) {
+    const policy = OwnerIdentityPolicy();
+    if (policy.isInventorOwnerContact(
+      email: email,
+      phoneNumber: phoneNumber,
+    )) {
       _rolesByLifexId[lifexId] = GlobalAdminRole.owner;
     }
     return roleOf(lifexId);

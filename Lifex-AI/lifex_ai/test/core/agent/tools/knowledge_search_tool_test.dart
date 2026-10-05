@@ -10,25 +10,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/agent/agent_context.dart';
 import 'package:lifex_ai/core/agent/agent_permissions.dart';
-import 'package:lifex_ai/core/agent/knowledge/knowledge_context.dart';
 import 'package:lifex_ai/core/agent/knowledge/knowledge_document.dart';
-import 'package:lifex_ai/core/agent/knowledge/knowledge_retriever.dart';
 import 'package:lifex_ai/core/agent/tools/knowledge_search_tool.dart';
-
-class _FakeRetriever implements KnowledgeRetriever {
-  _FakeRetriever(this.matches);
-  final List<KnowledgeDocument> matches;
-  String? lastQuery;
-
-  @override
-  Future<KnowledgeContext> retrieve(String query, {int maxResults = 8}) async {
-    lastQuery = query;
-    return KnowledgeContext(query: query, matches: matches);
-  }
-
-  @override
-  void invalidateCache() {}
-}
+import '../../../support/knowledge_retriever_test_doubles.dart';
 
 AgentContext _context() {
   return AgentContext(
@@ -42,7 +26,7 @@ AgentContext _context() {
 void main() {
   group('KnowledgeSearchTool.execute — استنتاج نص البحث', () {
     test('يستخدم query الصريح إن وُجد، وليس userRequest', () async {
-      final retriever = _FakeRetriever(const []);
+      final retriever = FakeKnowledgeRetriever(const []);
       final tool = KnowledgeSearchTool(retriever: retriever);
 
       await tool.execute(
@@ -54,7 +38,7 @@ void main() {
     });
 
     test('يستخدم userRequest عند غياب query الصريح', () async {
-      final retriever = _FakeRetriever(const []);
+      final retriever = FakeKnowledgeRetriever(const []);
       final tool = KnowledgeSearchTool(retriever: retriever);
 
       await tool.execute(
@@ -67,7 +51,7 @@ void main() {
 
     test('يستخدم النص المستخرج من ملاحظة سابقة عند غياب كل ما سبق',
         () async {
-      final retriever = _FakeRetriever(const []);
+      final retriever = FakeKnowledgeRetriever(const []);
       final tool = KnowledgeSearchTool(retriever: retriever);
 
       await tool.execute(
@@ -83,7 +67,7 @@ void main() {
     });
 
     test('يفشل بوضوح عند عدم توفر أي نص بحث صالح', () async {
-      final retriever = _FakeRetriever(const []);
+      final retriever = FakeKnowledgeRetriever(const []);
       final tool = KnowledgeSearchTool(retriever: retriever);
 
       final result = await tool.execute(
@@ -103,7 +87,7 @@ void main() {
   group('KnowledgeSearchTool.execute — نتائج', () {
     test('نتائج فارغة تُنتج ثقة low وليس فشلاً (لا توجد معلومة ≠ خطأ)',
         () async {
-      final retriever = _FakeRetriever(const []);
+      final retriever = FakeKnowledgeRetriever(const []);
       final tool = KnowledgeSearchTool(retriever: retriever);
 
       final result = await tool.execute(
@@ -124,7 +108,7 @@ void main() {
         searchableText: 'صداع',
         raw: {'id': 's001', 'nameAr': 'صداع'},
       );
-      final retriever = _FakeRetriever(const [doc]);
+      final retriever = FakeKnowledgeRetriever(const [doc]);
       final tool = KnowledgeSearchTool(retriever: retriever);
 
       final result = await tool.execute(
