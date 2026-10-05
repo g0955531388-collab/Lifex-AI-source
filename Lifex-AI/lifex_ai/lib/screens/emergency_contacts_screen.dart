@@ -9,6 +9,8 @@ library lifex_ai.screens.emergency_contacts_screen;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/profile/active_profile_controller.dart';
 
@@ -133,8 +135,39 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                     trailing: IconButton(
                       tooltip: 'حذف جهة الثقة',
                       icon: const Icon(Icons.delete_outline),
-                      onPressed: () {
-                        setState(() => _contacts.removeAt(index));
+                      onPressed: () async {
+                        final profileId = context
+                                .read<ActiveProfileController>()
+                                .activeProfileId ??
+                            'local';
+                        final entry =
+                            context.read<LioSensitiveActionEntry>();
+                        final outcome = await entry.authorizeThenRun<void>(
+                          request: LioGatewayRequest(
+                            requestId:
+                                'emg_contact_del_${index}_${DateTime.now().millisecondsSinceEpoch}',
+                            correlationId: 'emg_$profileId',
+                            identityAccountId: profileId,
+                            purpose: 'emergency_signal',
+                            requestedAction: 'delete_emergency_contact',
+                            dataScope: 'emergency_contacts_min',
+                            sensitivity: LioDataSensitivity.personal,
+                            consent: const LioConsentContext(
+                              consentGranted: true,
+                              purposeAligned: true,
+                            ),
+                            riskLevel: LioActionRisk.medium,
+                            timestamp: DateTime.now().toUtc(),
+                            authenticated: true,
+                            authorized: true,
+                            minimumNecessarySatisfied: true,
+                          ),
+                          run: () async {
+                            _contacts.removeAt(index);
+                          },
+                        );
+                        if (!outcome.executed || !mounted) return;
+                        setState(() {});
                         _persist();
                       },
                     ),

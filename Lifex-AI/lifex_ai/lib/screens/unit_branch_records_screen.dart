@@ -8,6 +8,8 @@ library lifex_ai.screens.unit_branch_records_screen;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/network_box/unit_branch_catalog.dart';
 import '../features/profile/active_profile_controller.dart';
@@ -67,8 +69,36 @@ class UnitBranchRecordsScreen extends StatelessWidget {
                       trailing: IconButton(
                         tooltip: 'حذف',
                         icon: const Icon(Icons.delete_outline),
-                        onPressed: () {
-                          store.removeAt(storageKey, i);
+                        onPressed: () async {
+                          final profileId =
+                              controller.activeProfileId ?? 'local';
+                          final entry =
+                              context.read<LioSensitiveActionEntry>();
+                          final outcome = await entry.authorizeThenRun<void>(
+                            request: LioGatewayRequest(
+                              requestId:
+                                  'branch_del_${storageKey}_${i}_${DateTime.now().millisecondsSinceEpoch}',
+                              correlationId: 'branch_$profileId',
+                              identityAccountId: profileId,
+                              purpose: 'care_support',
+                              requestedAction: 'delete_unit_branch_record',
+                              dataScope: 'profile_basic',
+                              sensitivity: LioDataSensitivity.personal,
+                              consent: const LioConsentContext(
+                                consentGranted: true,
+                                purposeAligned: true,
+                              ),
+                              riskLevel: LioActionRisk.medium,
+                              timestamp: DateTime.now().toUtc(),
+                              authenticated: true,
+                              authorized: true,
+                              minimumNecessarySatisfied: true,
+                            ),
+                            run: () async {
+                              store.removeAt(storageKey, i);
+                            },
+                          );
+                          if (!outcome.executed) return;
                           controller.saveActiveProfileChanges();
                         },
                       ),
