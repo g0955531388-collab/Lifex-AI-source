@@ -14,7 +14,6 @@ import 'package:provider/provider.dart';
 
 import '../core/trial_manager.dart';
 import '../features/emergency/emergency_manager.dart';
-import '../features/network_box/box_unit_catalog.dart';
 import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/finance/billing_exemption_policy.dart';
 import '../features/location/gps_priority_monitor.dart';
@@ -26,7 +25,6 @@ import 'ai_agent_screen.dart';
 import 'ai_hub_screen.dart';
 import 'appointments_screen.dart';
 import 'blood_request_screen.dart';
-import 'box_unit_screen.dart';
 import 'camera_notes_screen.dart';
 import 'doctor_directory_screen.dart';
 import 'emergency_contacts_screen.dart';
@@ -40,6 +38,8 @@ import 'project_box_hub_screen.dart';
 import 'settings_screen.dart';
 import 'smart_health_questionnaire_screen.dart';
 import 'system_search_screen.dart';
+import 'device_center_screen.dart';
+import 'donations_center_screen.dart';
 import 'voice_control_screen.dart';
 import 'wallet_screen.dart';
 
@@ -61,10 +61,13 @@ class HomeScreen extends StatelessWidget {
   void _open(BuildContext context, String unitId, Widget page) {
     if (!_allowed(context, unitId)) {
       final trial = context.read<TrialManager>();
+      final phase = trial.phase();
+      final reason = phase == TrialPhase.giftFrozen
+          ? 'REQUIRES_EXTERNAL_SETUP — نسخة الإهداء غير مخصّصة بعد. '
+              'افتح الإعدادات لإكمال التخصيص.'
+          : trial.statusLineAr();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(trial.statusLineAr()),
-        ),
+        SnackBar(content: Text(reason)),
       );
       return;
     }
@@ -203,16 +206,15 @@ class HomeScreen extends StatelessWidget {
                         AccessibleActionButton(
                           icon: Icons.calendar_month_outlined,
                           label: 'مواعيدي',
-                          semanticHint: 'يفتح قائمة المواعيد الطبية المحفوظة',
-                          onTap: activeProfileId == null
-                              ? null
-                              : () {
-                                  _open(
-                                    context,
-                                    'appointments',
-                                    const AppointmentsScreen(),
-                                  );
-                                },
+                          semanticHint:
+                              'يفتح التقويم ومواعيدك المحلية شهراً ويوماً',
+                          onTap: () {
+                            _open(
+                              context,
+                              'appointments',
+                              const AppointmentsScreen(),
+                            );
+                          },
                         ),
                         AccessibleActionButton(
                           icon: Icons.mic_none_outlined,
@@ -226,6 +228,21 @@ class HomeScreen extends StatelessWidget {
                                     context,
                                     'voice',
                                     const VoiceControlScreen(),
+                                  );
+                                },
+                        ),
+                        AccessibleActionButton(
+                          icon: Icons.devices_other_outlined,
+                          label: 'مركز الأجهزة',
+                          semanticHint:
+                              'اكتشاف وربط الأجهزة عبر السائق والبروتوكول ومركز التحكم',
+                          onTap: activeProfileId == null
+                              ? null
+                              : () {
+                                  _open(
+                                    context,
+                                    'devices',
+                                    const DeviceCenterScreen(),
                                   );
                                 },
                         ),
@@ -312,12 +329,12 @@ class HomeScreen extends StatelessWidget {
                           icon: Icons.volunteer_activism_outlined,
                           label: 'التبرعات',
                           semanticHint:
-                              'تبقى مفتوحة بلا اشتراك: حملات الدعم الإنساني على هذا الجهاز',
+                              'يفتح مركز التبرعات: بحث عام موافق، رسوم، محفظة، عيني',
                           onTap: () {
                             _open(
                               context,
                               'donations',
-                              const BoxUnitScreen(unit: BoxUnitCatalog.donations),
+                              const DonationsCenterScreen(),
                             );
                           },
                         ),
@@ -355,16 +372,14 @@ class HomeScreen extends StatelessWidget {
                           icon: Icons.medical_services_outlined,
                           label: 'الأطباء',
                           semanticHint:
-                              'يفتح دليل الأطباء المحلي مرتباً حسب المسافة المدخلة',
-                          onTap: activeProfileId == null
-                              ? null
-                              : () {
-                                  _open(
-                                    context,
-                                    'doctors',
-                                    const DoctorDirectoryScreen(),
-                                  );
-                                },
+                              'يفتح دليل الأطباء. فارغ إن لم تُضف بيانات بعد — ليس رفض صلاحية',
+                          onTap: () {
+                            _open(
+                              context,
+                              'doctors',
+                              const DoctorDirectoryScreen(),
+                            );
+                          },
                         ),
                         AccessibleActionButton(
                           icon: Icons.camera_alt_outlined,

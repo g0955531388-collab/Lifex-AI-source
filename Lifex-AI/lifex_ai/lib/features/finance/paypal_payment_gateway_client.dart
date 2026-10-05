@@ -27,12 +27,16 @@ class PayPalPaymentGatewayClient implements PaymentGatewayClient {
     required int amountInSmallestUnit,
     required String currencyCode,
     required String description,
+    String? idempotencyKey,
   }) async {
     // TODO: استبدال هذا بالاستدعاء الفعلي لـ PayPal Orders API (إنشاء
     // Order ثم Capture) عند اعتماد حساب PayPal تجاري حقيقي للمشروع.
     return const PaymentResult(
       status: PaymentStatus.failed,
-      errorMessageAr: 'بوابة PayPal غير مُفعَّلة بعد. يُرجى المحاولة لاحقاً.',
+      environment: FinancialEnvironment.production,
+      isSandbox: false,
+      errorMessageAr:
+          'NOT_CONFIGURED — بوابة PayPal غير مُفعَّلة. لا حركة أموال حقيقية.',
     );
   }
 
@@ -43,6 +47,8 @@ class PayPalPaymentGatewayClient implements PaymentGatewayClient {
   }) async {
     return const PaymentResult(
       status: PaymentStatus.failed,
+      environment: FinancialEnvironment.production,
+      isSandbox: false,
       errorMessageAr: 'بوابة PayPal غير مُفعَّلة بعد.',
     );
   }

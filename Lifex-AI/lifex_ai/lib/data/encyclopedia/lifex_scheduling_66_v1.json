@@ -1,0 +1,8 @@
+{
+  "schema_id": "LIFEX-SCHEDULING-66",
+  "version": "1.0",
+  "platformModule": 66,
+  "path": "lib/core/scheduling/",
+  "doesNotReplace64_69_100": true,
+  "appointmentNotEncounter": true
+}

@@ -1,0 +1,12 @@
+{
+  "schema_id": "LIFEX-DEVICE-CONTROL-CENTER",
+  "version": "1.0",
+  "doesNotGrantNewPermissions": true,
+  "sendIsNotSuccess": true,
+  "automationCannotEscalate": true,
+  "emergencyNoAutoDial": true,
+  "medicalControlForbidden": true,
+    "groupDoesNotBypassAuth": true,
+    "sceneStartIsNotSuccess": true,
+    "sceneEachStepOwnPermissions": true
+}

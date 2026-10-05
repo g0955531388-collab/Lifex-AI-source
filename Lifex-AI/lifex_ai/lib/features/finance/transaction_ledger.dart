@@ -26,6 +26,22 @@ enum TransactionType {
 
   /// خدمة غير مشمولة بالاشتراك (دورة، إعلان متفق، خاص) بعد تفاوض.
   extraService,
+
+  /// تحويل داخلي صادر من هذه المحفظة.
+  transferOut,
+
+  /// تحويل داخلي وارد إلى هذه المحفظة.
+  transferIn,
+
+  /// سحب إلى وجهة خارجية عبر مزود (عند التوفر).
+  withdrawal,
+}
+
+enum WalletTxStatus {
+  posted,
+  pending,
+  failed,
+  reversed,
 }
 
 class WalletTransaction {
@@ -37,6 +53,11 @@ class WalletTransaction {
   final String? relatedGatewayTransactionId;
   final String? relatedEntityId; // مثلاً معرّف فاتورة مستشفى أو تبرع
   final DateTime recordedAt;
+  final WalletTxStatus status;
+  final int feeInSmallestUnit;
+  final String? counterpartyProfileId;
+  final String? idempotencyKey;
+  final bool isSandbox;
 
   const WalletTransaction({
     required this.transactionId,
@@ -47,6 +68,11 @@ class WalletTransaction {
     this.relatedGatewayTransactionId,
     this.relatedEntityId,
     required this.recordedAt,
+    this.status = WalletTxStatus.posted,
+    this.feeInSmallestUnit = 0,
+    this.counterpartyProfileId,
+    this.idempotencyKey,
+    this.isSandbox = false,
   });
 }
 
@@ -58,6 +84,20 @@ class TransactionLedger {
   final List<WalletTransaction> _transactions = [];
   int _counter = 0;
 
+  WalletTransaction? findByIdempotency(String key) {
+    for (final t in _transactions) {
+      if (t.idempotencyKey == key) return t;
+    }
+    return null;
+  }
+
+  WalletTransaction? findById(String transactionId) {
+    for (final t in _transactions) {
+      if (t.transactionId == transactionId) return t;
+    }
+    return null;
+  }
+
   WalletTransaction record({
     required String profileId,
     required TransactionType type,
@@ -65,7 +105,16 @@ class TransactionLedger {
     required String currencyCode,
     String? relatedGatewayTransactionId,
     String? relatedEntityId,
+    WalletTxStatus status = WalletTxStatus.posted,
+    int feeInSmallestUnit = 0,
+    String? counterpartyProfileId,
+    String? idempotencyKey,
+    bool isSandbox = false,
   }) {
+    if (idempotencyKey != null) {
+      final existing = findByIdempotency(idempotencyKey);
+      if (existing != null) return existing;
+    }
     _counter++;
     final transaction = WalletTransaction(
       transactionId: 'TXN-$_counter',
@@ -76,6 +125,11 @@ class TransactionLedger {
       relatedGatewayTransactionId: relatedGatewayTransactionId,
       relatedEntityId: relatedEntityId,
       recordedAt: DateTime.now(),
+      status: status,
+      feeInSmallestUnit: feeInSmallestUnit,
+      counterpartyProfileId: counterpartyProfileId,
+      idempotencyKey: idempotencyKey,
+      isSandbox: isSandbox,
     );
     _transactions.add(transaction);
     return transaction;
@@ -94,12 +148,15 @@ class TransactionLedger {
   /// الرصيد الحالي المحسوب من السجل الكامل — لا يُخزَّن كرقم منفصل قابل
   /// للتلاعب، بل يُشتق دائماً من مجموع الحركات (شحن/استرجاع موجب،
   /// دفع سالب).
+  /// الرصيد المتاح فقط — الحركات posted؛ المعلّقة لا تُحسب هنا.
   int currentBalanceFor(String profileId) {
     int balance = 0;
     for (final t in historyFor(profileId)) {
+      if (t.status != WalletTxStatus.posted) continue;
       switch (t.type) {
         case TransactionType.topUp:
         case TransactionType.refund:
+        case TransactionType.transferIn:
           balance += t.amountInSmallestUnit;
           break;
         case TransactionType.hospitalPayment:
@@ -108,10 +165,39 @@ class TransactionLedger {
         case TransactionType.appStoreSale:
         case TransactionType.platformFee:
         case TransactionType.extraService:
+        case TransactionType.transferOut:
+        case TransactionType.withdrawal:
           balance -= t.amountInSmallestUnit;
           break;
       }
     }
     return balance;
+  }
+
+  int pendingBalanceFor(String profileId) {
+    int pending = 0;
+    for (final t in historyFor(profileId)) {
+      if (t.status != WalletTxStatus.pending) continue;
+      if (t.type == TransactionType.topUp ||
+          t.type == TransactionType.transferIn) {
+        pending += t.amountInSmallestUnit;
+      } else if (t.type == TransactionType.transferOut ||
+          t.type == TransactionType.withdrawal) {
+        pending += t.amountInSmallestUnit;
+      }
+    }
+    return pending;
+  }
+
+  int reservedBalanceFor(String profileId) {
+    int reserved = 0;
+    for (final t in historyFor(profileId)) {
+      if (t.status != WalletTxStatus.pending) continue;
+      if (t.type == TransactionType.transferOut ||
+          t.type == TransactionType.withdrawal) {
+        reserved += t.amountInSmallestUnit;
+      }
+    }
+    return reserved;
   }
 }
