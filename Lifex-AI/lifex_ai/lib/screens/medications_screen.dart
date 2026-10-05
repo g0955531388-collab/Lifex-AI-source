@@ -11,6 +11,8 @@ library lifex_ai.screens.medications_screen;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../data/medical_database_manager.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
@@ -36,10 +38,37 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   }
 
   Future<void> _loadCatalog() async {
-    final manager =
-        Provider.of<MedicalDatabaseManager>(context, listen: false);
-    final json = await manager.readBundleFile(MedicalBundleFiles.medications);
+    final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
+    final outcome = await entry.readMedicalBundle(
+      gatewayRequest: LioGatewayRequest(
+        requestId: 'med_catalog_${widget.profileId}_${DateTime.now().millisecondsSinceEpoch}',
+        correlationId: 'med_${widget.profileId}',
+        identityAccountId: widget.profileId,
+        purpose: 'knowledge_lookup',
+        requestedAction: 'read_medical_catalog',
+        dataScope: 'knowledge_public',
+        sensitivity: LioDataSensitivity.public,
+        consent: const LioConsentContext(
+          consentGranted: true,
+          purposeAligned: true,
+        ),
+        riskLevel: LioActionRisk.low,
+        timestamp: DateTime.now().toUtc(),
+        authenticated: true,
+        authorized: true,
+        minimumNecessarySatisfied: true,
+      ),
+      fileName: MedicalBundleFiles.medications,
+    );
     if (!mounted) return;
+    if (!outcome.executed) {
+      setState(() {
+        _catalog = const [];
+        _loading = false;
+      });
+      return;
+    }
+    final json = outcome.value ?? const <String, dynamic>{};
     setState(() {
       _catalog = (json['medications'] as List<dynamic>? ?? const [])
           .whereType<Map>()

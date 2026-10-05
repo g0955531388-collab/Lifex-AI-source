@@ -23,11 +23,9 @@ import 'package:lifex_ai/core/agent/agents/knowledge_agent.dart';
 import 'package:lifex_ai/core/agent/agents/medical_agent.dart';
 import 'package:lifex_ai/core/agent/agents/report_agent.dart';
 import 'package:lifex_ai/core/agent/agents/vision_agent.dart';
-import 'package:lifex_ai/core/agent/knowledge/knowledge_context.dart';
-import 'package:lifex_ai/core/agent/knowledge/knowledge_document.dart';
-import 'package:lifex_ai/core/agent/knowledge/knowledge_retriever.dart';
 import 'package:lifex_ai/core/agent/tools/agent_tool.dart';
 import 'package:lifex_ai/core/agent/tools/agent_tool_registry.dart';
+import '../../../support/knowledge_retriever_test_doubles.dart';
 
 /// أداة يجب ألا تُستدعى أبداً في سيناريو الطوارئ — أي استدعاء لها
 /// يعني رسوب الاختبار.
@@ -62,18 +60,6 @@ class _MustNotBeCalledTool implements AgentTool {
   }
 }
 
-class _StubKnowledgeRetriever implements KnowledgeRetriever {
-  const _StubKnowledgeRetriever();
-
-  @override
-  Future<KnowledgeContext> retrieve(String query, {int maxResults = 8}) async {
-    return const KnowledgeContext(query: '', matches: <KnowledgeDocument>[]);
-  }
-
-  @override
-  void invalidateCache() {}
-}
-
 void main() {
   group('CoordinatorAgent.handleUserRequest — emergency short-circuit', () {
     test('مؤشر طوارئ حرج يوقف المهمة قبل أي تنفيذ ويطلب انتباهاً بشرياً',
@@ -90,7 +76,7 @@ void main() {
         planner: const AgentPlanner(),
         executor: executor,
         memory: AgentMemory(),
-        knowledgeRetriever: const _StubKnowledgeRetriever(),
+        knowledgeRetriever: const StubKnowledgeRetriever(),
       );
 
       final coordinator = CoordinatorAgent(
@@ -98,7 +84,7 @@ void main() {
         emergencyAgent: EmergencyAgent(),
         medicalAgent: MedicalAgent(),
         visionAgent: const VisionAgent(),
-        knowledgeAgent: KnowledgeAgent(retriever: const _StubKnowledgeRetriever()),
+        knowledgeAgent: KnowledgeAgent(retriever: const StubKnowledgeRetriever()),
         reportAgent: const ReportAgent(),
       );
 
@@ -131,7 +117,7 @@ void main() {
         planner: const AgentPlanner(),
         executor: executor,
         memory: AgentMemory(),
-        knowledgeRetriever: const _StubKnowledgeRetriever(),
+        knowledgeRetriever: const StubKnowledgeRetriever(),
       );
 
       final coordinator = CoordinatorAgent(
@@ -139,7 +125,7 @@ void main() {
         emergencyAgent: EmergencyAgent(),
         medicalAgent: MedicalAgent(),
         visionAgent: const VisionAgent(),
-        knowledgeAgent: KnowledgeAgent(retriever: const _StubKnowledgeRetriever()),
+        knowledgeAgent: KnowledgeAgent(retriever: const StubKnowledgeRetriever()),
         reportAgent: const ReportAgent(),
       );
 

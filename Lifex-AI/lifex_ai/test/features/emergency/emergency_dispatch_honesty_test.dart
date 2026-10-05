@@ -71,4 +71,22 @@ void main() {
     expect(once, notice);
     expect(LicenseManager.instance.appendAr(once), notice);
   });
+
+  test('مسودة SMS لا تُعدّ إرسالاً ناجحاً', () async {
+    final registry = EmergencyPhoneContactsRegistry();
+    registry.replaceForProfile('p1', ['+963955531388']);
+    final manager = EmergencyMessageManager(
+      emergencyContactsRegistry: registry,
+      draftHandoffFunction: (phone, msg) async => true,
+    );
+    final outcome = await manager.dispatchEmergencyMessage(
+      profileId: 'p1',
+      caseId: 'EMG-2',
+      riskLevel: 'critical',
+      reasonAr: 'فحص',
+    );
+    expect(outcome.outboundSent, isFalse);
+    expect(outcome.messageAr, contains('مسودة SMS'));
+    expect(outcome.messageAr, isNot(contains('أُرسلت الاستغاثة')));
+  });
 }
