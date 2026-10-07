@@ -98,7 +98,15 @@ class HealthIdentityManager {
   }) {
     if (_lifexIdByProfileId.containsKey(profileId)) {
       final existingId = _lifexIdByProfileId[profileId]!;
-      return _identitiesByLifexId[existingId]!;
+      final existing = _identitiesByLifexId[existingId]!;
+      if (email != null) existing.email = email;
+      if (phoneNumber != null) existing.phoneNumber = phoneNumber;
+      GlobalAdminManager.instance.autoActivateOwnerIfMatches(
+        lifexId: existingId,
+        email: email ?? existing.email,
+        phoneNumber: phoneNumber ?? existing.phoneNumber,
+      );
+      return existing;
     }
 
     final requestedId = preferredLifexId?.trim();

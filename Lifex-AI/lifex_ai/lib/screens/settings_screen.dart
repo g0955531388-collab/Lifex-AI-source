@@ -27,6 +27,7 @@ import '../widgets/lifex_brand_mark.dart';
 import 'admin_dashboard_screen.dart';
 import 'clinical_watch_screen.dart';
 import 'family_management_screen.dart';
+import 'identity_workspace_screen.dart';
 import 'layered_lens_studio_screen.dart';
 import 'partner_sign_in_screen.dart';
 import 'permission_transparency_screen.dart';
@@ -195,6 +196,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const Divider(),
+          ListTile(
+            leading: const Icon(Icons.badge_outlined),
+            title: const Text('هوية الحساب وبيانات الاتصال'),
+            subtitle: const Text(
+              'تحديث البريد أو الهاتف وتفعيل وصول المالك عند مطابقته',
+            ),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const IdentityWorkspaceScreen(),
+                ),
+              );
+            },
+          ),
           ListTile(
             leading: const Icon(Icons.image_outlined),
             title: const Text('Manage the thumbnail'),
