@@ -95,11 +95,25 @@ class ActiveProfileController extends ChangeNotifier {
     String? email,
     String? phoneNumber,
   }) {
-    HealthIdentityManager.instance.createIdentity(
+    final storedEmail =
+        email ?? profile.questionnaireData['accountEmail'] as String?;
+    final storedPhone =
+        phoneNumber ?? profile.questionnaireData['accountPhone'] as String?;
+    final storedLifexId =
+        profile.questionnaireData['accountLifexId'] as String?;
+    final identity = HealthIdentityManager.instance.createIdentity(
       profileId: profile.profileId,
-      email: email,
-      phoneNumber: phoneNumber,
+      email: storedEmail,
+      phoneNumber: storedPhone,
+      preferredLifexId: storedLifexId,
     );
+    profile.questionnaireData['accountLifexId'] = identity.lifexId;
+    if (storedEmail != null) {
+      profile.questionnaireData['accountEmail'] = storedEmail;
+    }
+    if (storedPhone != null) {
+      profile.questionnaireData['accountPhone'] = storedPhone;
+    }
     ProfilePrivacyRegistry.instance.forProfile(profile.profileId);
   }
 
@@ -134,11 +148,12 @@ class ActiveProfileController extends ChangeNotifier {
   /// يحفظ في الذاكرة وعلى الجهاز.
   void saveActiveProfileChanges() => notifyProfileChanged();
 
-  void rebindIdentitiesAfterRestore() {
+  Future<void> rebindIdentitiesAfterRestore() async {
     for (final profile in engine.allProfiles) {
       final email = profile.questionnaireData['accountEmail'] as String?;
       final phone = profile.questionnaireData['accountPhone'] as String?;
       _bindLocalIdentity(profile, email: email, phoneNumber: phone);
     }
+    await _persist();
   }
 }

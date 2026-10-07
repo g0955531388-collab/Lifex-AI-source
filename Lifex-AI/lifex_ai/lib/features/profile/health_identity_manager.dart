@@ -94,13 +94,19 @@ class HealthIdentityManager {
     required String profileId,
     String? phoneNumber,
     String? email,
+    String? preferredLifexId,
   }) {
     if (_lifexIdByProfileId.containsKey(profileId)) {
       final existingId = _lifexIdByProfileId[profileId]!;
       return _identitiesByLifexId[existingId]!;
     }
 
-    final lifexId = _generateUniqueLifexId();
+    final requestedId = preferredLifexId?.trim();
+    final lifexId = requestedId != null &&
+            requestedId.isNotEmpty &&
+            !_identitiesByLifexId.containsKey(requestedId)
+        ? requestedId
+        : _generateUniqueLifexId();
     final identity = HealthIdentity(
       lifexId: lifexId,
       linkedProfileId: profileId,
@@ -136,8 +142,7 @@ class HealthIdentityManager {
   }
 
   /// استرجاع الهوية عبر معرّف Lifex-ID.
-  HealthIdentity? getByLifexId(String lifexId) =>
-      _identitiesByLifexId[lifexId];
+  HealthIdentity? getByLifexId(String lifexId) => _identitiesByLifexId[lifexId];
 
   /// استرجاع الهوية عبر معرّف الملف الصحي المرتبط.
   HealthIdentity? getByProfileId(String profileId) {

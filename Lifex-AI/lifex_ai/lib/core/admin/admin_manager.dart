@@ -10,6 +10,11 @@
 /// =============================================================
 library lifex_ai.core.admin.admin_manager;
 
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../app_constants.dart';
 import '../error_handler.dart';
 import 'admin_permissions.dart';
@@ -37,10 +42,106 @@ class GlobalAdminManager {
   GlobalAdminManager._internal();
   static final GlobalAdminManager instance = GlobalAdminManager._internal();
 
+  static const _rolesStorageKey = 'lifex_global_admin_roles_v1';
+  static const _eventTogglesStorageKey = 'lifex_global_admin_event_toggles_v1';
+  SharedPreferences? _preferences;
+  Future<void> _pendingPersistence = Future<void>.value();
+
   /// دور كل مستخدم، مفهرَس بمعرّف الهوية الصحية (Lifex-ID) وليس رقم
   /// الهاتف أو البريد مباشرة، اتساقاً مع بقية النظام الذي يعتمد Lifex-ID
   /// كمعرّف موحّد في التراسل والتبرعات.
   final Map<String, GlobalAdminRole> _rolesByLifexId = {};
+
+  /// تحميل سجل الأدوار من التخزين المحلي قبل إعادة ربط الملفات الصحية.
+  Future<void> initialize(SharedPreferences preferences) async {
+    _preferences = preferences;
+    _pendingPersistence = Future<void>.value();
+    _rolesByLifexId.clear();
+
+    final rawRoles = preferences.getString(_rolesStorageKey);
+    if (rawRoles != null && rawRoles.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawRoles);
+        if (decoded is Map) {
+          for (final entry in decoded.entries) {
+            if (entry.key is! String || entry.value is! String) continue;
+            final role = GlobalAdminRole.values.where(
+              (candidate) => candidate.name == entry.value,
+            );
+            if (role.isNotEmpty && role.first != GlobalAdminRole.none) {
+              _rolesByLifexId[entry.key as String] = role.first;
+            }
+          }
+        }
+      } on FormatException catch (error) {
+        ErrorHandler.instance.report(
+          'ADMIN_ROLE_STORAGE_INVALID',
+          'تعذّرت قراءة سجل الأدوار المحفوظ: $error',
+          sourceModule: 'admin_manager',
+          severity: ErrorSeverity.warning,
+        );
+      }
+    }
+
+    final rawToggles = preferences.getString(_eventTogglesStorageKey);
+    if (rawToggles != null && rawToggles.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawToggles);
+        if (decoded is Map) {
+          for (final entry in decoded.entries) {
+            if (entry.key is String &&
+                entry.value is bool &&
+                _systemEventToggles.containsKey(entry.key)) {
+              _systemEventToggles[entry.key as String] = entry.value as bool;
+            }
+          }
+        }
+      } on FormatException catch (error) {
+        ErrorHandler.instance.report(
+          'ADMIN_TOGGLE_STORAGE_INVALID',
+          'تعذّرت قراءة إعدادات مفاتيح الأحداث: $error',
+          sourceModule: 'admin_manager',
+          severity: ErrorSeverity.warning,
+        );
+      }
+    }
+  }
+
+  Future<void> flushPersistence() => _pendingPersistence;
+
+  void _persistRoles() {
+    final preferences = _preferences;
+    if (preferences == null) return;
+    final snapshot = jsonEncode({
+      for (final entry in _rolesByLifexId.entries) entry.key: entry.value.name,
+    });
+    _pendingPersistence = _pendingPersistence.then((_) async {
+      await preferences.setString(_rolesStorageKey, snapshot);
+    }).catchError((Object error) {
+      ErrorHandler.instance.report(
+        'ADMIN_ROLE_STORAGE_FAILED',
+        'تعذّر حفظ سجل الأدوار: $error',
+        sourceModule: 'admin_manager',
+        severity: ErrorSeverity.warning,
+      );
+    });
+  }
+
+  void _persistEventToggles() {
+    final preferences = _preferences;
+    if (preferences == null) return;
+    final snapshot = jsonEncode(_systemEventToggles);
+    _pendingPersistence = _pendingPersistence.then((_) async {
+      await preferences.setString(_eventTogglesStorageKey, snapshot);
+    }).catchError((Object error) {
+      ErrorHandler.instance.report(
+        'ADMIN_TOGGLE_STORAGE_FAILED',
+        'تعذّر حفظ إعدادات مفاتيح الأحداث: $error',
+        sourceModule: 'admin_manager',
+        severity: ErrorSeverity.warning,
+      );
+    });
+  }
 
   /// مفاتيح الأحداث الدقيقة القابلة للتحكم من لوحة الأدمن — القيم
   /// الافتراضية هنا هي الحالة الآمنة عند أول تشغيل للنظام.
@@ -57,6 +158,11 @@ class GlobalAdminManager {
   bool hasPermission(String lifexId, GlobalAdminPermission permission) {
     final role = roleOf(lifexId);
     return defaultGlobalRolePermissions[role]?.contains(permission) ?? false;
+  }
+
+  bool hasFullSystemAccess(String lifexId) {
+    final role = roleOf(lifexId);
+    return role == GlobalAdminRole.owner || role == GlobalAdminRole.admin;
   }
 
   /// يُستدعى مرة عند كل تسجيل دخول/إنشاء هوية — إن تطابق البريد أو
@@ -82,13 +188,14 @@ class GlobalAdminManager {
 
     if (isOwnerEmail || isOwnerPhone) {
       _rolesByLifexId[lifexId] = GlobalAdminRole.owner;
+      _persistRoles();
     }
     return roleOf(lifexId);
   }
 
   /// منح دور لمستخدم آخر. يتحقق أن صاحب الطلب (granterLifexId) يملك
   /// الصلاحية المناسبة للدور المطلوب منحه، وفق قاعدة صارمة:
-  /// - دور admin: للمالك (owner) فقط.
+  /// - دور admin: للمالك أو الأدمن المفوض.
   /// - دور moderator: للمالك أو أي أدمن.
   /// - لا يجوز لأي دور منح دور owner على الإطلاق (يُفعَّل تلقائياً فقط).
   AdminRoleActionResult grantRole({
@@ -111,7 +218,7 @@ class GlobalAdminManager {
       ErrorHandler.instance.report(
         'ADMIN_GRANT_DENIED',
         'محاولة منح دور ${role.name} من مستخدم ($granterLifexId) لا يملك '
-        'الصلاحية اللازمة.',
+            'الصلاحية اللازمة.',
         sourceModule: 'admin_manager',
         severity: ErrorSeverity.warning,
       );
@@ -121,6 +228,7 @@ class GlobalAdminManager {
     }
 
     _rolesByLifexId[targetLifexId] = role;
+    _persistRoles();
     return AdminRoleActionResult.ok('تم منح دور ${role.name} بنجاح.');
   }
 
@@ -150,6 +258,7 @@ class GlobalAdminManager {
     }
 
     _rolesByLifexId[targetLifexId] = GlobalAdminRole.none;
+    _persistRoles();
     return AdminRoleActionResult.ok('تم سحب الدور بنجاح.');
   }
 
@@ -157,25 +266,30 @@ class GlobalAdminManager {
   // مفاتيح الأحداث الدقيقة (Granular system event toggles)
   // ---------------------------------------------------------------
 
-  bool isEventEnabled(String eventKey) => _systemEventToggles[eventKey] ?? false;
+  bool isEventEnabled(String eventKey) =>
+      _systemEventToggles[eventKey] ?? false;
 
-  Map<String, bool> get allEventToggles => Map.unmodifiable(_systemEventToggles);
+  Map<String, bool> get allEventToggles =>
+      Map.unmodifiable(_systemEventToggles);
 
   AdminRoleActionResult setEventToggle({
     required String actorLifexId,
     required String eventKey,
     required bool enabled,
   }) {
-    if (!hasPermission(actorLifexId, GlobalAdminPermission.manageSystemEventToggles)) {
+    if (!hasPermission(
+        actorLifexId, GlobalAdminPermission.manageSystemEventToggles)) {
       return AdminRoleActionResult.rejected(
         'لا تملك صلاحية التحكم بمفاتيح الأحداث الدقيقة.',
       );
     }
     if (!_systemEventToggles.containsKey(eventKey)) {
-      return AdminRoleActionResult.rejected('مفتاح الحدث "$eventKey" غير معروف.');
+      return AdminRoleActionResult.rejected(
+          'مفتاح الحدث "$eventKey" غير معروف.');
     }
 
     _systemEventToggles[eventKey] = enabled;
+    _persistEventToggles();
     return AdminRoleActionResult.ok(
       'تم ${enabled ? "تفعيل" : "تعطيل"} "$eventKey" بنجاح.',
     );
@@ -183,6 +297,8 @@ class GlobalAdminManager {
 
   /// إعادة كل شيء لحالته الأولية — للاختبارات فقط.
   void resetForTesting() {
+    _preferences = null;
+    _pendingPersistence = Future<void>.value();
     _rolesByLifexId.clear();
     _systemEventToggles
       ..clear()

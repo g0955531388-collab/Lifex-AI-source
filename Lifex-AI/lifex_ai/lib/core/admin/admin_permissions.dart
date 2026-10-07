@@ -18,7 +18,7 @@ enum GlobalAdminRole {
   /// [AppConstants.ownerPhoneNumber]. لا يُمنح هذا الدور يدوياً لأي شخص.
   owner,
 
-  /// أدمن كامل الصلاحيات باستثناء منح دور "أدمن" لغيره (حصراً للمالك).
+  /// أدمن النظام — يملك صلاحيات التشغيل ويستطيع تفويض أدمنين ومشرفين.
   admin,
 
   /// مشرف بصلاحيات محدودة (إشراف على المحتوى/التراسل دون التحكم المالي
@@ -34,7 +34,7 @@ enum GlobalAdminPermission {
   /// منح أو سحب دور "مشرف" (moderator) من مستخدم آخر.
   grantModeratorRole,
 
-  /// منح أو سحب دور "أدمن" (admin) من مستخدم آخر — للمالك فقط.
+  /// منح أو سحب دور "أدمن" (admin) من مستخدم آخر — للمالك والأدمن.
   grantAdminRole,
 
   /// التحكم بمفاتيح الأحداث الدقيقة على مستوى النظام (تفعيل/تعطيل ميزة
@@ -77,6 +77,7 @@ const Map<GlobalAdminRole, Set<GlobalAdminPermission>>
   },
   GlobalAdminRole.admin: {
     GlobalAdminPermission.grantModeratorRole,
+    GlobalAdminPermission.grantAdminRole,
     GlobalAdminPermission.manageSystemEventToggles,
     GlobalAdminPermission.manageUsers,
     GlobalAdminPermission.moderateContent,
