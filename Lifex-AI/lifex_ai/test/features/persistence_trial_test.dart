@@ -151,6 +151,32 @@ void main() {
       );
     });
 
+    test('المالك والأدمن يفتحان كل الوحدات بعد انتهاء الشهر', () async {
+      SharedPreferences.setMockInitialValues({
+        'lifex_installed_at': DateTime.now()
+            .subtract(const Duration(days: AppConstants.trialPeriodDays + 1))
+            .toIso8601String(),
+        'lifex_copy_origin': 'independent',
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final trial = TrialManager(prefs);
+      expect(trial.phase(), TrialPhase.residual);
+      expect(trial.phase(adminAccess: true), TrialPhase.subscribed);
+      expect(
+        trial.statusLineAr(adminAccess: true),
+        contains('وصول المالك/الأدمن'),
+      );
+      expect(
+        const SessionAccessPolicy().canOpenUnit(
+          'box',
+          phase: TrialPhase.residual,
+          feeExempt: false,
+          adminAccess: true,
+        ),
+        isTrue,
+      );
+    });
+
     test('الإهداء مرة واحدة من مشترك ثم خمسة عشر يوماً ثم تخصيص', () async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
@@ -278,8 +304,10 @@ void main() {
   group('CommandParser', () {
     test('يفتح البحث والصيدلية', () {
       final parser = CommandParser();
-      expect(parser.parse('ابحث عن دواء').intent, VoiceCommandIntent.openSearch);
-      expect(parser.parse('افتح الصيدلية').intent, VoiceCommandIntent.openPharmacy);
+      expect(
+          parser.parse('ابحث عن دواء').intent, VoiceCommandIntent.openSearch);
+      expect(parser.parse('افتح الصيدلية').intent,
+          VoiceCommandIntent.openPharmacy);
     });
 
     test('يزيل كلمة ليفكس ويفهم مرادفات الدواء والطوارئ', () {

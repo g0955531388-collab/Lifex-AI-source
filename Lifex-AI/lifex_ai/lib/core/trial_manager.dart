@@ -13,18 +13,23 @@ import 'app_constants.dart';
 enum TrialPhase {
   /// اشتراك سنوي محلي مسجّل أو إعفاء يُمرَّر من الواجهة.
   subscribed,
+
   /// نسخة إهداء تعمل كاملة خمسة عشر يوماً.
   giftWorking,
+
   /// انتهت الخمسة عشر يوماً. تتوقف حتى التخصيص.
   giftFrozen,
+
   /// مشترك جديد في الشهر المجاني بخدمات أقل.
   reducedMonth,
+
   /// بلا اشتراك أو منتهٍ: إشعارات وتبرعات وإسعاف ودم.
   residual,
 }
 
 class GiftActionResult {
-  const GiftActionResult({required this.ok, required this.messageAr, this.token});
+  const GiftActionResult(
+      {required this.ok, required this.messageAr, this.token});
 
   final bool ok;
   final String messageAr;
@@ -94,8 +99,10 @@ class TrialManager {
     return DateTime.tryParse(raw);
   }
 
-  TrialPhase phase({bool feeExempt = false}) {
-    if (feeExempt || paidYearActive) return TrialPhase.subscribed;
+  TrialPhase phase({bool feeExempt = false, bool adminAccess = false}) {
+    if (feeExempt || adminAccess || paidYearActive) {
+      return TrialPhase.subscribed;
+    }
     if (isGiftCopy) {
       final started = giftStartedAt ?? installedAt;
       final giftDays = DateTime.now().difference(started).inDays;
@@ -122,7 +129,10 @@ class TrialManager {
   bool get asksForSubscription =>
       phase() == TrialPhase.reducedMonth || phase() == TrialPhase.residual;
 
-  String statusLineAr({bool feeExempt = false}) {
+  String statusLineAr({bool feeExempt = false, bool adminAccess = false}) {
+    if (adminAccess) {
+      return 'وصول المالك/الأدمن الكامل مفعّل على هذا الحساب؛ لا تنطبق عليه مدة التجربة.';
+    }
     switch (phase(feeExempt: feeExempt)) {
       case TrialPhase.subscribed:
         return feeExempt
@@ -251,8 +261,10 @@ class SessionAccessPolicy {
     String unitId, {
     required TrialPhase phase,
     required bool feeExempt,
+    bool adminAccess = false,
   }) {
-    if (feeExempt ||
+    if (adminAccess ||
+        feeExempt ||
         phase == TrialPhase.subscribed ||
         phase == TrialPhase.giftWorking) {
       return true;

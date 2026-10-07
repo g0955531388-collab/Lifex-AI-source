@@ -127,14 +127,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final activeProfileId =
         Provider.of<ActiveProfileController>(context).activeProfileId;
     if (activeProfileId == null) return null;
-    return HealthIdentityManager.instance.getByProfileId(activeProfileId)?.lifexId;
+    return HealthIdentityManager.instance
+        .getByProfileId(activeProfileId)
+        ?.lifexId;
   }
 
   @override
   Widget build(BuildContext context) {
     final activeLifexId = _activeLifexId(context);
+    final activeProfile =
+        Provider.of<ActiveProfileController>(context).activeProfile;
+    final billingExempt = activeProfile != null &&
+        const BillingExemptionPolicy().evaluate(activeProfile).isExempt;
     final hasAdminRole = activeLifexId != null &&
-        GlobalAdminManager.instance.roleOf(activeLifexId) != GlobalAdminRole.none;
+        GlobalAdminManager.instance.roleOf(activeLifexId) !=
+            GlobalAdminRole.none;
+    final adminAccess = activeLifexId != null &&
+        GlobalAdminManager.instance.hasFullSystemAccess(activeLifexId);
 
     return Scaffold(
       appBar: AppBar(title: const Text('الإعدادات')),
@@ -250,18 +259,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: const Icon(Icons.chevron_left),
             onTap: () {
               final trial = context.read<TrialManager>();
-              final profile =
-                  context.read<ActiveProfileController>().activeProfile;
-              final exempt = profile != null &&
-                  const BillingExemptionPolicy().evaluate(profile).isExempt;
               final allowed = const SessionAccessPolicy().canOpenUnit(
                 'box',
-                phase: trial.phase(feeExempt: exempt),
-                feeExempt: exempt,
+                phase: trial.phase(
+                  feeExempt: billingExempt,
+                  adminAccess: adminAccess,
+                ),
+                feeExempt: billingExempt,
+                adminAccess: adminAccess,
               );
               if (!allowed) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(trial.statusLineAr(feeExempt: exempt))),
+                  SnackBar(
+                    content: Text(
+                      trial.statusLineAr(feeExempt: billingExempt),
+                    ),
+                  ),
                 );
                 return;
               }
@@ -277,17 +290,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('حالة النسخة والاشتراك'),
             subtitle: Text(
               context.read<TrialManager>().statusLineAr(
-                    feeExempt: context
-                                .read<ActiveProfileController>()
-                                .activeProfile !=
-                            null &&
-                        const BillingExemptionPolicy()
-                            .evaluate(
-                              context
-                                  .read<ActiveProfileController>()
-                                  .activeProfile!,
-                            )
-                            .isExempt,
+                    feeExempt: billingExempt,
+                    adminAccess: adminAccess,
                   ),
             ),
           ),
@@ -303,8 +307,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               final profile = profiles.activeProfile;
               final exempt = profile != null &&
                   const BillingExemptionPolicy().evaluate(profile).isExempt;
-              final subscribed =
-                  trial.phase(feeExempt: exempt) == TrialPhase.subscribed;
+              final subscribed = trial.phase(
+                    feeExempt: exempt,
+                    adminAccess: adminAccess,
+                  ) ==
+                  TrialPhase.subscribed;
               return Column(
                 children: [
                   ListTile(
@@ -348,7 +355,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                     child: const Text('تفعيل نسخة الإهداء'),
                   ),
-                  if (trial.phase(feeExempt: exempt) == TrialPhase.giftFrozen)
+                  if (trial.phase(
+                        feeExempt: exempt,
+                        adminAccess: adminAccess,
+                      ) ==
+                      TrialPhase.giftFrozen)
                     FilledButton(
                       onPressed: () {
                         final result = trial.claimAsNewSubscriber();
@@ -406,7 +417,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.monitor_heart_outlined),
             title: const Text('مراقبة سريرية ظاهرة'),
-            subtitle: const Text('إشعار دائم بموافقة. بلا تصوير خفي وبلا حفظ صور'),
+            subtitle:
+                const Text('إشعار دائم بموافقة. بلا تصوير خفي وبلا حفظ صور'),
             trailing: const Icon(Icons.chevron_left),
             onTap: () {
               Navigator.of(context).push(

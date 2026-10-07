@@ -197,6 +197,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
 
   // 1) الهوية الصحية والملفات المتعددة.
   final prefs = await SharedPreferences.getInstance();
+  await GlobalAdminManager.instance.initialize(prefs);
   final vault = ProfileVault(prefs);
   final trialManager = TrialManager(prefs);
   final multiProfileEngine = MultiProfileEngine(
@@ -216,7 +217,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     engine: multiProfileEngine,
     vault: vault,
   );
-  activeProfileController.rebindIdentitiesAfterRestore();
+  await activeProfileController.rebindIdentitiesAfterRestore();
 
   LocalKnowledge localKnowledge;
   try {
@@ -246,7 +247,8 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     // TODO: استبدال هذا الرابط برابط خادم Lifex-AI الفعلي عند توفره.
     remoteManifestUrl: 'https://api.lifex-ai.example.com/medical-manifest',
   );
-  final medicalKnowledge = await MedicalDataLoader.loadAll(medicalDatabaseManager);
+  final medicalKnowledge =
+      await MedicalDataLoader.loadAll(medicalDatabaseManager);
   final aiModuleBundle = AiBridge.initialize(
     symptomKeywordMap: medicalKnowledge.symptomKeywordMap,
     emergencySymptomIds: medicalKnowledge.emergencySymptomIds,
@@ -342,7 +344,8 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   final walletManager = WalletManager(
     // ⚠️ يتطلب مفتاح Stripe حقيقي قبل قبول أي دفعة فعلية — راجع
     // REGULATORY_COMPLIANCE_NOTES.md أولاً.
-    gatewayClient: StripePaymentGatewayClient(publishableKey: 'pk_test_placeholder'),
+    gatewayClient:
+        StripePaymentGatewayClient(publishableKey: 'pk_test_placeholder'),
     ledger: transactionLedger,
   );
   final paymentController = PaymentController(walletManager: walletManager);
@@ -430,7 +433,8 @@ class LifexAiApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<MultiProfileEngine>.value(value: appContext.multiProfileEngine),
+        Provider<MultiProfileEngine>.value(
+            value: appContext.multiProfileEngine),
         Provider<AiModuleBundle>.value(value: appContext.aiModuleBundle),
         Provider<EmergencyManager>.value(value: appContext.emergencyManager),
         Provider<EnergyManager>.value(value: appContext.energyManager),
@@ -445,12 +449,16 @@ class LifexAiApp extends StatelessWidget {
         Provider<SubscriptionBillingManager>.value(
           value: appContext.subscriptionBillingManager,
         ),
-        Provider<TransactionService>.value(value: appContext.transactionService),
-        Provider<UnifiedAiHubGateway>.value(value: appContext.unifiedAiHubGateway),
+        Provider<TransactionService>.value(
+            value: appContext.transactionService),
+        Provider<UnifiedAiHubGateway>.value(
+            value: appContext.unifiedAiHubGateway),
         Provider<AiServiceRouter>.value(value: appContext.aiServiceRouter),
         Provider<CloudSyncManager>.value(value: appContext.cloudSyncManager),
-        Provider<TranslationService>.value(value: appContext.translationService),
-        Provider<HealthDeviceReader>.value(value: appContext.healthDeviceReader),
+        Provider<TranslationService>.value(
+            value: appContext.translationService),
+        Provider<HealthDeviceReader>.value(
+            value: appContext.healthDeviceReader),
         Provider<TerminologyConnector>.value(
           value: appContext.terminologyConnector,
         ),
@@ -469,14 +477,17 @@ class LifexAiApp extends StatelessWidget {
         ),
         Provider<TrialManager>.value(value: appContext.trialManager),
         Provider<LocalKnowledge>.value(value: appContext.localKnowledge),
-        Provider<LastingSearchIndex>.value(value: appContext.lastingSearchIndex),
+        Provider<LastingSearchIndex>.value(
+            value: appContext.lastingSearchIndex),
       ],
       child: MaterialApp(
         navigatorKey: LifexNavigator.key,
         title: 'Lifex-AI',
         debugShowCheckedModeBanner: false,
         locale: Locale(
-          AppConfig.instance.defaultLanguage == AppLanguage.arabic ? 'ar' : 'en',
+          AppConfig.instance.defaultLanguage == AppLanguage.arabic
+              ? 'ar'
+              : 'en',
         ),
         localizationsDelegates: const [
           AppLocalizations.delegate,

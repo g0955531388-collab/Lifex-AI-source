@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
+import '../core/admin/admin_manager.dart';
 import '../core/trial_manager.dart';
 import '../features/emergency/emergency_manager.dart';
 import '../features/network_box/box_unit_catalog.dart';
@@ -19,6 +20,7 @@ import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/finance/billing_exemption_policy.dart';
 import '../features/location/gps_priority_monitor.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../features/profile/health_identity_manager.dart';
 import '../widgets/accessible_widgets.dart';
 import '../widgets/encyclopedia_share_bar.dart';
 import 'accessibility_assistant_screen.dart';
@@ -51,10 +53,16 @@ class HomeScreen extends StatelessWidget {
     final profile = context.read<ActiveProfileController>().activeProfile;
     final exempt = profile != null &&
         const BillingExemptionPolicy().evaluate(profile).isExempt;
+    final identity = profile == null
+        ? null
+        : HealthIdentityManager.instance.getByProfileId(profile.profileId);
+    final adminAccess = identity != null &&
+        GlobalAdminManager.instance.hasFullSystemAccess(identity.lifexId);
     return const SessionAccessPolicy().canOpenUnit(
       unitId,
-      phase: trial.phase(feeExempt: exempt),
+      phase: trial.phase(feeExempt: exempt, adminAccess: adminAccess),
       feeExempt: exempt,
+      adminAccess: adminAccess,
     );
   }
 
@@ -81,8 +89,14 @@ class HomeScreen extends StatelessWidget {
             const BillingExemptionPolicy()
                 .evaluate(profileController.activeProfile!)
                 .isExempt;
-        final phase = trial.phase(feeExempt: exempt);
-        final showGate = !exempt &&
+        final identity = activeProfileId == null
+            ? null
+            : HealthIdentityManager.instance.getByProfileId(activeProfileId);
+        final adminAccess = identity != null &&
+            GlobalAdminManager.instance.hasFullSystemAccess(identity.lifexId);
+        final phase = trial.phase(feeExempt: exempt, adminAccess: adminAccess);
+        final showGate = !adminAccess &&
+            !exempt &&
             phase != TrialPhase.subscribed &&
             phase != TrialPhase.giftWorking;
 
@@ -317,7 +331,8 @@ class HomeScreen extends StatelessWidget {
                             _open(
                               context,
                               'donations',
-                              const BoxUnitScreen(unit: BoxUnitCatalog.donations),
+                              const BoxUnitScreen(
+                                  unit: BoxUnitCatalog.donations),
                             );
                           },
                         ),
@@ -497,12 +512,12 @@ class HomeScreen extends StatelessWidget {
                   profile?.questionnaireData['trustedContacts'],
                 ),
               );
-              final outcome =
-                  await context.read<EmergencyManager>().triggerEmergency(
-                        profileId: profileId,
-                        reasonAr:
-                            'تفعيل يدوي من الشاشة الرئيسية بواسطة المستخدم.',
-                      );
+              final outcome = await context
+                  .read<EmergencyManager>()
+                  .triggerEmergency(
+                    profileId: profileId,
+                    reasonAr: 'تفعيل يدوي من الشاشة الرئيسية بواسطة المستخدم.',
+                  );
 
               if (!context.mounted) return;
               Navigator.of(dialogContext).pop();
