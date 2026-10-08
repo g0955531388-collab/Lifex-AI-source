@@ -47,6 +47,15 @@ void main() {
       expect(role, GlobalAdminRole.owner);
     });
 
+    test('يُفعَّل owner بالرقم السوري المحلي والأرقام العربية', () {
+      final admin = GlobalAdminManager.instance;
+      final role = admin.autoActivateOwnerIfMatches(
+        lifexId: 'LFX-000002-local',
+        phoneNumber: '٠٩٥٥٥٣١٣٨٨',
+      );
+      expect(role, GlobalAdminRole.owner);
+    });
+
     test('لا يُفعَّل owner لأي بريد أو هاتف مختلف', () {
       final admin = GlobalAdminManager.instance;
       final role = admin.autoActivateOwnerIfMatches(

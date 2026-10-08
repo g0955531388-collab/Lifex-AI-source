@@ -8,6 +8,7 @@ library lifex_ai.screens.identity_workspace_screen;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/admin/admin_manager.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/network_box/unit_branch_catalog.dart';
 import '../features/profile/active_profile_controller.dart';
@@ -62,14 +63,12 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
     _nationalId.text = store?.stringField(BoxKeys.ownerNationalId) ?? '';
     _nationality.text = store?.stringField(BoxKeys.nationality) ?? '';
     _residence.text = store?.stringField(BoxKeys.residencePlace) ?? '';
-    _publicAliasMode =
-        store?.stringField(BoxKeys.publicIdentityMode) != 'real';
+    _publicAliasMode = store?.stringField(BoxKeys.publicIdentityMode) != 'real';
     _seeded = true;
   }
 
   ProfileBoxStore? _store() {
-    final profile =
-        context.read<ActiveProfileController>().activeProfile;
+    final profile = context.read<ActiveProfileController>().activeProfile;
     if (profile == null) return null;
     return ProfileBoxStore(profile);
   }
@@ -101,9 +100,24 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
       BoxKeys.publicIdentityMode,
       _publicAliasMode ? 'alias' : 'real',
     );
-    controller.saveActiveProfileChanges();
+    controller.updateAccountIdentity(
+      email: _email.text.trim(),
+      phoneNumber: _phone.text.trim(),
+    );
+    final profile = controller.activeProfile;
+    final identity = profile == null
+        ? null
+        : HealthIdentityManager.instance.getByProfileId(profile.profileId);
+    final hasAdminAccess = identity != null &&
+        GlobalAdminManager.instance.hasFullSystemAccess(identity.lifexId);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('حُفظت الهوية في ملفك على هذا الجهاز.')),
+      SnackBar(
+        content: Text(
+          hasAdminAccess
+              ? 'حُفظت الهوية وتم تفعيل وصول المالك/الأدمن الكامل.'
+              : 'حُفظت الهوية على هذا الجهاز. لم تتطابق بيانات الاتصال مع بيانات المالك المسجّلة.',
+        ),
+      ),
     );
   }
 
@@ -126,10 +140,15 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
                       messageAr:
                           'الهوية الحقيقية للجهات الصحية المخوّلة فقط. الهوية المستعارة للمجتمع والتعليم. التحقق الوثائقي يحتاج خادماً.',
                     ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'مالك النظام: أدخل البريد الإلكتروني أو الهاتف المسجّل للمالك ثم احفظ. عند المطابقة تُفعّل صلاحيات المالك فوراً على هذا الجهاز.',
+                    ),
                     const SizedBox(height: 12),
                     Center(
                       child: LifexThumbnail(
-                        localPath: _store()?.stringField(BoxKeys.profileThumbnailPath),
+                        localPath:
+                            _store()?.stringField(BoxKeys.profileThumbnailPath),
                         size: 96,
                       ),
                     ),
@@ -265,8 +284,8 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
                       child: ListTile(
                         leading: const Icon(Icons.family_restroom_outlined),
                         title: const Text('أفراد العائلة'),
-                        subtitle: const Text(
-                            'ملفات مستقلة. الإشعارات باسم كل فرد'),
+                        subtitle:
+                            const Text('ملفات مستقلة. الإشعارات باسم كل فرد'),
                         onTap: () => UnitBranchNavigator.open(
                           context,
                           UnitBranchCatalog.healthCv.firstWhere(

@@ -165,6 +165,23 @@ class GlobalAdminManager {
     return role == GlobalAdminRole.owner || role == GlobalAdminRole.admin;
   }
 
+  String _normalizeOwnerPhone(String value) {
+    final westernDigits = value.replaceAllMapped(
+      RegExp(r'[٠-٩۰-۹]'),
+      (match) {
+        final code = match[0]!.codeUnitAt(0);
+        final zero = code >= 0x06f0 ? 0x06f0 : 0x0660;
+        return String.fromCharCode(0x30 + code - zero);
+      },
+    );
+    var digits = westernDigits.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.startsWith('00')) digits = digits.substring(2);
+    if (digits.startsWith('963')) return digits;
+    if (digits.startsWith('0')) return '963${digits.substring(1)}';
+    if (digits.startsWith('9')) return '963$digits';
+    return digits;
+  }
+
   /// يُستدعى مرة عند كل تسجيل دخول/إنشاء هوية — إن تطابق البريد أو
   /// الهاتف تماماً مع بيانات المالك الثابتة في AppConstants، يُفعَّل دور
   /// المالك تلقائياً دون أي تدخل بشري. لا يوجد أي مسار آخر للحصول على
@@ -178,13 +195,9 @@ class GlobalAdminManager {
         AppConstants.ownerEmails
             .map((e) => e.trim().toLowerCase())
             .contains(email.trim().toLowerCase());
-    final normalizedPhone = phoneNumber?.replaceAll(RegExp(r'[\s-]'), '');
-    final ownerPhoneDigits =
-        AppConstants.ownerPhoneNumber.replaceAll(RegExp(r'[\s-]'), '');
-    final isOwnerPhone = normalizedPhone != null &&
-        (normalizedPhone == ownerPhoneDigits ||
-            normalizedPhone == ownerPhoneDigits.replaceFirst('+963', '0') ||
-            normalizedPhone == ownerPhoneDigits.replaceFirst('+963', ''));
+    final isOwnerPhone = phoneNumber != null &&
+        _normalizeOwnerPhone(phoneNumber) ==
+            _normalizeOwnerPhone(AppConstants.ownerPhoneNumber);
 
     if (isOwnerEmail || isOwnerPhone) {
       _rolesByLifexId[lifexId] = GlobalAdminRole.owner;

@@ -69,9 +69,22 @@ class HomeScreen extends StatelessWidget {
   void _open(BuildContext context, String unitId, Widget page) {
     if (!_allowed(context, unitId)) {
       final trial = context.read<TrialManager>();
+      final profile = context.read<ActiveProfileController>().activeProfile;
+      final exempt = profile != null &&
+          const BillingExemptionPolicy().evaluate(profile).isExempt;
+      final identity = profile == null
+          ? null
+          : HealthIdentityManager.instance.getByProfileId(profile.profileId);
+      final adminAccess = identity != null &&
+          GlobalAdminManager.instance.hasFullSystemAccess(identity.lifexId);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(trial.statusLineAr()),
+          content: Text(
+            trial.statusLineAr(
+              feeExempt: exempt,
+              adminAccess: adminAccess,
+            ),
+          ),
         ),
       );
       return;

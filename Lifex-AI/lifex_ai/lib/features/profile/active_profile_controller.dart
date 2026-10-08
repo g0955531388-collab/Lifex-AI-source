@@ -145,6 +145,28 @@ class ActiveProfileController extends ChangeNotifier {
     _persist();
   }
 
+  /// تحديث وسيلة الاتصال للحساب النشط ثم إعادة فحص دور المالك مباشرة.
+  /// المطابقة محلية في الوقت الحالي ولا تعني تحققاً عبر OTP.
+  void updateAccountIdentity({String? email, String? phoneNumber}) {
+    final profile = engine.activeProfile;
+    if (profile == null) return;
+    final storedEmail = email?.trim();
+    final storedPhone = phoneNumber?.trim();
+    if (storedEmail != null) {
+      profile.questionnaireData['accountEmail'] = storedEmail;
+    }
+    if (storedPhone != null) {
+      profile.questionnaireData['accountPhone'] = storedPhone;
+    }
+    _bindLocalIdentity(
+      profile,
+      email: storedEmail,
+      phoneNumber: storedPhone,
+    );
+    notifyListeners();
+    _persist();
+  }
+
   /// يحفظ في الذاكرة وعلى الجهاز.
   void saveActiveProfileChanges() => notifyProfileChanged();
 
