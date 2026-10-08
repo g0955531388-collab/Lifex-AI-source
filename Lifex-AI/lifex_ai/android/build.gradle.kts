@@ -1,9 +1,6 @@
 allprojects {
     extra["kotlin_version"] = "2.2.20"
     repositories {
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
-        maven { url = uri("https://maven.aliyun.com/repository/central") }
-        maven { url = uri("https://repo.huaweicloud.com/repository/maven") }
         google()
         mavenCentral()
     }
@@ -12,9 +9,6 @@ allprojects {
 subprojects {
     buildscript {
         repositories {
-            maven { url = uri("https://maven.aliyun.com/repository/google") }
-            maven { url = uri("https://maven.aliyun.com/repository/central") }
-            maven { url = uri("https://repo.huaweicloud.com/repository/maven") }
             google()
             mavenCentral()
         }
