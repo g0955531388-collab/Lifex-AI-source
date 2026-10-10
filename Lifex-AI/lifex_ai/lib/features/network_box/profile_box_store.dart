@@ -20,6 +20,8 @@ class BoxKeys {
   static const pharmacy = 'pharmacyRecords';
   static const hospital = 'hospitalRecords';
   static const dental = 'dentalRecords';
+  static const dentalSessions = 'dentalSessionRecords';
+  static const meetingRooms = 'localMeetingRooms';
   static const women = 'womenHealthRecords';
   static const donations = 'donationRecords';
   static const education = 'careTrainingRecords';
