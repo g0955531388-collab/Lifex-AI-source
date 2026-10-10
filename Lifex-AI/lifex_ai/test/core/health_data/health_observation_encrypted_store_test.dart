@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifex_ai/core/health_data/clinical_phr_export_types.dart';
 import 'package:lifex_ai/core/health_data/encrypted_health_observation_store.dart';
 import 'package:lifex_ai/core/health_data/file_health_observation_store.dart';
 import 'package:lifex_ai/core/health_data/health_data_types.dart';
@@ -348,11 +349,21 @@ void main() {
       gatewayRequest: req(
         id: 'ex',
         action: 'export_phr',
+        purpose: 'phr_export',
+        scope: 'phr_export_observations',
         risk: LioActionRisk.high,
         humanConfirmed: true,
       ),
+      exportRequest: const ClinicalPhrExportRequest(
+        patientId: 'patient-ex',
+        purpose: 'phr_export',
+        requestedScopes: {PhrExportScopeKind.patientObservations},
+      ),
     );
-    expect(export.value!.reasonCode, 'NOT_IMPLEMENTED');
+    expect(export.executed, isTrue);
+    expect(export.value!.succeeded, isTrue);
+    expect(export.value!.reasonCode, 'EXPORT_OK');
+    expect(export.value!.artifact, isNotNull);
     final printOp = await entry.requestSensitivePrint(
       gatewayRequest: req(id: 'pr', action: 'print'),
     );

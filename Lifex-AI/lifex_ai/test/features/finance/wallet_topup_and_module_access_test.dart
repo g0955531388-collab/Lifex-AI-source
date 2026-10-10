@@ -63,6 +63,33 @@ void main() {
       );
     });
 
+    test('شراء الكتاب من المحفظة يخصم السعر والعمولة، والنقد يُرفض', () async {
+      final wallet = buildWallet();
+      await wallet.topUp(
+        profileId: 'reader',
+        amountInSmallestUnit: 10000,
+        currencyCode: 'USD',
+        idempotencyKey: 'top-reader',
+      );
+      final bought = wallet.purchaseThroughWallet(
+        profileId: 'reader',
+        priceMinor: 1000,
+        currencyCode: 'USD',
+        itemId: 'book-1',
+      );
+      expect(bought.success, isTrue);
+      expect(wallet.balanceFor('reader'), 10000 - 1050);
+      final cash = wallet.purchaseThroughWallet(
+        profileId: 'reader',
+        priceMinor: 1000,
+        currencyCode: 'USD',
+        itemId: 'book-2',
+        paidInCash: true,
+      );
+      expect(cash.success, isFalse);
+      expect(wallet.balanceFor('reader'), 10000 - 1050);
+    });
+
     test('TopUpFailureTest — فشل البوابة لا يغيّر الرصيد المتاح', () async {
       final wallet = buildWallet(fail: true);
       final result = await wallet.topUp(

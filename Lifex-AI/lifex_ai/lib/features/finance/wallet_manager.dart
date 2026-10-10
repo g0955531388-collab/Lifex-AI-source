@@ -7,6 +7,7 @@ library lifex_ai.features.finance.wallet_manager;
 
 import '../../core/financial/double_entry_ledger.dart';
 import 'financial_receipt.dart';
+import 'subscription_catalog.dart';
 import 'payment_gateway_client.dart';
 import 'topup_session.dart';
 import 'transaction_ledger.dart';
@@ -494,6 +495,51 @@ class WalletManager {
     _completedByIdempotency[key] = ok;
     _audits.add('transfer|$fromProfileId->$toProfileId|$amountMinor');
     return ok;
+  }
+
+  /// شراء من المحفظة فقط. العمولة تُخصم مع السعر. النقد لا يُكمل الشراء.
+  WalletOperationResult purchaseThroughWallet({
+    required String profileId,
+    required int priceMinor,
+    required String currencyCode,
+    required String itemId,
+    bool paidInCash = false,
+    String? idempotencyKey,
+  }) {
+    if (paidInCash) {
+      return const WalletOperationResult.failure(
+        'الشراء يتم من محفظة المنصة فقط. النقد لا يخصم عمولة ولا يُتمم العملية.',
+      );
+    }
+    if (priceMinor < 0) {
+      return const WalletOperationResult.failure('السعر غير صالح.');
+    }
+    final commission = priceMinor == 0
+        ? 0
+        : (priceMinor * SubscriptionCatalog.platformFeePercent) ~/ 100;
+    final fee = priceMinor > 0 && commission < 1 ? 1 : commission;
+    final total = priceMinor + fee;
+    if (total == 0) {
+      return const WalletOperationResult.success(
+        messageAr: 'العنصر مجاني. لم يُخصم شيء من المحفظة.',
+      );
+    }
+    final paid = payFromBalance(
+      profileId: profileId,
+      amountInSmallestUnit: total,
+      currencyCode: currencyCode,
+      type: TransactionType.extraService,
+      relatedEntityId: itemId,
+      idempotencyKey: idempotencyKey,
+    );
+    if (!paid.success) return paid;
+    return WalletOperationResult.success(
+      messageAr:
+          'خُصم $total من المحفظة. منها $fee عمولة المنصة '
+          '(${SubscriptionCatalog.platformFeePercent}٪) لصالح Lifex-AI.',
+      newBalance: paid.newBalance,
+      transactionId: paid.transactionId,
+    );
   }
 
   /// سحب — غير متاح بلا مزود مرخّص؛ يفشل بصراحة.

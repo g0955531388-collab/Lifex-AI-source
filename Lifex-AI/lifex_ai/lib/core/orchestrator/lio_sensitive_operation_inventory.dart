@@ -166,7 +166,8 @@ class LioSensitiveOperationInventory {
         ),
         LioSensitiveOpRecord(
           path: 'lib/features/finance/wallet_manager.dart',
-          classOrFunction: 'WalletManager.withdraw/topUp',
+          classOrFunction:
+              'WalletManager.withdraw/topUp/purchaseThroughWallet',
           callerSurface: 'Application',
           operation: 'FINANCIAL/WALLET',
           classification: LioSensitiveOpClass.financial,

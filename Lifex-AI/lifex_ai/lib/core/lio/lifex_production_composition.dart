@@ -15,6 +15,7 @@ import '../agent/knowledge/knowledge_engine_bridge.dart';
 import '../agent/knowledge/knowledge_retriever.dart';
 import '../agent/knowledge/medical_bundle_corpus_seeder.dart';
 import '../agent/knowledge/production_knowledge_composition.dart';
+import '../health_data/clinical_phr_export_application_service.dart';
 import '../health_data/encrypted_health_observation_store.dart';
 import '../health_data/file_health_observation_store.dart';
 import '../health_data/health_observation_application_service.dart';
@@ -239,6 +240,8 @@ class LifexProductionComposition {
     final healthRepo = PersistentHealthObservationRepository(store: store);
     final healthSvc =
         HealthObservationApplicationService(repository: healthRepo);
+    final phrExport =
+        ClinicalPhrExportApplicationService(repository: healthRepo);
 
     final entry = LioSensitiveActionEntry(
       lioGateway: gateway,
@@ -246,6 +249,7 @@ class LifexProductionComposition {
       aiServiceRouter: aiServiceRouter,
       aiHubGateway: aiServiceRouter.hubGateway,
       healthObservationService: healthSvc,
+      clinicalPhrExportService: phrExport,
     );
 
     return LifexProductionBundle(

@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifex_ai/core/health_data/clinical_phr_export_types.dart';
+import 'package:lifex_ai/core/health_data/file_health_observation_store.dart';
 import 'package:lifex_ai/core/health_data/health_data_types.dart';
 import 'package:lifex_ai/core/health_data/health_observation_application_service.dart';
 import 'package:lifex_ai/core/health_data/in_memory_health_observation_repository.dart';
@@ -121,6 +125,9 @@ void main() {
       knowledgeEngine: LifexKnowledgeEngine(corpus: corpus),
       corpus: corpus,
       clock: clock,
+      healthObservationStore: FileHealthObservationStore(
+        rootDirectory: Directory.systemTemp.createTempSync('lifex_phr_life_'),
+      ),
     );
     final ledger = TransactionLedger();
     final wallet = WalletManager(
@@ -317,22 +324,27 @@ void main() {
     expect(o.value!.opKind != LioLifecycleOpKind.delete, isTrue);
   });
 
-  test('8 EXPORT clinical/PHR — NOT_IMPLEMENTED ≠ SHARE', () async {
+  test('8 EXPORT clinical/PHR — EXPORT_OK وليس SHARE', () async {
     final o = await entry.requestClinicalPhrExport(
       gatewayRequest: req(
         id: '8',
         action: 'export_phr',
-        purpose: 'care_support',
-        scope: 'profile_basic',
+        purpose: 'phr_export',
+        scope: 'phr_export_observations',
         sensitivity: LioDataSensitivity.personal,
         risk: LioActionRisk.high,
         humanConfirmed: true,
       ),
+      exportRequest: const ClinicalPhrExportRequest(
+        patientId: 'patient-8',
+        purpose: 'phr_export',
+        requestedScopes: {PhrExportScopeKind.patientObservations},
+      ),
     );
-    expect(o.value!.succeeded, isFalse);
-    expect(o.value!.reasonCode, 'NOT_IMPLEMENTED');
-    expect(o.value!.opKind, LioLifecycleOpKind.export);
-    expect(o.value!.opKind != LioLifecycleOpKind.share, isTrue);
+    expect(o.executed, isTrue);
+    expect(o.value!.succeeded, isTrue);
+    expect(o.value!.reasonCode, 'EXPORT_OK');
+    expect(o.value!.messageAr, contains('EXPORT ≠ SHARE'));
   });
 
   test('9 SHARE public encyclopedia implemented', () async {
@@ -508,19 +520,24 @@ void main() {
       gatewayRequest: req(
         id: '19c',
         action: 'export',
-        purpose: 'care_support',
-        scope: 'profile_basic',
+        purpose: 'phr_export',
+        scope: 'phr_export_observations',
         sensitivity: LioDataSensitivity.personal,
         risk: LioActionRisk.high,
         humanConfirmed: true,
       ),
+      exportRequest: const ClinicalPhrExportRequest(
+        patientId: 'patient-19',
+        purpose: 'phr_export',
+        requestedScopes: {PhrExportScopeKind.patientObservations},
+      ),
     );
     expect(printR.value!.succeeded, isFalse);
     expect(ctrl.value!.succeeded, isFalse);
-    expect(export.value!.succeeded, isFalse);
+    expect(export.value!.succeeded, isTrue);
     expect(printR.value!.reasonCode, 'UNSUPPORTED_OPERATION');
     expect(ctrl.value!.reasonCode, 'UNSUPPORTED_OPERATION');
-    expect(export.value!.reasonCode, 'NOT_IMPLEMENTED');
+    expect(export.value!.reasonCode, 'EXPORT_OK');
   });
 
   test('20 no sensitive operation bypasses LIO', () async {

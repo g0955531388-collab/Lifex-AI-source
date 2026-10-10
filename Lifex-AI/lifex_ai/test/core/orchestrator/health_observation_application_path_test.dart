@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifex_ai/core/health_data/clinical_phr_export_types.dart';
 import 'package:lifex_ai/core/health_data/file_health_observation_store.dart';
 import 'package:lifex_ai/core/health_data/health_data_types.dart';
 import 'package:lifex_ai/core/health_data/health_observation_application_service.dart';
@@ -204,10 +205,19 @@ void main() {
       gatewayRequest: req(
         id: 'e1',
         action: 'export_phr',
+        purpose: 'phr_export',
+        scope: 'phr_export_observations',
         risk: LioActionRisk.high,
         humanConfirmed: true,
       ),
+      exportRequest: const ClinicalPhrExportRequest(
+        patientId: 'patient-e1',
+        purpose: 'phr_export',
+        requestedScopes: {PhrExportScopeKind.patientObservations},
+      ),
     );
+    expect(export.executed, isTrue);
+    expect(export.value!.reasonCode, 'EXPORT_OK');
     final share = await entry.requestClinicalOrPrivateShare(
       gatewayRequest: req(
         id: 's1',
@@ -229,7 +239,7 @@ void main() {
         humanConfirmed: true,
       ),
     );
-    expect(export.value!.reasonCode, 'NOT_IMPLEMENTED');
+    expect(export.value!.reasonCode, 'EXPORT_OK');
     expect(share.value!.reasonCode, 'NOT_IMPLEMENTED');
     expect(printOp.value!.reasonCode, 'UNSUPPORTED_OPERATION');
     expect(ctrl.value!.reasonCode, 'UNSUPPORTED_OPERATION');

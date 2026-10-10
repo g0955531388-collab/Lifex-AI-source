@@ -144,8 +144,12 @@ class LioSensitiveActionEntry {
           encyclopediaShareBridge ?? this.encyclopediaShareBridge,
       healthObservationService:
           healthObservationService ?? this.healthObservationService,
-      clinicalPhrExportService:
-          clinicalPhrExportService ?? this.clinicalPhrExportService,
+      clinicalPhrExportService: clinicalPhrExportService ??
+          (healthObservationService != null
+              ? ClinicalPhrExportApplicationService(
+                  repository: healthObservationService.repository,
+                )
+              : this.clinicalPhrExportService),
     );
   }
 
@@ -485,6 +489,33 @@ class LioSensitiveActionEntry {
             currencyCode: currencyCode,
             feeMinor: feeMinor,
           ),
+    );
+  }
+
+  Future<LioSensitiveActionOutcome<WalletOperationResult>> purchaseThroughWallet({
+    required LioGatewayRequest gatewayRequest,
+    required String profileId,
+    required int priceMinor,
+    required String currencyCode,
+    required String itemId,
+    bool paidInCash = false,
+  }) {
+    final wallet = walletManager;
+    if (wallet == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => throw StateError('walletManager unbound'),
+      );
+    }
+    return authorizeThenRun(
+      request: gatewayRequest,
+      run: () async => wallet.purchaseThroughWallet(
+        profileId: profileId,
+        priceMinor: priceMinor,
+        currencyCode: currencyCode,
+        itemId: itemId,
+        paidInCash: paidInCash,
+      ),
     );
   }
 
