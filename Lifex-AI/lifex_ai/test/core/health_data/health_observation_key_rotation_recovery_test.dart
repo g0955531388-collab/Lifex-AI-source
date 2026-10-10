@@ -1,3 +1,5 @@
+
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -323,7 +325,7 @@ void main() {
     );
     final raw = (await inner.readRaw())!;
     final parts = raw.split('.');
-    parts[4] = parts[4].substring(0, parts[4].length - 2) + 'aa';
+    parts[4] = '${parts[4].substring(0, parts[4].length - 2)}aa';
     await inner.writeRaw(parts.join('.'));
     final broken = PersistentHealthObservationRepository(store: encrypted);
     await expectLater(

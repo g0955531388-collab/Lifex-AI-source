@@ -1,3 +1,4 @@
+
 import 'dart:io';
 import 'dart:math';
 
@@ -108,14 +109,14 @@ void main() {
     );
   }
 
-  EncryptedHealthObservationStore _encryptedStore() {
+  EncryptedHealthObservationStore encryptedStore() {
     return EncryptedHealthObservationStore(
       inner: inner,
       keyVault: HealthObservationKeyVault(secretStore: secrets),
     );
   }
 
-  LifexProductionBundle _assemble({
+  LifexProductionBundle assemble({
     required HealthObservationPersistentStore store,
     required MemorySecureSecretStore secretStore,
   }) {
@@ -153,8 +154,8 @@ void main() {
     tempDir = await Directory.systemTemp.createTemp('lifex_health_enc_');
     secrets = MemorySecureSecretStore();
     inner = FileHealthObservationStore(rootDirectory: tempDir);
-    encrypted = _encryptedStore();
-    final bundle = _assemble(store: encrypted, secretStore: secrets);
+    encrypted = encryptedStore();
+    final bundle = assemble(store: encrypted, secretStore: secrets);
     entry = bundle.sensitiveActionEntry;
     persistentRepo =
         bundle.healthObservationRepository as PersistentHealthObservationRepository;
@@ -323,7 +324,7 @@ void main() {
   });
 
   test('production composition uses encrypted persistent implementation', () {
-    final bundle = _assemble(store: encrypted, secretStore: secrets);
+    final bundle = assemble(store: encrypted, secretStore: secrets);
     expect(
       bundle.healthObservationRepository,
       isA<PersistentHealthObservationRepository>(),

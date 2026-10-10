@@ -28,6 +28,8 @@ import '../agent/agent_core.dart';
 import '../agent/agent_orchestrator.dart';
 import '../agent/agent_result.dart';
 import '../agent/agent_state.dart';
+import '../health_data/clinical_phr_export_application_service.dart';
+import '../health_data/clinical_phr_export_types.dart';
 import '../health_data/health_data_types.dart';
 import '../health_data/health_observation_application_service.dart';
 import '../lasting_search_index.dart';
@@ -87,6 +89,7 @@ class LioSensitiveActionEntry {
     this.emergencyManager,
     this.encyclopediaShareBridge,
     this.healthObservationService,
+    this.clinicalPhrExportService,
   });
 
   static const String entryId = 'LioSensitiveActionEntry';
@@ -106,6 +109,7 @@ class LioSensitiveActionEntry {
   final EmergencyManager? emergencyManager;
   final EncyclopediaShareBridge? encyclopediaShareBridge;
   final HealthObservationApplicationService? healthObservationService;
+  final ClinicalPhrExportApplicationService? clinicalPhrExportService;
 
   /// يربط عمليات Application الحساسة دون إنشاء Gateway/Entry ثانٍ.
   LioSensitiveActionEntry bindApplicationOps({
@@ -119,6 +123,7 @@ class LioSensitiveActionEntry {
     EmergencyManager? emergencyManager,
     EncyclopediaShareBridge? encyclopediaShareBridge,
     HealthObservationApplicationService? healthObservationService,
+    ClinicalPhrExportApplicationService? clinicalPhrExportService,
   }) {
     return LioSensitiveActionEntry(
       lioGateway: lioGateway,
@@ -139,6 +144,8 @@ class LioSensitiveActionEntry {
           encyclopediaShareBridge ?? this.encyclopediaShareBridge,
       healthObservationService:
           healthObservationService ?? this.healthObservationService,
+      clinicalPhrExportService:
+          clinicalPhrExportService ?? this.clinicalPhrExportService,
     );
   }
 
@@ -617,19 +624,32 @@ class LioSensitiveActionEntry {
     );
   }
 
-  /// EXPORT سريري/PHR — ليس SHARE عاماً. بلا نجاح وهمي.
-  Future<LioSensitiveActionOutcome<LioLifecycleResult>>
+  /// EXPORT سريري/PHR — ليس SHARE عاماً. Fail-Closed بلا artifact عند الفشل.
+  Future<LioSensitiveActionOutcome<ClinicalPhrExportResult>>
       requestClinicalPhrExport({
     required LioGatewayRequest gatewayRequest,
+    required ClinicalPhrExportRequest exportRequest,
   }) {
+    final svc = clinicalPhrExportService;
+    if (svc == null) {
+      return authorizeThenRun(
+        request: gatewayRequest,
+        run: () async => ClinicalPhrExportResult.failed(
+              reasonCode: 'NOT_IMPLEMENTED',
+              messageAr:
+                  'EXPORT Clinical/PHR غير موصول: ClinicalPhrExportApplicationService unbound. '
+                  'EXPORT ≠ SHARE.',
+            ),
+      );
+    }
     return authorizeThenRun(
       request: gatewayRequest,
-      run: () async => LioLifecycleResult.notImplemented(
-            opKind: LioLifecycleOpKind.export,
-            domain: LioSensitiveDataDomain.patientPhr,
-            messageAr:
-                'EXPORT Clinical/PHR غير منفَّذ: لا مسار تصدير آمن بعد. '
-                'EXPORT ≠ SHARE العام. لا نجاح وهمي.',
+      run: () => svc.export(
+            request: exportRequest,
+            accountIdRef: gatewayRequest.identityAccountId,
+            gatewayPurpose: gatewayRequest.purpose,
+            gatewayDataScope: gatewayRequest.dataScope,
+            auditReference: gatewayRequest.requestId,
           ),
     );
   }

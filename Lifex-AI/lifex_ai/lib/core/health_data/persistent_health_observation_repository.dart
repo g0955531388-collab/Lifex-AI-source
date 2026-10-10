@@ -93,6 +93,12 @@ class PersistentHealthObservationRepository
   }
 
   @override
+  Future<ProvenanceRecord?> getProvenance(String provenanceId) async {
+    await _ensureLoaded();
+    return _provenance[provenanceId];
+  }
+
+  @override
   Future<HealthObservation?> saveObservation(
     HealthObservation observation,
   ) async {

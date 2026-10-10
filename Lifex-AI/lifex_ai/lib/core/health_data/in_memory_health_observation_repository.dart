@@ -24,6 +24,11 @@ class InMemoryHealthObservationRepository
   }
 
   @override
+  Future<ProvenanceRecord?> getProvenance(String provenanceId) async {
+    return provenance[provenanceId];
+  }
+
+  @override
   Future<HealthObservation?> saveObservation(
     HealthObservation observation,
   ) async {

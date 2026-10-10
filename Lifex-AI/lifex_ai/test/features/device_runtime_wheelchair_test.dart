@@ -1,6 +1,7 @@
 /// =============================================================
 /// Lifex-AI — اختبار ربط منظومة الأجهزة + الكرسي
 /// =============================================================
+library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/device_control_center/control_types.dart';
 import 'package:lifex_ai/core/device_drivers/smart_wheelchair_profile.dart';

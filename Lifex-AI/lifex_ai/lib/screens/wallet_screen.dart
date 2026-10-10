@@ -369,12 +369,12 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             const SizedBox(height: 12),
             TextField(
-              controller: amountController,
+          controller: amountController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
+          decoration: const InputDecoration(
                 labelText: 'المبلغ (دولار)',
-                border: OutlineInputBorder(),
-              ),
+            border: OutlineInputBorder(),
+          ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -671,11 +671,11 @@ class _WalletScreenState extends State<WalletScreen> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          FilledButton.icon(
+                      FilledButton.icon(
                             onPressed:
                                 _isProcessing ? null : _showTopUpWizard,
                             icon: const Icon(Icons.add),
-                            label: const Text('شحن الرصيد'),
+                        label: const Text('شحن الرصيد'),
                           ),
                           OutlinedButton.icon(
                             onPressed:

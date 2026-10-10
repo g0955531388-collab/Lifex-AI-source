@@ -12,6 +12,7 @@ abstract class HealthObservationRepository {
   static const ownerId = 'HealthObservationRepository';
 
   Future<void> ensureProvenance(ProvenanceRecord provenance);
+  Future<ProvenanceRecord?> getProvenance(String provenanceId);
   Future<HealthObservation?> saveObservation(HealthObservation observation);
   Future<HealthObservation?> getObservation(String observationId);
   Future<List<HealthObservation>> listObservationsForPatient(String patientId);

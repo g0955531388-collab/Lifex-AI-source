@@ -22,6 +22,7 @@ class LioGatewayPolicy {
     'knowledge_lookup',
     'audit_review',
     'settings',
+    'phr_export',
   };
 
   /// نطاقات بيانات مسموحة عامة/تشغيلية.
@@ -35,6 +36,8 @@ class LioGatewayPolicy {
     'emergency_contacts_min',
     'knowledge_public',
     'settings_local',
+    'phr_export_observations',
+    'phr_export_complete',
   };
 
   LioGatewayDecision evaluate(LioGatewayRequest request) {

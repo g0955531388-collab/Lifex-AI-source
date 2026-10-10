@@ -1,3 +1,4 @@
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/lio/claim_verifier.dart';
 import 'package:lifex_ai/core/lio/lifex_intelligence_fabric.dart';
@@ -138,19 +139,19 @@ void main() {
     );
     // shrink timeout via custom contract registry
     final tight = McpLiveToolRegistry(seed: {
-      'mcp.local_files': McpToolContract(
+      'mcp.local_files': const McpToolContract(
         toolId: 'mcp.local_files',
         toolName: 'Files',
         description: 'timeout test',
-        capabilities: const ['ping'],
-        allowedOperations: const ['ping'],
-        writeOperations: const [],
-        allowedScopes: const ['project_files'],
-        requiredPermissions: const [],
+        capabilities: ['ping'],
+        allowedOperations: ['ping'],
+        writeOperations: [],
+        allowedScopes: ['project_files'],
+        requiredPermissions: [],
         riskLevel: LioRiskLevel.low,
         approvalPolicy: McpApprovalPolicy.none,
         enabled: true,
-        timeout: const Duration(milliseconds: 50),
+        timeout: Duration(milliseconds: 50),
         auditPolicy: McpAuditPolicy.minimal,
       ),
     });

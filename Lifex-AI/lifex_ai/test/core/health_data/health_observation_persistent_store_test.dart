@@ -1,3 +1,4 @@
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -104,7 +105,7 @@ void main() {
     );
   }
 
-  LifexProductionBundle _assemble({
+  LifexProductionBundle assemble({
     required HealthObservationPersistentStore store,
     required MemorySecureSecretStore secretStore,
   }) {
@@ -138,7 +139,7 @@ void main() {
     );
   }
 
-  EncryptedHealthObservationStore _encStore() {
+  EncryptedHealthObservationStore encStore() {
     return EncryptedHealthObservationStore(
       inner: FileHealthObservationStore(rootDirectory: tempDir),
       keyVault: HealthObservationKeyVault(secretStore: secrets),
@@ -148,8 +149,8 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('lifex_health_obs_');
     secrets = MemorySecureSecretStore();
-    final store = _encStore();
-    final bundle = _assemble(store: store, secretStore: secrets);
+    final store = encStore();
+    final bundle = assemble(store: store, secretStore: secrets);
     entry = bundle.sensitiveActionEntry;
     persistentRepo =
         bundle.healthObservationRepository as PersistentHealthObservationRepository;
@@ -285,8 +286,8 @@ void main() {
   });
 
   test('canonical ownership + production composition uses Persistent', () {
-    final bundle = _assemble(
-      store: _encStore(),
+    final bundle = assemble(
+      store: encStore(),
       secretStore: secrets,
     );
     expect(

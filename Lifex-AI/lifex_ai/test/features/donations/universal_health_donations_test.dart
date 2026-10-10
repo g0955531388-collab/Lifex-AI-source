@@ -20,7 +20,7 @@ void main() {
     });
 
     test('CancerDonationSearch / HeartDonationSearch', () {
-      final parser = const DonationIntentParser();
+      const parser = DonationIntentParser();
       expect(parser.parseNeedCategory('أريد التبرع لمرضى السرطان'), DonationNeedCategory.cancer);
       expect(parser.parseNeedCategory('تبرع لمرضى القلب'), DonationNeedCategory.cardiovascular);
 

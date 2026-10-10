@@ -1,3 +1,4 @@
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -8,7 +9,7 @@ import 'package:lifex_ai/core/lio/knowledge_engine/knowledge_engine.dart';
 void main() {
   final libRoot = Directory('lib');
 
-  List<File> _dartFilesUnder(Directory dir) {
+  List<File> dartFilesUnder(Directory dir) {
     if (!dir.existsSync()) return const [];
     return dir
         .listSync(recursive: true)
@@ -17,15 +18,15 @@ void main() {
         .toList();
   }
 
-  String _norm(String p) => p.replaceAll('\\', '/');
+  String norm(String p) => p.replaceAll('\\', '/');
 
   test('Only LifexProductionComposition is the Agent Knowledge production root',
       () {
     final roots = <String>[];
-    for (final f in _dartFilesUnder(libRoot)) {
+    for (final f in dartFilesUnder(libRoot)) {
       final text = f.readAsStringSync();
       if (text.contains('class LifexProductionComposition')) {
-        roots.add(_norm(f.path));
+        roots.add(norm(f.path));
       }
     }
     expect(roots, hasLength(1));
@@ -48,8 +49,8 @@ void main() {
   test('KnowledgeRetriever.production only from ProductionKnowledgeComposition',
       () {
     final offenders = <String>[];
-    for (final f in _dartFilesUnder(libRoot)) {
-      final path = _norm(f.path);
+    for (final f in dartFilesUnder(libRoot)) {
+      final path = norm(f.path);
       if (path.endsWith('production_knowledge_composition.dart')) continue;
       if (path.endsWith('knowledge_retriever.dart')) continue;
       final text = f.readAsStringSync();
@@ -82,8 +83,8 @@ void main() {
 
   test('No second production Fabric factory outside Composition', () {
     final offenders = <String>[];
-    for (final f in _dartFilesUnder(libRoot)) {
-      final path = _norm(f.path);
+    for (final f in dartFilesUnder(libRoot)) {
+      final path = norm(f.path);
       if (path.endsWith('lifex_intelligence_fabric.dart')) continue;
       if (path.endsWith('lifex_production_composition.dart')) continue;
       final text = f.readAsStringSync();
@@ -97,8 +98,8 @@ void main() {
   test('ProductionKnowledgeComposition.createRetriever only from Composition Root',
       () {
     final offenders = <String>[];
-    for (final f in _dartFilesUnder(libRoot)) {
-      final path = _norm(f.path);
+    for (final f in dartFilesUnder(libRoot)) {
+      final path = norm(f.path);
       if (path.endsWith('production_knowledge_composition.dart')) continue;
       if (path.endsWith('lifex_production_composition.dart')) continue;
       final text = f.readAsStringSync();
@@ -111,10 +112,10 @@ void main() {
 
   test('No Fake/Stub KnowledgeRetriever classes in lib/', () {
     final offenders = <String>[];
-    for (final f in _dartFilesUnder(libRoot)) {
+    for (final f in dartFilesUnder(libRoot)) {
       final text = f.readAsStringSync();
       if (RegExp(r'class\s+(Fake|Stub)\w*KnowledgeRetriever\b').hasMatch(text)) {
-        offenders.add(_norm(f.path));
+        offenders.add(norm(f.path));
       }
     }
     expect(offenders, isEmpty, reason: offenders.join('\n'));
@@ -138,11 +139,11 @@ void main() {
 
   test('Production lib must not import test/support doubles', () {
     final offenders = <String>[];
-    for (final f in _dartFilesUnder(libRoot)) {
+    for (final f in dartFilesUnder(libRoot)) {
       final text = f.readAsStringSync();
       if (text.contains('test/support/') ||
           text.contains('knowledge_retriever_test_doubles')) {
-        offenders.add(_norm(f.path));
+        offenders.add(norm(f.path));
       }
     }
     expect(offenders, isEmpty, reason: offenders.join('\n'));
