@@ -19,10 +19,14 @@ import '../features/network_box/box_unit_catalog.dart';
 import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/finance/billing_exemption_policy.dart';
 import '../features/location/gps_priority_monitor.dart';
+import '../features/network_box/studio_portal_catalog.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_identity_manager.dart';
+import '../features/profile/health_profile.dart';
 import '../widgets/accessible_widgets.dart';
 import '../widgets/encyclopedia_share_bar.dart';
+import '../widgets/studio_menu_bar.dart';
+import '../widgets/studio_web_frame.dart';
 import 'accessibility_assistant_screen.dart';
 import 'ai_agent_screen.dart';
 import 'ai_hub_screen.dart';
@@ -42,11 +46,14 @@ import 'project_box_hub_screen.dart';
 import 'settings_screen.dart';
 import 'smart_health_questionnaire_screen.dart';
 import 'system_search_screen.dart';
+import 'studio_network_screen.dart';
 import 'voice_control_screen.dart';
 import 'wallet_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  static const servicesKey = GlobalObjectKey('lifex-studio-services');
 
   bool _allowed(BuildContext context, String unitId) {
     final trial = context.read<TrialManager>();
@@ -92,6 +99,56 @@ class HomeScreen extends StatelessWidget {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
   }
 
+  void _openPortal(
+    BuildContext context,
+    StudioPortal portal,
+    String? profileId,
+    HealthProfile? profile,
+  ) {
+    final openWithoutProfile = portal.id == StudioPortalId.patient ||
+        portal.id == StudioPortalId.doctor ||
+        portal.id == StudioPortalId.emergency ||
+        portal.id == StudioPortalId.privacy;
+    if (!openWithoutProfile && profileId == null) {
+      const message = 'أنشئ الملف الصحي أولاً، ثم تفتح هذه البوابة.';
+      announceForScreenReader(context, message);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(message)),
+      );
+      return;
+    }
+    final unitId = switch (portal.id) {
+      StudioPortalId.patient => 'profile',
+      StudioPortalId.doctor => 'doctors',
+      StudioPortalId.pharmacy => 'pharmacy',
+      StudioPortalId.devices => 'devices',
+      StudioPortalId.emergency => 'emergency',
+      StudioPortalId.ai => 'ai',
+      StudioPortalId.privacy => 'settings',
+      _ => 'box',
+    };
+    _open(
+      context,
+      unitId,
+      StudioNetworkScreen.pageFor(
+        id: portal.id,
+        profileId: profileId ?? '',
+        profile: profile,
+      ),
+    );
+  }
+
+  void _confirmEmergency(BuildContext context, String? activeProfileId) {
+    if (!_allowed(context, 'emergency')) {
+      final trial = context.read<TrialManager>();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(trial.statusLineAr())),
+      );
+      return;
+    }
+    _showEmergencyConfirmationDialog(context, activeProfileId);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ActiveProfileController>(
@@ -115,69 +172,139 @@ class HomeScreen extends StatelessWidget {
 
         return Scaffold(
           bottomNavigationBar: const EncyclopediaShareBar(),
-          appBar: AppBar(
-            title: const Text('Lifex-AI'),
-            actions: [
-              Semantics(
-                button: true,
-                label: 'بحث المنظومة',
-                hint: 'يفتح البحث في الوحدات والمرجع المحلي',
-                child: IconButton(
-                  icon: const Icon(Icons.search),
-                  tooltip: 'بحث المنظومة',
-                  onPressed: () => _open(
-                    context,
-                    'search',
-                    const SystemSearchScreen(),
-                  ),
+          body: Column(
+            children: [
+              StudioMenuBar(
+                onHome: () {
+                  final target = servicesKey.currentContext;
+                  if (target != null) {
+                    Scrollable.ensureVisible(target);
+                  }
+                },
+                onPortal: (portal) => _openPortal(
+                  context,
+                  portal,
+                  activeProfileId,
+                  profileController.activeProfile,
                 ),
-              ),
-              Semantics(
-                button: true,
-                label: 'الإعدادات',
-                hint: 'يفتح شاشة إعدادات التطبيق واللغة والخصوصية',
-                child: IconButton(
-                  icon: const Icon(Icons.settings),
-                  tooltip: 'الإعدادات',
-                  onPressed: () {
-                    _open(context, 'settings', const SettingsScreen());
-                  },
+                onSearch: () => _open(
+                  context,
+                  'search',
+                  const SystemSearchScreen(),
                 ),
+                onAccount: () =>
+                    _open(context, 'settings', const SettingsScreen()),
+                onEmergency: () => _confirmEmergency(context, activeProfileId),
               ),
-            ],
-          ),
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  FutureBuilder<PermissionStatus>(
-                    future: Permission.location.status,
-                    builder: (context, snapshot) {
-                      final granted = snapshot.data?.isGranted == true;
-                      final gps = const GpsPriorityMonitor()
-                          .fromPermission(granted: granted);
-                      return Card(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        child: ListTile(
-                          leading: const Icon(Icons.gps_fixed),
-                          title: const Text('حالة GPS — أولوية عالية'),
-                          subtitle: Text(gps.messageAr),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  children: [
+                    StudioWebHero(
+                      onStart: () => _openPortal(
+                        context,
+                        StudioPortalCatalog.portals.firstWhere(
+                          (portal) => portal.id == StudioPortalId.patient,
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  if (showGate)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(trial.statusLineAr(feeExempt: exempt)),
+                        activeProfileId,
+                        profileController.activeProfile,
+                      ),
+                      onExplore: () => _openPortal(
+                        context,
+                        StudioPortalCatalog.portals.firstWhere(
+                          (portal) => portal.id == StudioPortalId.network,
+                        ),
+                        activeProfileId,
+                        profileController.activeProfile,
+                      ),
+                      onLogin: () =>
+                          _open(context, 'settings', const SettingsScreen()),
+                      onServices: () {
+                        final target = servicesKey.currentContext;
+                        if (target != null) {
+                          Scrollable.ensureVisible(target);
+                        }
+                      },
+                      onEmergency: () =>
+                          _confirmEmergency(context, activeProfileId),
+                    ),
+                    const SizedBox(height: 16),
+                    StudioPortalGrid(
+                      key: servicesKey,
+                      onPortal: (portal) => _openPortal(
+                        context,
+                        portal,
+                        activeProfileId,
+                        profileController.activeProfile,
                       ),
                     ),
-                  if (showGate) const SizedBox(height: 12),
-                  Expanded(
-                    child: GridView.count(
+                    const SizedBox(height: 16),
+                    StudioPublicSections(
+                      onNetwork: () => _openPortal(
+                        context,
+                        StudioPortalCatalog.portals.firstWhere(
+                          (portal) => portal.id == StudioPortalId.network,
+                        ),
+                        activeProfileId,
+                        profileController.activeProfile,
+                      ),
+                      onProfile: () => _open(
+                        context,
+                        'profile',
+                        HealthProfileScreen(
+                          profile: profileController.activeProfile,
+                        ),
+                      ),
+                      onAi: () => _openPortal(
+                        context,
+                        StudioPortalCatalog.portals.firstWhere(
+                          (portal) => portal.id == StudioPortalId.ai,
+                        ),
+                        activeProfileId,
+                        profileController.activeProfile,
+                      ),
+                      onDevices: () => _openPortal(
+                        context,
+                        StudioPortalCatalog.portals.firstWhere(
+                          (portal) => portal.id == StudioPortalId.devices,
+                        ),
+                        activeProfileId,
+                        profileController.activeProfile,
+                      ),
+                      onEmergency: () =>
+                          _confirmEmergency(context, activeProfileId),
+                      onContact: () =>
+                          _open(context, 'settings', const SettingsScreen()),
+                    ),
+                    const SizedBox(height: 16),
+                    FutureBuilder<PermissionStatus>(
+                      future: Permission.location.status,
+                      builder: (context, snapshot) {
+                        final granted = snapshot.data?.isGranted == true;
+                        final gps = const GpsPriorityMonitor()
+                            .fromPermission(granted: granted);
+                        return Card(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          child: ListTile(
+                            leading: const Icon(Icons.gps_fixed),
+                            title: const Text('حالة GPS — أولوية عالية'),
+                            subtitle: Text(gps.messageAr),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    if (showGate)
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(trial.statusLineAr(feeExempt: exempt)),
+                        ),
+                      ),
+                    if (showGate) const SizedBox(height: 12),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
                       crossAxisCount: 2,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
@@ -470,16 +597,15 @@ class HomeScreen extends StatelessWidget {
                               );
                               return;
                             }
-                            _showEmergencyConfirmationDialog(
-                                context, activeProfileId);
+                            _confirmEmergency(context, activeProfileId);
                           },
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         );
       },

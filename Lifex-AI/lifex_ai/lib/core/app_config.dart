@@ -6,6 +6,10 @@
 /// (بيئة التشغيل، اللغة الافتراضية، إعدادات الخصوصية العامة...).
 /// =============================================================
 
+import 'package:flutter/foundation.dart';
+
+import 'studio_theme.dart';
+
 /// بيئات التشغيل الممكنة للتطبيق.
 enum AppEnvironment { development, staging, production }
 
@@ -26,7 +30,10 @@ class AppConfig {
   AppLanguage defaultLanguage = AppLanguage.arabic;
 
   /// هل الوضع الليلي مفعّل؟
-  bool darkModeEnabled = false;
+  bool darkModeEnabled = true;
+
+  /// مظهر الاستوديو: داكن ثم فاتح ثم تباين.
+  StudioAppearance appearance = StudioAppearance.dark;
 
   /// هل يُسمح بجمع بيانات استخدام مجهولة الهوية لتحسين النظام؟
   bool anonymousAnalyticsEnabled = false;
@@ -79,10 +86,40 @@ class AppConfig {
         'environment': environment.name,
         'defaultLanguage': defaultLanguage.name,
         'darkModeEnabled': darkModeEnabled,
+        'appearance': appearance.name,
         'anonymousAnalyticsEnabled': anonymousAnalyticsEnabled,
         'voiceGuidanceEnabledByDefault': voiceGuidanceEnabledByDefault,
         'offlineModeSupported': offlineModeSupported,
         'maxFamilyProfilesPerAccount': maxFamilyProfilesPerAccount,
         'sessionTimeoutMinutes': sessionTimeoutMinutes,
       };
+}
+
+class StudioThemeController extends ChangeNotifier {
+  StudioThemeController._();
+
+  static final StudioThemeController instance = StudioThemeController._();
+
+  void setAppearance(StudioAppearance value) {
+    AppConfig.instance.appearance = value;
+    AppConfig.instance.darkModeEnabled = value != StudioAppearance.light;
+    notifyListeners();
+  }
+
+  void cycleAppearance() {
+    final next = switch (AppConfig.instance.appearance) {
+      StudioAppearance.dark => StudioAppearance.light,
+      StudioAppearance.light => StudioAppearance.contrast,
+      StudioAppearance.contrast => StudioAppearance.dark,
+    };
+    setAppearance(next);
+  }
+
+  void toggleLanguage() {
+    AppConfig.instance.defaultLanguage =
+        AppConfig.instance.defaultLanguage == AppLanguage.arabic
+            ? AppLanguage.english
+            : AppLanguage.arabic;
+    notifyListeners();
+  }
 }
