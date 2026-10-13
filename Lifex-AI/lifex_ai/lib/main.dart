@@ -23,6 +23,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/app_config.dart';
+import 'core/studio_theme.dart';
+import 'widgets/studio_web_frame.dart';
 import 'core/error_handler.dart';
 import 'core/agent/agent_core.dart';
 import 'core/agent/adapters/placeholder_ocr_extractor.dart';
@@ -480,35 +482,39 @@ class LifexAiApp extends StatelessWidget {
         Provider<LastingSearchIndex>.value(
             value: appContext.lastingSearchIndex),
       ],
-      child: MaterialApp(
-        navigatorKey: LifexNavigator.key,
-        title: 'Lifex-AI',
-        debugShowCheckedModeBanner: false,
-        locale: Locale(
-          AppConfig.instance.defaultLanguage == AppLanguage.arabic
-              ? 'ar'
-              : 'en',
-        ),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        theme: ThemeData(
-          colorSchemeSeed: Colors.teal,
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData(
-          colorSchemeSeed: Colors.teal,
-          brightness: Brightness.dark,
-          useMaterial3: true,
-        ),
-        themeMode: AppConfig.instance.darkModeEnabled
-            ? ThemeMode.dark
-            : ThemeMode.light,
-        home: const SplashScreen(),
+      child: ListenableBuilder(
+        listenable: StudioThemeController.instance,
+        builder: (context, _) {
+          final appearance = AppConfig.instance.appearance;
+          return MaterialApp(
+            navigatorKey: LifexNavigator.key,
+            title: 'Lifex-AI',
+            debugShowCheckedModeBanner: false,
+            locale: Locale(
+              AppConfig.instance.defaultLanguage == AppLanguage.arabic
+                  ? 'ar'
+                  : 'en',
+            ),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: StudioTheme.light(),
+            darkTheme: appearance == StudioAppearance.contrast
+                ? StudioTheme.contrast()
+                : StudioTheme.dark(),
+            themeMode: appearance == StudioAppearance.light
+                ? ThemeMode.light
+                : ThemeMode.dark,
+            home: const SplashScreen(),
+            builder: (context, child) => StudioWebCanvas(
+              child: child ?? const SizedBox.shrink(),
+            ),
+          );
+        },
       ),
     );
   }
