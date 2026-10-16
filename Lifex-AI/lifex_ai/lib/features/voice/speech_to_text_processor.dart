@@ -6,22 +6,32 @@
 /// (Interface) الذي سيُنفَّذ لاحقاً عبر مكتبة تعرّف صوتي حقيقية
 /// (مثل speech_to_text على Flutter)، دون ربط هذا الملف بمكتبة محددة الآن.
 /// =============================================================
+library;
 
+import '../../core/app_config.dart';
+import 'assistant_permission_desk.dart';
 import 'voice_engine.dart';
 import 'voice_locale_policy.dart';
 
 /// حالة نتيجة التعرّف الصوتي.
-enum SpeechRecognitionStatus { success, noSpeechDetected, permissionDenied, error }
+enum SpeechRecognitionStatus {
+  success,
+  noSpeechDetected,
+  permissionDenied,
+  error
+}
 
 class SpeechRecognitionResult {
   final SpeechRecognitionStatus status;
   final String? recognizedText;
   final double? confidence;
+  final String? messageAr;
 
   const SpeechRecognitionResult({
     required this.status,
     this.recognizedText,
     this.confidence,
+    this.messageAr,
   });
 }
 
@@ -51,30 +61,35 @@ class SpeechToTextProcessor {
   Future<VoiceOperationResult> _listenAndConvert() async {
     final hasPermission = await provider.requestMicrophonePermission();
     if (!hasPermission) {
-      return const VoiceOperationResult.failure(
-        'لم يتم منح إذن الميكروفون. لا يمكن استخدام الأوامر الصوتية بدونه.',
+      return VoiceOperationResult.failure(
+        AssistantPermissionDesk.lastExplanationAr ??
+            'لم يتم منح إذن الميكروفون. لا يمكن استخدام الأوامر الصوتية بدونه.',
       );
     }
 
-    final locale = const VoiceLocalePolicy().preferredListenCode();
+    final appLanguage =
+        AppConfig.instance.defaultLanguage == AppLanguage.english ? 'en' : 'ar';
+    final locale =
+        const VoiceLocalePolicy().listenCode(appLanguage: appLanguage);
     VoiceEngine.instance.activeLocaleId = locale;
-    VoiceEngine.instance.signalAr('أستمع بلغة الجهاز: $locale');
     final result = await provider.listenOnce(localeCode: locale);
 
     switch (result.status) {
       case SpeechRecognitionStatus.success:
         return VoiceOperationResult.success(textResult: result.recognizedText);
       case SpeechRecognitionStatus.noSpeechDetected:
-        return const VoiceOperationResult.failure(
-          'لم يتم رصد أي كلام. حاول التحدث بوضوح أكثر بالقرب من الميكروفون.',
+        return VoiceOperationResult.failure(
+          result.messageAr ??
+              'لم يصلني نص هذه المرة. يمكنك المحاولة مجدداً أو الكتابة.',
         );
       case SpeechRecognitionStatus.permissionDenied:
         return const VoiceOperationResult.failure(
           'إذن الميكروفون مرفوض. يمكنك تفعيله من إعدادات الجهاز.',
         );
       case SpeechRecognitionStatus.error:
-        return const VoiceOperationResult.failure(
-          'محرّك التعرّف غير متاح أو رُفض الميكروفون. لا أدّعي أني سمعت شيئاً.',
+        return VoiceOperationResult.failure(
+          result.messageAr ??
+              'خدمة التعرف على الكلام غير متاحة الآن. يمكنك الكتابة أو المحاولة لاحقاً.',
         );
     }
   }

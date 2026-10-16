@@ -10,6 +10,7 @@
 /// المستخدم (runtime permission) مع شرح واضح للسبب قبل الطلب. لا يُخزَّن
 /// أو يُرسل أي مقطع صوتي لأي خادم دون موافقة صريحة ومنفصلة عن إذن النظام.
 /// =============================================================
+library lifex_ai.features.voice.voice_engine;
 
 import '../../core/error_handler.dart';
 
@@ -45,11 +46,13 @@ class VoiceEngine {
   String? partialTranscript;
   String? activeLocaleId;
   String lastSignalAr = 'الصوت في وضع الانتظار';
+  int speechEpoch = 0;
 
   /// دوال منفَّذة من المحركات الفرعية (تُسجَّل عند التهيئة عبر
   /// voice_command_engine أو غيره) لتنفيذ العمليات الفعلية.
   Future<VoiceOperationResult> Function()? _startListeningImpl;
   Future<void> Function()? _stopListeningImpl;
+  Future<void> Function()? _stopSpeakingImpl;
   Future<VoiceOperationResult> Function(String text)? _speakImpl;
 
   VoiceEngineState get state => _state;
@@ -97,6 +100,10 @@ class VoiceEngine {
     _stopListeningImpl = implementation;
   }
 
+  void bindStopSpeakingImplementation(Future<void> Function() implementation) {
+    _stopSpeakingImpl = implementation;
+  }
+
   /// ربط التنفيذ الفعلي للنطق (يُستدعى من text_to_speech_manager.dart).
   void bindSpeakImplementation(
     Future<VoiceOperationResult> Function(String text) implementation,
@@ -104,8 +111,36 @@ class VoiceEngine {
     _speakImpl = implementation;
   }
 
+  /// الميكروفون بدأ فعلاً. لا تُعرض حالة الاستماع قبل هذه الإشارة.
+  void noteCaptureStarted() {
+    if (_state == VoiceEngineState.processing ||
+        _state == VoiceEngineState.idle) {
+      signalAr('الميكروفون يستقبل الكلام.');
+      _setState(VoiceEngineState.listening);
+    }
+  }
+
+  Future<VoiceOperationResult>? _listenFlight;
+
   /// بدء الاستماع لصوت المستخدم وتحويله لنص.
+  /// جلسة واحدة في كل وقت: الطلب الثاني يُرفض حتى تنتهي الأولى.
   Future<VoiceOperationResult> startListening() async {
+    if (_listenFlight != null) {
+      signalAr('جلسة الاستماع السابقة لم تنته.');
+      return const VoiceOperationResult.failure(
+        'جلسة الاستماع السابقة لم تنته بعد.',
+      );
+    }
+    final flight = _listenOnce();
+    _listenFlight = flight;
+    try {
+      return await flight;
+    } finally {
+      if (identical(_listenFlight, flight)) _listenFlight = null;
+    }
+  }
+
+  Future<VoiceOperationResult> _listenOnce() async {
     if (_startListeningImpl == null) {
       ErrorHandler.instance.report(
         'VOICE_LISTEN_NOT_BOUND',
@@ -119,15 +154,17 @@ class VoiceEngine {
       );
     }
 
+    await _stopSpeakingImpl?.call();
     partialTranscript = null;
-    signalAr('أستمع وأسجّل الآن.');
-    _setState(VoiceEngineState.listening);
+    signalAr('أجهّز التعرف على الكلام.');
+    _setState(VoiceEngineState.processing);
     try {
       final result = await _startListeningImpl!();
       signalAr(result.success
-          ? 'انتهى الاستماع.'
+          ? 'وصل كلامك.'
           : (result.errorMessageAr ?? 'تعذّر الاستماع.'));
-      _setState(VoiceEngineState.idle);
+      _setState(
+          result.success ? VoiceEngineState.idle : VoiceEngineState.error);
       return result;
     } catch (e, stackTrace) {
       signalAr('تعذّر تشغيل الميكروفون.');
@@ -148,6 +185,20 @@ class VoiceEngine {
     _setState(VoiceEngineState.idle);
   }
 
+  /// يقطع النطق فقط إذا كان المحرك يقرأ. التنقل الصامت لا يغيّر الإشارة.
+  Future<void> interruptIfSpeaking() async {
+    if (_state != VoiceEngineState.speaking) return;
+    await stopSpeaking();
+  }
+
+  /// يقطع النطق الجاري. يزيد [speechEpoch] حتى يتجاهل المتصل نتيجة النطق القديمة.
+  Future<void> stopSpeaking() async {
+    speechEpoch++;
+    await _stopSpeakingImpl?.call();
+    signalAr('أوقفت القراءة.');
+    _setState(VoiceEngineState.idle);
+  }
+
   /// نطق نص معيّن بصوت مسموع (Text-to-Speech).
   Future<VoiceOperationResult> speak(String text) async {
     if (_speakImpl == null) {
@@ -163,9 +214,13 @@ class VoiceEngine {
       );
     }
 
+    final epoch = ++speechEpoch;
     signalAr('أردّ بالصوت الآن.');
     _setState(VoiceEngineState.speaking);
     final result = await _speakImpl!(text);
+    if (epoch != speechEpoch) {
+      return VoiceOperationResult.success(textResult: text);
+    }
     signalAr(result.success
         ? 'انتهى الرد الصوتي.'
         : (result.errorMessageAr ?? 'تعذّر النطق.'));
