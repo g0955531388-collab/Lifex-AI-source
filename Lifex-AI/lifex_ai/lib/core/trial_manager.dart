@@ -13,18 +13,23 @@ import 'app_constants.dart';
 enum TrialPhase {
   /// اشتراك سنوي محلي مسجّل أو إعفاء يُمرَّر من الواجهة.
   subscribed,
+
   /// نسخة إهداء تعمل كاملة خمسة عشر يوماً.
   giftWorking,
+
   /// انتهت الخمسة عشر يوماً. تتوقف حتى التخصيص.
   giftFrozen,
+
   /// مشترك جديد في الشهر المجاني بخدمات أقل.
   reducedMonth,
+
   /// بلا اشتراك أو منتهٍ: إشعارات وتبرعات وإسعاف ودم.
   residual,
 }
 
 class GiftActionResult {
-  const GiftActionResult({required this.ok, required this.messageAr, this.token});
+  const GiftActionResult(
+      {required this.ok, required this.messageAr, this.token});
 
   final bool ok;
   final String messageAr;
@@ -94,8 +99,10 @@ class TrialManager {
     return DateTime.tryParse(raw);
   }
 
-  TrialPhase phase({bool feeExempt = false}) {
-    if (feeExempt || paidYearActive) return TrialPhase.subscribed;
+  TrialPhase phase({bool feeExempt = false, bool adminAccess = false}) {
+    if (feeExempt || adminAccess || paidYearActive) {
+      return TrialPhase.subscribed;
+    }
     if (isGiftCopy) {
       final started = giftStartedAt ?? installedAt;
       final giftDays = DateTime.now().difference(started).inDays;
@@ -122,7 +129,10 @@ class TrialManager {
   bool get asksForSubscription =>
       phase() == TrialPhase.reducedMonth || phase() == TrialPhase.residual;
 
-  String statusLineAr({bool feeExempt = false}) {
+  String statusLineAr({bool feeExempt = false, bool adminAccess = false}) {
+    if (adminAccess) {
+      return 'وصول المالك/الأدمن الكامل مفعّل على هذا الحساب؛ لا تنطبق عليه مدة التجربة.';
+    }
     switch (phase(feeExempt: feeExempt)) {
       case TrialPhase.subscribed:
         return feeExempt
@@ -229,12 +239,27 @@ class TrialManager {
   }
 }
 
-/// فصل صارم: فتح الوحدة ≠ استحقاق تجاري ≠ صلاحية بيانات.
+/// فصل صارم: فتح الوحدة حسب مرحلة التجربة ≠ استحقاق مدفوع ≠ صلاحية بيانات.
 ///
-/// - [canOpenUnit]: اكتشاف/تنقل/فتح الوحدة الأساسية — لا يُحجب بـ Trial.
-/// - [canUsePaidFeature]: عمليات مدفوعة داخل الوحدة (حجز مميز، شحن مزوّد…).
+/// - [canOpenUnit]: قيود المرحلة، مع استثناء صريح للوصول الإداري والإعفاء.
+/// - [canUsePaidFeature]: العمليات المدفوعة داخل وحدة مسموح بفتحها.
 class SessionAccessPolicy {
   const SessionAccessPolicy();
+
+  static const residualUnits = {
+    'emergency',
+    'blood',
+    'donations',
+    'notifications',
+    'settings',
+    'wallet',
+  };
+
+  static const reducedExtraUnits = {
+    'profile',
+    'medications',
+    'appointments',
+  };
 
   /// وحدات أساسية قابلة للاكتشاف دائماً (Module Access).
   static const coreDiscoverableUnits = {
@@ -276,20 +301,27 @@ class SessionAccessPolicy {
     'paid_advertising',
   };
 
-  /// فتح الوحدة/التنقل — لا يُرفض بسبب انتهاء Trial أو غياب الاشتراك.
-  /// الاشتراك يقيّد [canUsePaidFeature] فقط.
+  /// فتح الوحدة حسب المرحلة. الوصول الإداري والإعفاء يفتحان الوحدات صراحة.
   bool canOpenUnit(
     String unitId, {
     required TrialPhase phase,
     required bool feeExempt,
+    bool adminAccess = false,
   }) {
-    // giftFrozen: نسخة إهداء غير مخصّصة — الإعدادات فقط حتى التخصيص
-    // (REQUIRES_EXTERNAL_SETUP وليس LOCKED بسبب Premium).
+    if (adminAccess ||
+        feeExempt ||
+        phase == TrialPhase.subscribed ||
+        phase == TrialPhase.giftWorking) {
+      return true;
+    }
     if (phase == TrialPhase.giftFrozen) {
       return unitId == 'settings';
     }
-    // residual / reducedMonth / giftWorking / subscribed: كل الوحدات الأساسية.
-    return true;
+    if (phase == TrialPhase.reducedMonth) {
+      return residualUnits.contains(unitId) ||
+          reducedExtraUnits.contains(unitId);
+    }
+    return residualUnits.contains(unitId);
   }
 
   /// هل الوحدة الأساسية ضمن قائمة الاكتشاف؟
@@ -301,13 +333,14 @@ class SessionAccessPolicy {
     String featureId, {
     required TrialPhase phase,
     required bool feeExempt,
+    bool adminAccess = false,
   }) {
-    if (feeExempt ||
+    if (adminAccess ||
+        feeExempt ||
         phase == TrialPhase.subscribed ||
         phase == TrialPhase.giftWorking) {
       return true;
     }
-    // خارج الاشتراك: الميزات المدفوعة مقيدة؛ الوحدات نفسها تبقى مفتوحة.
     return !paidFeatureIds.contains(featureId);
   }
 }

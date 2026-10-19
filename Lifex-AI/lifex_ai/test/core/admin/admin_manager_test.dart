@@ -13,6 +13,7 @@ import 'package:lifex_ai/core/admin/admin_manager.dart';
 import 'package:lifex_ai/core/admin/admin_permissions.dart';
 import 'package:lifex_ai/core/app_constants.dart';
 import 'package:lifex_ai/features/profile/health_identity_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUp(() {
@@ -43,6 +44,15 @@ void main() {
       final role = admin.autoActivateOwnerIfMatches(
         lifexId: 'LFX-000002',
         phoneNumber: AppConstants.ownerPhoneNumber,
+      );
+      expect(role, GlobalAdminRole.owner);
+    });
+
+    test('يُفعَّل owner بالرقم السوري المحلي والأرقام العربية', () {
+      final admin = GlobalAdminManager.instance;
+      final role = admin.autoActivateOwnerIfMatches(
+        lifexId: 'LFX-000002-local',
+        phoneNumber: '٠٩٥٥٥٣١٣٨٨',
       );
       expect(role, GlobalAdminRole.owner);
     });
@@ -89,7 +99,7 @@ void main() {
       expect(admin.roleOf('user2'), GlobalAdminRole.none);
     });
 
-    test('الأدمن يستطيع منح دور مشرف لكن ليس دور أدمن', () {
+    test('الأدمن يستطيع منح دور مشرف وأدمن آخر', () {
       final admin = GlobalAdminManager.instance;
       admin.autoActivateOwnerIfMatches(
         lifexId: 'owner2',
@@ -114,8 +124,8 @@ void main() {
         targetLifexId: 'user3',
         role: GlobalAdminRole.admin,
       );
-      expect(adminResult.success, isFalse);
-      expect(admin.roleOf('user3'), GlobalAdminRole.none);
+      expect(adminResult.success, isTrue);
+      expect(admin.roleOf('user3'), GlobalAdminRole.admin);
     });
 
     test('لا يمكن منح دور المالك يدوياً بأي حال', () {
@@ -152,6 +162,57 @@ void main() {
     });
   });
 
+  group('استمرارية أدوار الإدارة', () {
+    test('يحفظ أدوار المالك والأدمن بعد إعادة تهيئة المدير', () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final admin = GlobalAdminManager.instance;
+      await admin.initialize(preferences);
+      admin.autoActivateOwnerIfMatches(
+        lifexId: 'stable-owner',
+        email: AppConstants.ownerEmail,
+      );
+      final granted = admin.grantRole(
+        granterLifexId: 'stable-owner',
+        targetLifexId: 'stable-admin',
+        role: GlobalAdminRole.admin,
+      );
+      expect(granted.success, isTrue);
+      await admin.flushPersistence();
+
+      admin.resetForTesting();
+      await admin.initialize(preferences);
+
+      expect(admin.roleOf('stable-owner'), GlobalAdminRole.owner);
+      expect(admin.roleOf('stable-admin'), GlobalAdminRole.admin);
+    });
+  });
+
+  group('استمرارية مفاتيح الأحداث', () {
+    test('يستعيد حالة مفتاح النظام بعد إعادة تهيئة المدير', () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final admin = GlobalAdminManager.instance;
+      await admin.initialize(preferences);
+      admin.autoActivateOwnerIfMatches(
+        lifexId: 'toggle-owner',
+        email: AppConstants.ownerEmail,
+      );
+      final result = admin.setEventToggle(
+        actorLifexId: 'toggle-owner',
+        eventKey: 'ai_gateway_enabled',
+        enabled: false,
+      );
+      expect(result.success, isTrue);
+      await admin.flushPersistence();
+
+      admin.resetForTesting();
+      await admin.initialize(preferences);
+
+      expect(admin.isEventEnabled('ai_gateway_enabled'), isFalse);
+    });
+  });
+
   group('مفاتيح الأحداث الدقيقة', () {
     test('الأدمن يستطيع تعطيل تنبيهات شبكة الدم', () {
       final admin = GlobalAdminManager.instance;
@@ -160,7 +221,8 @@ void main() {
         email: AppConstants.ownerEmail,
       );
 
-      expect(admin.isEventEnabled('blood_network_flash_alerts_enabled'), isTrue);
+      expect(
+          admin.isEventEnabled('blood_network_flash_alerts_enabled'), isTrue);
 
       final result = admin.setEventToggle(
         actorLifexId: 'owner5',
@@ -169,7 +231,8 @@ void main() {
       );
 
       expect(result.success, isTrue);
-      expect(admin.isEventEnabled('blood_network_flash_alerts_enabled'), isFalse);
+      expect(
+          admin.isEventEnabled('blood_network_flash_alerts_enabled'), isFalse);
     });
 
     test('مستخدم عادي لا يستطيع التحكم بمفاتيح الأحداث', () {

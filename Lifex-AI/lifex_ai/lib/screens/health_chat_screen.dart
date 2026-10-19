@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../core/admin/admin_manager.dart';
 import '../core/lasting_search_index.dart';
 import '../core/local_knowledge.dart';
 import '../core/trial_manager.dart';
@@ -17,6 +18,7 @@ import '../features/messaging/conversation_type_router.dart';
 import '../features/messaging/health_thread_ledger.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../features/profile/health_identity_manager.dart';
 import '../features/profile/health_profile.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
@@ -193,7 +195,12 @@ class _ThreadPageState extends State<_ThreadPage> {
   bool get _subscriber {
     final trial = context.read<TrialManager>();
     final exempt = const BillingExemptionPolicy().evaluate(widget.me).isExempt;
-    return trial.phase(feeExempt: exempt) == TrialPhase.subscribed;
+    final identity =
+        HealthIdentityManager.instance.getByProfileId(widget.me.profileId);
+    final adminAccess = identity != null &&
+        GlobalAdminManager.instance.hasFullSystemAccess(identity.lifexId);
+    return trial.phase(feeExempt: exempt, adminAccess: adminAccess) ==
+        TrialPhase.subscribed;
   }
 
   @override

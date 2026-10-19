@@ -149,6 +149,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
 
   // 1) الهوية الصحية والملفات المتعددة.
   final prefs = await SharedPreferences.getInstance();
+  await GlobalAdminManager.instance.initialize(prefs);
   final vault = ProfileVault(prefs);
   final trialManager = TrialManager(prefs);
   final multiProfileEngine = MultiProfileEngine(
@@ -168,7 +169,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     engine: multiProfileEngine,
     vault: vault,
   );
-  activeProfileController.rebindIdentitiesAfterRestore();
+  await activeProfileController.rebindIdentitiesAfterRestore();
 
   LocalKnowledge localKnowledge;
   try {
@@ -198,7 +199,8 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     // TODO: استبدال هذا الرابط برابط خادم Lifex-AI الفعلي عند توفره.
     remoteManifestUrl: 'https://api.lifex-ai.example.com/medical-manifest',
   );
-  final medicalKnowledge = await MedicalDataLoader.loadAll(medicalDatabaseManager);
+  final medicalKnowledge =
+      await MedicalDataLoader.loadAll(medicalDatabaseManager);
   final aiModuleBundle = AiBridge.initialize(
     symptomKeywordMap: medicalKnowledge.symptomKeywordMap,
     emergencySymptomIds: medicalKnowledge.emergencySymptomIds,
@@ -307,7 +309,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   final transactionLedger = TransactionLedger();
   final walletManager = WalletManager(
     // الإنتاج غير موصول: Sandbox صريح حتى يوجد مزود مرخّص حقيقي.
-    // لا تُخلط حركات Sandbox بأموال Production.
+    // مفتاح pk_test_placeholder ليس إعداد دفع صالحاً.
     gatewayClient: SandboxPaymentGatewayClient(
       feePolicy: const TopUpFeePolicy(fixedMinor: 200),
     ),
@@ -320,25 +322,30 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   // 7-ب) فوترة الاشتراكات — فرد 100 دولار/سنة، وحدة صحية 300، مستشفى 600.
   // الاشتراك عادي بلا إعلانات ولا خدمات خاصة. التحويل والخدمات الأخرى برسوم.
   // المعفى: إعاقة ببطاقة من بلد الحساب، مرض دائم في الملف، مكفوفون.
-  // ⚠️ يتطلب Client ID فعلي من حساب PayPal تجاري حقيقي قبل أي دفعة حقيقية.
+  // معرّف PayPal الفعلي يأتى من LIFEX_PAYPAL_CLIENT_ID عند البناء. القيمة
+  // الفارغة ليست إعداداً، والبوابة لا تُسجَّل ولا تُعرض كمتصلة.
   final subscriptionBillingManager = SubscriptionBillingManager(
     ledger: transactionLedger,
     exemptionPolicy: const BillingExemptionPolicy(),
-  )..registerGateway(
-      PayPalPaymentGatewayClient(clientId: 'paypal_client_id_placeholder'),
-    );
-
-  // 8) المزامنة السحابية.
-  final cloudBackendClient = CloudBackendClient(
-    // TODO: استبدال هذا الرابط برابط خادم Lifex-AI الخلفي الفعلي.
-    baseUrl: 'https://backend.lifex-ai.example.com',
   );
+  const paypalClientId = String.fromEnvironment('LIFEX_PAYPAL_CLIENT_ID');
+  final paypalGateway = PayPalPaymentGatewayClient(clientId: paypalClientId);
+  if (paypalGateway.isConfigured && paypalGateway.isAvailable) {
+    subscriptionBillingManager.registerGateway(paypalGateway);
+  }
+
+  // 8) المزامنة السحابية. عنوان الخادم من LIFEX_BACKEND_URL. الفراغ يعني
+  // أن المزامنة غير موصولة، والطابور يبقى محلياً.
+  const backendUrl = String.fromEnvironment('LIFEX_BACKEND_URL');
+  final cloudBackendClient = CloudBackendClient(baseUrl: backendUrl);
   final cloudSyncManager = CloudSyncManager(backendClient: cloudBackendClient);
 
   // 9) خدمات الترجمة الديناميكية والمصطلحات الطبية الرسمية والأجهزة الذكية.
+  // مفتاح الترجمة من LIFEX_TRANSLATION_API_KEY. الفراغ يبقي الخدمة غير متصلة.
+  const translationApiKey =
+      String.fromEnvironment('LIFEX_TRANSLATION_API_KEY');
   final translationService = TranslationService(
-    // TODO: استبدال هذا بمفتاح Google Cloud Translation حقيقي.
-    provider: GoogleTranslationProvider(apiKey: 'placeholder-translation-key'),
+    provider: GoogleTranslationProvider(apiKey: translationApiKey),
   );
   SpeechToTextProcessor(
     provider: DeviceSpeechToTextProvider(),
@@ -401,7 +408,8 @@ class LifexAiApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<MultiProfileEngine>.value(value: appContext.multiProfileEngine),
+        Provider<MultiProfileEngine>.value(
+            value: appContext.multiProfileEngine),
         Provider<AiModuleBundle>.value(value: appContext.aiModuleBundle),
         Provider<EmergencyManager>.value(value: appContext.emergencyManager),
         Provider<EnergyManager>.value(value: appContext.energyManager),
@@ -419,12 +427,15 @@ class LifexAiApp extends StatelessWidget {
         Provider<SubscriptionBillingManager>.value(
           value: appContext.subscriptionBillingManager,
         ),
-        Provider<TransactionService>.value(value: appContext.transactionService),
-        // UnifiedAiHubGateway / AiServiceRouter غير معروضين للـ UI —
-        // الوصول الحساس عبر LioSensitiveActionEntry فقط.
+        Provider<TransactionService>.value(
+            value: appContext.transactionService),
+        // فُحصت الشاشات: لا قراءة مباشرة لبوابة الذكاء أو موجّه الخدمات.
+        // التعريض لشجرة الواجهة ممنوع؛ الاستدعاء عبر LioSensitiveActionEntry.
         Provider<CloudSyncManager>.value(value: appContext.cloudSyncManager),
-        Provider<TranslationService>.value(value: appContext.translationService),
-        Provider<HealthDeviceReader>.value(value: appContext.healthDeviceReader),
+        Provider<TranslationService>.value(
+            value: appContext.translationService),
+        Provider<HealthDeviceReader>.value(
+            value: appContext.healthDeviceReader),
         Provider<TerminologyConnector>.value(
           value: appContext.terminologyConnector,
         ),
@@ -449,7 +460,8 @@ class LifexAiApp extends StatelessWidget {
         ),
         Provider<TrialManager>.value(value: appContext.trialManager),
         Provider<LocalKnowledge>.value(value: appContext.localKnowledge),
-        Provider<LastingSearchIndex>.value(value: appContext.lastingSearchIndex),
+        Provider<LastingSearchIndex>.value(
+            value: appContext.lastingSearchIndex),
         Provider<LifexDeviceRuntime>.value(value: appContext.deviceRuntime),
       ],
       child: MaterialApp(
@@ -457,7 +469,9 @@ class LifexAiApp extends StatelessWidget {
         title: 'Lifex-AI',
         debugShowCheckedModeBanner: false,
         locale: Locale(
-          AppConfig.instance.defaultLanguage == AppLanguage.arabic ? 'ar' : 'en',
+          AppConfig.instance.defaultLanguage == AppLanguage.arabic
+              ? 'ar'
+              : 'en',
         ),
         localizationsDelegates: const [
           AppLocalizations.delegate,

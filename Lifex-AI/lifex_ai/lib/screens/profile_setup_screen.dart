@@ -112,6 +112,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     if (!_formKey.currentState!.validate()) return;
     final ageYears = int.parse(_ageController.text.trim());
+    final now = DateTime.now();
 
     final controller = Provider.of<ActiveProfileController>(
       context,
@@ -121,10 +122,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final profile = HealthProfile(
       // معرّف بسيط ومحلي كافٍ لهذه المرحلة؛ يُستبدل لاحقاً بمعرّف صادر
       // من خادم Lifex-AI الخلفي عند ربط الحساب بمصادقة حقيقية.
-      profileId: 'local-${DateTime.now().millisecondsSinceEpoch}',
+      profileId: 'local-${now.millisecondsSinceEpoch}',
       fullName: _nameController.text.trim(),
-      statedAgeYears: ageYears,
-      dateOfBirth: _dateOfBirth,
+      dateOfBirth: _dateOfBirth ?? DateTime(now.year - ageYears, now.month, now.day),
       biologicalSex: _sex,
       isPersonOfDetermination: _isPersonOfDetermination,
       accountCountry: _accountCountryController.text.trim(),
@@ -156,9 +156,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenArrival(
-      message: BlindNavigationCopy.profileArrival,
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(title: const Text('إنشاء ملفك الصحي')),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -359,7 +357,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             ),
           ),
         ),
-      ),
     );
   }
 }

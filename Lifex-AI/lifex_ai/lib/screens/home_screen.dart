@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
+import '../core/admin/admin_manager.dart';
 import '../core/orchestrator/lio_gateway_contracts.dart';
 import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/trial_manager.dart';
@@ -19,6 +20,7 @@ import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/finance/billing_exemption_policy.dart';
 import '../features/location/gps_priority_monitor.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../features/profile/health_identity_manager.dart';
 import '../widgets/accessible_widgets.dart';
 import '../widgets/encyclopedia_share_bar.dart';
 import 'accessibility_assistant_screen.dart';
@@ -52,23 +54,41 @@ class HomeScreen extends StatelessWidget {
     final profile = context.read<ActiveProfileController>().activeProfile;
     final exempt = profile != null &&
         const BillingExemptionPolicy().evaluate(profile).isExempt;
+    final identity = profile == null
+        ? null
+        : HealthIdentityManager.instance.getByProfileId(profile.profileId);
+    final adminAccess = identity != null &&
+        GlobalAdminManager.instance.hasFullSystemAccess(identity.lifexId);
     return const SessionAccessPolicy().canOpenUnit(
       unitId,
-      phase: trial.phase(feeExempt: exempt),
+      phase: trial.phase(feeExempt: exempt, adminAccess: adminAccess),
       feeExempt: exempt,
+      adminAccess: adminAccess,
     );
+  }
+
+  String _blockedUnitReason(BuildContext context) {
+    final trial = context.read<TrialManager>();
+    final profile = context.read<ActiveProfileController>().activeProfile;
+    final exempt = profile != null &&
+        const BillingExemptionPolicy().evaluate(profile).isExempt;
+    final identity = profile == null
+        ? null
+        : HealthIdentityManager.instance.getByProfileId(profile.profileId);
+    final adminAccess = identity != null &&
+        GlobalAdminManager.instance.hasFullSystemAccess(identity.lifexId);
+    final phase = trial.phase(feeExempt: exempt, adminAccess: adminAccess);
+    if (phase == TrialPhase.giftFrozen) {
+      return 'REQUIRES_EXTERNAL_SETUP — نسخة الإهداء غير مخصّصة بعد. '
+          'افتح الإعدادات لإكمال التخصيص.';
+    }
+    return trial.statusLineAr(feeExempt: exempt, adminAccess: adminAccess);
   }
 
   void _open(BuildContext context, String unitId, Widget page) {
     if (!_allowed(context, unitId)) {
-      final trial = context.read<TrialManager>();
-      final phase = trial.phase();
-      final reason = phase == TrialPhase.giftFrozen
-          ? 'REQUIRES_EXTERNAL_SETUP — نسخة الإهداء غير مخصّصة بعد. '
-              'افتح الإعدادات لإكمال التخصيص.'
-          : trial.statusLineAr();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(reason)),
+        SnackBar(content: Text(_blockedUnitReason(context))),
       );
       return;
     }
@@ -85,8 +105,14 @@ class HomeScreen extends StatelessWidget {
             const BillingExemptionPolicy()
                 .evaluate(profileController.activeProfile!)
                 .isExempt;
-        final phase = trial.phase(feeExempt: exempt);
-        final showGate = !exempt &&
+        final identity = activeProfileId == null
+            ? null
+            : HealthIdentityManager.instance.getByProfileId(activeProfileId);
+        final adminAccess = identity != null &&
+            GlobalAdminManager.instance.hasFullSystemAccess(identity.lifexId);
+        final phase = trial.phase(feeExempt: exempt, adminAccess: adminAccess);
+        final showGate = !adminAccess &&
+            !exempt &&
             phase != TrialPhase.subscribed &&
             phase != TrialPhase.giftWorking;
 
@@ -453,7 +479,7 @@ class HomeScreen extends StatelessWidget {
                             if (!_allowed(context, 'emergency')) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(trial.statusLineAr()),
+                                  content: Text(_blockedUnitReason(context)),
                                 ),
                               );
                               return;
@@ -478,9 +504,11 @@ class HomeScreen extends StatelessWidget {
     BuildContext context,
     String? activeProfileId,
   ) {
+    var emergencySending = false;
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
         title: const Text('تأكيد حالة طوارئ'),
         content: const Text(
           'ستُسجَّل حالة طوارئ على هذا الجهاز. الإرسال لجهات الثقة يحتاج قناة SMS أو دفع حقيقية. هل تريد المتابعة؟',
@@ -502,7 +530,10 @@ class HomeScreen extends StatelessWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
+            onPressed: emergencySending
+                ? null
+                : () async {
+              setDialogState(() => emergencySending = true);
               final profileId = activeProfileId ?? 'unknown_profile';
               final registry = context.read<EmergencyPhoneContactsRegistry>();
               final profile =
@@ -513,6 +544,7 @@ class HomeScreen extends StatelessWidget {
                   profile?.questionnaireData['trustedContacts'],
                 ),
               );
+              try {
               final outcome = await context
                   .read<LioSensitiveActionEntry>()
                   .triggerEmergencyLimited(
@@ -560,11 +592,21 @@ class HomeScreen extends StatelessWidget {
                       : Colors.orange,
                 ),
               );
+              } catch (_) {
+                if (!context.mounted) return;
+                setDialogState(() => emergencySending = false);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('تعذر إكمال إشارة الطوارئ. لم يُسجَّل نجاح.'),
+                  ),
+                );
+              }
             },
             child: const Text('تأكيد الطوارئ'),
           ),
         ],
       ),
+        ),
     );
   }
 }

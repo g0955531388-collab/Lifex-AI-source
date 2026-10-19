@@ -57,6 +57,18 @@ void main() {
       expect(service.all(), hasLength(1));
       expect(service.publicQueue().first['code'], booking.accessCode);
     });
+
+    test('يستبعد الحجوزات الأقدم من يوم من الطابور العام', () {
+      final service = UnifiedBookingService(ProfileBoxStore(profile()));
+      service.add(
+        unitId: 'hospital',
+        title: 'مخبر',
+        place: 'دمشق',
+        scheduledAt: DateTime.now().subtract(const Duration(days: 2)),
+      );
+
+      expect(service.publicQueue(), isEmpty);
+    });
   });
 
   group('SectorAnalytics', () {
@@ -104,7 +116,8 @@ void main() {
 
     test('الأطباء يفصلون مهتم عن طبيبي', () {
       final ids = UnitBranchCatalog.forUnit('doctors').map((b) => b.id);
-      expect(ids, containsAll(['interested', 'myDoctor', 'publicCv', 'directory']));
+      expect(ids,
+          containsAll(['interested', 'myDoctor', 'publicCv', 'directory']));
     });
 
     test('المرأة تغطي الحمل والنفاس والدورة', () {
@@ -116,7 +129,8 @@ void main() {
       final ids = UnitBranchCatalog.healthCv.map((b) => b.id);
       expect(
         ids,
-        containsAll(['cvIdentity', 'cvMeds', 'cvHistory', 'cvVaccines', 'cvFamily']),
+        containsAll(
+            ['cvIdentity', 'cvMeds', 'cvHistory', 'cvVaccines', 'cvFamily']),
       );
     });
   });

@@ -1087,6 +1087,33 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
           );
         }
         break;
+      case VoiceCommandIntent.openWebSearch:
+      case VoiceCommandIntent.openLibrary:
+      case VoiceCommandIntent.openVisionResources:
+      case VoiceCommandIntent.goBack:
+      case VoiceCommandIntent.goHome:
+      case VoiceCommandIntent.readVisibleText:
+      case VoiceCommandIntent.repeatScene:
+      case VoiceCommandIntent.pauseScene:
+      case VoiceCommandIntent.resumeScene:
+      case VoiceCommandIntent.stopReading:
+      case VoiceCommandIntent.readScreen:
+      case VoiceCommandIntent.raiseVolume:
+      case VoiceCommandIntent.openEpidemicDesk:
+      case VoiceCommandIntent.openHealthGuidance:
+      case VoiceCommandIntent.phoneBattery:
+      case VoiceCommandIntent.slowReading:
+      case VoiceCommandIntent.fasterReading:
+      case VoiceCommandIntent.updateCameraMind:
+      case VoiceCommandIntent.disableAutoModelUpdate:
+      case VoiceCommandIntent.readBarcode:
+        await reply(
+          const VoiceReply(
+            ar: 'الأمر معروف، ومساره على هذه الشاشة غير موصول بعد.',
+            en: 'The command is recognized. Its path on this screen is not wired yet.',
+          ),
+        );
+        break;
       case VoiceCommandIntent.unknown:
         await reply(
           const VoiceReply(

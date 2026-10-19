@@ -27,6 +27,7 @@ import '../widgets/lifex_brand_mark.dart';
 import 'admin_dashboard_screen.dart';
 import 'clinical_watch_screen.dart';
 import 'family_management_screen.dart';
+import 'identity_workspace_screen.dart';
 import 'layered_lens_studio_screen.dart';
 import 'partner_sign_in_screen.dart';
 import 'permission_transparency_screen.dart';
@@ -168,7 +169,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final activeProfileId =
         Provider.of<ActiveProfileController>(context).activeProfileId;
     if (activeProfileId == null) return null;
-    return HealthIdentityManager.instance.getByProfileId(activeProfileId)?.lifexId;
+    return HealthIdentityManager.instance
+        .getByProfileId(activeProfileId)
+        ?.lifexId;
   }
 
   Future<void> _showInventorActivationDialog(String profileId) async {
@@ -257,10 +260,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     }
+    final billingExempt = activeProfile != null &&
+        const BillingExemptionPolicy().evaluate(activeProfile).isExempt;
     final hasAdminRole = activeLifexId != null &&
-        GlobalAdminManager.instance.roleOf(activeLifexId) != GlobalAdminRole.none;
+        GlobalAdminManager.instance.roleOf(activeLifexId) !=
+            GlobalAdminRole.none;
     final isOwner = activeLifexId != null &&
         GlobalAdminManager.instance.isOwner(activeLifexId);
+    final adminAccess = activeLifexId != null &&
+        GlobalAdminManager.instance.hasFullSystemAccess(activeLifexId);
 
     return Scaffold(
       appBar: AppBar(title: const Text('الإعدادات')),
@@ -312,6 +320,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const Divider(),
+          ListTile(
+            leading: const Icon(Icons.badge_outlined),
+            title: const Text('هوية الحساب وبيانات الاتصال'),
+            subtitle: const Text(
+              'تحديث البريد أو الهاتف وتفعيل وصول المالك عند مطابقته',
+            ),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const IdentityWorkspaceScreen(),
+                ),
+              );
+            },
+          ),
           ListTile(
             leading: const Icon(Icons.image_outlined),
             title: const Text('Manage the thumbnail'),
@@ -376,18 +399,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: const Icon(Icons.chevron_left),
             onTap: () {
               final trial = context.read<TrialManager>();
-              final profile =
-                  context.read<ActiveProfileController>().activeProfile;
-              final exempt = profile != null &&
-                  const BillingExemptionPolicy().evaluate(profile).isExempt;
               final allowed = const SessionAccessPolicy().canOpenUnit(
                 'box',
-                phase: trial.phase(feeExempt: exempt),
-                feeExempt: exempt,
+                phase: trial.phase(
+                  feeExempt: billingExempt,
+                  adminAccess: adminAccess,
+                ),
+                feeExempt: billingExempt,
+                adminAccess: adminAccess,
               );
               if (!allowed) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(trial.statusLineAr(feeExempt: exempt))),
+                  SnackBar(
+                    content: Text(
+                      trial.statusLineAr(feeExempt: billingExempt),
+                    ),
+                  ),
                 );
                 return;
               }
@@ -403,17 +430,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('حالة النسخة والاشتراك'),
             subtitle: Text(
               context.read<TrialManager>().statusLineAr(
-                    feeExempt: context
-                                .read<ActiveProfileController>()
-                                .activeProfile !=
-                            null &&
-                        const BillingExemptionPolicy()
-                            .evaluate(
-                              context
-                                  .read<ActiveProfileController>()
-                                  .activeProfile!,
-                            )
-                            .isExempt,
+                    feeExempt: billingExempt,
+                    adminAccess: adminAccess,
                   ),
             ),
           ),
@@ -429,8 +447,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               final profile = profiles.activeProfile;
               final exempt = profile != null &&
                   const BillingExemptionPolicy().evaluate(profile).isExempt;
-              final subscribed =
-                  trial.phase(feeExempt: exempt) == TrialPhase.subscribed;
+              final subscribed = trial.phase(
+                    feeExempt: exempt,
+                    adminAccess: adminAccess,
+                  ) ==
+                  TrialPhase.subscribed;
               return Column(
                 children: [
                   ListTile(
@@ -474,7 +495,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                     child: const Text('تفعيل نسخة الإهداء'),
                   ),
-                  if (trial.phase(feeExempt: exempt) == TrialPhase.giftFrozen)
+                  if (trial.phase(
+                        feeExempt: exempt,
+                        adminAccess: adminAccess,
+                      ) ==
+                      TrialPhase.giftFrozen)
                     FilledButton(
                       onPressed: () {
                         final result = trial.claimAsNewSubscriber();
@@ -532,7 +557,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.monitor_heart_outlined),
             title: const Text('مراقبة سريرية ظاهرة'),
-            subtitle: const Text('إشعار دائم بموافقة. بلا تصوير خفي وبلا حفظ صور'),
+            subtitle:
+                const Text('إشعار دائم بموافقة. بلا تصوير خفي وبلا حفظ صور'),
             trailing: const Icon(Icons.chevron_left),
             onTap: () {
               Navigator.of(context).push(
