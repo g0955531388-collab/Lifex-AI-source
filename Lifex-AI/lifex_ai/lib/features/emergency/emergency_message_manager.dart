@@ -48,10 +48,14 @@ class EmergencyMessageManager {
   EmergencyMessageManager({
     required this.emergencyContactsRegistry,
     this.sendFunction,
+    this.draftHandoffFunction,
   });
 
   final EmergencyPhoneContactsRegistry emergencyContactsRegistry;
   final EmergencySendFunction? sendFunction;
+
+  /// يفتح مسودة SMS فقط — لا يُعدّ إرسالاً ناجحاً أبداً.
+  final EmergencySendFunction? draftHandoffFunction;
   final List<EmergencyDispatchRecord> _log = [];
 
   /// بناء نص الرسالة حسب مستوى الخطورة وإرسالها فعلياً لكل رقم في قائمة
@@ -75,29 +79,46 @@ class EmergencyMessageManager {
     final message = _buildMessage(riskLevel, reasonAr, latitude, longitude);
     final contacts = emergencyContactsRegistry.contactsFor(profileId);
 
-    if (sendFunction == null) {
+    if (sendFunction != null) {
+      var sent = 0;
+      for (final contact in contacts) {
+        final ok = await sendFunction!(contact.phoneNumber, message);
+        if (ok) sent++;
+      }
+      return EmergencyDispatchOutcome(
+        localCaseOpened: true,
+        outboundSent: sent > 0 && sent == contacts.length,
+        contactCount: contacts.length,
+        messageAr: sent == 0
+            ? 'سُجّلت الحالة محلياً. تعذّر إرسال الاستغاثة الخارجية.'
+            : 'أُرسلت الاستغاثة إلى $sent من أصل ${contacts.length} جهة.',
+      );
+    }
+
+    if (draftHandoffFunction != null && contacts.isNotEmpty) {
+      var opened = 0;
+      for (final contact in contacts) {
+        final ok = await draftHandoffFunction!(contact.phoneNumber, message);
+        if (ok) opened++;
+      }
       return EmergencyDispatchOutcome(
         localCaseOpened: true,
         outboundSent: false,
         contactCount: contacts.length,
-        messageAr: contacts.isEmpty
-            ? 'سُجّلت حالة طوارئ على هذا الجهاز. لا أرقام ثقة محفوظة، وقناة SMS/Push غير مربوطة.'
-            : 'سُجّلت حالة طوارئ على هذا الجهاز لـ ${contacts.length} جهة. لم يُرسل SMS ولا إشعار دفع: القناة غير مربوطة بمفاتيح حقيقية.',
+        messageAr: opened == 0
+            ? 'سُجّلت الحالة محلياً. تعذّر فتح مسودات SMS على الجهاز.'
+            : 'فُتحت $opened مسودة SMS على الجهاز لجهات الثقة. '
+                'لم يُرسل تلقائياً — أكّد الإرسال من تطبيق الرسائل.',
       );
     }
 
-    var sent = 0;
-    for (final contact in contacts) {
-      final ok = await sendFunction!(contact.phoneNumber, message);
-      if (ok) sent++;
-    }
     return EmergencyDispatchOutcome(
       localCaseOpened: true,
-      outboundSent: sent > 0 && sent == contacts.length,
+      outboundSent: false,
       contactCount: contacts.length,
-      messageAr: sent == 0
-          ? 'سُجّلت الحالة محلياً. تعذّر إرسال الاستغاثة الخارجية.'
-          : 'أُرسلت الاستغاثة إلى $sent من أصل ${contacts.length} جهة.',
+      messageAr: contacts.isEmpty
+          ? 'سُجّلت حالة طوارئ على هذا الجهاز. لا أرقام ثقة محفوظة، وقناة SMS/Push غير مربوطة.'
+          : 'سُجّلت حالة طوارئ على هذا الجهاز لـ ${contacts.length} جهة. لم يُرسل SMS ولا إشعار دفع: القناة غير مربوطة بمفاتيح حقيقية.',
     );
   }
 

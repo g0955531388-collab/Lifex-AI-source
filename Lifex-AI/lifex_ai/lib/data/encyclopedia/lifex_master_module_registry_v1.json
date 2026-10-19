@@ -1,0 +1,22 @@
+{
+  "schema_id": "LIFEX-MASTER-MODULE-REGISTRY",
+  "version": "1.0",
+  "historicalIds": 140,
+  "duplicates": {
+    "76": 41,
+    "77": 42,
+    "92": 41,
+    "93": 42,
+    "94": 78,
+    "95": 79,
+    "96": 80,
+    "97": 81,
+    "98": 82,
+    "99": 83,
+    "100": 84
+  },
+  "independentModules": 129,
+  "oneOwnerOneSoT": true,
+  "noCrossModuleDb": true,
+  "naming": "Universal Name → lib/core/snake_case/ → Lifex…Engine"
+}

@@ -9,12 +9,17 @@
 /// =============================================================
 library lifex_ai.screens.profile_setup_screen;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/app_config.dart';
+import '../features/accessibility/access_mode_preference.dart';
 import '../features/profile/active_profile_controller.dart';
-import '../features/profile/determination_credential_policy.dart';
 import '../features/profile/health_profile.dart';
+import '../widgets/accessible_widgets.dart';
 import 'home_screen.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
@@ -30,15 +35,54 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _accountCountryController = TextEditingController();
-  final _cardCountryController = TextEditingController();
-  final _cardRefController = TextEditingController();
+  final _ageController = TextEditingController();
   DateTime? _dateOfBirth;
   BiologicalSex _sex = BiologicalSex.unspecified;
   bool _isPersonOfDetermination = false;
   bool _isBlind = false;
-  DeterminationCardKind _cardKind = DeterminationCardKind.disabilityCard;
-  bool _acceptsBloodDonationAlerts = true;
+  bool _accessEnabled = false;
+  bool _accessUserChose = false;
+  bool _acceptsBloodDonationAlerts = false;
   String? _errorMessageAr;
+
+  bool get _english =>
+      AppConfig.instance.defaultLanguage == AppLanguage.english;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadAccessMode());
+  }
+
+  Future<void> _loadAccessMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final memory = AccessModeMemory()..readPrefs(prefs);
+    final decision = memory.load(profileNeedsAccess: _isBlind);
+    if (!mounted) return;
+    setState(() {
+      _accessEnabled = decision.enabled;
+      _accessUserChose = decision.userChose;
+    });
+  }
+
+  Future<void> _persistAccessMode() async {
+    final memory = AccessModeMemory();
+    if (_accessUserChose) {
+      memory.saveUserChoice(_accessEnabled);
+    } else {
+      final decision = AccessModePreference.decide(
+        profileNeedsAccess: AccessModePreference.profileNeedsAccess(
+          isBlind: _isBlind,
+        ),
+        storedEnabled: _accessEnabled,
+        userChose: false,
+      );
+      memory.enabled = decision.enabled;
+      memory.userChose = false;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await memory.writePrefs(prefs);
+  }
 
   @override
   void dispose() {
@@ -46,8 +90,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _accountCountryController.dispose();
-    _cardCountryController.dispose();
-    _cardRefController.dispose();
+    _ageController.dispose();
     super.dispose();
   }
 
@@ -64,33 +107,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     setState(() => _errorMessageAr = null);
 
     if (!_formKey.currentState!.validate()) return;
-    if (_dateOfBirth == null) {
-      setState(() => _errorMessageAr = 'يُرجى تحديد تاريخ الميلاد.');
-      return;
-    }
-    if (_isPersonOfDetermination) {
-      final draft = HealthProfile(
-        profileId: 'draft',
-        fullName: _nameController.text.trim(),
-        dateOfBirth: _dateOfBirth!,
-        isPersonOfDetermination: true,
-        accountCountry: _accountCountryController.text.trim(),
-        determinationCardKind: _cardKind.name,
-        determinationCardCountry: _cardCountryController.text.trim().isEmpty
-            ? _accountCountryController.text.trim()
-            : _cardCountryController.text.trim(),
-        determinationCardRef: _cardRefController.text.trim(),
-      );
-      final check = const DeterminationCredentialPolicy().evaluate(draft);
-      if (!check.recognized) {
-        setState(() => _errorMessageAr = check.messageAr);
-        return;
-      }
-    }
+    final ageYears = int.parse(_ageController.text.trim());
+    final now = DateTime.now();
 
     final controller = Provider.of<ActiveProfileController>(
       context,
@@ -100,21 +122,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final profile = HealthProfile(
       // معرّف بسيط ومحلي كافٍ لهذه المرحلة؛ يُستبدل لاحقاً بمعرّف صادر
       // من خادم Lifex-AI الخلفي عند ربط الحساب بمصادقة حقيقية.
-      profileId: 'local-${DateTime.now().millisecondsSinceEpoch}',
+      profileId: 'local-${now.millisecondsSinceEpoch}',
       fullName: _nameController.text.trim(),
-      dateOfBirth: _dateOfBirth!,
+      dateOfBirth: _dateOfBirth ?? DateTime(now.year - ageYears, now.month, now.day),
       biologicalSex: _sex,
       isPersonOfDetermination: _isPersonOfDetermination,
       accountCountry: _accountCountryController.text.trim(),
-      determinationCardKind:
-          _isPersonOfDetermination ? _cardKind.name : '',
-      determinationCardCountry: _isPersonOfDetermination
-          ? (_cardCountryController.text.trim().isEmpty
-              ? _accountCountryController.text.trim()
-              : _cardCountryController.text.trim())
-          : '',
-      determinationCardRef:
-          _isPersonOfDetermination ? _cardRefController.text.trim() : '',
       isBlind: _isBlind,
       acceptsBloodDonationAlerts: _acceptsBloodDonationAlerts,
     );
@@ -134,6 +147,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       return;
     }
 
+    await _persistAccessMode();
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
@@ -142,188 +157,206 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('إنشاء ملفك الصحي')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'مرحباً بك في Lifex-AI. لنبدأ بإنشاء ملفك الصحي '
-                  'الأساسي — يمكنك إضافة أفراد عائلتك لاحقاً من '
-                  'الإعدادات.',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-                const SizedBox(height: 24),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'الاسم الكامل',
-                    border: OutlineInputBorder(),
+        appBar: AppBar(title: const Text('إنشاء ملفك الصحي')),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'مرحباً بك في Lifex-AI. لنبدأ بإنشاء ملفك الصحي '
+                    'الأساسي. يمكنك إضافة أفراد عائلتك لاحقاً من الإعدادات.',
+                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'يُرجى إدخال الاسم.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: _pickDateOfBirth,
-                  child: InputDecorator(
+                  const SizedBox(height: 24),
+                  TextFormField(
+                    controller: _nameController,
                     decoration: const InputDecoration(
-                      labelText: 'تاريخ الميلاد',
+                      labelText: 'الاسم الكامل',
                       border: OutlineInputBorder(),
                     ),
-                    child: Text(
-                      _dateOfBirth == null
-                          ? 'اضغط لاختيار التاريخ'
-                          : '${_dateOfBirth!.year}/${_dateOfBirth!.month}/${_dateOfBirth!.day}',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<BiologicalSex>(
-                  value: _sex,
-                  decoration: const InputDecoration(
-                    labelText: 'الجنس البيولوجي (لأغراض طبية بحتة)',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: BiologicalSex.unspecified,
-                      child: Text('تفضّل عدم التحديد'),
-                    ),
-                    DropdownMenuItem(
-                      value: BiologicalSex.male,
-                      child: Text('ذكر'),
-                    ),
-                    DropdownMenuItem(
-                      value: BiologicalSex.female,
-                      child: Text('أنثى'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) setState(() => _sex = value);
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'البريد الإلكتروني (اختياري)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'رقم الهاتف (اختياري)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('أنا من ذوي الهمم / الإعاقة'),
-                  subtitle: const Text(
-                    'لا تُمنح الميزة بالتصريح. بطاقة وطنية أو إعاقة أو مرض دائم من بلد الحساب.',
-                  ),
-                  value: _isPersonOfDetermination,
-                  onChanged: (value) =>
-                      setState(() => _isPersonOfDetermination = value),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('مكفوف / ضعف بصر شديد في هذه الفئة'),
-                  subtitle: const Text('لا أجور ولا رسوم على هذه الفئة.'),
-                  value: _isBlind,
-                  onChanged: (value) => setState(() => _isBlind = value),
-                ),
-                TextFormField(
-                  controller: _accountCountryController,
-                  decoration: const InputDecoration(
-                    labelText: 'بلد صاحب الحساب',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                if (_isPersonOfDetermination) ...[
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<DeterminationCardKind>(
-                    value: _cardKind,
-                    decoration: const InputDecoration(
-                      labelText: 'نوع البطاقة',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      for (final kind in DeterminationCardKind.values)
-                        DropdownMenuItem(
-                          value: kind,
-                          child: Text(kind.labelAr),
-                        ),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) setState(() => _cardKind = value);
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'يُرجى إدخال الاسم.';
+                      }
+                      return null;
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   TextFormField(
-                    controller: _cardCountryController,
+                    controller: _ageController,
+                    keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                      labelText: 'بلد البطاقة (نفس بلد الحساب)',
+                      labelText: 'العمر بعدد السنوات',
+                      border: OutlineInputBorder(),
+                      helperText: 'اكتب العمر رقماً، مثل 34',
+                    ),
+                    validator: (value) {
+                      final years = int.tryParse(value?.trim() ?? '');
+                      if (years == null) {
+                        return 'يُرجى كتابة العمر بعدد السنوات.';
+                      }
+                      if (years < 0 || years > 130) {
+                        return 'اكتب عمراً بين 0 و 130 سنة.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Semantics(
+                    button: true,
+                    label: _dateOfBirth == null
+                        ? 'تاريخ الميلاد اختياري'
+                        : 'تاريخ الميلاد ${_dateOfBirth!.year}/${_dateOfBirth!.month}/${_dateOfBirth!.day}',
+                    hint: 'يفتح اختيار التاريخ، ويمكن تركه فارغاً',
+                    onTap: _pickDateOfBirth,
+                    child: ExcludeSemantics(
+                      child: InkWell(
+                        onTap: _pickDateOfBirth,
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'تاريخ الميلاد (اختياري)',
+                            border: OutlineInputBorder(),
+                          ),
+                          child: Text(
+                            _dateOfBirth == null
+                                ? 'يمكن تركه فارغاً'
+                                : '${_dateOfBirth!.year}/${_dateOfBirth!.month}/${_dateOfBirth!.day}',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<BiologicalSex>(
+                    value: _sex,
+                    decoration: const InputDecoration(
+                      labelText: 'الجنس البيولوجي (لأغراض طبية بحتة)',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: BiologicalSex.unspecified,
+                        child: Text('تفضّل عدم التحديد'),
+                      ),
+                      DropdownMenuItem(
+                        value: BiologicalSex.male,
+                        child: Text('ذكر'),
+                      ),
+                      DropdownMenuItem(
+                        value: BiologicalSex.female,
+                        child: Text('أنثى'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) setState(() => _sex = value);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'البريد الإلكتروني (اختياري)',
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   TextFormField(
-                    controller: _cardRefController,
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
                     decoration: const InputDecoration(
-                      labelText: 'رقم أو مرجع البطاقة',
+                      labelText: 'رقم الهاتف (اختياري)',
                       border: OutlineInputBorder(),
                     ),
                   ),
-                ],
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('استقبال طلبات التبرع بالدم'),
-                  subtitle: const Text(
-                    'إن أوقفت هذا الخيار لن يصلك فلاش أو تنبيه تبرع.',
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('أنا من ذوي الهمم / الإعاقة'),
+                    subtitle: const Text(
+                      'التثبيت لاحقاً في وحدة المعاقين ببطاقة إعاقة أو بطاقة مريض دائم من البلد المسجّل فيه.',
+                    ),
+                    value: _isPersonOfDetermination,
+                    onChanged: (value) =>
+                        setState(() => _isPersonOfDetermination = value),
                   ),
-                  value: _acceptsBloodDonationAlerts,
-                  onChanged: (value) =>
-                      setState(() => _acceptsBloodDonationAlerts = value),
-                ),
-                if (_errorMessageAr != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _errorMessageAr!,
-                    style: const TextStyle(color: Colors.red),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('مكفوف / ضعف بصر شديد في هذه الفئة'),
+                    subtitle: const Text(
+                      'الإعفاء يتبع بطاقة الإعاقة في وحدة المعاقين، من البلد المسجّل فيه.',
+                    ),
+                    value: _isBlind,
+                    onChanged: (value) => setState(() {
+                      _isBlind = value;
+                      if (value && !_accessUserChose) _accessEnabled = true;
+                    }),
                   ),
-                ],
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _submit,
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 14),
-                      child: Text('إنشاء الملف والمتابعة'),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(AccessModePreference.title(english: _english)),
+                    subtitle: Text(
+                      AccessModePreference.subtitle(english: _english),
+                    ),
+                    value: _accessEnabled,
+                    onChanged: (value) => setState(() {
+                      _accessEnabled = value;
+                      _accessUserChose = true;
+                    }),
+                  ),
+                  TextFormField(
+                    controller: _accountCountryController,
+                    decoration: const InputDecoration(
+                      labelText: 'بلد صاحب الحساب',
+                      border: OutlineInputBorder(),
                     ),
                   ),
-                ),
-              ],
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('استقبال طلبات التبرع بالدم'),
+                    subtitle: const Text(
+                      'إن أوقفت هذا الخيار لن يصلك فلاش أو تنبيه تبرع.',
+                    ),
+                    value: _acceptsBloodDonationAlerts,
+                    onChanged: (value) =>
+                        setState(() => _acceptsBloodDonationAlerts = value),
+                  ),
+                  if (_errorMessageAr != null) ...[
+                    const SizedBox(height: 12),
+                    LiveAnnouncingText(
+                      message: _errorMessageAr!,
+                      style:
+                          TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Semantics(
+                      button: true,
+                      label: 'إنشاء الملف والمتابعة',
+                      hint: 'يحفظ الملف وينتقل للرئيسية',
+                      onTap: _submit,
+                      child: ExcludeSemantics(
+                        child: FilledButton(
+                          onPressed: _submit,
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 14),
+                            child: Text('إنشاء الملف والمتابعة'),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
     );
   }
 }

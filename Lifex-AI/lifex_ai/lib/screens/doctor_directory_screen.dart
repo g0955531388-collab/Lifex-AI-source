@@ -50,7 +50,17 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
         if (profile == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('الأطباء')),
-            body: const Center(child: Text('لا يوجد ملف صحي نشط.')),
+            body: const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'EMPTY — وحدة الأطباء متاحة.\n'
+                  'لا يوجد ملف صحي نشط بعد.\n'
+                  'أنشئ ملفاً لإضافة أطباء محليين. ليس ACCESS DENIED.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
           );
         }
         final store = ProfileBoxStore(profile);
@@ -67,6 +77,17 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                 messageAr:
                     'الصفحة العامة: اسم واختصاص وتواصل. بلا أسماء مرضى. الموقع الآلي يحتاج إذناً وخادماً؛ المسافة هنا يدوية.',
               ),
+              if (doctors.isEmpty)
+                const Card(
+                  child: ListTile(
+                    leading: Icon(Icons.info_outline),
+                    title: Text('No Doctors Found'),
+                    subtitle: Text(
+                      'EMPTY — لا أطباء محفوظين على هذا الجهاز بعد. '
+                      'أضف طبيباً أدناه. الدليل العام يبقى مفتوحاً.',
+                    ),
+                  ),
+                ),
               ListTile(
                 leading: const Icon(Icons.event_note_outlined),
                 title: const Text('يوميات الطبيب'),

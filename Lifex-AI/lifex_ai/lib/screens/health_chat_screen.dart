@@ -16,6 +16,7 @@ import '../core/trial_manager.dart';
 import '../features/finance/billing_exemption_policy.dart';
 import '../features/messaging/conversation_type_router.dart';
 import '../features/messaging/health_thread_ledger.dart';
+import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_identity_manager.dart';
 import '../features/profile/health_profile.dart';
@@ -48,8 +49,27 @@ class HealthChatScreen extends StatelessWidget {
                 messageAr:
                     'مثل أسلوب واتساب للتنظيم الصحي على هذا الجهاز: تسليم فوري هنا فقط. '
                     'العامة بلا إباحي ولا نابية. الأطباء والوحدات قد يرسلون ملفاً طبياً حرجاً. '
-                    'المشترك يرفق قواعد أكبر من جيغا محلياً دون رفع سحابي.',
+                    'المشترك يرفق قواعد أكبر من جيغا محلياً دون رفع سحابي. '
+                    'غرفة الاجتماع سجل محلي للحضور، وليست مكالمة فيديو.',
               ),
+              const SizedBox(height: 8),
+              FilledButton.icon(
+                onPressed: others.isEmpty
+                    ? null
+                    : () => _openLocalMeeting(context, controller, me, others),
+                icon: const Icon(Icons.groups_outlined),
+                label: const Text('غرفة اجتماع محلية'),
+              ),
+              for (final room
+                  in ProfileBoxStore(me).list(BoxKeys.meetingRooms))
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.meeting_room_outlined),
+                  title: Text(room['conversationId'] as String? ?? 'غرفة'),
+                  subtitle: Text(
+                    'حضور: ${(room['participantLifexIds'] as List?)?.length ?? 0}',
+                  ),
+                ),
               if (others.isEmpty)
                 const Text('أضيفي ملفاً آخر من العائلة لتبدأ محادثة ثنائية.'),
               for (final other in others)
@@ -76,6 +96,73 @@ class HealthChatScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _openLocalMeeting(
+    BuildContext context,
+    ActiveProfileController controller,
+    HealthProfile me,
+    List<HealthProfile> others,
+  ) async {
+    final selected = <String>{};
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setLocal) => AlertDialog(
+          title: const Text('غرفة اجتماع محلية'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('تُحفظ أسماء الحضور على هذا الجهاز. لا تبدأ مكالمة.'),
+                for (final other in others)
+                  CheckboxListTile(
+                    value: selected.contains(other.profileId),
+                    title: Text(other.fullName),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    onChanged: (value) {
+                      setLocal(() {
+                        if (value == true) {
+                          selected.add(other.profileId);
+                        } else {
+                          selected.remove(other.profileId);
+                        }
+                      });
+                    },
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('فتح السجل'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (saved != true || !context.mounted) return;
+    final room = ConversationTypeRouter().openMeetingRoom(
+      participantLifexIds: [me.profileId, ...selected],
+    );
+    if (room == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('اختر مشاركاً واحداً على الأقل معك.')),
+      );
+      return;
+    }
+    ProfileBoxStore(me).add(BoxKeys.meetingRooms, {
+      'conversationId': room.conversationId,
+      'type': room.type.name,
+      'participantLifexIds': room.participantLifexIds,
+      'createdAt': room.createdAt.toIso8601String(),
+    });
+    controller.saveActiveProfileChanges();
   }
 }
 

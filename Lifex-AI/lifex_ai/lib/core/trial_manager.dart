@@ -239,6 +239,10 @@ class TrialManager {
   }
 }
 
+/// فصل صارم: فتح الوحدة حسب مرحلة التجربة ≠ استحقاق مدفوع ≠ صلاحية بيانات.
+///
+/// - [canOpenUnit]: قيود المرحلة، مع استثناء صريح للوصول الإداري والإعفاء.
+/// - [canUsePaidFeature]: العمليات المدفوعة داخل وحدة مسموح بفتحها.
 class SessionAccessPolicy {
   const SessionAccessPolicy();
 
@@ -257,6 +261,47 @@ class SessionAccessPolicy {
     'appointments',
   };
 
+  /// وحدات أساسية قابلة للاكتشاف دائماً (Module Access).
+  static const coreDiscoverableUnits = {
+    'emergency',
+    'blood',
+    'donations',
+    'notifications',
+    'settings',
+    'wallet',
+    'profile',
+    'medications',
+    'appointments',
+    'doctors',
+    'hospitals',
+    'labs',
+    'pharmacy',
+    'imaging',
+    'dentistry',
+    'devices',
+    'location',
+    'documents',
+    'messages',
+    'ai',
+    'education',
+    'accessibility',
+    'power',
+    'camera',
+    'voice',
+    'family',
+    'search',
+    'admin',
+  };
+
+  /// عمليات تجارية/مدفوعة — تُفحص منفصلة عن فتح الوحدة.
+  static const paidFeatureIds = {
+    'premium_booking',
+    'paid_topup_provider',
+    'marketplace_purchase',
+    'paid_advertising',
+  };
+
+  /// فتح الوحدة حسب المرحلة. الوصول الإداري والإعفاء يفتحان الوحدات صراحة.
   bool canOpenUnit(
     String unitId, {
     required TrialPhase phase,
@@ -277,5 +322,25 @@ class SessionAccessPolicy {
           reducedExtraUnits.contains(unitId);
     }
     return residualUnits.contains(unitId);
+  }
+
+  /// هل الوحدة الأساسية ضمن قائمة الاكتشاف؟
+  bool isCoreDiscoverable(String unitId) =>
+      coreDiscoverableUnits.contains(unitId);
+
+  /// استحقاق ميزة مدفوعة داخل وحدة مفتوحة مسبقاً.
+  bool canUsePaidFeature(
+    String featureId, {
+    required TrialPhase phase,
+    required bool feeExempt,
+    bool adminAccess = false,
+  }) {
+    if (adminAccess ||
+        feeExempt ||
+        phase == TrialPhase.subscribed ||
+        phase == TrialPhase.giftWorking) {
+      return true;
+    }
+    return !paidFeatureIds.contains(featureId);
   }
 }

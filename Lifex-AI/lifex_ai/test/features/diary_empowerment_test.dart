@@ -54,7 +54,7 @@ void main() {
       'متاح',
     );
     expect(
-      PharmacyReviewGate(enabled: true, namedPharmaciesAr: 'صيدلية النور')
+      const PharmacyReviewGate(enabled: true, namedPharmaciesAr: 'صيدلية النور')
           .spokenAr(),
       contains('مقيّدة'),
     );

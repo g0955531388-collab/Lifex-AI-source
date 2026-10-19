@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/app_constants.dart';
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/education/personal_shelf.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/voice/voice_engine.dart';
@@ -103,7 +105,33 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
     final store = _store();
     final controller = context.read<ActiveProfileController>();
     if (store == null) return;
-    await store.drop(record.id);
+    final profileId = controller.activeProfileId ?? 'local';
+    final entry = context.read<LioSensitiveActionEntry>();
+    final outcome = await entry.authorizeThenRun<void>(
+      request: LioGatewayRequest(
+        requestId:
+            'shelf_del_${record.id}_${DateTime.now().millisecondsSinceEpoch}',
+        correlationId: 'shelf_$profileId',
+        identityAccountId: profileId,
+        purpose: 'education',
+        requestedAction: 'delete_personal_shelf_item',
+        dataScope: 'profile_basic',
+        sensitivity: LioDataSensitivity.personal,
+        consent: const LioConsentContext(
+          consentGranted: true,
+          purposeAligned: true,
+        ),
+        riskLevel: LioActionRisk.medium,
+        timestamp: DateTime.now().toUtc(),
+        authenticated: true,
+        authorized: true,
+        minimumNecessarySatisfied: true,
+      ),
+      run: () async {
+        await store.drop(record.id);
+      },
+    );
+    if (!outcome.executed || !mounted) return;
     controller.saveActiveProfileChanges();
     setState(() => _statusAr = 'حُذف من الجهاز ومن الرف.');
   }

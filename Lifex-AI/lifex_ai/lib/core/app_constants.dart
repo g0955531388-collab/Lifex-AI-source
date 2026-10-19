@@ -6,6 +6,8 @@
 /// يحتاجها أكثر من ملف واحد يجب أن تُعرَّف هنا وليس مكررة محلياً.
 /// =============================================================
 
+import 'attribution/project_attribution.dart';
+
 class AppConstants {
   AppConstants._(); // منع إنشاء أي كائن من هذا الكلاس
 
@@ -25,33 +27,38 @@ class AppConstants {
   static const String studioBannerCredit =
       'Lifex-AI | غازي سليم بكفلاوي | G0955531388@gmail.com';
 
+  /// Alias للإسناد الرسمي — لا صيغة بديلة ولا حقوق ملكية مشتركة.
   static const String builderAttributionAr =
-      'تم بناء هذا النظام من قبل خبير التكنولوجيا الطبية والبرمجيات '
-      'المخترع غازي سليم بكفلاوي ومعاونته المرشدة رباب محمود الحايك. '
-      'تعود حقوق الملكية الفكرية للسيد غازي سليم بكفلاوي والسيدة رباب محمود الحايك.';
+      ProjectAttribution.officialStatementAr;
 
   static const String humanitarianExemptionStatementAr =
       'يُعفى ذوو الإعاقة بعد بطاقة من بلد صاحب الحساب، والمرضى الدائمون '
       'في الملف، والمكفوفون: لا أجور ولا رسوم. اشتراك الأفراد 100 دولار '
       'سنوياً عادي بلا إعلانات ولا خدمات خاصة. الوحدة الصحية 300 والمستشفى 600.';
 
-  /// نص الإسناد والملكية الرسمي — يجب عرضه في كل شاشة "حول التطبيق"،
-  /// كل بانر ترحيبي/شاشة افتتاحية (Splash)، وكل رسالة صادرة من النظام
-  /// (طوارئ، تراسل، شهادات تبرع) التي تحمل توقيعاً أو تذييلاً رسمياً.
-  /// لا يجوز تعديل هذا النص أو اختصاره في أي مكان يظهر فيه.
+  /// نص الإسناد والملكية الرسمي الوحيد (عربي).
+  /// المصدر: [ProjectAttribution.officialStatementAr]
+  /// ممنوع إعادة الصياغة أو إضافة ورثة/شركاء/أسماء عائلية.
   static const String ownershipStatement =
-      'تأسس هذا المشروع بواسطة المخترع العالمي غازي سليم بكفلاوي '
-      'ومساعدته المرشدة رباب الحايك. يُعتبر المالك الفعلي لهذا النظام '
-      'كل من: المخترع المؤسس غازي سليم بكفلاوي، وورثته الموصى بهم وهم: '
-      'المرشدة رباب الحايك، والسيدة رنا ناعسة، والأستاذة فاطمة غازي '
-      'بكفلاوي، والأستاذ هادي غازي بكفلاوي، والأستاذة مريم غازي بكفلاوي.';
+      ProjectAttribution.officialStatementAr;
 
-  /// نص مختصر يُستخدم في الأماكن الضيقة (تذييل رسالة، شريط سفلي) حيث
-  /// لا تتسع المساحة للنص الكامل أعلاه.
+  /// النص الإنجليزي الرسمي الوحيد للإسناد.
+  static const String ownershipStatementEn =
+      ProjectAttribution.officialStatementEn;
+
+  /// نص مختصر للأماكن الضيقة — نفس المعنى الرسمي بلا أسماء إضافية.
   static const String ownershipStatementShort =
-      'Lifex-AI — ملك المخترع غازي سليم بكفلاوي والمرشدة رباب الحايك وأسرته.';
+      ProjectAttribution.officialStatementShortAr;
 
-  static const String developerCredit = 'غازي سليم بكفلاوي والمرشدة رباب الحايك';
+  static const String ownershipStatementShortEn =
+      ProjectAttribution.officialStatementShortEn;
+
+  /// اسم المخترع/المالك فقط — للاختراعات التقنية داخل المشروع.
+  static const String developerCredit = ProjectAttribution.inventorOwnerAr;
+
+  /// صفة المرشدة فقط — ليست ملكية ولا اختراع.
+  static const String guideCreditAr =
+      '${ProjectAttribution.guideRoleAr} ${ProjectAttribution.guideAr}';
 
   // ---------------------------------------------------------------
   // حساب المالك (Owner) — يُستخدم حصرياً لتفعيل صلاحية المالك تلقائياً

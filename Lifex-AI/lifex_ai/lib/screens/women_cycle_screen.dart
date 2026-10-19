@@ -30,12 +30,6 @@ class _WomenCycleScreenState extends State<WomenCycleScreen> {
 
   final _opened = <String>{};
 
-  ProfileBoxStore? _store() {
-    final profile = context.read<ActiveProfileController>().activeProfile;
-    if (profile == null) return null;
-    return ProfileBoxStore(profile);
-  }
-
   void _loadOpened(ProfileBoxStore store) {
     _opened
       ..clear()

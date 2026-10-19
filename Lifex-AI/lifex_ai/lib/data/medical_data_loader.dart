@@ -8,8 +8,10 @@
 /// الذكاء الاصطناعي تلقائياً من أي تحديث للحزمة الطبية يُنزَّل من
 /// الخادم، دون أي تغيير في هذا الملف.
 /// =============================================================
+library;
 
 import 'medical_database_manager.dart';
+import 'medical_json_link_module.dart';
 
 /// نتيجة تحميل كل البيانات الطبية اللازمة لتهيئة محركات الذكاء
 /// الاصطناعي عبر AiBridge.initialize().
@@ -17,11 +19,13 @@ class LoadedMedicalKnowledge {
   final Map<String, String> symptomKeywordMap;
   final Set<String> emergencySymptomIds;
   final Map<String, String> symptomBodySystemMap;
+  final MedicalJsonLinkIndex linkIndex;
 
   const LoadedMedicalKnowledge({
     required this.symptomKeywordMap,
     required this.emergencySymptomIds,
     required this.symptomBodySystemMap,
+    required this.linkIndex,
   });
 }
 
@@ -36,21 +40,31 @@ class MedicalDataLoader {
   static Future<LoadedMedicalKnowledge> loadAll(
     MedicalDatabaseManager databaseManager,
   ) async {
-    final symptomsJson = await databaseManager.readBundleFile(
-      MedicalBundleFiles.symptoms,
-    );
-    final knowledgeJson = await databaseManager.readBundleFile(
-      MedicalBundleFiles.knowledge,
-    );
+    final bundle = await databaseManager.readFullBundle();
+    final symptomsJson = bundle[MedicalBundleFiles.symptoms] ?? const {};
+    final knowledgeJson = bundle[MedicalBundleFiles.knowledge] ?? const {};
+    Map<String, dynamic>? biometricCatalog;
+    try {
+      biometricCatalog = await databaseManager.readBundleFile(
+        MedicalBundleFiles.biometrics,
+      );
+    } catch (_) {
+      biometricCatalog = null;
+    }
 
     final symptomKeywordMap = _buildSymptomKeywordMap(symptomsJson);
     final symptomBodySystemMap = _buildSymptomBodySystemMap(symptomsJson);
     final emergencySymptomIds = _buildEmergencySymptomIds(knowledgeJson);
+    final linkIndex = const MedicalJsonLinkModule().build(
+      bundle: bundle,
+      biometricCatalog: biometricCatalog,
+    );
 
     return LoadedMedicalKnowledge(
       symptomKeywordMap: symptomKeywordMap,
       emergencySymptomIds: emergencySymptomIds,
       symptomBodySystemMap: symptomBodySystemMap,
+      linkIndex: linkIndex,
     );
   }
 

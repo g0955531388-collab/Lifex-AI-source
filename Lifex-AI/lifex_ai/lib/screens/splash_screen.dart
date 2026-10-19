@@ -83,16 +83,10 @@ class _SplashScreenState extends State<SplashScreen> {
               // لأنها أول شاشة يراها أي مستخدم عند فتح التطبيق.
               Semantics(
                 label:
-                    '${AppConstants.builderAttributionAr} ${AppConstants.ownershipStatement} ${AppConstants.humanitarianExemptionStatementAr}',
+                    '${AppConstants.ownershipStatement} ${AppConstants.humanitarianExemptionStatementAr}',
                 child: ExcludeSemantics(
                   child: Column(
                     children: [
-                      Text(
-                        AppConstants.builderAttributionAr,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 8),
                       Text(
                         AppConstants.ownershipStatement,
                         textAlign: TextAlign.center,

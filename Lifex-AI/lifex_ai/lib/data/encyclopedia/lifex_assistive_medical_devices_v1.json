@@ -1,0 +1,21 @@
+{
+  "schema_id": "LIFEX-ASSISTIVE-MEDICAL-DEVICES",
+  "version": "1.0",
+  "pack": 69,
+  "deviceIsNotOwnership": true,
+  "deviceDonationIsNotMoneyDonation": true,
+  "matchingIsNotDiagnosis": true,
+  "diseaseNameIsNotMedicalFit": true,
+  "usedDeviceNeedsInspection": true,
+  "registrationDoesNotMakeUnknownSafe": true,
+  "lifexDoesNotOwnOnRegister": true,
+  "loanDoesNotGrantOwnership": true,
+  "donationDoesNotOpenHealthRecord": true,
+  "recallQuarantines": true,
+  "consumerElectronicsNotAutoAssistive": true,
+  "localCardIsNotGovernmentId": true,
+  "assistiveDeviceIsNotLabResult": true,
+  "riskSignalIsNotGuilt": true,
+  "moneyMovesOnlyVia51": true,
+  "patientAssignmentIs55NotDefinition": true
+}

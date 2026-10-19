@@ -1,0 +1,14 @@
+{
+  "schema_id": "LIFEX-DEVICE-SERVICE-REGISTRY",
+  "version": "1.0",
+  "registryIsNotAuthorization": true,
+  "rankingIsNotMedicalJudgment": true,
+  "heartbeatLostIsNotDeviceFailure": true,
+  "dataQualityIsNotInterpretation": true,
+  "personalLabelsStayLocal": true,
+  "capabilityAliases": {
+    "pulse": "HEART_RATE",
+    "hr": "HEART_RATE",
+    "spo2": "OXYGEN_SATURATION"
+  }
+}

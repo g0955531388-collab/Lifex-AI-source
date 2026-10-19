@@ -17,6 +17,7 @@
 /// 3) لو فشل التحقق أو انقطع التحميل، يبقى التطبيق يعمل بالنسخة
 ///    المحلية القديمة (أو نسخة الأصول) دون أي انقطاع للمستخدم.
 /// =============================================================
+library;
 
 import 'dart:convert';
 import 'dart:io';
@@ -35,6 +36,10 @@ class MedicalBundleFiles {
   static const String tests = 'tests_database.json';
   static const String medications = 'medications_database.json';
   static const String knowledge = 'medical_knowledge.json';
+
+  /// قاموس قياسات منفصل عن الحزمة الخماسية. غيابه لا يلغي تحديث الأمراض.
+  static const String biometrics =
+      'Lifex_AI_Human_Biometric_Measurements_v1.json';
 
   static const List<String> all = [
     diseases,
@@ -221,7 +226,7 @@ class MedicalDatabaseManager {
           sourceModule: 'medical_database_manager',
           severity: ErrorSeverity.error,
         );
-        return MedicalUpdateResult.failure(
+        return const MedicalUpdateResult.failure(
           'البيانات المُحمَّلة غير متوافقة داخلياً. تم إلغاء التحديث '
           'للحفاظ على استقرار قاعدة بياناتك الحالية.',
         );

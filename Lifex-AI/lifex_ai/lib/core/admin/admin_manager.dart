@@ -15,9 +15,9 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../app_constants.dart';
 import '../error_handler.dart';
 import 'admin_permissions.dart';
+import 'owner_identity_policy.dart';
 
 /// نتيجة أي عملية منح/سحب دور — يوضّح النجاح أو سبب الرفض بدل إرجاع
 /// قيمة منطقية صامتة، بنفس أسلوب AddProfileResult في multi_profile_engine.
@@ -160,26 +160,32 @@ class GlobalAdminManager {
     return defaultGlobalRolePermissions[role]?.contains(permission) ?? false;
   }
 
+  /// كل صلاحيات الدور الحالي — للمالك = مجموعة كاملة من الخريطة.
+  Set<GlobalAdminPermission> permissionsOf(String lifexId) {
+    final role = roleOf(lifexId);
+    return Set.unmodifiable(
+      defaultGlobalRolePermissions[role] ?? const <GlobalAdminPermission>{},
+    );
+  }
+
+  /// علم وصفي على المدير نفسه. تفويض المستخدم يمر عبر [roleOf]
+  /// و[hasPermission] فقط، وهذا العلم لا يُقرأ في أي مسار منح.
+  bool get hasFullOperationalControlAsOwner => true;
+
+  bool isOwner(String lifexId) => roleOf(lifexId) == GlobalAdminRole.owner;
+
+  /// قائمة العاملين الإداريين المحليين (مالك/أدمن/مشرف).
+  Map<String, GlobalAdminRole> listStaffRoles() {
+    return Map.unmodifiable(
+      Map.fromEntries(
+        _rolesByLifexId.entries.where((e) => e.value != GlobalAdminRole.none),
+      ),
+    );
+  }
+
   bool hasFullSystemAccess(String lifexId) {
     final role = roleOf(lifexId);
     return role == GlobalAdminRole.owner || role == GlobalAdminRole.admin;
-  }
-
-  String _normalizeOwnerPhone(String value) {
-    final westernDigits = value.replaceAllMapped(
-      RegExp(r'[٠-٩۰-۹]'),
-      (match) {
-        final code = match[0]!.codeUnitAt(0);
-        final zero = code >= 0x06f0 ? 0x06f0 : 0x0660;
-        return String.fromCharCode(0x30 + code - zero);
-      },
-    );
-    var digits = westernDigits.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.startsWith('00')) digits = digits.substring(2);
-    if (digits.startsWith('963')) return digits;
-    if (digits.startsWith('0')) return '963${digits.substring(1)}';
-    if (digits.startsWith('9')) return '963$digits';
-    return digits;
   }
 
   /// يُستدعى مرة عند كل تسجيل دخول/إنشاء هوية — إن تطابق البريد أو
@@ -191,15 +197,11 @@ class GlobalAdminManager {
     String? email,
     String? phoneNumber,
   }) {
-    final isOwnerEmail = email != null &&
-        AppConstants.ownerEmails
-            .map((e) => e.trim().toLowerCase())
-            .contains(email.trim().toLowerCase());
-    final isOwnerPhone = phoneNumber != null &&
-        _normalizeOwnerPhone(phoneNumber) ==
-            _normalizeOwnerPhone(AppConstants.ownerPhoneNumber);
-
-    if (isOwnerEmail || isOwnerPhone) {
+    const policy = OwnerIdentityPolicy();
+    if (policy.isInventorOwnerContact(
+      email: email,
+      phoneNumber: phoneNumber,
+    )) {
       _rolesByLifexId[lifexId] = GlobalAdminRole.owner;
       _persistRoles();
     }
