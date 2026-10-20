@@ -322,15 +322,15 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   // 7-ب) فوترة الاشتراكات — فرد 100 دولار/سنة، وحدة صحية 300، مستشفى 600.
   // الاشتراك عادي بلا إعلانات ولا خدمات خاصة. التحويل والخدمات الأخرى برسوم.
   // المعفى: إعاقة ببطاقة من بلد الحساب، مرض دائم في الملف، مكفوفون.
-  // معرّف PayPal الفعلي يأتى من LIFEX_PAYPAL_CLIENT_ID عند البناء. القيمة
-  // الفارغة ليست إعداداً، والبوابة لا تُسجَّل ولا تُعرض كمتصلة.
+  // معرّف PayPal يأتى من LIFEX_PAYPAL_CLIENT_ID عند البناء. القيمة الفارغة
+  // أو التي تحتوي placeholder ليست إعداداً، والبوابة لا تُسجَّل.
   final subscriptionBillingManager = SubscriptionBillingManager(
     ledger: transactionLedger,
     exemptionPolicy: const BillingExemptionPolicy(),
   );
   const paypalClientId = String.fromEnvironment('LIFEX_PAYPAL_CLIENT_ID');
   final paypalGateway = PayPalPaymentGatewayClient(clientId: paypalClientId);
-  if (paypalGateway.isConfigured && paypalGateway.isAvailable) {
+  if (paypalGateway.isConfigured) {
     subscriptionBillingManager.registerGateway(paypalGateway);
   }
 

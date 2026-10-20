@@ -22,6 +22,13 @@ class PayPalPaymentGatewayClient implements PaymentGatewayClient {
   @override
   String get gatewayName => 'PayPal';
 
+  /// نفس قاعدة Stripe: المعرّف الفارغ أو الذي يحتوي placeholder ليس إعداداً.
+  /// المعرّف الشكلي لا يعني أن التحصيل مربوط.
+  bool get isConfigured {
+    final id = clientId.trim();
+    return id.isNotEmpty && !id.toLowerCase().contains('placeholder');
+  }
+
   @override
   Future<PaymentResult> chargeAmount({
     required int amountInSmallestUnit,
@@ -29,14 +36,21 @@ class PayPalPaymentGatewayClient implements PaymentGatewayClient {
     required String description,
     String? idempotencyKey,
   }) async {
-    // TODO: استبدال هذا بالاستدعاء الفعلي لـ PayPal Orders API (إنشاء
-    // Order ثم Capture) عند اعتماد حساب PayPal تجاري حقيقي للمشروع.
+    if (!isConfigured) {
+      return const PaymentResult(
+        status: PaymentStatus.failed,
+        environment: FinancialEnvironment.production,
+        isSandbox: false,
+        errorMessageAr:
+            'PayPal غير موصول بمعرّف عميل صالح. لا حركة أموال حقيقية.',
+      );
+    }
     return const PaymentResult(
       status: PaymentStatus.failed,
       environment: FinancialEnvironment.production,
       isSandbox: false,
       errorMessageAr:
-          'NOT_CONFIGURED — بوابة PayPal غير مُفعَّلة. لا حركة أموال حقيقية.',
+          'واجهة PayPal Orders غير مربوطة في هذا البناء. لا حركة أموال حقيقية.',
     );
   }
 

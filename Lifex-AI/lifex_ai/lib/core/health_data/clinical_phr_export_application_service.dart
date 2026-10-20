@@ -22,7 +22,6 @@ class ClinicalPhrExportApplicationService {
     DateTime Function()? clock,
     String Function()? exportIdFactory,
   })  : builder = builder ?? ClinicalPhrExportBuilder(clock: clock),
-        _clock = clock ?? (() => DateTime.now().toUtc()),
         _exportIdFactory = exportIdFactory ??
             (() => 'exp_${DateTime.now().toUtc().microsecondsSinceEpoch}');
 
@@ -33,7 +32,6 @@ class ClinicalPhrExportApplicationService {
   final ClinicalPhrExportPolicy policy;
   final ClinicalPhrExportBuilder builder;
   final ClinicalPhrExportIntegrity integrity;
-  final DateTime Function() _clock;
   final String Function() _exportIdFactory;
 
   Future<ClinicalPhrExportResult> export({

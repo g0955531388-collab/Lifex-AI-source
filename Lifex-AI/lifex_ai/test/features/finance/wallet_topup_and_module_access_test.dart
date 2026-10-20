@@ -1,7 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/trial_manager.dart';
+import 'package:lifex_ai/features/finance/billing_exemption_policy.dart';
 import 'package:lifex_ai/features/finance/payment_controller.dart';
 import 'package:lifex_ai/features/finance/payment_gateway_client.dart';
+import 'package:lifex_ai/features/finance/paypal_payment_gateway_client.dart';
+import 'package:lifex_ai/features/finance/subscription_billing_manager.dart';
 import 'package:lifex_ai/features/finance/topup_session.dart';
 import 'package:lifex_ai/features/finance/transaction_ledger.dart';
 import 'package:lifex_ai/features/finance/wallet_account.dart';
@@ -251,6 +254,40 @@ void main() {
       );
       expect(r.success, isTrue);
       expect(wallet.doubleEntryLedger.isBalanced(r.transactionId!), isTrue);
+    });
+
+    test('PayPal لا يُسجَّل بلا معرّف أو بمعرّف placeholder', () {
+      final ledger = TransactionLedger();
+      final manager = SubscriptionBillingManager(
+        ledger: ledger,
+        exemptionPolicy: const BillingExemptionPolicy(),
+      );
+      for (final clientId in ['', '   ', 'paypal_placeholder_client']) {
+        final gateway = PayPalPaymentGatewayClient(clientId: clientId);
+        expect(gateway.isConfigured, isFalse);
+        if (gateway.isConfigured) manager.registerGateway(gateway);
+      }
+      expect(manager.availableGatewaysForCountry('SY'), isEmpty);
+    });
+
+    test('PayPal بمعرّف شكلي يُسجَّل لكن التحصيل يفشل', () async {
+      final gateway = PayPalPaymentGatewayClient(clientId: 'live-client-id');
+      expect(gateway.isConfigured, isTrue);
+      final ledger = TransactionLedger();
+      final manager = SubscriptionBillingManager(
+        ledger: ledger,
+        exemptionPolicy: const BillingExemptionPolicy(),
+      );
+      if (gateway.isConfigured) manager.registerGateway(gateway);
+      expect(manager.availableGatewaysForCountry('SY'), ['PayPal']);
+      final result = await gateway.chargeAmount(
+        amountInSmallestUnit: 100,
+        currencyCode: 'USD',
+        description: 'unbound orders api',
+      );
+      expect(result.status, PaymentStatus.failed);
+      expect(result.isSandbox, isFalse);
+      expect(result.errorMessageAr, contains('Orders'));
     });
 
     test('ProductionNoFakeTransactionTest — Stripe placeholder لا ينجح', () async {
