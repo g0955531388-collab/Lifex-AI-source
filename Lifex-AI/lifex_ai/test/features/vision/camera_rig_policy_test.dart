@@ -90,7 +90,7 @@ void main() {
     expect(parser.parse('x200').intent, VoiceCommandIntent.openLayeredLens);
     expect(
       parser.parse('افتح الكاميرا').intent,
-      VoiceCommandIntent.openCamera,
+      VoiceCommandIntent.openLiveSight,
     );
     expect(NetworkCanon.match('الزوم الكبير')?.unitId, 'radiology');
     expect(NetworkCanon.seatForInboxFile('x200.html'), 'radiology');
