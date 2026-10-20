@@ -22,7 +22,7 @@ class OwnerIdentityPolicy {
       .toList(growable: false);
 
   String get ownerPhoneDigits =>
-      AppConstants.ownerPhoneNumber.replaceAll(RegExp(r'[\s-]'), '');
+      _foldOwnerPhone(AppConstants.ownerPhoneNumber);
 
   bool matchesOwnerEmail(String? email) {
     if (email == null || email.trim().isEmpty) return false;
@@ -33,12 +33,11 @@ class OwnerIdentityPolicy {
 
   bool matchesOwnerPhone(String? phone) {
     if (phone == null || phone.trim().isEmpty) return false;
-    final n = phone.replaceAll(RegExp(r'[\s-]'), '');
+    final n = _foldOwnerPhone(phone);
     final digits = ownerPhoneDigits;
     return n == digits ||
         n == digits.replaceFirst('+963', '0') ||
-        n == digits.replaceFirst('+963', '') ||
-        n.endsWith(digits.replaceFirst('+963', ''));
+        n == digits.replaceFirst('+963', '');
   }
 
   bool isInventorOwnerContact({String? email, String? phoneNumber}) =>
@@ -50,4 +49,17 @@ class OwnerIdentityPolicy {
       '${AppConstants.ownerPhoneNumber}. '
       'الإسناد الرسمي يبقى: ${ProjectAttribution.inventorOwnerAr} — '
       'وليس دوراً يُمنح يدوياً لأي شخص.';
+}
+
+/// يحوّل ٠١٢٣٤٥٦٧٨٩ إلى 0123456789 ثم يحذف المسافات والشرطات.
+/// التطبيع لا يضيف صيغة ولا يُثبت تحققاً برمز.
+String _foldOwnerPhone(String raw) {
+  const arabicIndic = '٠١٢٣٤٥٦٧٨٩';
+  final buffer = StringBuffer();
+  for (final rune in raw.runes) {
+    final char = String.fromCharCode(rune);
+    final index = arabicIndic.indexOf(char);
+    buffer.write(index >= 0 ? '$index' : char);
+  }
+  return buffer.toString().replaceAll(RegExp(r'[\s-]'), '');
 }

@@ -57,6 +57,24 @@ void main() {
       expect(role, GlobalAdminRole.owner);
     });
 
+    test('لا يُفعَّل owner لرقم عربي هندي مختلف', () {
+      final admin = GlobalAdminManager.instance;
+      final role = admin.autoActivateOwnerIfMatches(
+        lifexId: 'LFX-000002-other',
+        phoneNumber: '٠٩٥٥٥٣١٣٨٩',
+      );
+      expect(role, GlobalAdminRole.none);
+    });
+
+    test('لا يُفعَّل owner لرقم أطول ينتهي بأرقام المالك', () {
+      final admin = GlobalAdminManager.instance;
+      final role = admin.autoActivateOwnerIfMatches(
+        lifexId: 'LFX-000002-suffix',
+        phoneNumber: '+19999555531388',
+      );
+      expect(role, GlobalAdminRole.none);
+    });
+
     test('لا يُفعَّل owner لأي بريد أو هاتف مختلف', () {
       final admin = GlobalAdminManager.instance;
       final role = admin.autoActivateOwnerIfMatches(
