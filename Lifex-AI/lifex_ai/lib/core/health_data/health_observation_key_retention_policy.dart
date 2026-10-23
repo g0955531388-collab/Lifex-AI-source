@@ -213,7 +213,7 @@ class HealthObservationKeyRetentionPolicy {
     required bool stillReferencedByCiphertext,
   }) {
     if (meta.status == HealthObservationKeyStatus.current) {
-      return HealthObservationKeyRetentionDecision(
+      return const HealthObservationKeyRetentionDecision(
         allowed: false,
         reasonCode: HealthObservationKeyRetentionDecision.retentionRequired,
         messageAr: 'لا يُحذف المفتاح الحالي — RETENTION_REQUIRED.',
@@ -230,7 +230,7 @@ class HealthObservationKeyRetentionPolicy {
     }
     if (meta.status != HealthObservationKeyStatus.revoked &&
         meta.status != HealthObservationKeyStatus.archived) {
-      return HealthObservationKeyRetentionDecision(
+      return const HealthObservationKeyRetentionDecision(
         allowed: false,
         reasonCode: HealthObservationKeyRetentionDecision.retentionRequired,
         messageAr:

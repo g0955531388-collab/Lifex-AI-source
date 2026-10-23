@@ -2,6 +2,7 @@
 /// Lifex-AI — اختبار
 /// الملف: device_automation_test.dart
 /// =============================================================
+library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/device_automation/automation_engine.dart';
 import 'package:lifex_ai/core/device_automation/automation_types.dart';

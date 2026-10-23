@@ -39,7 +39,7 @@ void main() {
     expect(r.status, McpLiveInvokeStatus.sessionNotReady);
   });
 
-  test('local_files ping ينجح بعد السياسة', () async {
+  test('local_files ping عبر invoke لا يمر بأعلام مفروضة', () async {
     await live.connect();
     final r = await live.invoke(
       const McpLiveInvokeRequest(
@@ -48,8 +48,8 @@ void main() {
         arguments: {'action': 'ping'},
       ),
     );
-    expect(r.status, McpLiveInvokeStatus.ok);
-    expect(r.payload['live'], isTrue);
+    expect(r.status, McpLiveInvokeStatus.deniedByPolicy);
+    expect(r.messageAr, contains('غير مصادق'));
   });
 
   test('cursor بلا موافقة بشرية → deniedByPolicy', () async {
@@ -63,7 +63,7 @@ void main() {
       ),
     );
     expect(r.status, McpLiveInvokeStatus.deniedByPolicy);
-    expect(r.messageAr, contains('Human Approval'));
+    expect(r.messageAr, contains('غير مصادق'));
   });
 
   test('cursor بموافقة → TOOL_UNAVAILABLE صادق', () async {
@@ -101,8 +101,8 @@ void main() {
         arguments: {'action': 'stat', 'path': '/data/clinical/patient.json'},
       ),
     );
-    expect(r.status, McpLiveInvokeStatus.transportError);
-    expect(r.messageAr, contains('محظور'));
+    expect(r.status, McpLiveInvokeStatus.deniedByPolicy);
+    expect(r.messageAr, contains('غير مصادق'));
   });
 
   test('research لا يستدعي mcp.cursor', () async {

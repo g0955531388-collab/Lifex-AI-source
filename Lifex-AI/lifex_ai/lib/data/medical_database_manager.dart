@@ -41,6 +41,9 @@ class MedicalBundleFiles {
   static const String biometrics =
       'Lifex_AI_Human_Biometric_Measurements_v1.json';
 
+  /// مرجع جلد وشعر منفصل عن جدول الأمراض. غيابه لا يلغي الحزمة الخماسية.
+  static const String skinHair = 'Lifex_AI_Skin_Hair_Reference_v1.json';
+
   static const List<String> all = [
     diseases,
     symptoms,
@@ -77,6 +80,10 @@ class MedicalDatabaseManager {
   /// رابط "بيان" الحزمة على الخادم — يُرجع رقم إصدار وروابط تحميل كل
   /// ملف من الملفات الخمسة، وليس ملفاً واحداً مباشرة.
   final String remoteManifestUrl;
+
+  bool get _remoteCatalogConfigured =>
+      remoteManifestUrl.isNotEmpty &&
+      !remoteManifestUrl.contains('example.com');
   final http.Client _httpClient;
 
   static const String _assetBasePath = 'lib/data/medical/';
@@ -131,6 +138,7 @@ class MedicalDatabaseManager {
 
   /// التحقق من وجود إصدار أحدث على الخادم دون تحميل الحزمة كاملة.
   Future<String?> checkForNewerVersion() async {
+    if (!_remoteCatalogConfigured) return null;
     try {
       final response = await _httpClient.get(Uri.parse(remoteManifestUrl));
       if (response.statusCode != 200) return null;
@@ -172,6 +180,11 @@ class MedicalDatabaseManager {
   /// حفظها محلياً فقط إذا نجح التحقق بالكامل. لا يُستبدل أي ملف قديم
   /// إلا بعد التأكد من صحة كل الملفات الخمسة الجديدة معاً.
   Future<MedicalUpdateResult> downloadAndUpdateBundle() async {
+    if (!_remoteCatalogConfigured) {
+      return const MedicalUpdateResult.failure(
+        'خادم الحزمة الطبية غير موصول. تبقى نسخة الأصول على الجهاز.',
+      );
+    }
     try {
       final manifestResponse =
           await _httpClient.get(Uri.parse(remoteManifestUrl));

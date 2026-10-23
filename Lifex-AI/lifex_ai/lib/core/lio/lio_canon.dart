@@ -5,11 +5,13 @@
 /// =============================================================
 library lifex_ai.core.lio.lio_canon;
 
+import '../attribution/project_attribution.dart';
+
 /// قوانين ثابتة قابلة للاختبار — موجة LIO الأولى.
 class LifexLioCanon {
   const LifexLioCanon();
 
-  String get systemName => 'Lifex-AI';
+  String get systemName => ProjectAttribution.systemName;
   String get packageName => 'lifex_ai';
   String get orchestratorName => 'Lifex Intelligence Orchestrator';
   String get orchestratorShortName => 'LIO';

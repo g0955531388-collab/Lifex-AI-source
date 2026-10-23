@@ -42,6 +42,11 @@ class MedicalRecordCanon {
     'fungal nail infection - hands': 'onychomycosis',
     'contact dermatitis': 'contact_dermatitis',
     'allergic contact dermatitis': 'contact_dermatitis_allergic',
+    'kidney stones': 'kidney_stones',
+    'nephrolithiasis': 'kidney_stones',
+    'systemic lupus erythematosus': 'sle',
+    'systemic lupus erythematosus sle': 'sle',
+    'sle': 'sle',
   };
 
   static const Map<String, String> arabicSynonyms = {
@@ -55,6 +60,31 @@ class MedicalRecordCanon {
         .replaceAll(RegExp(r'[()\[\].,/_\-]+'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+  }
+
+  /// مطابقة البحث فقط. لا تُستخدم لمفتاح السجل حتى لا تُدمج الأسماء.
+  static String searchFold(String raw) {
+    return normalize(raw)
+        .replaceAll('أ', 'ا')
+        .replaceAll('إ', 'ا')
+        .replaceAll('آ', 'ا')
+        .replaceAll('ٱ', 'ا')
+        .replaceAll('ة', 'ه')
+        .replaceAll('ى', 'ي')
+        .replaceAll('ؤ', 'و')
+        .replaceAll('ئ', 'ي')
+        .replaceAll('ـ', '')
+        .replaceAll(RegExp('[ً-ْٰ]'), '');
+  }
+
+  static bool queryMatches(String blob, String query) {
+    final hay = searchFold(blob);
+    final needle = searchFold(query);
+    if (needle.isEmpty || hay.isEmpty) return false;
+    if (hay.contains(needle)) return true;
+    final tokens = needle.split(' ').where((token) => token.length >= 2);
+    if (tokens.isEmpty) return false;
+    return tokens.every(hay.contains);
   }
 
   static String foldKey({

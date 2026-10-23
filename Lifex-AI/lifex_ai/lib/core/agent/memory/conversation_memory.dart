@@ -6,6 +6,7 @@
 /// AgentContext.conversationContext (بند 11) دون الاحتفاظ بالمحادثة
 /// كاملة في الذاكرة إلى الأبد (بند 33: إدارة الذاكرة بعناية على الهاتف).
 /// =============================================================
+library;
 
 class ConversationTurn {
   const ConversationTurn({

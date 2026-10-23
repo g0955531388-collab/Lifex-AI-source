@@ -29,10 +29,23 @@ void main() {
     expect(due32.difference(due28).inDays, 4);
   });
 
-  test('التأخير يفتح رسالة خاصة بلا عنوان صريح', () {
+  test('دورة واحدة لا تُنتج موعداً شخصياً ولا تثبت الحمل', () {
     final snap = engine.evaluate(
       now: DateTime(2026, 2, 20),
       starts: [DateTime(2026, 1, 1)],
+      trackingEnabled: true,
+      pregnancyConfirmed: false,
+    );
+    expect(snap.nextStart, isNull);
+    expect(snap.lateByDays, isNull);
+    expect(snap.notices, isEmpty);
+    expect(snap.pregnancyActive, isFalse);
+  });
+
+  test('التأخير يفتح رسالة خاصة بلا عنوان صريح', () {
+    final snap = engine.evaluate(
+      now: DateTime(2026, 2, 20),
+      starts: [DateTime(2025, 12, 4), DateTime(2026, 1, 1)],
       trackingEnabled: true,
       pregnancyConfirmed: false,
     );
@@ -43,15 +56,52 @@ void main() {
     expect(PrivateFemaleNotice.publicTitleAr.contains('حمل'), isFalse);
   });
 
-  test('قبل الموعد بيومين: رسالة خاصة للهدأة', () {
+  test('قبل الموعد بيوم واحد: رسالة خاصة للهدأة', () {
+    final snap = engine.evaluate(
+      now: DateTime(2026, 1, 28),
+      starts: [DateTime(2025, 12, 4), DateTime(2026, 1, 1)],
+      trackingEnabled: true,
+      pregnancyConfirmed: false,
+    );
+    expect(snap.daysUntilNext, 1);
+    expect(snap.notices, isNotEmpty);
+    expect(snap.notices.first.bodyAr.contains('إحراج'), isFalse);
+  });
+
+  test('متوسط الثلاثة أشهر يُسقط الدورات الأقدم', () {
+    final mean = engine.meanStartToStartDays(
+      [
+        DateTime(2025, 1, 1),
+        DateTime(2025, 3, 1),
+        DateTime(2026, 6, 1),
+        DateTime(2026, 6, 29),
+      ],
+      asOf: DateTime(2026, 6, 29),
+    );
+    expect(mean, 28);
+  });
+
+  test('يوم الموعد نفسه تبقى الرسالة الخاصة', () {
+    final snap = engine.evaluate(
+      now: DateTime(2026, 1, 29),
+      starts: [DateTime(2025, 12, 4), DateTime(2026, 1, 1)],
+      trackingEnabled: true,
+      pregnancyConfirmed: false,
+    );
+    expect(snap.daysUntilNext, 0);
+    expect(snap.notices, isNotEmpty);
+    expect(PrivateFemaleNotice.publicTitleAr.contains('دورة'), isFalse);
+  });
+
+  test('قبل الموعد بيومين لا تُرسل الرسالة', () {
     final snap = engine.evaluate(
       now: DateTime(2026, 1, 27),
-      starts: [DateTime(2026, 1, 1)],
+      starts: [DateTime(2025, 12, 4), DateTime(2026, 1, 1)],
       trackingEnabled: true,
       pregnancyConfirmed: false,
     );
     expect(snap.daysUntilNext, 2);
-    expect(snap.notices.first.bodyAr.contains('إحراج'), isFalse);
+    expect(snap.notices, isEmpty);
   });
 
   test('تأكيد الحمل يراجع دواء الملف نحو الطبيبة', () {

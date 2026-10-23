@@ -3,9 +3,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
-        maven { url = uri("https://maven.aliyun.com/repository/central") }
-        maven { url = uri("https://repo.huaweicloud.com/repository/maven") }
     }
 }
 
@@ -14,9 +11,6 @@ subprojects {
         repositories {
             google()
             mavenCentral()
-            maven { url = uri("https://maven.aliyun.com/repository/google") }
-            maven { url = uri("https://maven.aliyun.com/repository/central") }
-            maven { url = uri("https://repo.huaweicloud.com/repository/maven") }
         }
     }
 }

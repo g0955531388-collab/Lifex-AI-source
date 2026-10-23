@@ -7,6 +7,7 @@
 /// (طبي عادة). لا يحتوي منطق رؤية حاسوبية بذاته — ذلك يبقى في
 /// SmartVisionEngine الموجود فعلاً.
 /// =============================================================
+library;
 
 import '../agent_confidence.dart';
 import 'specialized_agent.dart';

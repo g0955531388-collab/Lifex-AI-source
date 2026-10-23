@@ -13,6 +13,7 @@ import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/network_box/unit_branch_catalog.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../widgets/barcode_scan_button.dart';
 import '../widgets/honesty_banner.dart';
 
 class UnitBranchRecordsScreen extends StatelessWidget {
@@ -114,6 +115,8 @@ class UnitBranchRecordsScreen extends StatelessWidget {
   String _subtitle(Map<String, dynamic> record) {
     final lines = <String>[
       record['detail']?.toString() ?? '',
+      if ((record['barcode']?.toString().trim() ?? '').isNotEmpty)
+        'باركود: ${record['barcode']}',
     ];
     for (final field in branch.extraFields) {
       final value = record[field.key]?.toString().trim() ?? '';
@@ -131,12 +134,14 @@ class UnitBranchRecordsScreen extends StatelessWidget {
   ) async {
     final title = TextEditingController();
     final detail = TextEditingController();
+    final barcode = TextEditingController();
     final extras = {
       for (final field in branch.extraFields) field.key: TextEditingController(),
     };
     final saved = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setLocal) => AlertDialog(
         title: Text(branch.titleAr),
         content: SingleChildScrollView(
           child: Column(
@@ -158,6 +163,14 @@ class UnitBranchRecordsScreen extends StatelessWidget {
                   maxLines: field.maxLines,
                   decoration: InputDecoration(labelText: field.labelAr),
                 ),
+              const SizedBox(height: 8),
+              BarcodeScanButton(
+                current: barcode.text,
+                onCode: (code) {
+                  barcode.text = code;
+                  setLocal(() {});
+                },
+              ),
             ],
           ),
         ),
@@ -167,10 +180,11 @@ class UnitBranchRecordsScreen extends StatelessWidget {
             child: const Text('إلغاء'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('حفظ'),
           ),
         ],
+        ),
       ),
     );
     final heading = title.text.trim();
@@ -179,15 +193,18 @@ class UnitBranchRecordsScreen extends StatelessWidget {
       for (final field in branch.extraFields)
         field.key: extras[field.key]?.text.trim() ?? '',
     };
+    final scanned = barcode.text.trim();
     title.dispose();
     detail.dispose();
+    barcode.dispose();
     for (final controller in extras.values) {
       controller.dispose();
     }
     if (saved != true || heading.isEmpty) return;
     store.add(storageKey, {
       'title': heading,
-      'detail': note.isEmpty ? 'بدون تفاصيل' : note,
+      'detail': note,
+      if (scanned.isNotEmpty) 'barcode': scanned,
       ...extraValues,
     });
     controller.saveActiveProfileChanges();

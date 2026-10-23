@@ -13,6 +13,7 @@
 /// يبقى مسؤولية المستمع النهائي على الحدث — لا تُنفَّذ هنا مباشرة،
 /// لأن ذلك تكرار لما هو مخطط في health_alert_dispatcher.dart.
 /// =============================================================
+library;
 
 import '../../../core/health_event_manager.dart';
 import '../agent_context.dart';
@@ -70,7 +71,7 @@ class NotificationTool implements AgentTool {
       data: {'messageAr': message, 'taskId': context.taskId},
     );
 
-    return AgentToolExecutionResult.success({
+    return const AgentToolExecutionResult.success({
       'dataType': 'notification_dispatched',
       'confidence': 'high',
     });

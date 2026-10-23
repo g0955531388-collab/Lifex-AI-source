@@ -83,16 +83,31 @@ class LifexFinancialEngine {
     return trust?.canCreatePrice(actorId) ?? false;
   }
 
+  /// الخصم يُحتسب فقط إذا مرّ الدفع من محفظة المنصة. النقد بلا خصم.
+  int walletOnlyDiscount({
+    required int requestedDiscountMinor,
+    required bool paidThroughPlatformWallet,
+  }) {
+    if (!paidThroughPlatformWallet || requestedDiscountMinor <= 0) return 0;
+    return requestedDiscountMinor;
+  }
+
   Invoice createInvoice({
     required String customerId,
     required List<InvoiceItem> items,
     required String currency,
     int discountMinor = 0,
+    bool paidThroughPlatformWallet = true,
     String taxJurisdiction = '',
     int taxMinor = 0,
   }) {
     final sub = items.fold<int>(0, (a, i) => a + i.amountMinor);
-    final afterDiscount = (sub - discountMinor).clamp(0, sub);
+    final allowed = walletOnlyDiscount(
+      requestedDiscountMinor: discountMinor,
+      paidThroughPlatformWallet: paidThroughPlatformWallet,
+    );
+    final applied = allowed > sub ? sub : allowed;
+    final afterDiscount = sub - applied;
     final fee = platformFee.feeOn(afterDiscount);
     final total = afterDiscount + taxMinor;
     return Invoice(
@@ -101,7 +116,7 @@ class LifexFinancialEngine {
       currency: currency,
       items: items,
       subtotalMinor: sub,
-      discountMinor: discountMinor,
+      discountMinor: applied,
       taxMinor: taxMinor,
       platformFeeMinor: fee,
       providerFeeMinor: 0,

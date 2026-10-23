@@ -4,6 +4,7 @@
 /// المسار: lib/features/medical_imaging/imaging_appointment_manager.dart
 /// الوصف: حجز مواعيد الفحوصات التصويرية (أشعة، رنين، سونار...).
 /// =============================================================
+library;
 
 import 'imaging_center_profile.dart';
 

@@ -11,6 +11,9 @@ import 'package:provider/provider.dart';
 import '../features/device_guardian/account_recovery_manager.dart';
 import '../features/device_guardian/device_guardian_manager.dart';
 import '../features/device_guardian/device_presence_note.dart';
+import 'package:geolocator/geolocator.dart';
+
+import '../features/device_guardian/lost_phone_desk.dart';
 import '../features/device_guardian/lost_phone_policy.dart';
 import '../features/device_guardian/trusted_devices_manager.dart';
 import '../features/device_guardian/watch_bond_ledger.dart';
@@ -137,22 +140,82 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(const LostPhonePolicy().simChangeWithoutPinAr()),
                       const SizedBox(height: 8),
+                      Text(LostPhoneDesk.limitAr),
+                      const SizedBox(height: 8),
                       Text(
-                        (guardian['pin']?.toString().isNotEmpty == true)
-                            ? 'رمز الاستعادة محفوظ محلياً على هذا الجهاز.'
-                            : 'لم يُحفظ رمز بعد. الرسالة البعيدة تحتاج الرمز.',
+                        (guardian['pinHash']?.toString().isNotEmpty == true)
+                            ? 'بصمة الرمز محفوظة. الرمز نفسه غير مخزّن.'
+                            : guardian['pin']?.toString().isNotEmpty == true
+                                ? 'وُجد رمز قديم بصيغة واضحة. أعد كتابته ليُستبدل ببصمة.'
+                                : 'لم تُحفظ بصمة رمز بعد.',
                       ),
                       TextField(
                         obscureText: true,
                         decoration: const InputDecoration(
-                          labelText: 'رمز أين جوالي (محلي)',
+                          labelText: 'رمز أين جوالي',
                         ),
-                        onSubmitted: (value) {
-                          final pin = value.trim();
-                          if (pin.isEmpty) return;
+                        onSubmitted: (value) async {
+                          final desk = LostPhoneDesk();
+                          await desk.rememberSecret(value);
+                          if (desk.secretHash == null) return;
+                          final next = {...store.map(BoxKeys.guardian)};
+                          next.remove('pin');
+                          next['pinHash'] = desk.secretHash;
+                          store.setMap(BoxKeys.guardian, next);
+                          controller.saveActiveProfileChanges();
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Semantics(
+                        button: true,
+                        label: 'فحص جاهزية العثور',
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            bool? locationOn;
+                            try {
+                              locationOn = await Geolocator.isLocationServiceEnabled();
+                            } catch (_) {
+                              locationOn = null;
+                            }
+                            final desk = LostPhoneDesk()..restore({
+                              ...guardian,
+                              'pinHash': guardian['pinHash'],
+                              'consent': guardian['findConsent'] == true,
+                            });
+                            final message = desk.arm(
+                              userConsent: guardian['findConsent'] == true,
+                              mobileDataOn: null,
+                              locationOn: locationOn,
+                              now: DateTime.now(),
+                            );
+                            store.setMap(BoxKeys.guardian, {
+                              ...store.map(BoxKeys.guardian),
+                              'findCheckedAt': DateTime.now().toIso8601String(),
+                              'findLocationOn': locationOn,
+                              'findReadinessAr': message,
+                              'findArmed': false,
+                            });
+                            controller.saveActiveProfileChanges();
+                          },
+                          child: const Text('أعد فحص الجاهزية'),
+                        ),
+                      ),
+                      Text(
+                        guardian['findReadinessAr']?.toString() ??
+                            LostPhoneDesk().readinessAr(),
+                      ),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('أوافق على متطلبات العثور'),
+                        subtitle: const Text(
+                          'الموافقة وحدها لا تفعّل الحماية إذا لم تُقاس البيانات والموقع.',
+                        ),
+                        value: guardian['findConsent'] == true,
+                        onChanged: (value) {
                           store.setMap(BoxKeys.guardian, {
                             ...store.map(BoxKeys.guardian),
-                            'pin': pin,
+                            'findConsent': value,
+                            'findArmed': false,
                           });
                           controller.saveActiveProfileChanges();
                         },

@@ -30,6 +30,8 @@ class _ManualVitalsScreenState extends State<ManualVitalsScreen> {
   final _oxygen = TextEditingController();
   final _pulse = TextEditingController();
   final _bp = TextEditingController();
+  final _foam = TextEditingController();
+  final _clarity = TextEditingController();
   String _urine = UrineColorNote.none;
   String _status = 'أدخل أرقام جهازك. لن تُملأ قيم افتراضية.';
 
@@ -39,6 +41,8 @@ class _ManualVitalsScreenState extends State<ManualVitalsScreen> {
     _oxygen.dispose();
     _pulse.dispose();
     _bp.dispose();
+    _foam.dispose();
+    _clarity.dispose();
     super.dispose();
   }
 
@@ -49,6 +53,8 @@ class _ManualVitalsScreenState extends State<ManualVitalsScreen> {
       pulseBpm: int.tryParse(_pulse.text.trim()),
       bloodPressure: _bp.text.trim(),
       urineColorNote: _urine,
+      urineFoamNote: _foam.text,
+      urineClarityNote: _clarity.text,
     );
   }
 
@@ -134,6 +140,18 @@ class _ManualVitalsScreenState extends State<ManualVitalsScreen> {
             onChanged: (value) {
               if (value != null) setState(() => _urine = value);
             },
+          ),
+          TextField(
+            controller: _foam,
+            decoration: const InputDecoration(
+              labelText: 'ملاحظة الرغوة، إن كتبتها',
+            ),
+          ),
+          TextField(
+            controller: _clarity,
+            decoration: const InputDecoration(
+              labelText: 'ملاحظة الوضوح، إن كتبتها',
+            ),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(

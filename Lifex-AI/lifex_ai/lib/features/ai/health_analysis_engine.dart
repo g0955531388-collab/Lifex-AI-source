@@ -8,6 +8,7 @@
 /// ⚠️ هذا المحرك لا يشخّص. أقصى ما يفعله هو ربط الأعراض بمعلومات مرجعية
 /// عامة وتوجيه المستخدم لأنسب خطوة تالية (مراجعة طبيب / اتصال بالإسعاف).
 /// =============================================================
+library;
 
 import 'ai_engine.dart';
 
@@ -86,11 +87,11 @@ class HealthAnalysisEngine {
     }
 
     if (matchedIds.isEmpty) {
-      return SymptomAnalysisResult(
-        matchedSymptomIds: const [],
-        possibleGeneralCategories: const [],
+      return const SymptomAnalysisResult(
+        matchedSymptomIds: [],
+        possibleGeneralCategories: [],
         isEmergencyIndicator: false,
-        response: const AiResponse(
+        response: AiResponse(
           summaryAr: 'لم أستطع التعرّف بوضوح على أعراض محددة من النص المُدخل. '
               'يُرجى وصف الأعراض بمزيد من التفصيل، أو مراجعة طبيب مباشرة إن '
               'كانت الأعراض تزعجك.',

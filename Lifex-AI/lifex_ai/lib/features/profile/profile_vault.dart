@@ -16,7 +16,7 @@ class ProfileVault {
   ProfileVault(this.prefs);
 
   final SharedPreferences prefs;
-  static const storageKey = AppConstants.storageKeyActiveProfileId + '_bundle';
+  static const storageKey = '${AppConstants.storageKeyActiveProfileId}_bundle';
 
   Future<void> loadInto(MultiProfileEngine engine) async {
     final raw = prefs.getString(storageKey);

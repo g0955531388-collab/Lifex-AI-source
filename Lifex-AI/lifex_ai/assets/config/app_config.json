@@ -1,0 +1,9 @@
+{
+  "stripe.publishableKey": "",
+  "paypal.clientId": "",
+  "backend.baseUrl": "",
+  "backend.medicalManifestUrl": "",
+  "translation.googleApiKey": "",
+  "terminology.icd11.clientId": "",
+  "terminology.icd11.clientSecret": ""
+}

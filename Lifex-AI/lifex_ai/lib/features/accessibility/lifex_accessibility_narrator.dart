@@ -6,6 +6,7 @@
 /// =============================================================
 library lifex_ai.features.accessibility.lifex_accessibility_narrator;
 
+import '../../core/app_config.dart';
 import '../voice/voice_engine.dart';
 
 enum SpeechPriority { emergency, critical, high, normal, low }
@@ -42,6 +43,9 @@ class LifexAccessibilityNarrator {
   final VoiceEngine _engine;
   final List<_QueuedUtterance> _queue = [];
   bool _draining = false;
+
+  /// طبقة الإرشاد تبقى موجودة. الإيقاف يكتم النطق العادي فقط.
+  bool guideEnabled = true;
   String? _lastSpokenNormalized;
   DateTime? _lastSpokenAt;
   int _seq = 0;
@@ -74,6 +78,11 @@ class LifexAccessibilityNarrator {
   }) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
+    final urgent = priority == SpeechPriority.emergency ||
+        priority == SpeechPriority.critical;
+    final guidanceOn =
+        guideEnabled && AppConfig.instance.voiceGuidanceEnabledByDefault;
+    if (!guidanceOn && !urgent) return;
 
     final normalized = trimmed.toLowerCase();
     final now = DateTime.now();

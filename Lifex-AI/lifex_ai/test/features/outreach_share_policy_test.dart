@@ -28,6 +28,8 @@ void main() {
       PartnerSignInKind.notPartner,
     );
     expect(policy.evaluate('chatgpt.com').mayProceed, isFalse);
+    expect(policy.evaluate('chatgpt.com').offersLocalAccount, isTrue);
+    expect(policy.evaluate('https://www.pornhub.com').offersLocalAccount, isFalse);
     expect(
       policy.evaluate('https://gemini.google.com').kind,
       PartnerSignInKind.notPartner,

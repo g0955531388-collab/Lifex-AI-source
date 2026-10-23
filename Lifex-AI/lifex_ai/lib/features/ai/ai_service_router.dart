@@ -12,6 +12,7 @@
 /// موثَّقة؛ "تعريف التطبيق" هنا يعني فقط إرسال اسم التطبيق ومعرّفه في
 /// رأس الطلب (Header)، وهذا معيار قياسي تدعمه كل واجهات AI الكبرى.
 /// =============================================================
+library;
 
 import 'dart:convert';
 
@@ -19,6 +20,7 @@ import 'package:http/http.dart' as http;
 
 import '../../core/app_constants.dart';
 import '../../core/error_handler.dart';
+import '../accessibility/gemini_bidi_session.dart';
 import 'unified_ai_hub_gateway.dart';
 
 /// معلومات تعريف التطبيق التي تُرسَل مع كل طلب لأي محرك خارجي، حتى
@@ -61,6 +63,103 @@ abstract class ExternalAiEngineClient {
   });
 }
 
+/// يختار نموذجاً يولّد نصاً من قائمة Gemini. يفضّل flash ويتجاوز التضمين.
+String? chooseGeminiModelName(List<dynamic> models) {
+  String? fallback;
+  for (final item in models) {
+    if (item is! Map) continue;
+    final name = item['name'];
+    if (name is! String || name.isEmpty) continue;
+    final methods = item['supportedGenerationMethods'];
+    if (methods is List && !methods.contains('generateContent')) continue;
+    final lower = name.toLowerCase();
+    if (lower.contains('embed') ||
+        lower.contains('aqa') ||
+        lower.contains('tts') ||
+        lower.contains('image')) {
+      continue;
+    }
+    fallback ??= name;
+    if (lower.contains('flash')) return name;
+  }
+  return fallback;
+}
+
+/// يختار نموذجاً اسمه يحتوي live. غيابه لا يُستبدل بنموذج نصي.
+String? chooseGeminiLiveModelName(List<dynamic> models) {
+  String? fallback;
+  for (final item in models) {
+    if (item is! Map) continue;
+    final name = item['name'];
+    if (name is! String || name.isEmpty) continue;
+    final lower = name.toLowerCase();
+    if (!lower.contains('live')) continue;
+    if (lower.contains('embed') ||
+        lower.contains('tts') ||
+        lower.contains('image')) {
+      continue;
+    }
+    final methods = item['supportedGenerationMethods'];
+    if (methods is List &&
+        methods.isNotEmpty &&
+        !methods.contains('bidiGenerateContent') &&
+        !methods.contains('generateContent')) {
+      continue;
+    }
+    fallback ??= name;
+    if (lower.contains('flash') || lower.contains('3.8')) return name;
+  }
+  return fallback;
+}
+
+String? chooseOpenAiModelId(List<dynamic> models) {
+  final ids = <String>[
+    for (final item in models)
+      if (item is Map && item['id'] is String) item['id'] as String,
+  ];
+  for (final preferred in const [
+    'gpt-4o-mini',
+    'gpt-4o',
+    'gpt-4.1-mini',
+    'gpt-4.1',
+  ]) {
+    if (ids.contains(preferred)) return preferred;
+  }
+  for (final id in ids) {
+    if (id.startsWith('gpt-')) return id;
+  }
+  return null;
+}
+
+String? chooseClaudeModelId(List<dynamic> models) {
+  final ids = <String>[
+    for (final item in models)
+      if (item is Map && item['id'] is String) item['id'] as String,
+  ];
+  for (final id in ids) {
+    if (id.contains('sonnet')) return id;
+  }
+  if (ids.isEmpty) return null;
+  return ids.first;
+}
+
+String readProviderError(String body, int statusCode) {
+  try {
+    final decoded = jsonDecode(body);
+    if (decoded is Map) {
+      final error = decoded['error'];
+      if (error is Map && error['message'] is String) {
+        return 'رمز $statusCode. ${error['message']}';
+      }
+      if (error is String && error.isNotEmpty) {
+        return 'رمز $statusCode. $error';
+      }
+    }
+  } catch (_) {}
+  final clip = body.length > 180 ? body.substring(0, 180) : body;
+  return 'رمز $statusCode. $clip';
+}
+
 /// تنفيذ عميل Gemini — المحرك الأساسي المفضَّل لهذا المشروع، وفق
 /// طلب صريح من مالك المشروع بعدم الاعتماد الحصري على محرك واحد.
 class GeminiEngineClient implements ExternalAiEngineClient {
@@ -68,12 +167,10 @@ class GeminiEngineClient implements ExternalAiEngineClient {
       : _httpClient = httpClient ?? http.Client();
 
   final http.Client _httpClient;
+  final Map<String, String> _modelByKey = {};
 
   @override
   ExternalAiProvider get provider => ExternalAiProvider.gemini;
-
-  static const String _endpoint =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
   @override
   Future<ExternalAiResponse> sendQuery({
@@ -82,47 +179,41 @@ class GeminiEngineClient implements ExternalAiEngineClient {
     Map<String, String>? extraHeaders,
   }) async {
     try {
-      final response = await _httpClient.post(
-        Uri.parse('$_endpoint?key=$apiKeyOrToken'),
-        headers: {
-          'Content-Type': 'application/json',
-          ...AppAttributionHeader.build(),
-          ...?extraHeaders,
-        },
-        body: jsonEncode({
-          'system_instruction': {
-            'parts': [
-              {'text': lifexAiSystemContext}
-            ]
-          },
-          'contents': [
-            {
-              'parts': [
-                {'text': query}
-              ]
-            }
-          ]
-        }),
+      final model = await _modelFor(apiKeyOrToken);
+      if (model == null) {
+        return ExternalAiResponse.failure(
+          _modelByKey['error:$apiKeyOrToken'] ??
+              'المفتاح لم يُرجع نموذجاً يولّد نصاً من Gemini.',
+        );
+      }
+      var response = await _post(
+        model: model,
+        apiKeyOrToken: apiKeyOrToken,
+        query: query,
+        withSystem: true,
+        extraHeaders: extraHeaders,
       );
-
+      if (response.statusCode == 400) {
+        response = await _post(
+          model: model,
+          apiKeyOrToken: apiKeyOrToken,
+          query: query,
+          withSystem: false,
+          extraHeaders: extraHeaders,
+        );
+      }
       if (response.statusCode != 200) {
         return ExternalAiResponse.failure(
-          'تعذّر الاتصال بمحرك Gemini حالياً (رمز الخطأ: ${response.statusCode}).',
+          'تعذّر جلب الرد من Gemini. ${readProviderError(response.body, response.statusCode)}',
         );
       }
-
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      final candidates = decoded['candidates'] as List<dynamic>?;
-      final text = candidates != null && candidates.isNotEmpty
-          ? (candidates.first['content']?['parts']?[0]?['text'] as String?)
-          : null;
-
+      final decoded = jsonDecode(response.body);
+      final text = decoded is Map<String, dynamic> ? _geminiText(decoded) : null;
       if (text == null) {
         return const ExternalAiResponse.failure(
-          'لم يُرجع محرك Gemini رداً قابلاً للقراءة.',
+          'رد Gemini وصل بلا نص قابل للعرض. الربط ما زال محفوظاً.',
         );
       }
-
       return ExternalAiResponse.success(text);
     } catch (e, stackTrace) {
       ErrorHandler.instance.report(
@@ -133,9 +224,116 @@ class GeminiEngineClient implements ExternalAiEngineClient {
         stackTrace: stackTrace,
       );
       return const ExternalAiResponse.failure(
-        'حدث خطأ أثناء التواصل مع محرك Gemini. حاول مرة أخرى.',
+        'حدث خطأ أثناء التواصل مع محرك Gemini. الربط ما زال محفوظاً.',
       );
     }
+  }
+
+  Future<String?> _modelFor(String apiKeyOrToken) async {
+    final cached = _modelByKey[apiKeyOrToken];
+    if (cached != null) return cached;
+    final response = await _httpClient.get(
+      Uri.https(
+        'generativelanguage.googleapis.com',
+        '/v1beta/models',
+        {'key': apiKeyOrToken},
+      ),
+    );
+    if (response.statusCode != 200) {
+      _modelByKey['error:$apiKeyOrToken'] =
+          'تعذّر قراءة نماذج Gemini. ${readProviderError(response.body, response.statusCode)}';
+      return null;
+    }
+    final decoded = jsonDecode(response.body);
+    final models = decoded is Map ? decoded['models'] : null;
+    final chosen = chooseGeminiModelName(
+      models is List ? models : const [],
+    );
+    if (chosen == null) {
+      _modelByKey['error:$apiKeyOrToken'] =
+          'قائمة Gemini بلا نموذج توليد نص. الربط ما زال محفوظاً.';
+      return null;
+    }
+    _modelByKey[apiKeyOrToken] = chosen;
+    return chosen;
+  }
+
+  /// اسم نموذج Live، أو النموذج الموثق إن أعادت القائمة 200 بلا اسم live.
+  /// فشل المصادقة يعيد null ولا يُسجَّل المفتاح.
+  Future<String?> liveModelName(String apiKeyOrToken) async {
+    try {
+      final response = await _httpClient
+          .get(
+            Uri.https(
+              'generativelanguage.googleapis.com',
+              '/v1beta/models',
+              {'key': apiKeyOrToken},
+            ),
+          )
+          .timeout(const Duration(seconds: 8));
+      if (response.statusCode != 200) return null;
+      final decoded = jsonDecode(response.body);
+      final models = decoded is Map ? decoded['models'] : null;
+      return chooseGeminiLiveModelName(models is List ? models : const []) ??
+          geminiLiveModelFallback;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<http.Response> _post({
+    required String model,
+    required String apiKeyOrToken,
+    required String query,
+    required bool withSystem,
+    Map<String, String>? extraHeaders,
+  }) {
+    final resource = model.startsWith('models/') ? model : 'models/$model';
+    final body = <String, dynamic>{
+      'contents': [
+        {
+          'parts': [
+            {'text': query}
+          ]
+        }
+      ],
+    };
+    if (withSystem) {
+      body['system_instruction'] = {
+        'parts': [
+          {'text': lifexAiSystemContext}
+        ]
+      };
+    }
+    return _httpClient.post(
+      Uri.https(
+        'generativelanguage.googleapis.com',
+        '/v1beta/$resource:generateContent',
+        {'key': apiKeyOrToken},
+      ),
+      headers: {
+        'Content-Type': 'application/json',
+        ...AppAttributionHeader.build(),
+        ...?extraHeaders,
+      },
+      body: jsonEncode(body),
+    );
+  }
+
+  String? _geminiText(Map<String, dynamic> decoded) {
+    final candidates = decoded['candidates'];
+    if (candidates is! List || candidates.isEmpty) return null;
+    final first = candidates.first;
+    if (first is! Map) return null;
+    final content = first['content'];
+    if (content is! Map) return null;
+    final parts = content['parts'];
+    if (parts is! List || parts.isEmpty) return null;
+    final part = parts.first;
+    if (part is! Map) return null;
+    final text = part['text'];
+    if (text is! String || text.trim().isEmpty) return null;
+    return text;
   }
 }
 
@@ -153,6 +351,7 @@ class OpenAiEngineClient implements ExternalAiEngineClient {
       : _httpClient = httpClient ?? http.Client();
 
   final http.Client _httpClient;
+  final Map<String, String> _modelByKey = {};
 
   @override
   ExternalAiProvider get provider => ExternalAiProvider.chatgpt;
@@ -166,6 +365,13 @@ class OpenAiEngineClient implements ExternalAiEngineClient {
     Map<String, String>? extraHeaders,
   }) async {
     try {
+      final model = await _modelFor(apiKeyOrToken);
+      if (model == null) {
+        return ExternalAiResponse.failure(
+          _modelByKey['error:$apiKeyOrToken'] ??
+              'المفتاح لم يُرجع نموذجاً من OpenAI.',
+        );
+      }
       final response = await _httpClient.post(
         Uri.parse(_endpoint),
         headers: {
@@ -175,7 +381,7 @@ class OpenAiEngineClient implements ExternalAiEngineClient {
           ...?extraHeaders,
         },
         body: jsonEncode({
-          'model': 'gpt-4o-mini',
+          'model': model,
           'messages': [
             {'role': 'system', 'content': lifexAiSystemContext},
             {'role': 'user', 'content': query},
@@ -185,7 +391,7 @@ class OpenAiEngineClient implements ExternalAiEngineClient {
 
       if (response.statusCode != 200) {
         return ExternalAiResponse.failure(
-          'تعذّر الاتصال بمحرك ChatGPT حالياً (رمز الخطأ: ${response.statusCode}).',
+          'تعذّر جلب الرد من ChatGPT. ${readProviderError(response.body, response.statusCode)} الربط ما زال محفوظاً.',
         );
       }
 
@@ -211,9 +417,33 @@ class OpenAiEngineClient implements ExternalAiEngineClient {
         stackTrace: stackTrace,
       );
       return const ExternalAiResponse.failure(
-        'حدث خطأ أثناء التواصل مع محرك ChatGPT. حاول مرة أخرى.',
+        'حدث خطأ أثناء التواصل مع محرك ChatGPT. الربط ما زال محفوظاً.',
       );
     }
+  }
+
+  Future<String?> _modelFor(String apiKeyOrToken) async {
+    final cached = _modelByKey[apiKeyOrToken];
+    if (cached != null) return cached;
+    final response = await _httpClient.get(
+      Uri.parse('https://api.openai.com/v1/models'),
+      headers: {'Authorization': 'Bearer $apiKeyOrToken'},
+    );
+    if (response.statusCode != 200) {
+      _modelByKey['error:$apiKeyOrToken'] =
+          'تعذّر قراءة نماذج OpenAI. ${readProviderError(response.body, response.statusCode)}';
+      return null;
+    }
+    final decoded = jsonDecode(response.body);
+    final data = decoded is Map ? decoded['data'] : null;
+    final chosen = chooseOpenAiModelId(data is List ? data : const []);
+    if (chosen == null) {
+      _modelByKey['error:$apiKeyOrToken'] =
+          'قائمة OpenAI بلا نموذج gpt. الربط ما زال محفوظاً.';
+      return null;
+    }
+    _modelByKey[apiKeyOrToken] = chosen;
+    return chosen;
   }
 }
 
@@ -223,6 +453,7 @@ class ClaudeEngineClient implements ExternalAiEngineClient {
       : _httpClient = httpClient ?? http.Client();
 
   final http.Client _httpClient;
+  final Map<String, String> _modelByKey = {};
 
   @override
   ExternalAiProvider get provider => ExternalAiProvider.claude;
@@ -236,6 +467,13 @@ class ClaudeEngineClient implements ExternalAiEngineClient {
     Map<String, String>? extraHeaders,
   }) async {
     try {
+      final model = await _modelFor(apiKeyOrToken);
+      if (model == null) {
+        return ExternalAiResponse.failure(
+          _modelByKey['error:$apiKeyOrToken'] ??
+              'المفتاح لم يُرجع نموذجاً من Claude.',
+        );
+      }
       final response = await _httpClient.post(
         Uri.parse(_endpoint),
         headers: {
@@ -246,7 +484,7 @@ class ClaudeEngineClient implements ExternalAiEngineClient {
           ...?extraHeaders,
         },
         body: jsonEncode({
-          'model': 'claude-sonnet-4-6',
+          'model': model,
           'max_tokens': 1024,
           'system': lifexAiSystemContext,
           'messages': [
@@ -257,7 +495,7 @@ class ClaudeEngineClient implements ExternalAiEngineClient {
 
       if (response.statusCode != 200) {
         return ExternalAiResponse.failure(
-          'تعذّر الاتصال بمحرك Claude حالياً (رمز الخطأ: ${response.statusCode}).',
+          'تعذّر جلب الرد من Claude. ${readProviderError(response.body, response.statusCode)} الربط ما زال محفوظاً.',
         );
       }
 
@@ -283,9 +521,36 @@ class ClaudeEngineClient implements ExternalAiEngineClient {
         stackTrace: stackTrace,
       );
       return const ExternalAiResponse.failure(
-        'حدث خطأ أثناء التواصل مع محرك Claude. حاول مرة أخرى.',
+        'حدث خطأ أثناء التواصل مع محرك Claude. الربط ما زال محفوظاً.',
       );
     }
+  }
+
+  Future<String?> _modelFor(String apiKeyOrToken) async {
+    final cached = _modelByKey[apiKeyOrToken];
+    if (cached != null) return cached;
+    final response = await _httpClient.get(
+      Uri.parse('https://api.anthropic.com/v1/models'),
+      headers: {
+        'x-api-key': apiKeyOrToken,
+        'anthropic-version': '2023-06-01',
+      },
+    );
+    if (response.statusCode != 200) {
+      _modelByKey['error:$apiKeyOrToken'] =
+          'تعذّر قراءة نماذج Claude. ${readProviderError(response.body, response.statusCode)}';
+      return null;
+    }
+    final decoded = jsonDecode(response.body);
+    final data = decoded is Map ? decoded['data'] : null;
+    final chosen = chooseClaudeModelId(data is List ? data : const []);
+    if (chosen == null) {
+      _modelByKey['error:$apiKeyOrToken'] =
+          'قائمة Claude بلا نموذج. الربط ما زال محفوظاً.';
+      return null;
+    }
+    _modelByKey[apiKeyOrToken] = chosen;
+    return chosen;
   }
 }
 
@@ -349,4 +614,25 @@ class AiServiceRouter {
   /// قائمة المحركات المدعومة برمجياً حالياً داخل التطبيق (بغض النظر عن
   /// كون المستخدم ربط حساباً بها أم لا).
   List<ExternalAiProvider> get supportedEngines => _engineClients.keys.toList();
+
+  /// يفتح جلسة Gemini Live إن وُجد مفتاح صالح ونموذج. لا يعيد المفتاح.
+  Future<GeminiBidiVisionSession?> openBlindLiveVision({
+    required String profileId,
+    LiveSocketConnector? connector,
+  }) async {
+    final credential = await hubGateway.credentialFor(
+      profileId: profileId,
+      provider: ExternalAiProvider.gemini,
+    );
+    if (credential == null || !geminiCredentialUsable(credential)) return null;
+    final client = _engineClients[ExternalAiProvider.gemini];
+    if (client is! GeminiEngineClient) return null;
+    final model = await client.liveModelName(credential);
+    if (model == null) return null;
+    return GeminiBidiVisionSession.start(
+      apiKey: credential,
+      model: model,
+      connector: connector ?? const IoLiveSocketConnector(),
+    );
+  }
 }

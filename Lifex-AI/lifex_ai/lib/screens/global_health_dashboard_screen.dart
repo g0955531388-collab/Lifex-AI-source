@@ -40,74 +40,74 @@ class GlobalHealthDashboardScreen extends StatelessWidget {
         'النواة والملف الصحي',
         Icons.person_outline,
         [
-          _Module(
+          const _Module(
               'صندوق المشروع أ',
               'من التكوين حتى آخر يوم بكل المقاعد',
               Icons.inventory_2_outlined,
-              const ProjectBoxHubScreen()),
-          _Module(
+              ProjectBoxHubScreen()),
+          const _Module(
               'الهوية من الصفر',
               'هوية حقيقية ومستعارة وملاحظات التكوين',
               Icons.badge_outlined,
-              const IdentityWorkspaceScreen()),
-          _Module(
+              IdentityWorkspaceScreen()),
+          const _Module(
               'الملف الصحي الحي',
               'الاستبيان والتاريخ والحساسية',
               Icons.assignment_outlined,
-              const SmartHealthQuestionnaireScreen()),
+              SmartHealthQuestionnaireScreen()),
           _Module('الأدوية', 'الجرعات والمواعيد وسجل الالتزام',
               Icons.medication_outlined, MedicationsScreen(profileId: profileId)),
-          _Module('المواعيد', 'مواعيد شخصية على الجهاز',
-              Icons.event_available_outlined, const AppointmentsScreen()),
+          const _Module('المواعيد', 'مواعيد شخصية على الجهاز',
+              Icons.event_available_outlined, AppointmentsScreen()),
         ]
       ),
       (
         'الوصول والصوت والرؤية',
         Icons.record_voice_over_outlined,
         [
-          _Module('التحكم الصوتي', 'تنفيذ أوامر عربية والتنقل بالصوت',
-              Icons.mic_none_outlined, const VoiceControlScreen()),
-          _Module(
+          const _Module('التحكم الصوتي', 'تنفيذ أوامر عربية والتنقل بالصوت',
+              Icons.mic_none_outlined, VoiceControlScreen()),
+          const _Module(
               'مراقبة سريرية ظاهرة',
               'إشعار دائم بموافقة. بلا تصوير خفي',
               Icons.monitor_heart_outlined,
-              const ClinicalWatchScreen()),
-          _Module(
+              ClinicalWatchScreen()),
+          const _Module(
               'القياسات اليدوية',
               'حرارة وأكسجين ونبض من جهازك. بلا صورة',
               Icons.favorite_outline,
-              const ManualVitalsScreen()),
+              ManualVitalsScreen()),
           _Module(
               'المساعد البصري',
               'الكاميرا وقراءة النصوص والنطق',
               Icons.visibility_outlined,
               AccessibilityAssistantScreen(profileId: profileId)),
-          _Module('المحادثة الصحية', 'أسئلة تنظيمية مع قراءة الرد صوتيًا',
-              Icons.chat_outlined, const HealthChatScreen()),
+          const _Module('المحادثة الصحية', 'أسئلة تنظيمية مع قراءة الرد صوتيًا',
+              Icons.chat_outlined, HealthChatScreen()),
         ]
       ),
       (
         'الطوارئ والمجتمع',
         Icons.health_and_safety_outlined,
         [
-          _Module('الطوارئ وجهات الثقة', 'إدارة جهات الثقة ومستويات الصلاحية',
-              Icons.sos_outlined, const EmergencyContactsScreen()),
-          _Module(
+          const _Module('الطوارئ وجهات الثقة', 'إدارة جهات الثقة ومستويات الصلاحية',
+              Icons.sos_outlined, EmergencyContactsScreen()),
+          const _Module(
               'الوحدات الصحية',
               'المخبر والدم والتبرعات والمرأة والأسنان والتأهيل',
               Icons.hub_outlined,
-              const HealthModulesScreen()),
-          _Module(
+              HealthModulesScreen()),
+          const _Module(
               'مرجع العلامات البصرية',
               'معاني علامات الوجه والجلد من أرشيف الكاميرا الذكية',
               Icons.visibility_outlined,
-              const MedicalReferenceScreen(
+              MedicalReferenceScreen(
                   kind: MedicalReferenceKind.cameraSigns)),
-          _Module(
+          const _Module(
               'موسوعة الحالات والأدوية',
               'بحث مرجعي في الحالات ومعايير النمو ودليل الأدوية',
               Icons.menu_book_outlined,
-              const MedicalReferenceScreen(
+              MedicalReferenceScreen(
                   kind: MedicalReferenceKind.conditions)),
         ]
       ),
@@ -115,87 +115,87 @@ class GlobalHealthDashboardScreen extends StatelessWidget {
         'الخدمات الصحية المتخصصة',
         Icons.local_hospital_outlined,
         [
-          _Module(
+          const _Module(
               'الأطباء',
               'دليل محلي بانتظار خادم الجهة',
               Icons.medical_information_outlined,
-              const BoxUnitScreen(unit: BoxUnitCatalog.doctors)),
-          _Module(
+              BoxUnitScreen(unit: BoxUnitCatalog.doctors)),
+          const _Module(
               'المرضى',
               'سجلات رعاية محلية',
               Icons.personal_injury_outlined,
-              const BoxUnitScreen(unit: BoxUnitCatalog.patients)),
-          _Module(
+              BoxUnitScreen(unit: BoxUnitCatalog.patients)),
+          const _Module(
               'المستشفى',
               'دخول وتحويلات محلية',
               Icons.local_hospital_outlined,
-              const BoxUnitScreen(unit: BoxUnitCatalog.hospital)),
-          _Module(
+              BoxUnitScreen(unit: BoxUnitCatalog.hospital)),
+          const _Module(
               'المخابر والتحاليل',
               'طلبات ونتائج يضيفها المستخدم',
               Icons.science_outlined,
-              const BoxUnitScreen(unit: BoxUnitCatalog.labs)),
-          _Module(
+              BoxUnitScreen(unit: BoxUnitCatalog.labs)),
+          const _Module(
               'الصيدليات والوصفات',
               'صرف مرتبط بسجل أدويتك',
               Icons.local_pharmacy_outlined,
-              const BoxUnitScreen(unit: BoxUnitCatalog.pharmacy)),
-          _Module(
+              BoxUnitScreen(unit: BoxUnitCatalog.pharmacy)),
+          const _Module(
               'التصوير والأشعة',
               'أرشيف مواعيد وتقارير محلية',
               Icons.image_search_outlined,
-              const BoxUnitScreen(unit: BoxUnitCatalog.radiology)),
-          _Module(
+              BoxUnitScreen(unit: BoxUnitCatalog.radiology)),
+          const _Module(
               'الأسنان',
               'خطة علاج سنية',
               Icons.medical_services_outlined,
-              const BoxUnitScreen(unit: BoxUnitCatalog.dental)),
-          _Module(
+              BoxUnitScreen(unit: BoxUnitCatalog.dental)),
+          const _Module(
               'الحمل ورعاية الإناث',
               'من التكوين حتى ما بعد الولادة',
               Icons.pregnant_woman_outlined,
-              const BoxUnitScreen(unit: BoxUnitCatalog.women)),
-          _Module(
+              BoxUnitScreen(unit: BoxUnitCatalog.women)),
+          const _Module(
               'الحجز والأكواد',
               'مسودة حجز ورمز تحقق محلي',
               Icons.qr_code_2,
-              const BookingWorkspaceScreen()),
+              BookingWorkspaceScreen()),
         ]
       ),
       (
         'الربط والإنسانية',
         Icons.public_outlined,
         [
-          _Module(
+          const _Module(
               'الحماية والمراقبة والأجهزة',
               'فقدان جهاز وطاقة وربط عائلي',
               Icons.shield_outlined,
-              const ProtectionWorkspaceScreen()),
-          _Module(
+              ProtectionWorkspaceScreen()),
+          const _Module(
               'العالم: سحابة وإحصاء وشاشات وتراسل',
               'طابور محلي بلا نجاح وهمي',
               Icons.public_outlined,
-              const WorldWorkspaceScreen()),
-          _Module(
+              WorldWorkspaceScreen()),
+          const _Module(
               'شبكة الدم',
               'طلبات للموافقين على هذا الجهاز',
               Icons.bloodtype_outlined,
-              const BloodRequestScreen()),
-          _Module(
+              BloodRequestScreen()),
+          const _Module(
               'التبرعات',
               'دعم مالي أو خدمي أو عيني',
               Icons.volunteer_activism_outlined,
-              const BoxUnitScreen(unit: BoxUnitCatalog.donations)),
-          _Module(
+              BoxUnitScreen(unit: BoxUnitCatalog.donations)),
+          const _Module(
               'التأهيل والتعليم',
               'دورات وخطط تطوير',
               Icons.school_outlined,
-              const BoxUnitScreen(unit: BoxUnitCatalog.education)),
-          _Module(
+              BoxUnitScreen(unit: BoxUnitCatalog.education)),
+          const _Module(
               'الرعاية المزمنة والهمم',
               'خطط طويلة وإعفاء',
               Icons.accessibility_new_outlined,
-              const BoxUnitScreen(unit: BoxUnitCatalog.chronicPlans)),
+              BoxUnitScreen(unit: BoxUnitCatalog.chronicPlans)),
         ]
       ),
     ];

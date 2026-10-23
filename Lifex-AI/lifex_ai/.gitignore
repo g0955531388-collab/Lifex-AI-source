@@ -88,3 +88,4 @@ coverage/
 # Environment/secrets — لا تُرفع مفاتيح API الحقيقية أبداً لأي مستودع
 .env
 *.env.local
+assets/config/app_config.json

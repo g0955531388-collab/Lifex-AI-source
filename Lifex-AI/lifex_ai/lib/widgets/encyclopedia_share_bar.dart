@@ -114,15 +114,26 @@ class _ShareIcon extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 22),
-            const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 10)),
-          ],
+      child: Semantics(
+        button: true,
+        label: label,
+        hint: 'مشاركة الموسوعة العامة',
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+          child: ExcludeSemantics(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 22),
+                  const SizedBox(height: 2),
+                  Text(label, style: const TextStyle(fontSize: 14)),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

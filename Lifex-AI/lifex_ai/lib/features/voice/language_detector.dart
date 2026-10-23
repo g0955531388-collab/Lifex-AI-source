@@ -13,6 +13,7 @@
 /// google_mlkit_language_id) عبر تنفيذ [MlBasedLanguageDetector] بدلاً
 /// من الاعتماد على الكاشف البسيط الافتراضي وحده.
 /// =============================================================
+library;
 
 /// اللغات القابلة للاكتشاف تلقائياً حالياً بالكاشف البسيط الافتراضي.
 enum DetectedLanguage { arabic, english, unknown }

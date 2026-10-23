@@ -34,7 +34,7 @@ class DeviceSemanticGraph {
         kind: GraphNodeKind.device,
         universalType: service.category.name,
         label: service.personalLabel ?? service.deviceId,
-        vendorHint: '${service.deviceId}',
+        vendorHint: service.deviceId,
       ),
     );
     final svcId = 'service:${service.serviceId}';

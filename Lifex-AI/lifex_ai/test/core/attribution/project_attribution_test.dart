@@ -21,9 +21,9 @@ void main() {
       expect(
         AppConstants.ownershipStatement,
         'Lifex-AI\n'
-        'المالك والمخترع: غازي سليم بكفلاوي\n'
-        'خبير الهندسة الطبية الحيوية\n'
-        'المرشدة: رباب الحايك',
+        'الملكية والشراكة مناصفة: غازي سليم بكفلاوي ورباب الحايك\n'
+        'المخترع: غازي سليم بكفلاوي\n'
+        'خبير الهندسة الطبية الحيوية',
       );
     });
 
@@ -35,25 +35,27 @@ void main() {
       expect(
         AppConstants.ownershipStatementEn,
         'Lifex-AI\n'
-        'Inventor & Owner: Ghazi Salim Bekfalawi\n'
-        'Biomedical Engineering Expert\n'
-        'Guide: Rabab Al-Hayek',
+        'Equal ownership and partnership: Ghazi Salim Bekfalawi and Rabab Al-Hayek\n'
+        'Inventor: Ghazi Salim Bekfalawi\n'
+        'Biomedical Engineering Expert',
       );
     });
 
-    test('المالك والمخترع هو غازي فقط والمرشدة بصفة إرشاد', () {
+    test('الملكية والشراكة مناصفة والمخترع غازي', () {
       expect(
         AppConstants.developerCredit,
         ProjectAttribution.inventorOwnerAr,
       );
       expect(AppConstants.developerCredit.contains('رباب'), isFalse);
-      expect(AppConstants.guideCreditAr, 'المرشدة رباب الحايك');
+      expect(AppConstants.guideCreditAr, 'الشريكة رباب الحايك');
       expect(
-        AppConstants.ownershipStatement.contains('المالك والمخترع: غازي سليم بكفلاوي'),
+        AppConstants.ownershipStatement.contains(
+          'الملكية والشراكة مناصفة: غازي سليم بكفلاوي ورباب الحايك',
+        ),
         isTrue,
       );
       expect(
-        AppConstants.ownershipStatement.contains('المرشدة: رباب الحايك'),
+        AppConstants.ownershipStatement.contains('المخترع: غازي سليم بكفلاوي'),
         isTrue,
       );
     });
@@ -78,9 +80,10 @@ void main() {
       }
     });
 
-    test('تذييل الترخيص الإنجليزي لا يمنح ملكية مشتركة', () {
+    test('تذييل الترخيص يذكر المناصفة ولا يضيف ورثة', () {
       final stamped = LicenseManager.instance.appendEn('Body');
       expect(stamped.contains(AppConstants.ownershipStatementShortEn), isTrue);
+      expect(stamped.contains('Equal ownership and partnership'), isTrue);
       expect(stamped.contains('with Rabab'), isFalse);
       expect(stamped.contains('ورث'), isFalse);
     });

@@ -5,6 +5,7 @@
 /// الوصف: غلاف حول KnowledgeRetriever (agent/knowledge/) ليكون قابلاً
 /// للاستدعاء ضمن الخطة كأداة عادية، بنفس عقد AgentTool مثل بقية الأدوات.
 /// =============================================================
+library;
 
 import '../agent_context.dart';
 import '../agent_permissions.dart';

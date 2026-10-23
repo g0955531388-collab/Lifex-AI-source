@@ -2,6 +2,7 @@
 /// Lifex-AI — اختبار
 /// الملف: device_control_center_test.dart
 /// =============================================================
+library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/device_control_center/control_types.dart';
 import 'package:lifex_ai/core/device_control_center/device_control_center.dart';
@@ -136,10 +137,10 @@ void main() {
       isFalse,
     );
     c.rules.add(
-      AutomationRule(
+      const AutomationRule(
         ruleId: 'a1',
         triggerEvent: 'night',
-        action: const ControlCommand(
+        action: ControlCommand(
           commandId: 'a',
           deviceId: 'pump',
           serviceId: 'infusion',

@@ -5,9 +5,12 @@
 /// الوصف: المدير المركزي لسياسات استهلاك الطاقة داخل التطبيق — يقرر
 /// أي ميزات تُخفَّف أو تُعطَّل مؤقتاً بناءً على حالة البطارية.
 /// =============================================================
+library;
 
+import '../../core/app_config.dart';
 import 'battery_monitor.dart';
 import 'intermittent_sense_policy.dart';
+import 'phone_battery_brief.dart';
 import 'survival_energy_mode.dart';
 
 /// المدير المركزي للطاقة.
@@ -23,8 +26,25 @@ class EnergyManager {
   final BatteryMonitor batteryMonitor;
   final SurvivalEnergyMode survivalMode;
   final IntermittentSensePolicy sensePolicy;
+  final BatteryAlertGate alerts = BatteryAlertGate();
+  void Function(String line)? onAlert;
 
   void _onBatteryChanged(BatteryStatus status) {
+    if (batteryMonitor.hasDeviceReading) {
+      final english =
+          AppConfig.instance.defaultLanguage == AppLanguage.english;
+      final lines = alerts.onReading(
+        level: status.level,
+        charging: status.isCharging,
+        english: english,
+      );
+      final sink = onAlert;
+      if (sink != null) {
+        for (final line in lines) {
+          sink(line);
+        }
+      }
+    }
     if (status.level <= survivalMode.activationThresholdPercent &&
         !status.isCharging) {
       survivalMode.activate();

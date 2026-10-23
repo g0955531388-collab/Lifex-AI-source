@@ -28,6 +28,12 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
   final VoiceLocalePolicy _localePolicy;
   int _ticket = 0;
   SpeechListenLatch? _latch;
+  SpeechErrorListener? _onError;
+  SpeechStatusListener? _onStatus;
+  List<String>? _localeIds;
+
+  /// صمت أقصر بعد آخر كلمة. أربع ثوانٍ كانت تُبقي الأمر معلّقاً.
+  static const commandPause = Duration(milliseconds: 1500);
 
   @override
   Future<bool> requestMicrophonePermission() async {
@@ -60,56 +66,64 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
     final latch = SpeechListenLatch(gate);
     _latch = latch;
     Timer? grace;
+    var closing = false;
 
     void finish(SpeechRecognitionResult result) {
-      if (ticket != _ticket) return;
+      if (ticket != _ticket || closing) return;
+      closing = true;
       grace?.cancel();
       if (identical(_latch, latch)) _latch = null;
       latch.finish(result);
+      if (_speech.isListening) {
+        unawaited(() async {
+          try {
+            await _speech.stop();
+          } catch (_) {}
+        }());
+      }
     }
 
     try {
       if (_speech.isListening) {
         await _speech.stop();
       }
-      final ready = await _speech.initialize(
-        onError: (_) {
-          gate.sawError = true;
-          grace?.cancel();
-          if (gate.words.trim().isNotEmpty) {
-            finish(_fromWords(gate.words, 0));
-            return;
-          }
-          finish(const SpeechRecognitionResult(
-            status: SpeechRecognitionStatus.error,
-            messageAr:
-                'تعطل محرك التعرف أثناء الجلسة. النص لم يُفقد إن كان ظاهراً، ويمكنك الكتابة.',
-          ));
-        },
-        onStatus: (status) {
-          if (ticket != _ticket) return;
-          gate.onStatus(status);
-          if (gate.shouldCloseNow(status)) {
-            finish(_fromWords(gate.words, 0));
-            return;
-          }
-          if (gate.waitForLateWords &&
-              (status == 'done' || status == 'notListening') &&
-              grace == null) {
-            grace = Timer(const Duration(milliseconds: 900), () {
-              if (gate.words.trim().isNotEmpty) {
-                finish(_fromWords(gate.words, 0));
-              } else {
-                finish(const SpeechRecognitionResult(
-                  status: SpeechRecognitionStatus.noSpeechDetected,
-                  messageAr:
-                      'انتهت مهلة الجلسة دون نص. هذا ليس دليلاً على أن الميكروفون مغلق.',
-                ));
-              }
-            });
-          }
-        },
-      );
+      _onError = (_) {
+        gate.sawError = true;
+        grace?.cancel();
+        if (gate.words.trim().isNotEmpty) {
+          finish(_fromWords(gate.words, 0));
+          return;
+        }
+        finish(const SpeechRecognitionResult(
+          status: SpeechRecognitionStatus.error,
+          messageAr:
+              'تعطل محرك التعرف أثناء الجلسة. النص لم يُفقد إن كان ظاهراً، ويمكنك الكتابة.',
+        ));
+      };
+      _onStatus = (status) {
+        if (ticket != _ticket) return;
+        gate.onStatus(status);
+        if (gate.shouldCloseNow(status)) {
+          finish(_fromWords(gate.words, 0));
+          return;
+        }
+        if (gate.waitForLateWords &&
+            (status == 'done' || status == 'notListening') &&
+            grace == null) {
+          grace = Timer(const Duration(milliseconds: 900), () {
+            if (gate.words.trim().isNotEmpty) {
+              finish(_fromWords(gate.words, 0));
+            } else {
+              finish(const SpeechRecognitionResult(
+                status: SpeechRecognitionStatus.noSpeechDetected,
+                messageAr:
+                    'انتهت مهلة الجلسة دون نص. هذا ليس دليلاً على أن الميكروفون مغلق.',
+              ));
+            }
+          });
+        }
+      };
+      final ready = await _ensureEngine();
       if (ticket != _ticket) {
         return const SpeechRecognitionResult(
           status: SpeechRecognitionStatus.error,
@@ -124,10 +138,10 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
         );
       }
 
-      final available = await _speech.locales();
+      final available = await _knownLocales();
       final choice = _localePolicy.chooseRecognition(
         preferred: localeCode,
-        available: available.map((item) => item.localeId).toList(),
+        available: available,
       );
       if (choice.refusalAr != null) {
         return SpeechRecognitionResult(
@@ -136,8 +150,7 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
         );
       }
       final localeId = choice.localeId ?? localeCode;
-      if (!available.any((item) => item.localeId == localeId) &&
-          available.isNotEmpty) {
+      if (!available.contains(localeId) && available.isNotEmpty) {
         return SpeechRecognitionResult(
           status: SpeechRecognitionStatus.error,
           messageAr: 'اللغة $localeCode غير مثبتة في محرك التعرف.',
@@ -145,26 +158,48 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
       }
       VoiceEngine.instance.activeLocaleId = localeId;
 
-      await _speech.listen(
-        localeId: localeId,
-        listenFor: const Duration(seconds: 20),
-        pauseFor: const Duration(seconds: 4),
-        listenOptions: SpeechListenOptions(
-          partialResults: true,
-          cancelOnError: true,
-        ),
-        onResult: (result) {
-          if (ticket != _ticket) return;
-          gate.onWords(
-            result.recognizedWords,
-            isFinal: result.finalResult,
-          );
-          if (gate.words.isNotEmpty) {
-            VoiceEngine.instance.reportPartial(gate.words);
-          }
-          if (gate.sawFinal) finish(_fromWords(gate.words, result.confidence));
-        },
-      );
+      Future<void> startCapture() {
+        return _speech.listen(
+          localeId: localeId,
+          listenFor: const Duration(seconds: 20),
+          pauseFor: commandPause,
+          listenOptions: SpeechListenOptions(
+            partialResults: true,
+            cancelOnError: true,
+            listenMode: ListenMode.confirmation,
+            pauseFor: commandPause,
+            listenFor: const Duration(seconds: 20),
+            localeId: localeId,
+          ),
+          onResult: (result) {
+            if (ticket != _ticket) return;
+            gate.onWords(
+              result.recognizedWords,
+              isFinal: result.finalResult,
+            );
+            if (gate.words.isNotEmpty) {
+              VoiceEngine.instance.reportPartial(gate.words);
+            }
+            if (gate.sawFinal) {
+              finish(_fromWords(gate.words, result.confidence));
+            }
+          },
+        );
+      }
+
+      try {
+        await startCapture();
+      } catch (error) {
+        if (!speechSessionBusy(error) || ticket != _ticket) rethrow;
+        try {
+          await _speech.cancel();
+        } catch (_) {
+          try {
+            await _speech.stop();
+          } catch (_) {}
+        }
+        await startCapture();
+      }
       if (ticket != _ticket) {
         return const SpeechRecognitionResult(
           status: SpeechRecognitionStatus.error,
@@ -197,6 +232,28 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
     }
   }
 
+  Future<bool> _ensureEngine() async {
+    if (!_speech.isAvailable) {
+      final ready = await _speech.initialize(
+        onError: (error) => _onError?.call(error),
+        onStatus: (status) => _onStatus?.call(status),
+      );
+      if (!ready) return false;
+    }
+    _speech.errorListener = (error) => _onError?.call(error);
+    _speech.statusListener = (status) => _onStatus?.call(status);
+    return true;
+  }
+
+  Future<List<String>> _knownLocales() async {
+    final cached = _localeIds;
+    if (cached != null && cached.isNotEmpty) return cached;
+    final available = await _speech.locales();
+    final ids = available.map((item) => item.localeId).toList();
+    if (ids.isNotEmpty) _localeIds = ids;
+    return ids;
+  }
+
   SpeechRecognitionResult _fromWords(String words, double confidence) {
     final trimmed = words.trim();
     if (trimmed.isEmpty) {
@@ -221,6 +278,15 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
       await _speech.stop();
     } catch (_) {}
   }
+}
+
+bool speechSessionBusy(Object error) {
+  final text = error.toString().toLowerCase();
+  return text.contains('busy') ||
+      text.contains('error_busy') ||
+      text.contains('already started') ||
+      text.contains('already listening') ||
+      text.contains('previous session');
 }
 
 /// جلسة تعرّف واحدة. الإيقاف يُغلقها فوراً بالنص الذي وصل، أو برفض صريح إن لم يصل نص.

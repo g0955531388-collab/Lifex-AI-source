@@ -57,7 +57,7 @@ class _VoiceFillButtonState extends State<VoiceFillButton> {
     messenger?.showSnackBar(
       const SnackBar(content: Text('أستمع وأسجّل الآن...')),
     );
-    final result = await VoiceEngine.instance.startListening();
+    final result = await VoiceEngine.instance.listenFresh();
     if (!mounted) return;
     setState(() => _busy = false);
     final text = result.textResult?.trim() ?? '';

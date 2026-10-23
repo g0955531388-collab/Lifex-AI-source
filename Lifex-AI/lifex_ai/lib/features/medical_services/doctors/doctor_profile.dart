@@ -6,6 +6,7 @@
 /// طبيب أو حجز موعد. البيانات الإدارية الداخلية (جداول المناوبات
 /// التفصيلية) تُدار في doctor_dashboard.dart وdoctor_schedule_manager.dart.
 /// =============================================================
+library;
 
 class DoctorProfile {
   final String doctorId;

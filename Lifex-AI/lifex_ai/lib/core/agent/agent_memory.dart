@@ -6,6 +6,7 @@
 /// معاً، حتى لا يضطر AgentOrchestrator للتعامل مع 3 كائنات منفصلة.
 /// نمط مطابق لـ AiModuleBundle/AiBridge الموجود في features/ai/.
 /// =============================================================
+library;
 
 import 'memory/conversation_memory.dart';
 import 'memory/long_term_memory.dart';

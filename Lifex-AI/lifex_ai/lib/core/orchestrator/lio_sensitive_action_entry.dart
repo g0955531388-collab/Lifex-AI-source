@@ -9,6 +9,7 @@
 library lifex_ai.core.orchestrator.lio_sensitive_action_entry;
 
 import '../../data/medical_database_manager.dart';
+import '../../features/accessibility/gemini_bidi_session.dart';
 import '../../features/ai/ai_service_router.dart';
 import '../../features/ai/unified_ai_hub_gateway.dart';
 import '../../features/emergency/emergency_manager.dart';
@@ -199,6 +200,22 @@ class LioSensitiveActionEntry {
       run: () => aiServiceRouter.query(
         profileId: profileId,
         userQuery: userQuery,
+      ),
+    );
+  }
+
+  /// جلسة Gemini Live. المفتاح يبقى داخل الموجّه ولا يُعاد للواجهة.
+  Future<LioSensitiveActionOutcome<GeminiBidiVisionSession?>>
+      openBlindLiveVision({
+    required LioGatewayRequest gatewayRequest,
+    required String profileId,
+    LiveSocketConnector? connector,
+  }) {
+    return authorizeThenRun<GeminiBidiVisionSession?>(
+      request: gatewayRequest,
+      run: () => aiServiceRouter.openBlindLiveVision(
+        profileId: profileId,
+        connector: connector,
       ),
     );
   }

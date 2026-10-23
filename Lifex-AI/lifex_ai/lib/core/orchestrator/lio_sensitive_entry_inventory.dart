@@ -69,6 +69,14 @@ class LioSensitiveEntryInventory {
           legalPathNote: 'via LioSensitiveActionEntry.runAiChatQuery',
         ),
         LioSensitiveEntryRecord(
+          path: 'lib/screens/live_sight_screen.dart',
+          classOrFunction: 'LiveSightScreen._openLive',
+          callerSurface: 'UI',
+          operation: 'blind_live_vision',
+          mustPassLio: true,
+          legalPathNote: 'via LioSensitiveActionEntry.openBlindLiveVision',
+        ),
+        LioSensitiveEntryRecord(
           path: 'lib/screens/ai_hub_screen.dart',
           classOrFunction: 'AiHubScreen._showConnectDialog',
           callerSurface: 'UI',

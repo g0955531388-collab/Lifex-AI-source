@@ -653,7 +653,7 @@ class HealthObservationKeyReferenceIndexSupport {
     required AesGcmHealthObservationCipher cipher,
   }) async {
     final issues = <HealthObservationKeyIndexInconsistency>[];
-    final envelopeId =
+    const envelopeId =
         HealthObservationKeyReferenceIndex.canonicalEnvelopeId;
 
     final raw = await cipherTextInner.readRaw();

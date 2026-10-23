@@ -40,6 +40,38 @@ void main() {
       VoiceCommandIntent.openClinicalWatch,
     );
     expect(
+      parser.parse('حماية في الخلفية').intent,
+      VoiceCommandIntent.openClinicalWatch,
+    );
+    expect(
+      parser.parse('افتح المسنجر').intent,
+      VoiceCommandIntent.openMessenger,
+    );
+    expect(
+      parser.parse('تشغيل الموقع').intent,
+      VoiceCommandIntent.openSite,
+    );
+    expect(
+      parser.parse('ابحث عن أسبرين').intent,
+      VoiceCommandIntent.openSearch,
+    );
+    expect(
+      parser.parse('حماية في الخلفية').intent,
+      VoiceCommandIntent.openClinicalWatch,
+    );
+    expect(
+      parser.parse('افتح المسنجر').intent,
+      VoiceCommandIntent.openMessenger,
+    );
+    expect(
+      parser.parse('تشغيل الموقع').intent,
+      VoiceCommandIntent.openSite,
+    );
+    expect(
+      parser.parse('ابحث عن أسبرين').intent,
+      VoiceCommandIntent.openSearch,
+    );
+    expect(
       parser.parse('افتح الرادار الضوئي').intent,
       VoiceCommandIntent.openOpticalRadar,
     );

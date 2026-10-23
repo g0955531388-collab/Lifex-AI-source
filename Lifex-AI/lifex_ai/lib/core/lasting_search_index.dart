@@ -51,7 +51,7 @@ class LastingSearchIndex {
         '${row['nameAr'] ?? ''} ${row['name'] ?? ''} ${row['sign'] ?? ''} '
         '${row['description'] ?? ''} ${row['meaning'] ?? ''} ${row['nameEn'] ?? ''}',
       );
-      if (!blob.contains(q)) continue;
+      if (!MedicalRecordCanon.queryMatches(blob, q)) continue;
       hits.add(
         KnowledgeHit(
           kindAr: 'قاعدة داخلية دائمة',

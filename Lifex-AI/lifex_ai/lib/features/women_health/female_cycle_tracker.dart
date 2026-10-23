@@ -9,6 +9,7 @@
 /// تُعرض للمستخدمة فقط بعد تفعيل صريح منها، ولا تظهر لأي فرد آخر في
 /// الحساب العائلي مهما كان دوره، إلا بموافقتها الصريحة والمنفصلة.
 /// =============================================================
+library;
 
 /// سجل دورة واحدة (بداية ونهاية).
 class CycleRecord {
@@ -67,6 +68,9 @@ class CyclePrediction {
 class FemaleCycleTracker {
   FemaleCycleTracker({required this.profileId});
 
+  /// خط أساس ثلاثة أشهر.
+  static const baselineDays = 90;
+
   final String profileId;
   final List<CycleRecord> _cycles = [];
 
@@ -104,14 +108,20 @@ class FemaleCycleTracker {
     _cycles.last.loggedSymptoms.add(symptom);
   }
 
-  /// متوسط طول الدورة بناءً على السجلات المكتملة (يحتاج دورتين مكتملتين
-  /// على الأقل لإعطاء تقدير موثوق نسبياً).
+  /// متوسط طول الدورات المكتملة خلال 90 يوماً قبل آخر سجل.
+  /// إن لم تكفِ دورتان داخل النافذة يُستخدم السجل المكتمل كله.
   double? get averageCycleLengthDays {
     final completed = _cycles.where((c) => c.lengthInDays != null).toList();
     if (completed.length < 2) return null;
-    final totalDays =
-        completed.fold<int>(0, (sum, c) => sum + c.lengthInDays!);
-    return totalDays / completed.length;
+    final anchor = completed.last.endDate ?? completed.last.startDate;
+    final windowStart = DateTime(anchor.year, anchor.month, anchor.day)
+        .subtract(const Duration(days: baselineDays));
+    final recent = completed
+        .where((c) => !c.startDate.isBefore(windowStart))
+        .toList();
+    final sample = recent.length >= 2 ? recent : completed;
+    final totalDays = sample.fold<int>(0, (sum, c) => sum + c.lengthInDays!);
+    return totalDays / sample.length;
   }
 
   /// تقدير النافذة التالية للدورة ونافذة الخصوبة التقريبية (تُحسب بطريقة

@@ -33,14 +33,19 @@ class MedicalJsonLinkIndex {
   const MedicalJsonLinkIndex({
     required this.links,
     required this.measurementsByKey,
+    this.skinHairDiseaseIds = const {},
   });
 
   static const bool automaticPrescribingAllowed = false;
+  static const bool automaticDiagnosisAllowed = false;
 
   final List<MedicalJsonLink> links;
 
   /// مفتاح القياس → measurement_id. لا يحوي مجالاً مرجعياً رقمياً.
   final Map<String, String> measurementsByKey;
+
+  /// معرّف المرجع الجلدي → معرّف مرض قائم عند تطابق الاسم فقط.
+  final Map<String, String> skinHairDiseaseIds;
 
   List<MedicalJsonLink> from(String file, String id) {
     return links
@@ -53,6 +58,9 @@ class MedicalJsonLinkIndex {
   }
 
   String? measurementIdForKey(String key) => measurementsByKey[key];
+
+  String? diseaseIdForSkinHairReference(String referenceId) =>
+      skinHairDiseaseIds[referenceId];
 }
 
 /// يربط ملفات JSON الموجودة بالمعرّف. لا ينشئ سجلات طبية جديدة.
@@ -68,10 +76,13 @@ class MedicalJsonLinkModule {
       'معرّف تفاعل مذكور داخل سجل الدواء. ليس قراراً سريرياً.';
   static const emergencyNoteAr =
       'قاعدة تصعيد مذكورة في طبقة الربط. الأولوية للسلامة لا لقائمة أمراض.';
+  static const skinHairNoteAr =
+      'مطابقة اسم مع سجل المرض القائم. ليست تشخيصاً.';
 
   MedicalJsonLinkIndex build({
     required Map<String, Map<String, dynamic>> bundle,
     Map<String, dynamic>? biometricCatalog,
+    Map<String, dynamic>? skinHairCatalog,
   }) {
     final diseases = _byId(
       bundle[MedicalBundleFiles.diseases],
@@ -203,10 +214,62 @@ class MedicalJsonLinkModule {
       measurementsByKey[key] = measurementId;
     }
 
+    final skinHairDiseaseIds = _skinHairNameLinks(
+      diseases: diseases,
+      catalog: skinHairCatalog,
+      links: links,
+    );
+
     return MedicalJsonLinkIndex(
       links: List.unmodifiable(links),
       measurementsByKey: Map.unmodifiable(measurementsByKey),
+      skinHairDiseaseIds: Map.unmodifiable(skinHairDiseaseIds),
     );
+  }
+
+  Map<String, String> _skinHairNameLinks({
+    required Map<String, Map<String, dynamic>> diseases,
+    required Map<String, dynamic>? catalog,
+    required List<MedicalJsonLink> links,
+  }) {
+    final byTitle = <String, String>{};
+    final ambiguous = <String>{};
+    for (final disease in diseases.values) {
+      final id = disease['id'] as String? ?? '';
+      final title = _title(_nameAr(disease));
+      if (id.isEmpty || title.isEmpty) continue;
+      final previous = byTitle[title];
+      if (previous != null && previous != id) {
+        ambiguous.add(title);
+      } else {
+        byTitle[title] = id;
+      }
+    }
+    for (final title in ambiguous) {
+      byTitle.remove(title);
+    }
+
+    final matched = <String, String>{};
+    for (final raw in _rows(catalog?['records'])) {
+      final referenceId = raw['reference_id'] as String? ?? '';
+      final title = _title(raw['name_ar'] as String? ?? '');
+      if (referenceId.isEmpty || title.isEmpty) continue;
+      final diseaseId = byTitle[title];
+      if (diseaseId == null) continue;
+      matched[referenceId] = diseaseId;
+      links.add(
+        _link(
+          relation: 'skin_hair_name_reference',
+          fromFile: MedicalBundleFiles.skinHair,
+          fromId: referenceId,
+          toFile: MedicalBundleFiles.diseases,
+          toId: diseaseId,
+          target: diseases[diseaseId],
+          noteAr: skinHairNoteAr,
+        ),
+      );
+    }
+    return matched;
   }
 
   MedicalJsonLink _link({
@@ -259,5 +322,20 @@ class MedicalJsonLinkModule {
     if (nameAr is String && nameAr.isNotEmpty) return nameAr;
     final nameEn = row['nameEn'] ?? row['name_en'];
     return nameEn is String ? nameEn : '';
+  }
+
+  String _title(String raw) {
+    final trimmed =
+        raw.replaceAll('\u0640', '').replaceAll(RegExp(r'\s+'), ' ').trim();
+    final match = RegExp(r'^(.*?)\s*\(([^)]+)\)\s*$').firstMatch(trimmed);
+    if (match == null) return trimmed;
+    final left = match.group(1)!.trim();
+    final right = match.group(2)!.trim();
+    final leftLatin = RegExp(r'[A-Za-z]').allMatches(left).length >
+        left.runes.length ~/ 2;
+    final rightLatin = RegExp(r'[A-Za-z]').allMatches(right).length >
+        right.runes.length ~/ 2;
+    if (leftLatin && !rightLatin) return right;
+    return left;
   }
 }

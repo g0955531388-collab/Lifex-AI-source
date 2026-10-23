@@ -6,6 +6,7 @@
 /// health_profile.dart أن هذا يتعامل مع معرّفات الهوية (Lifex-ID)،
 /// التحقق من الهوية الحقيقية، وربطها بالحساب، وليس البيانات الطبية نفسها.
 /// =============================================================
+library;
 
 import 'dart:math';
 
@@ -30,9 +31,7 @@ class HealthIdentity {
   final String linkedProfileId;
   String? phoneNumber;
 
-  /// البريد الإلكتروني المرتبط بالهوية، إن وُجد. اختياري تماماً مثل رقم
-  /// الهاتف — يُستخدم حالياً في مطابقة حساب المالك التلقائي
-  /// (GlobalAdminManager) إضافة إلى أي استخدام مستقبلي لتسجيل الدخول.
+  /// بريد اختياري على الجهاز. وجوده لا يمنح دور المالك.
   String? email;
   IdentityVerificationLevel verificationLevel;
   DateTime createdAt;
@@ -94,35 +93,44 @@ class HealthIdentityManager {
     required String profileId,
     String? phoneNumber,
     String? email,
+    String? preferredLifexId,
   }) {
     if (_lifexIdByProfileId.containsKey(profileId)) {
       final existingId = _lifexIdByProfileId[profileId]!;
-      return _identitiesByLifexId[existingId]!;
+      final existing = _identitiesByLifexId[existingId]!;
+      if (email != null) existing.email = email;
+      if (phoneNumber != null) existing.phoneNumber = phoneNumber;
+      _considerOwner(existing);
+      return existing;
     }
 
-    final lifexId = _generateUniqueLifexId();
+    final requestedId = preferredLifexId?.trim();
+    final lifexId = requestedId != null &&
+            requestedId.isNotEmpty &&
+            !_identitiesByLifexId.containsKey(requestedId)
+        ? requestedId
+        : _generateUniqueLifexId();
     final identity = HealthIdentity(
       lifexId: lifexId,
       linkedProfileId: profileId,
       phoneNumber: phoneNumber,
       email: email,
-      verificationLevel: phoneNumber != null
-          ? IdentityVerificationLevel.phoneVerified
-          : IdentityVerificationLevel.unverified,
+      verificationLevel: IdentityVerificationLevel.unverified,
     );
 
     _identitiesByLifexId[lifexId] = identity;
     _lifexIdByProfileId[profileId] = lifexId;
-
-    // فحص تلقائي لمرة واحدة: هل البريد/الهاتف يطابق حساب المالك الثابت؟
-    // انظر GlobalAdminManager.autoActivateOwnerIfMatches للتفاصيل الكاملة.
-    GlobalAdminManager.instance.autoActivateOwnerIfMatches(
-      lifexId: lifexId,
-      email: email,
-      phoneNumber: phoneNumber,
-    );
-
+    _considerOwner(identity);
     return identity;
+  }
+
+  void _considerOwner(HealthIdentity identity) {
+    GlobalAdminManager.instance.activateOwnerForBoundIdentity(
+      lifexId: identity.lifexId,
+      linkedProfileId: identity.linkedProfileId,
+      email: identity.email,
+      phoneNumber: identity.phoneNumber,
+    );
   }
 
   /// توليد معرّف Lifex-ID فريد بصيغة LFX-XXXXXX.
@@ -193,11 +201,7 @@ class HealthIdentityManager {
       identity.phoneNumber =
           phoneNumber.trim().isEmpty ? null : phoneNumber.trim();
     }
-    GlobalAdminManager.instance.autoActivateOwnerIfMatches(
-      lifexId: lifexId,
-      email: identity.email,
-      phoneNumber: identity.phoneNumber,
-    );
+    _considerOwner(identity);
     return identity;
   }
 
@@ -221,6 +225,13 @@ class HealthIdentityManager {
       phoneNumber: phoneNumber,
       email: email,
     );
+  }
+
+  /// معرّف Lifex التشغيلي مختلف عن معرّف الملف.
+  bool actorIsOperationalLifexId(String actorId) {
+    final identity = getByLifexId(actorId);
+    if (identity == null) return false;
+    return identity.lifexId == actorId && identity.linkedProfileId != actorId;
   }
 
   /// إعادة كل الهويات لحالته الأولية — للاختبارات فقط.

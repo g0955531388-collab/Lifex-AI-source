@@ -321,21 +321,22 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
         _displaySteps.indexWhere((s) => s.state == _currentState);
     final thisIndex = _displaySteps.indexOf(step);
 
+    final scheme = Theme.of(context).colorScheme;
     IconData icon;
     Color color;
     if (_lastResult != null && !_lastResult!.isSuccessful) {
       icon = thisIndex <= currentIndex ? Icons.circle : Icons.circle_outlined;
-      color = thisIndex <= currentIndex ? Colors.orange : Colors.grey;
+      color = thisIndex <= currentIndex ? scheme.error : scheme.outline;
     } else if (thisIndex < currentIndex ||
         (thisIndex == currentIndex && _lastResult?.isSuccessful == true)) {
       icon = Icons.check_circle;
-      color = Colors.green;
+      color = scheme.primary;
     } else if (thisIndex == currentIndex) {
       icon = Icons.circle;
-      color = Colors.blue;
+      color = scheme.secondary;
     } else {
       icon = Icons.circle_outlined;
-      color = Colors.grey;
+      color = scheme.outline;
     }
 
     final showLiveLabel = thisIndex == currentIndex &&
@@ -376,8 +377,9 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
         ? reportAgent.buildDisplayTextAr(result.reportData!)
         : '${result.summaryAr}\n\n${result.errorMessageAr ?? ''}\n\n${result.disclaimerAr}';
 
+    final scheme = Theme.of(context).colorScheme;
     return Card(
-      color: result.isSuccessful ? null : Colors.orange.shade50,
+      color: result.isSuccessful ? null : scheme.error.withOpacity(0.12),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -387,7 +389,7 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
               children: [
                 Icon(
                   result.isSuccessful ? Icons.check_circle : Icons.warning_amber,
-                  color: result.isSuccessful ? Colors.green : Colors.orange,
+                  color: result.isSuccessful ? scheme.primary : scheme.error,
                 ),
                 const SizedBox(width: 8),
                 Text(

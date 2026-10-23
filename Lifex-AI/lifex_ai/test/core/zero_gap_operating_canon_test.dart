@@ -6,7 +6,7 @@ void main() {
   const canon = LifexZeroGapOperatingCanon();
 
   test('هوية النظام والحزمة ثابتة', () {
-    expect(canon.systemName, 'Lifex-AI');
+    expect(canon.systemName, 'Lifex-AI Global Health Network');
     expect(canon.packageName, 'lifex_ai');
     expect(canon.dartFlutterOnly, isTrue);
   });

@@ -8,6 +8,7 @@
 /// الحقيقي — وهذا الملف يحل الفجوة عبر ChangeNotifier موفَّر مركزياً
 /// بـ Provider، بحيث تقرأ كل شاشة الملف النشط الحقيقي دائماً.
 /// =============================================================
+library;
 
 import 'package:flutter/foundation.dart';
 
@@ -95,11 +96,25 @@ class ActiveProfileController extends ChangeNotifier {
     String? email,
     String? phoneNumber,
   }) {
-    HealthIdentityManager.instance.createIdentity(
+    final storedEmail =
+        email ?? profile.questionnaireData['accountEmail'] as String?;
+    final storedPhone =
+        phoneNumber ?? profile.questionnaireData['accountPhone'] as String?;
+    final storedLifexId =
+        profile.questionnaireData['accountLifexId'] as String?;
+    final identity = HealthIdentityManager.instance.createIdentity(
       profileId: profile.profileId,
-      email: email,
-      phoneNumber: phoneNumber,
+      email: storedEmail,
+      phoneNumber: storedPhone,
+      preferredLifexId: storedLifexId,
     );
+    profile.questionnaireData['accountLifexId'] = identity.lifexId;
+    if (storedEmail != null) {
+      profile.questionnaireData['accountEmail'] = storedEmail;
+    }
+    if (storedPhone != null) {
+      profile.questionnaireData['accountPhone'] = storedPhone;
+    }
     ProfilePrivacyRegistry.instance.forProfile(profile.profileId);
   }
 
@@ -131,14 +146,37 @@ class ActiveProfileController extends ChangeNotifier {
     _persist();
   }
 
+  /// تحديث وسيلة الاتصال للحساب النشط ثم إعادة فحص دور المالك مباشرة.
+  /// المطابقة محلية في الوقت الحالي ولا تعني تحققاً عبر OTP.
+  void updateAccountIdentity({String? email, String? phoneNumber}) {
+    final profile = engine.activeProfile;
+    if (profile == null) return;
+    final storedEmail = email?.trim();
+    final storedPhone = phoneNumber?.trim();
+    if (storedEmail != null) {
+      profile.questionnaireData['accountEmail'] = storedEmail;
+    }
+    if (storedPhone != null) {
+      profile.questionnaireData['accountPhone'] = storedPhone;
+    }
+    _bindLocalIdentity(
+      profile,
+      email: storedEmail,
+      phoneNumber: storedPhone,
+    );
+    notifyListeners();
+    _persist();
+  }
+
   /// يحفظ في الذاكرة وعلى الجهاز.
   void saveActiveProfileChanges() => notifyProfileChanged();
 
-  void rebindIdentitiesAfterRestore() {
+  Future<void> rebindIdentitiesAfterRestore() async {
     for (final profile in engine.allProfiles) {
       final email = profile.questionnaireData['accountEmail'] as String?;
       final phone = profile.questionnaireData['accountPhone'] as String?;
       _bindLocalIdentity(profile, email: email, phoneNumber: phone);
     }
+    await _persist();
   }
 }

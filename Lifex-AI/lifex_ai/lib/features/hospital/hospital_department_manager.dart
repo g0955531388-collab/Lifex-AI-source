@@ -4,6 +4,7 @@
 /// المسار: lib/features/hospital/hospital_department_manager.dart
 /// الوصف: إدارة الأقسام الطبية داخل المستشفى (قلب، جراحة، أطفال...).
 /// =============================================================
+library;
 
 class HospitalDepartment {
   final String departmentId;

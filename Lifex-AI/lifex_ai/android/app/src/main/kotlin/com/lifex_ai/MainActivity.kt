@@ -18,6 +18,8 @@ class MainActivity : FlutterActivity() {
     private val watchChannel = "lifex_ai/clinical_watch"
     private val shareChannel = "lifex_ai/share"
     private val contactPickerChannel = "lifex_ai/contact_picker"
+    private val shortcutChannel = "lifex_ai/assistant_shortcut"
+    private val visionAppChannel = "lifex_ai/vision_app"
     private val mainHandler = Handler(Looper.getMainLooper())
     private val pickContactRequest = 9911
 
@@ -28,9 +30,46 @@ class MainActivity : FlutterActivity() {
     private var lastHitAt: Long = 0
     private var lastCode: Int = 0
     private var pendingContactResult: MethodChannel.Result? = null
+    private var pendingAssistantShortcut: String? = null
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        captureAssistantShortcut(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        captureAssistantShortcut(intent)
+        deliverAssistantShortcut()
+    }
+
+    private fun captureAssistantShortcut(intent: Intent?) {
+        if (intent?.data?.host == "assistant") {
+            pendingAssistantShortcut = "visual_assistant"
+        }
+    }
+
+    private fun deliverAssistantShortcut() {
+        val messenger = flutterEngine?.dartExecutor?.binaryMessenger ?: return
+        val value = pendingAssistantShortcut ?: return
+        pendingAssistantShortcut = null
+        MethodChannel(messenger, shortcutChannel).invokeMethod("open", value)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, shortcutChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "consume" -> {
+                        val value = pendingAssistantShortcut
+                        pendingAssistantShortcut = null
+                        result.success(value)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, cueChannel)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -99,6 +138,20 @@ class MainActivity : FlutterActivity() {
                             pendingContactResult = null
                             result.error("UNAVAILABLE", e.message, null)
                         }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, visionAppChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "open" -> {
+                        val args = call.arguments as? Map<*, *>
+                        val packages = (args?.get("packages") as? List<*>)
+                            ?.map { it.toString() }
+                            ?: emptyList()
+                        val viewUrl = args?.get("viewUrl") as? String
+                        result.success(openVisionApp(packages, viewUrl))
                     }
                     else -> result.notImplemented()
                 }
@@ -240,6 +293,42 @@ class MainActivity : FlutterActivity() {
             }
         }
         return super.dispatchKeyEvent(event)
+    }
+
+    /**
+     * Opens the installed engine app. The view intent is locked to that package,
+     * so a browser never receives it. Missing apps are not replaced by a website.
+     */
+    private fun openVisionApp(packages: List<String>, viewUrl: String?): String {
+        for (pkg in packages) {
+            val installed = try {
+                packageManager.getPackageInfo(pkg, 0)
+                true
+            } catch (_: Exception) {
+                false
+            }
+            if (!installed) continue
+            if (!viewUrl.isNullOrBlank()) {
+                try {
+                    val view = Intent(Intent.ACTION_VIEW, Uri.parse(viewUrl)).apply {
+                        setPackage(pkg)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    if (view.resolveActivity(packageManager) != null) {
+                        startActivity(view)
+                        return "view:$pkg"
+                    }
+                } catch (_: Exception) {
+                }
+            }
+            val launch = packageManager.getLaunchIntentForPackage(pkg)
+            if (launch != null) {
+                launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launch)
+                return "app:$pkg"
+            }
+        }
+        return "missing"
     }
 
     private fun playStartTone() {

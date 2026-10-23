@@ -51,6 +51,14 @@ class MedicalDataLoader {
     } catch (_) {
       biometricCatalog = null;
     }
+    Map<String, dynamic>? skinHairCatalog;
+    try {
+      skinHairCatalog = await databaseManager.readBundleFile(
+        MedicalBundleFiles.skinHair,
+      );
+    } catch (_) {
+      skinHairCatalog = null;
+    }
 
     final symptomKeywordMap = _buildSymptomKeywordMap(symptomsJson);
     final symptomBodySystemMap = _buildSymptomBodySystemMap(symptomsJson);
@@ -58,6 +66,7 @@ class MedicalDataLoader {
     final linkIndex = const MedicalJsonLinkModule().build(
       bundle: bundle,
       biometricCatalog: biometricCatalog,
+      skinHairCatalog: skinHairCatalog,
     );
 
     return LoadedMedicalKnowledge(

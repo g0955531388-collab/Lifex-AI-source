@@ -1,0 +1,32 @@
+{
+  "system_name": "Lifex-AI Vaccine Name Index",
+  "version": "1.0.0",
+  "due_calculation_allowed": false,
+  "mandatory_flag_allowed": false,
+  "dosing_advice_allowed": false,
+  "early_dose_alert_allowed": false,
+  "country_schedule_is_not_universal": true,
+  "disclaimer_ar": "فهرس أسماء لقاحات للمطابقة مع سجل شخصي. ليس جدول دولة وليس شهادة تطعيم ولا أمر جرعة. اختلاف سورية والسعودية والعالم يبقى عند الجهة الصحية المحلية.",
+  "vaccines": [
+    {
+      "vaccine_id": "BCG_01",
+      "names": ["BCG", "لقاح السل"],
+      "name_only": true
+    },
+    {
+      "vaccine_id": "HEPB_01",
+      "names": ["HepB", "التهاب الكبد B", "لقاح التهاب الكبد الوبائي ب"],
+      "name_only": true
+    },
+    {
+      "vaccine_id": "POLIO_IPV_01",
+      "names": ["IPV", "لقاح شلل الأطفال المعطل"],
+      "name_only": true
+    },
+    {
+      "vaccine_id": "MMR_01",
+      "names": ["MMR", "الحصبة والنكاف والحصبة الألمانية"],
+      "name_only": true
+    }
+  ]
+}

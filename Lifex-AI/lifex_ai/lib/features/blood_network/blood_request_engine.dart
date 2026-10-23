@@ -5,6 +5,7 @@
 /// الوصف: المحرك المركزي لطلبات الدم — ينسّق بين فلترة المتبرعين
 /// المؤهلين، توسيع النطاق الجغرافي، والإشعارات الفورية.
 /// =============================================================
+library;
 
 import '../hospital/hospital_blood_bank.dart';
 import 'donor_eligibility_filter.dart';
@@ -20,6 +21,9 @@ class BloodRequest {
   final BloodRequestUrgency urgency;
   final double requestLatitude;
   final double requestLongitude;
+  final String healthUnitName;
+  final String address;
+  final String contact;
   bool fulfilled;
 
   BloodRequest({
@@ -29,6 +33,9 @@ class BloodRequest {
     required this.urgency,
     required this.requestLatitude,
     required this.requestLongitude,
+    this.healthUnitName = '',
+    this.address = '',
+    this.contact = '',
     this.fulfilled = false,
   });
 }
@@ -67,7 +74,8 @@ class BloodRequestEngine {
     );
     _requests[request.requestId] = request;
 
-    final initialRadiusKm = urgency == BloodRequestUrgency.critical ? 10.0 : 5.0;
+    final initialRadiusKm =
+        urgency == BloodRequestUrgency.critical ? 10.0 : 5.0;
 
     final eligibleDonors = eligibilityFilter.findEligibleDonors(
       bloodType: bloodType,
@@ -77,7 +85,8 @@ class BloodRequestEngine {
     );
 
     if (eligibleDonors.isEmpty) {
-      geoExpansionDispatcher.scheduleExpansion(request.requestId, initialRadiusKm);
+      geoExpansionDispatcher.scheduleExpansion(
+          request.requestId, initialRadiusKm);
     } else {
       for (final donor in eligibleDonors) {
         alertNotifier.sendAlert(donor.donorLifexId, request);

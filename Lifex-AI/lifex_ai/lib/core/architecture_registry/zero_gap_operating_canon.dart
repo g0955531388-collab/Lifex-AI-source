@@ -5,12 +5,14 @@
 /// =============================================================
 library lifex_ai.core.architecture_registry.zero_gap_operating_canon;
 
+import '../attribution/project_attribution.dart';
+
 /// أفضل الممارسات المستخرجة من الأوامر والسيناريوهات السابقة.
 class LifexZeroGapOperatingCanon {
   const LifexZeroGapOperatingCanon();
 
   // —— هوية النظام ——
-  String get systemName => 'Lifex-AI';
+  String get systemName => ProjectAttribution.systemName;
   String get packageName => 'lifex_ai';
   bool get dartFlutterOnly => true;
   bool get isGlobalHealthSupportNotDoctor => true;

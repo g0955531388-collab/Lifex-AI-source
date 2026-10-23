@@ -8,6 +8,7 @@ library lifex_ai.features.voice.command_parser;
 
 import '../../core/network_canon.dart';
 import 'spoken_blood_type.dart';
+import 'spoken_fold.dart';
 import 'wake_word_detector.dart';
 
 enum VoiceCommandIntent {
@@ -51,6 +52,8 @@ enum VoiceCommandIntent {
   openKnowledgeArcade,
   openPersonalShelf,
   openClinicalWatch,
+  openMessenger,
+  openSite,
   openManualVitals,
   openOpticalRadar,
   openNetworkUnit,
@@ -484,11 +487,26 @@ class CommandParser {
       'personal shelf',
     ]),
     _CommandRule(VoiceCommandIntent.openClinicalWatch, [
+      'حماية في الخلفية',
+      'الحماية في الخلفية',
       'المراقبة السريرية',
       'مراقبة سريرية',
       'إشعار المراقبة',
       'clinical watch',
       'bedside monitor',
+    ]),
+    _CommandRule(VoiceCommandIntent.openMessenger, [
+      'راسل بالمعرف',
+      'تراسل بالمعرف',
+      'المسنجر',
+      'open messenger',
+    ]),
+    _CommandRule(VoiceCommandIntent.openSite, [
+      'تشغيل الموقع',
+      'شغّل الموقع',
+      'شغل الموقع',
+      'افتح الموقع',
+      'open the site',
     ]),
     _CommandRule(VoiceCommandIntent.openManualVitals, [
       'القياسات اليدوية',
@@ -634,12 +652,11 @@ class CommandParser {
   ParsedVoiceCommand parse(String rawText) {
     final stripped = _wake.strip(rawText);
     final normalized = stripped.trim();
-    final folded = normalized.toLowerCase();
+    final folded = foldSpoken(normalized);
 
-    bool matches(_CommandRule rule) => rule.keywords.any((keyword) {
-          final key = keyword.toLowerCase();
-          return normalized.contains(keyword) || folded.contains(key);
-        });
+    bool hit(String keyword) => spokenContains(folded, keyword);
+
+    bool matches(_CommandRule rule) => rule.keywords.any(hit);
 
     final emergencyRule = _rules.firstWhere(
       (r) => r.intent == VoiceCommandIntent.callEmergency,
@@ -656,8 +673,8 @@ class CommandParser {
     for (final rule in _rules) {
       if (rule.intent == VoiceCommandIntent.callEmergency) continue;
       for (final keyword in rule.keywords) {
-        final key = keyword.toLowerCase();
-        if (!normalized.contains(keyword) && !folded.contains(key)) continue;
+        final key = foldSpoken(keyword);
+        if (key.isEmpty || !folded.contains(key)) continue;
         if (keyword.length <= strength) continue;
         chosen = rule;
         strength = keyword.length;

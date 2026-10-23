@@ -13,5 +13,6 @@ enum ConnectionType {
   wifi,
   wifiDirect,
   nfc,
+  network,
   virtual,
 }

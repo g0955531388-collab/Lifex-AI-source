@@ -2,6 +2,7 @@
 /// Lifex-AI — محرك
 /// الملف: health_data_engine.dart
 /// =============================================================
+library;
 import 'health_data_types.dart';
 
 /// Hybrid store: keyed entity maps + semantic relationship list.

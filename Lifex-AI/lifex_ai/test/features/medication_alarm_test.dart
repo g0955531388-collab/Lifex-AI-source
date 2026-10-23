@@ -26,13 +26,25 @@ void main() {
     final atEight = DateTime(2026, 9, 17, 8, 1);
     expect(engine.isDue(alarm, atEight), isTrue);
     final cue = engine.cue(alarm);
-    expect(cue.spokenAr, contains('سامي'));
+    expect(cue.spokenAr, startsWith('المريض سامي'));
     expect(cue.spokenAr, contains('أومنتين'));
     expect(cue.spokenAr, contains('08:00'));
     expect(cue.writtenAr, contains('وصفة'));
     final taken = engine.acknowledge(alarm, atEight);
     expect(engine.isDue(taken, atEight), isFalse);
     expect(engine.isDue(taken, DateTime(2026, 9, 18, 8, 1)), isTrue);
+    final nameless = engine.cue(
+      const MedicationAlarm(
+        id: 'x',
+        profileId: 'a',
+        personName: '  ',
+        medicine: 'أومنتين',
+        hour: 8,
+        minute: 0,
+      ),
+    );
+    expect(nameless.spokenAr, contains('اسم المريض فارغ'));
+    expect(nameless.spokenAr, isNot(contains('أومنتين')));
   });
 
   test('تم وتناولت يسكتان حتى الجرعة التالية لشخص آخر في الحساب', () {

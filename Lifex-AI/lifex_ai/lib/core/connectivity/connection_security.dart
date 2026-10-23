@@ -20,6 +20,8 @@ class ConnectionSecurity {
       ok: false,
       encrypted: false,
       reason: 'hardware_auth_unbound',
+      messageAr:
+          'مصادقة هذا الجهاز غير مربوطة. الظهور ليس اتصالاً ولا جلسة مشفّرة.',
     );
   }
 
@@ -31,9 +33,11 @@ class AuthResult {
     required this.ok,
     required this.encrypted,
     this.reason = '',
+    this.messageAr = '',
   });
 
   final bool ok;
   final bool encrypted;
   final String reason;
+  final String messageAr;
 }

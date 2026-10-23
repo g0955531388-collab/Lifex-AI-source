@@ -34,6 +34,12 @@ class BoxKeys {
   static const remoteLinks = 'remoteGuardianLinks';
   static const familyMessages = 'familyMessages';
   static const pharmacyStock = 'pharmacyStock';
+  static const pharmacyLedger = 'pharmacyMovementRecords';
+  static const pharmacyRequests = 'pharmacyServiceRequests';
+  static const pharmacyAccredited = 'pharmacyAccreditedLinks';
+  static const pharmacyNotices = 'pharmacyNoticeRecords';
+  static const careNotices = 'careCycleNotices';
+  static const unitHolds = 'careUnitHolds';
   static const cameraNotes = 'cameraNotes';
   static const careOrders = 'careOrders';
   static const accountEmail = 'accountEmail';
@@ -67,11 +73,18 @@ class BoxKeys {
   static const disabilityRecords = 'disabilitySelfRecords';
   static const marriageRequests = 'marriageHealthRequests';
   static const healthThreads = 'healthChannelThreads';
+  static const messengerGroups = 'messengerGroups';
+  static const messengerGroupPosts = 'messengerGroupPosts';
+  static const messengerCalls = 'messengerCallRequests';
+  static const messengerAnnouncements = 'messengerAnnouncements';
+  static const messengerBloodNotes = 'messengerBloodNotes';
   static const cvVault = 'ownerCvVault';
   static const accreditedPatientInbox = 'accreditedPatientInbox';
   static const doctorNotices = 'doctorUnitNotices';
   static const medicationAlarms = 'medicationAlarms';
   static const choiceMirrorJournal = 'choiceMirrorJournal';
+  static const unitOwnPlace = 'unitOwnPlace';
+  static const unitExchange = 'unitExchangePackets';
 }
 
 /// قراءة وكتابة قوائم الصندوق داخل [HealthProfile.questionnaireData].

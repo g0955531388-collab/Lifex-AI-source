@@ -9,6 +9,7 @@
 /// الأدنى الضروري فقط للمتبرعين (عبر alias)، مع إخفاء الهوية الكاملة
 /// إلا بموافقة المستفيد الصريحة.
 /// =============================================================
+library;
 
 enum BeneficiaryVerificationStatus { pendingReview, verified, rejected }
 

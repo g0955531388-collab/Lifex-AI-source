@@ -6,6 +6,7 @@
 /// =============================================================
 library lifex_ai.features.women_health.pregnancy_cv_guard;
 
+import '../medications/pharmacopoeia_reference.dart';
 import '../profile/health_profile.dart';
 
 class PregnancyCvGuard {
@@ -40,13 +41,19 @@ class PregnancyCvGuard {
     'قلب',
   ];
 
-  List<String> flagsFor(HealthProfile profile) {
+  List<String> flagsFor(
+    HealthProfile profile, {
+    PharmacopoeiaReference? pharmacopoeia,
+    int? gestationalWeek,
+  }) {
     final flags = <String>[];
     for (final med in profile.currentMedicationNames) {
       final folded = med.toLowerCase();
       if (_cautionMeds.any((item) => folded.contains(item.toLowerCase()))) {
         flags.add(
-          'دواء مسجَّل ($med) قد يحتاج إيقافاً أو تبديلاً عند الطبيبة أثناء الحمل.',
+          'دواء مسجَّل ($med) قد يحتاج مراجعة عاجلة بسبب الحمل. '
+          'تواصلي مع الطبيبة أو الصيدلي اليوم. لا توقفي دواءً موصوفاً '
+          'ولا تغيّري جرعته من تلقاء نفسك.',
         );
       }
     }
@@ -58,6 +65,14 @@ class PregnancyCvGuard {
           'حالة في الملف (${cond.conditionName}) تستدعي متابعة حمل مع الطبيبة.',
         );
       }
+    }
+    if (pharmacopoeia != null) {
+      flags.addAll(
+        pharmacopoeia.pregnancyCautions(
+          profile,
+          gestationalWeek: gestationalWeek,
+        ),
+      );
     }
     if (flags.isEmpty) {
       flags.add(

@@ -7,6 +7,7 @@
 /// بيانات حساسة) — بنفس روح ErrorHandler الموجود في core/error_handler.dart
 /// لكن مخصص لدورة حياة الوكيل تحديداً.
 /// =============================================================
+library;
 
 import 'agent_action.dart';
 import 'agent_confidence.dart';

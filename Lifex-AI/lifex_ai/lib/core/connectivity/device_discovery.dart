@@ -25,6 +25,7 @@ class DeviceDiscovery {
               ConnectionType.wifiDirect:
                   UnboundTransport(ConnectionType.wifiDirect),
               ConnectionType.nfc: UnboundTransport(ConnectionType.nfc),
+              ConnectionType.network: UnboundTransport(ConnectionType.network),
               ConnectionType.virtual: VirtualLoopbackTransport(),
             },
         virtualCatalog = virtualCatalog ?? [];

@@ -26,6 +26,7 @@ class PersonalShelfScreen extends StatefulWidget {
 
 class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
   final _url = TextEditingController();
+  final _priceMinor = TextEditingController(text: '0');
   final _downloader = PersonalShelfDownloader();
   bool _busy = false;
   String? _statusAr;
@@ -33,6 +34,7 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
   @override
   void dispose() {
     _url.dispose();
+    _priceMinor.dispose();
     super.dispose();
   }
 
@@ -67,6 +69,55 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
         _statusAr = result.errorAr;
       });
       return;
+    }
+    final priceText = _priceMinor.text.trim();
+    final priceMinor = priceText.isEmpty ? 0 : int.tryParse(priceText);
+    if (priceMinor == null || priceMinor < 0) {
+      setState(() {
+        _busy = false;
+        _statusAr = 'السعر عدد صحيح بالوحدات الصغرى، أو 0 للمحتوى المفتوح.';
+      });
+      return;
+    }
+    if (priceMinor > 0) {
+      final profileId = controller.activeProfileId ?? 'local';
+      final entry = context.read<LioSensitiveActionEntry>();
+      final outcome = await entry.purchaseThroughWallet(
+        gatewayRequest: LioGatewayRequest(
+          requestId: 'shelf_buy_${DateTime.now().millisecondsSinceEpoch}',
+          correlationId: 'shelf_$profileId',
+          identityAccountId: profileId,
+          purpose: 'education',
+          requestedAction: 'purchase_shelf_volume',
+          dataScope: 'profile_basic',
+          sensitivity: LioDataSensitivity.personal,
+          consent: const LioConsentContext(
+            consentGranted: true,
+            purposeAligned: true,
+          ),
+          riskLevel: LioActionRisk.high,
+          timestamp: DateTime.now().toUtc(),
+          authenticated: true,
+          authorized: true,
+          minimumNecessarySatisfied: true,
+          humanConfirmed: true,
+        ),
+        profileId: profileId,
+        priceMinor: priceMinor,
+        currencyCode: 'USD',
+        itemId: uri.toString(),
+      );
+      if (!mounted) return;
+      if (!outcome.executed || !(outcome.value?.success ?? false)) {
+        setState(() {
+          _busy = false;
+          _statusAr = outcome.executed
+              ? (outcome.value?.messageAr ??
+                  'تعذّر الخصم من المحفظة. لم يُحفظ الكتاب.')
+              : 'توقف الشراء عند البوابة (${outcome.decision.wireDecision}). لم يُحفظ الكتاب.';
+        });
+        return;
+      }
     }
     try {
       await store.keep(
@@ -154,7 +205,7 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
           const SizedBox(height: 8),
           const HonestyBanner(
             messageAr:
-                'التنزيل يحفظ نصاً بعد ردّ حقيقي من https. الكتب المدمجة في الرواق لا تُحذف لأنها جزء من التطبيق. ما تنزّله أنت يُحذف بطلبك. على الويب يُحفظ النص داخل الملف إن كان صغيراً.',
+                'التنزيل يحفظ نصاً أو HTML بعد ردّ حقيقي من https. السعر 0 يبقي المحتوى المفتوح مجاناً. السعر فوق صفر يخصم من المحفظة مع عمولة المنصة، والنقد لا يُتمم الشراء. ملفات PDF لا تُعرض هنا. الكتب المدمجة في الرواق لا تُحذف لأنها جزء من التطبيق.',
           ),
           if (kIsWeb)
             const HonestyBanner(
@@ -168,6 +219,14 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
               hintText: 'https://…',
             ),
             keyboardType: TextInputType.url,
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _priceMinor,
+            decoration: const InputDecoration(
+              labelText: 'السعر بالوحدات الصغرى (0 = محتوى مفتوح)',
+            ),
+            keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 8),
           FilledButton.icon(

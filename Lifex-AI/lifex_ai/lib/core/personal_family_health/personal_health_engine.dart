@@ -2,6 +2,7 @@
 /// Lifex-AI — محرك
 /// الملف: personal_health_engine.dart
 /// =============================================================
+library;
 import '../health_data/health_data_engine.dart';
 import '../health_data/health_data_types.dart';
 import 'personal_health_types.dart';

@@ -47,6 +47,7 @@ class VoiceEngine {
   String? activeLocaleId;
   String lastSignalAr = 'الصوت في وضع الانتظار';
   int speechEpoch = 0;
+  int _listenEpoch = 0;
 
   /// دوال منفَّذة من المحركات الفرعية (تُسجَّل عند التهيئة عبر
   /// voice_command_engine أو غيره) لتنفيذ العمليات الفعلية.
@@ -140,7 +141,18 @@ class VoiceEngine {
     }
   }
 
+  /// يوقف الجلسة العالقة ثم يفتح جلسة جديدة. للبحث الصوتي والأوامر المتكررة.
+  Future<VoiceOperationResult> listenFresh() async {
+    if (_listenFlight != null ||
+        _state == VoiceEngineState.listening ||
+        _state == VoiceEngineState.processing) {
+      await stopListening();
+    }
+    return startListening();
+  }
+
   Future<VoiceOperationResult> _listenOnce() async {
+    final epoch = _listenEpoch;
     if (_startListeningImpl == null) {
       ErrorHandler.instance.report(
         'VOICE_LISTEN_NOT_BOUND',
@@ -155,11 +167,15 @@ class VoiceEngine {
     }
 
     await _stopSpeakingImpl?.call();
+    if (epoch != _listenEpoch) {
+      return const VoiceOperationResult.failure('أُوقفت الجلسة السابقة.');
+    }
     partialTranscript = null;
     signalAr('أجهّز التعرف على الكلام.');
     _setState(VoiceEngineState.processing);
     try {
       final result = await _startListeningImpl!();
+      if (epoch != _listenEpoch) return result;
       signalAr(result.success
           ? 'وصل كلامك.'
           : (result.errorMessageAr ?? 'تعذّر الاستماع.'));
@@ -167,6 +183,9 @@ class VoiceEngine {
           result.success ? VoiceEngineState.idle : VoiceEngineState.error);
       return result;
     } catch (e, stackTrace) {
+      if (epoch != _listenEpoch) {
+        return const VoiceOperationResult.failure('أُوقفت الجلسة السابقة.');
+      }
       signalAr('تعذّر تشغيل الميكروفون.');
       _setState(VoiceEngineState.error);
       ErrorHandler.instance.report(
@@ -181,7 +200,9 @@ class VoiceEngine {
   }
 
   Future<void> stopListening() async {
+    _listenEpoch++;
     await _stopListeningImpl?.call();
+    _listenFlight = null;
     _setState(VoiceEngineState.idle);
   }
 

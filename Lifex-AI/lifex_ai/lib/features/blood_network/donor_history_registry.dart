@@ -5,6 +5,7 @@
 /// الوصف: سجل تاريخ تبرعات كل شخص بالدم — يُستخدم لتحديد الأهلية
 /// (الفاصل الزمني الآمن) ولإظهار "شارات" تقدير للمتبرعين المنتظمين.
 /// =============================================================
+library;
 
 class BloodDonationRecord {
   final String donorLifexId;
@@ -31,7 +32,9 @@ class DonorHistoryRegistry {
   DateTime? lastDonationDateFor(String donorLifexId) {
     final history = _historyByDonor[donorLifexId];
     if (history == null || history.isEmpty) return null;
-    return history.map((r) => r.donatedAt).reduce((a, b) => a.isAfter(b) ? a : b);
+    return history
+        .map((r) => r.donatedAt)
+        .reduce((a, b) => a.isAfter(b) ? a : b);
   }
 
   int totalDonationsCountFor(String donorLifexId) {

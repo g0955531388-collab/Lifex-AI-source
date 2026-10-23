@@ -64,7 +64,7 @@ void main() {
       profile: _buildProfile(
         isPersonOfDetermination: true,
         accountCountry: 'SY',
-        determinationCardKind: 'nationalId',
+        determinationCardKind: 'disabilityCard',
         determinationCardCountry: 'SY',
         determinationCardRef: 'N-1',
       ),

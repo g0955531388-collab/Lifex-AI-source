@@ -3,3 +3,5 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+Lifex-AI/lifex_ai/assets/config/app_config.json
+Lifex-AI/backend/lifex-backend/node_modules/

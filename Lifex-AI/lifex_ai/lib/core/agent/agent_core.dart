@@ -7,6 +7,7 @@
 /// main.dart لبناء الطبقة وربطها، دون أن تعرف الواجهات تفاصيل التركيب
 /// الداخلي (AgentToolRegistry، AgentMemory، إلخ) كل واحدة على حدة.
 /// =============================================================
+library;
 
 import '../../features/ai/ai_bridge.dart';
 import '../../features/ai/ai_service_router.dart';

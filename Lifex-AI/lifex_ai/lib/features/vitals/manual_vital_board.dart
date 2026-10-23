@@ -16,6 +16,8 @@ class ManualVitalDraft {
     this.pulseBpm,
     this.bloodPressure,
     this.urineColorNote,
+    this.urineFoamNote,
+    this.urineClarityNote,
   });
 
   final double? tempC;
@@ -23,15 +25,18 @@ class ManualVitalDraft {
   final int? pulseBpm;
   final String? bloodPressure;
   final String? urineColorNote;
+  final String? urineFoamNote;
+  final String? urineClarityNote;
 
-  bool get hasAnyValue =>
+  bool get hasNumericValue =>
       tempC != null ||
       oxygenPercent != null ||
       pulseBpm != null ||
-      (bloodPressure != null && bloodPressure!.trim().isNotEmpty) ||
-      (urineColorNote != null &&
-          urineColorNote!.trim().isNotEmpty &&
-          urineColorNote != UrineColorNote.none);
+      (bloodPressure != null && bloodPressure!.trim().isNotEmpty);
+
+  bool get hasUrineNote => UrineColorNote.linesFrom(this).isNotEmpty;
+
+  bool get hasAnyValue => hasNumericValue || hasUrineNote;
 }
 
 class ManualVitalScore {
@@ -94,21 +99,28 @@ class ManualVitalPolicy {
     if (draft.bloodPressure != null && draft.bloodPressure!.trim().isNotEmpty) {
       notes.add('الضغط كما كتبته: ${draft.bloodPressure!.trim()}.');
     }
-    if (draft.urineColorNote != null &&
-        draft.urineColorNote!.trim().isNotEmpty &&
-        draft.urineColorNote != UrineColorNote.none) {
-      notes.add(UrineColorNote.lineAr(draft.urineColorNote!));
+    final urineLines = UrineColorNote.linesFrom(draft);
+    if (!draft.hasNumericValue) {
+      return ManualVitalScore(
+        points: 0,
+        statusAr: 'ملاحظة',
+        messageAr:
+            '${urineLines.join(' ')} هذه ملاحظات وليست نتيجة تحليل.',
+        completeEnough: true,
+      );
     }
 
     points = points.clamp(0, 100);
     final alert = points > 50;
+    final urineTail =
+        urineLines.isEmpty ? '' : ' ${urineLines.join(' ')}';
     return ManualVitalScore(
       points: points,
       statusAr: alert
           ? 'تنبيه من الأرقام التي أدخلتها'
           : 'لا عتبة محلية على الأرقام المكتملة',
       messageAr:
-          '${notes.join(' ')} النتيجة $points من 100 محلياً. ليست تشخيصاً ولا نتيجة مختبر.',
+          '${notes.join(' ')}$urineTail العداد المحلي $points من 100 على الأرقام التي أدخلتها فقط. ليست تشخيصاً ولا نتيجة مختبر.',
       completeEnough: true,
     );
   }
@@ -128,10 +140,29 @@ class UrineColorNote {
   ];
 
   static const honestyAr =
-      'لون البول ملاحظة تدخلها أنت. ليس تحليلاً مخبرياً ولا قراءة من بكسل الصورة.';
+      'لون البول والرغوة والوضوح ملاحظات تدخلها أنت. ليست تحليلاً مخبرياً ولا قراءة من بكسل الصورة.';
 
   static String lineAr(String color) =>
       'ملاحظة لون البول: $color. ليست نتيجة تحليل.';
+
+  static String foamLineAr(String foam) =>
+      'ملاحظة الرغوة: ${foam.trim()}. ليست نتيجة تحليل.';
+
+  static String clarityLineAr(String clarity) =>
+      'ملاحظة الوضوح: ${clarity.trim()}. ليست نتيجة تحليل.';
+
+  static List<String> linesFrom(ManualVitalDraft draft) {
+    final lines = <String>[];
+    final color = draft.urineColorNote?.trim() ?? '';
+    if (color.isNotEmpty && color != none) {
+      lines.add(lineAr(color));
+    }
+    final foam = draft.urineFoamNote?.trim() ?? '';
+    if (foam.isNotEmpty) lines.add(foamLineAr(foam));
+    final clarity = draft.urineClarityNote?.trim() ?? '';
+    if (clarity.isNotEmpty) lines.add(clarityLineAr(clarity));
+    return lines;
+  }
 }
 
 /// حساب نغمة من النبض المدخل. المنفذ غير مربوط حتى يوجد MIDI حقيقي.

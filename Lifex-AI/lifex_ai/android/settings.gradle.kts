@@ -10,13 +10,10 @@ pluginManagement {
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
     repositories {
-        // Prefer reachable hosts first; Aliyun/Huawei as fallbacks when DNS allows.
+        // Google and Maven Central. Aliyun and Huawei do not resolve on this machine.
         google()
         mavenCentral()
         gradlePluginPortal()
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
-        maven { url = uri("https://maven.aliyun.com/repository/central") }
-        maven { url = uri("https://repo.huaweicloud.com/repository/maven") }
     }
 }
 

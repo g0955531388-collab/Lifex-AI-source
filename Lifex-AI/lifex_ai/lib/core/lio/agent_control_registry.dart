@@ -60,94 +60,94 @@ class LifexAgentControlRegistry {
   final Map<LioAgentRole, LioAgentProfile> _profiles;
 
   static final Map<LioAgentRole, LioAgentProfile> _defaults = {
-    LioAgentRole.research: LioAgentProfile(
+    LioAgentRole.research: const LioAgentProfile(
       identity: 'agent.research',
       role: LioAgentRole.research,
-      capabilities: const [
+      capabilities: [
         LioAgentCapability(id: 'search', descriptionAr: 'بحث'),
         LioAgentCapability(id: 'read', descriptionAr: 'قراءة'),
         LioAgentCapability(id: 'compare', descriptionAr: 'مقارنة'),
         LioAgentCapability(id: 'report', descriptionAr: 'تقرير'),
       ],
-      allowedTools: const ['mcp.browser', 'mcp.local_files'],
-      allowedSources: const ['web', 'docs', 'standards'],
-      allowedActions: const ['search', 'read', 'compare', 'report'],
-      forbiddenActions: const [
+      allowedTools: ['mcp.browser', 'mcp.local_files'],
+      allowedSources: ['web', 'docs', 'standards'],
+      allowedActions: ['search', 'read', 'compare', 'report'],
+      forbiddenActions: [
         'modify_patient_db',
         'prescribe',
         'spend_money',
         'control_medical_device',
         'merge_main',
       ],
-      dataScopes: const ['public_knowledge', 'project_docs'],
+      dataScopes: ['public_knowledge', 'project_docs'],
       riskCeiling: LioRiskLevel.medium,
       budgetTokens: 80000,
       timeLimitSeconds: 900,
       requiresHumanApproval: false,
       auditRequired: true,
     ),
-    LioAgentRole.code: LioAgentProfile(
+    LioAgentRole.code: const LioAgentProfile(
       identity: 'agent.code',
       role: LioAgentRole.code,
-      capabilities: const [
+      capabilities: [
         LioAgentCapability(id: 'edit', descriptionAr: 'تعديل كود'),
         LioAgentCapability(id: 'test', descriptionAr: 'اختبار'),
       ],
-      allowedTools: const ['mcp.cursor', 'mcp.github', 'mcp.local_files'],
-      allowedSources: const ['repository'],
-      allowedActions: const ['edit', 'test', 'open_pr'],
-      forbiddenActions: const [
+      allowedTools: ['mcp.cursor', 'mcp.github', 'mcp.local_files'],
+      allowedSources: ['repository'],
+      allowedActions: ['edit', 'test', 'open_pr'],
+      forbiddenActions: [
         'modify_patient_db',
         'prescribe',
         'spend_money',
         'force_push_main',
         'merge_main',
       ],
-      dataScopes: const ['source_code', 'tests'],
+      dataScopes: ['source_code', 'tests'],
       riskCeiling: LioRiskLevel.high,
       budgetTokens: 200000,
       timeLimitSeconds: 3600,
       requiresHumanApproval: true,
       auditRequired: true,
     ),
-    LioAgentRole.criticVerifier: LioAgentProfile(
+    LioAgentRole.criticVerifier: const LioAgentProfile(
       identity: 'agent.critic_verifier',
       role: LioAgentRole.criticVerifier,
-      capabilities: const [
+      capabilities: [
         LioAgentCapability(id: 'verify', descriptionAr: 'تحقق مستقل'),
       ],
-      allowedTools: const ['mcp.github', 'mcp.local_files'],
-      allowedSources: const ['ci', 'artifacts', 'tests'],
-      allowedActions: const ['analyze', 'test', 'inspect_artifact', 'verdict'],
-      forbiddenActions: const [
+      allowedTools: ['mcp.github', 'mcp.local_files'],
+      allowedSources: ['ci', 'artifacts', 'tests'],
+      allowedActions: ['analyze', 'test', 'inspect_artifact', 'verdict'],
+      forbiddenActions: [
         'modify_patient_db',
         'prescribe',
         'spend_money',
         'self_approve_own_claim',
       ],
-      dataScopes: const ['ci_logs', 'artifacts', 'code'],
+      dataScopes: ['ci_logs', 'artifacts', 'code'],
       riskCeiling: LioRiskLevel.high,
       budgetTokens: 50000,
       timeLimitSeconds: 1800,
       requiresHumanApproval: false,
       auditRequired: true,
     ),
-    LioAgentRole.device: LioAgentProfile(
+    LioAgentRole.device: const LioAgentProfile(
       identity: 'agent.device',
       role: LioAgentRole.device,
-      capabilities: const [
+      capabilities: [
         LioAgentCapability(id: 'status', descriptionAr: 'حالة جهاز'),
       ],
-      allowedTools: const ['mcp.devices'],
-      allowedSources: const ['device_hub'],
-      allowedActions: const ['read_status'],
-      forbiddenActions: const [
+      allowedTools: ['mcp.devices'],
+      allowedSources: ['device_hub'],
+      allowedActions: ['read_status'],
+      forbiddenActions: [
         'control_without_auth',
         'prescribe',
         'spend_money',
         'modify_patient_db',
       ],
-      dataScopes: const ['device_telemetry'],
+      dataScopes: ['device_telemetry'],
       riskCeiling: LioRiskLevel.critical,
       budgetTokens: 20000,
       timeLimitSeconds: 300,

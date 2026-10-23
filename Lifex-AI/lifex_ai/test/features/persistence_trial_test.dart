@@ -228,6 +228,7 @@ void main() {
         ],
         medications: [
           {'nameAr': 'باراسيتامول', 'nameEn': 'paracetamol'},
+          {'nameAr': 'اسبرين', 'nameEn': 'aspirin'},
         ],
         symptoms: const [],
         tests: const [],
@@ -248,6 +249,11 @@ void main() {
       expect(knowledge.search('باراسيتامول').first.kindAr, 'دواء');
       expect(knowledge.search('الهربس').first.kindAr, 'حالة مرجعية');
       expect(knowledge.search('cyanotic').first.kindAr, 'علامة بصرية');
+      expect(knowledge.search('أسبرين').first.titleAr, contains('اسبرين'));
+      expect(
+        knowledge.search('ضغط شرياني').any((hit) => hit.titleAr.contains('ضغط')),
+        isTrue,
+      );
     });
   });
 
@@ -306,7 +312,7 @@ void main() {
         VoiceCommandIntent.openMedications,
       );
       expect(
-        parser.parse("Lifex, I cannot breathe").intent,
+        parser.parse('Lifex, I cannot breathe').intent,
         VoiceCommandIntent.callEmergency,
       );
       expect(

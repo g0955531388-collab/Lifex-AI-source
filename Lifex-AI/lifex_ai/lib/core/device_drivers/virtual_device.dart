@@ -149,7 +149,7 @@ class VirtualDevice implements UniversalDriver {
       case 'READ_SPEED':
       case 'READ_OBSTACLE':
       case 'READ_POSITION':
-        return CommandResult(
+        return const CommandResult(
           ok: true,
           reason: 'simulated_read',
           executedOnHardware: false,

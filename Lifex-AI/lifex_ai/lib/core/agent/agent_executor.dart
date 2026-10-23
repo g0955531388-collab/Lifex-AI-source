@@ -7,6 +7,7 @@
 /// أقصى للدورات (منع Infinite Loop — بند 13/26)، وفحص الإلغاء قبل كل
 /// خطوة (بند 20).
 /// =============================================================
+library;
 
 import 'agent_action.dart';
 import 'agent_confidence.dart';

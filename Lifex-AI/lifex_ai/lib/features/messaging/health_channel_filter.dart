@@ -12,10 +12,12 @@ class HealthChannelVerdict {
   const HealthChannelVerdict({
     required this.allowed,
     required this.messageAr,
+    this.code = '',
   });
 
   final bool allowed;
   final String messageAr;
+  final String code;
 }
 
 class HealthChannelFilter {
@@ -80,6 +82,7 @@ class HealthChannelFilter {
     if (_contains(_adult, blob) && !clinical) {
       return const HealthChannelVerdict(
         allowed: false,
+        code: 'adult',
         messageAr:
             'المحادثة العامة لا تقبل عملاً إباحياً ولا ملفات من هذا الصنف.',
       );
@@ -90,6 +93,7 @@ class HealthChannelFilter {
         fileName.isNotEmpty) {
       return const HealthChannelVerdict(
         allowed: false,
+        code: 'adultClinical',
         messageAr:
             'حتى العيادة: الملف الإباحي الصريح مرفوض. المرفق الطبي الحرج مسموح.',
       );
@@ -97,6 +101,7 @@ class HealthChannelFilter {
     if (!clinical && _contains(_profanity, blob)) {
       return const HealthChannelVerdict(
         allowed: false,
+        code: 'profanity',
         messageAr: 'الكلمات النابية محظورة في المحادثة العامة.',
       );
     }
@@ -105,6 +110,7 @@ class HealthChannelFilter {
       if (sizeBytes > cap) {
         return HealthChannelVerdict(
           allowed: false,
+          code: 'tooLarge',
           messageAr: subscriber
               ? 'تجاوز حد المرفق للمشترك (حتى أكثر من جيغا على هذا الجهاز، دون رفع سحابي).'
               : 'غير المشترك: حد المرفق 25 ميغا. المشتركون يرسلون قواعد أكبر محلياً.',
@@ -113,6 +119,7 @@ class HealthChannelFilter {
     }
     return const HealthChannelVerdict(
       allowed: true,
+      code: 'sentHere',
       messageAr: 'أُرسلت على هذا الجهاز. ليست شبكة واتساب الخارجية.',
     );
   }

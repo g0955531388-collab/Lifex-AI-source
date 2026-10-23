@@ -2,6 +2,7 @@
 /// Lifex-AI — مستودع
 /// الملف: health_repository.dart
 /// =============================================================
+library;
 import 'health_data_types.dart';
 
 /// Relational maps are the source of truth. Graph and search are projections.

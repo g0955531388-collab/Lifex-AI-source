@@ -11,6 +11,7 @@
 /// SDKs مرخّصة من الشركات المصنّعة ولا تُبنى داخل تطبيق موبايل عادي —
 /// تُدار عبر medical_protocol_translator.dart كطبقة منفصلة لاحقاً.
 /// =============================================================
+library;
 
 import 'bluetooth_manager.dart';
 import 'connected_devices_registry.dart';

@@ -97,7 +97,7 @@ class VoiceCommandEngine {
   Future<VoiceCommandExecutionResult> listenAndExecute(
     VoiceEngine voiceEngine,
   ) async {
-    final listenResult = await voiceEngine.startListening();
+    final listenResult = await voiceEngine.listenFresh();
     if (!listenResult.success || listenResult.textResult == null) {
       return VoiceCommandExecutionResult(
         recognized: false,

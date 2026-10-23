@@ -8,8 +8,10 @@ library lifex_ai.screens.ai_hub_screen;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/local_knowledge.dart';
 import '../core/orchestrator/lio_gateway_contracts.dart';
 import '../core/orchestrator/lio_sensitive_action_entry.dart';
+import '../features/ai/public_search_desk.dart';
 import '../features/ai/unified_ai_hub_gateway.dart';
 import 'ai_agent_screen.dart';
 import 'partner_sign_in_screen.dart';
@@ -25,8 +27,13 @@ class AiHubScreen extends StatefulWidget {
 
 class _AiHubScreenState extends State<AiHubScreen> {
   bool _isConnecting = false;
+  bool _isSearching = false;
   String? _statusMessageAr;
+  String? _engineReplyAr;
+  String? _publicReplyAr;
+  List<KnowledgeHit> _localHits = const [];
   List<ConnectedAiAccount> _connected = const [];
+  final _search = TextEditingController();
 
   static const Map<ExternalAiProvider, String> _providerLabelsAr = {
     ExternalAiProvider.gemini: 'Gemini',
@@ -39,6 +46,12 @@ class _AiHubScreenState extends State<AiHubScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshConnected());
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
   }
 
   LioGatewayRequest _req({
@@ -152,7 +165,7 @@ class _AiHubScreenState extends State<AiHubScreen> {
       } else if (outcome.value == true) {
         _statusMessageAr =
             'حُفظ مفتاح ${_providerLabelsAr[provider]} على هذا الجهاز. '
-            'لم يُختبر مع المحرك بعد. التخزين الحالي في الذاكرة وليس خزنة مشفّرة.';
+            'الربط يبقى حتى توافق على الفصل. ابحث من الحقل أدناه.';
       } else {
         _statusMessageAr = 'تعذّر حفظ المفتاح على هذا الجهاز.';
       }
@@ -161,6 +174,31 @@ class _AiHubScreenState extends State<AiHubScreen> {
   }
 
   Future<void> _disconnect(ExternalAiProvider provider) async {
+    final agreed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('فصل ${_providerLabelsAr[provider]}'),
+        content: const Text(
+          'الفصل يحذف المفتاح من هذا الجهاز. لا يتم إلا إذا وافقت الآن.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('إبقاء الربط'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('أوافق على الفصل'),
+          ),
+        ],
+      ),
+    );
+    if (agreed != true || !mounted) {
+      if (mounted && agreed == false) {
+        setState(() => _statusMessageAr = 'بقي الربط. لم يُفصل شيء.');
+      }
+      return;
+    }
     final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
     final outcome = await entry.disconnectExternalAiAccount(
       gatewayRequest: _req(action: 'ai_hub_disconnect_account'),
@@ -176,6 +214,70 @@ class _AiHubScreenState extends State<AiHubScreen> {
     await _refreshConnected();
   }
 
+  Future<void> _searchWithEngine() async {
+    final text = _search.text.trim();
+    if (text.isEmpty || _isSearching) return;
+    List<KnowledgeHit> local = const [];
+    try {
+      local = context.read<LocalKnowledge>().search(text);
+    } catch (_) {}
+    setState(() {
+      _isSearching = true;
+      _engineReplyAr = null;
+      _publicReplyAr = null;
+      _localHits = local;
+      _statusMessageAr = _connected.isEmpty
+          ? 'بحث بلا مفتاح: المرجع المحلي ومحرك عام. الربط بالمفتاح يبقى اختياراً.'
+          : null;
+    });
+    final public = await const PublicSearchDesk().ask(text);
+    if (!mounted) return;
+    setState(() => _publicReplyAr = public.textAr);
+    if (_connected.isEmpty) {
+      setState(() => _isSearching = false);
+      return;
+    }
+    final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
+    final outcome = await entry.runAiChatQuery(
+      gatewayRequest: LioGatewayRequest(
+        requestId:
+            'hub_search_${widget.profileId}_${DateTime.now().millisecondsSinceEpoch}',
+        correlationId: 'hub_${widget.profileId}',
+        identityAccountId: widget.profileId,
+        purpose: 'knowledge_lookup',
+        requestedAction: 'ai_hub_search',
+        dataScope: 'knowledge_public',
+        sensitivity: LioDataSensitivity.public,
+        consent: const LioConsentContext(
+          consentGranted: true,
+          purposeAligned: true,
+        ),
+        riskLevel: LioActionRisk.low,
+        timestamp: DateTime.now().toUtc(),
+        authenticated: true,
+        authorized: true,
+        minimumNecessarySatisfied: true,
+      ),
+      profileId: widget.profileId,
+      userQuery: text,
+    );
+    if (!mounted) return;
+    setState(() {
+      _isSearching = false;
+      if (!outcome.executed) {
+        _engineReplyAr =
+            'توقف البحث عند LIO (${outcome.decision.wireDecision}). الربط ما زال محفوظاً.';
+        return;
+      }
+      final response = outcome.value;
+      _engineReplyAr = response == null
+          ? 'لم يصل رد. الربط ما زال محفوظاً.'
+          : response.success
+              ? (response.responseText ?? '')
+              : (response.errorMessageAr ?? 'تعذّر جلب الرد. الربط ما زال محفوظاً.');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final connectedProviders = _connected.map((a) => a.provider).toSet();
@@ -187,8 +289,8 @@ class _AiHubScreenState extends State<AiHubScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             const Text(
-              'حساب لايفكس لا يسجّل دخولاً نيابة عنك في Gemini أو ChatGPT أو غيرها. '
-              'إن حفظت مفتاحك فهو على هذا الجهاز فقط، ولم يُختبر مع المحرك حتى يوجد اتصال حقيقي. '
+              'البحث يعمل بلا مفتاح: مرجع الجهاز ومحرك عام. '
+              'مفتاح Gemini أو ChatGPT أو Claude اختياري ويبقى على هذا الجهاز حتى توافق على الفصل. '
               'طلب الدخول بأي موقع غير إباحي حقّك؛ التنفيذ للشركاء فقط.',
               style: TextStyle(fontSize: 13, color: Colors.grey),
             ),
@@ -222,6 +324,52 @@ class _AiHubScreenState extends State<AiHubScreen> {
               ),
             ),
             const SizedBox(height: 8),
+            TextField(
+              controller: _search,
+              decoration: const InputDecoration(
+                labelText: 'ابحث بلا مفتاح، أو بالمحرك المربوط',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (_) => _searchWithEngine(),
+            ),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: _isSearching ? null : _searchWithEngine,
+              icon: _isSearching
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.search),
+              label: const Text('بحث'),
+            ),
+            if (_localHits.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const Text('من المرجع المحلي على الجهاز'),
+              for (final hit in _localHits)
+                ListTile(
+                  title: Text(hit.titleAr),
+                  subtitle: Text('${hit.kindAr} — ${hit.detailAr}'),
+                ),
+            ],
+            if (_publicReplyAr != null && _publicReplyAr!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'خلاصة محرك عام بلا مفتاح. ليست تشخيصاً من Lifex-AI.',
+              ),
+              const SizedBox(height: 4),
+              Text(_publicReplyAr!),
+            ],
+            if (_engineReplyAr != null) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'رد المحرك المربوط بمفتاح. ليس تشخيصاً من Lifex-AI. الربط يبقى حتى توافق على الفصل.',
+              ),
+              const SizedBox(height: 4),
+              Text(_engineReplyAr!),
+            ],
+            const SizedBox(height: 8),
             if (_statusMessageAr != null) ...[
               Text(_statusMessageAr!, style: const TextStyle(fontSize: 13)),
               const SizedBox(height: 12),
@@ -239,8 +387,8 @@ class _AiHubScreenState extends State<AiHubScreen> {
                     connectedProviders.contains(provider) ? 'متصل' : 'غير متصل',
                     style: TextStyle(
                       color: connectedProviders.contains(provider)
-                          ? Colors.green
-                          : Colors.grey,
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).disabledColor,
                     ),
                   ),
                   trailing: _isConnecting

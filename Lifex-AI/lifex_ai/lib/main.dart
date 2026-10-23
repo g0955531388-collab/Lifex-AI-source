@@ -17,14 +17,22 @@
 /// =============================================================
 library lifex_ai.main;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/app_config.dart';
+import 'core/config/app_secrets.dart';
+import 'core/studio_theme.dart';
+import 'widgets/studio_web_frame.dart';
+import 'core/app_constants.dart';
 import 'core/error_handler.dart';
-import 'core/agent/adapters/placeholder_ocr_extractor.dart';
+import 'core/agent/adapters/mlkit_ocr_extractor.dart';
+import 'core/security/secure_credential_store.dart';
+import 'features/accessibility/real_sensory_executors.dart';
 import 'core/lio/lifex_app_context.dart';
 import 'core/lio/lifex_intelligence_fabric.dart';
 import 'core/lio/lifex_production_composition.dart';
@@ -34,13 +42,16 @@ import 'l10n/generated/app_localizations.dart';
 import 'data/medical_data_loader.dart';
 import 'data/medical_database_manager.dart';
 
+import 'features/voice/voice_route_observer.dart';
 import 'features/accessibility/assistive_vision_engine.dart';
+import 'features/accessibility/blind_camera_binding.dart';
 import 'features/accessibility/multi_sensory_alert_manager.dart';
 import 'features/devices/lifex_device_runtime.dart';
 import 'features/ai/ai_bridge.dart';
 import 'features/ai/ai_service_router.dart';
 import 'features/ai/unified_ai_hub_gateway.dart';
 import 'core/admin/admin_manager.dart';
+import 'features/profile/health_identity_manager.dart';
 import 'core/local_knowledge.dart';
 import 'core/lasting_search_index.dart';
 import 'core/trial_manager.dart';
@@ -76,6 +87,8 @@ import 'features/voice/hardware_cue_bridge.dart';
 import 'features/voice/hardware_cue_host.dart';
 import 'features/voice/speech_to_text_processor.dart';
 import 'features/voice/text_to_speech_manager.dart';
+import 'core/permission_transparency.dart';
+import 'features/voice/assistant_session.dart';
 import 'features/voice/voice_engine.dart';
 import 'features/vision/medical_ocr_reader.dart';
 import 'features/vision/smart_vision_engine.dart';
@@ -89,53 +102,12 @@ import 'screens/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppSecrets.ensureLoaded();
+  BlindCameraBinding.register(AssistiveVisionEngine.instance);
 
   final appContext = await _bootstrapLifexAi();
 
   runApp(LifexAiApp(appContext: appContext));
-}
-
-/// ⚠️ تنفيذ مؤقت (In-memory) لتخزين بيانات الاعتماد — **غير آمن** لأي
-/// استخدام حقيقي. يجب استبداله بـ FlutterSecureStorageCredentialStore
-/// (يستخدم حزمة flutter_secure_storage الموجودة بالفعل في pubspec.yaml)
-/// قبل أي إطلاق فعلي للتطبيق.
-class _InMemoryCredentialStore implements SecureCredentialStore {
-  final Map<String, String> _store = {};
-
-  @override
-  Future<void> saveCredential(String key, String value) async {
-    _store[key] = value;
-  }
-
-  @override
-  Future<String?> readCredential(String key) async => _store[key];
-
-  @override
-  Future<void> deleteCredential(String key) async {
-    _store.remove(key);
-  }
-}
-
-/// ⚠️ تنفيذ مؤقت (No-op) لتنفيذ الاهتزاز والومضة البصرية — لا يفعل شيئاً
-/// فعلياً بعد. يجب استبداله بتنفيذ حقيقي عبر حزمة vibration وواجهة
-/// وميض شاشة حقيقية قبل الاعتماد عليه لتنبيه مستخدمين صم فعلياً.
-class _NoopVibrationExecutor implements VibrationExecutor {
-  @override
-  Future<void> vibrate({required List<int> patternMs}) async {
-    // TODO: ربط هذا بحزمة vibration الفعلية.
-  }
-}
-
-class _NoopVisualFlashExecutor implements VisualFlashExecutor {
-  @override
-  Future<void> flashScreen({required int repeatCount}) async {
-    // TODO: تنفيذ ومضة شاشة فعلية (Overlay بلون متغيّر بسرعة).
-  }
-
-  @override
-  Future<void> flashCameraLight({required int repeatCount}) async {
-    // TODO: ربط هذا بحزمة تتحكم بفلاش الكاميرا الخلفي.
-  }
 }
 
 /// تهيئة كل الأنظمة الأساسية بالترتيب الصحيح قبل تشغيل أي واجهة.
@@ -149,6 +121,10 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
 
   // 1) الهوية الصحية والملفات المتعددة.
   final prefs = await SharedPreferences.getInstance();
+  await GlobalAdminManager.instance.initialize(prefs);
+  GlobalAdminManager.instance.bindActorLookup(
+    HealthIdentityManager.instance.actorIsOperationalLifexId,
+  );
   final vault = ProfileVault(prefs);
   final trialManager = TrialManager(prefs);
   final multiProfileEngine = MultiProfileEngine(
@@ -168,7 +144,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     engine: multiProfileEngine,
     vault: vault,
   );
-  activeProfileController.rebindIdentitiesAfterRestore();
+  await activeProfileController.rebindIdentitiesAfterRestore();
 
   LocalKnowledge localKnowledge;
   try {
@@ -195,10 +171,10 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
 
   // 2) الذكاء الاصطناعي الصحي الداخلي (تحليل أعراض/توجيه طبي).
   final medicalDatabaseManager = MedicalDatabaseManager(
-    // TODO: استبدال هذا الرابط برابط خادم Lifex-AI الفعلي عند توفره.
-    remoteManifestUrl: 'https://api.lifex-ai.example.com/medical-manifest',
+    remoteManifestUrl: AppSecrets.medicalManifestUrl,
   );
-  final medicalKnowledge = await MedicalDataLoader.loadAll(medicalDatabaseManager);
+  final medicalKnowledge =
+      await MedicalDataLoader.loadAll(medicalDatabaseManager);
   final aiModuleBundle = AiBridge.initialize(
     symptomKeywordMap: medicalKnowledge.symptomKeywordMap,
     emergencySymptomIds: medicalKnowledge.emergencySymptomIds,
@@ -207,8 +183,18 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
 
   // 3) بوابة الذكاء الاصطناعي الخارجية الموحّدة (Gemini/ChatGPT/Claude).
   final unifiedAiHubGateway = UnifiedAiHubGateway(
-    credentialStore: _InMemoryCredentialStore(), // ⚠️ راجع التحذير أعلاه
+    credentialStore: SecureStorageCredentialStore(),
   );
+  try {
+    await unifiedAiHubGateway.restoreLinkedAccounts();
+  } catch (error) {
+    ErrorHandler.instance.report(
+      'AI_HUB_RESTORE_FAILED',
+      'تعذّر قراءة الربط المحفوظ. لم يُحذف مفتاح: $error',
+      severity: ErrorSeverity.warning,
+      sourceModule: 'main',
+    );
+  }
   final aiServiceRouter = AiServiceRouter(hubGateway: unifiedAiHubGateway);
 
   // 4) الطوارئ — يعتمد على محرك تقييم الخطر ومدير الرسائل.
@@ -225,8 +211,10 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   // 4-ب) التنبيهات متعددة الحواس (اهتزاز + ومضة) لضمان وصول تنبيهات
   // الطوارئ لمستخدمين صم أو ضعاف سمع، وليس صوتاً فقط.
   final multiSensoryAlertManager = MultiSensoryAlertManager(
-    vibrationExecutor: _NoopVibrationExecutor(), // ⚠️ راجع التحذير أعلاه
-    visualFlashExecutor: _NoopVisualFlashExecutor(),
+    vibrationExecutor: VibrationPackageExecutor(),
+    visualFlashExecutor: ScreenFlashExecutor(
+      navigatorKey: LifexNavigator.key,
+    ),
   );
 
   // 4-ج) طبقة قرار "الطوارئ الصامتة" — ضوء فقط بدل صوت/اهتزاز، إلا إذا
@@ -252,11 +240,10 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   // يُبنى بعد medicalDatabaseManager وaiModuleBundle وaiServiceRouter
   // وriskLevelEngine مباشرة، لأنه يُعيد استخدامها جميعاً بدل تكرارها.
   //
-  // ⚠️ راجع core/agent/adapters/placeholder_ocr_extractor.dart: OCR
-  // الفعلي غير موصول بعد في كامل المشروع (لم يكن موصولاً قبل هذه
-  // الطبقة أيضاً) — الأدوات المعتمدة عليه تفشل بأمان بدل قراءة نص وهمي.
+  // OCR من ملف صورة مؤقت عبر ML Kit. النص اللاتيني فقط في هذا الإصدار.
+  // البايتات غير المعروفة أو فشل القراءة يبقيان نصاً فارغاً.
   final smartVisionEngine = SmartVisionEngine.instance;
-  const ocrTextExtractor = PlaceholderOcrExtractor();
+  const ocrTextExtractor = MlKitOcrExtractor();
   final medicalOcrReader = MedicalOcrReader(ocrExtractor: ocrTextExtractor);
   medicalOcrReader.registerWithVisionEngine(smartVisionEngine);
 
@@ -319,26 +306,36 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
 
   // 7-ب) فوترة الاشتراكات — فرد 100 دولار/سنة، وحدة صحية 300، مستشفى 600.
   // الاشتراك عادي بلا إعلانات ولا خدمات خاصة. التحويل والخدمات الأخرى برسوم.
-  // المعفى: إعاقة ببطاقة من بلد الحساب، مرض دائم في الملف، مكفوفون.
+  // المعفى بعد التثبيت في وحدة المعاقين: بطاقة إعاقة أو مريض دائم من بلد الحساب.
   // ⚠️ يتطلب Client ID فعلي من حساب PayPal تجاري حقيقي قبل أي دفعة حقيقية.
   final subscriptionBillingManager = SubscriptionBillingManager(
     ledger: transactionLedger,
     exemptionPolicy: const BillingExemptionPolicy(),
-  )..registerGateway(
-      PayPalPaymentGatewayClient(clientId: 'paypal_client_id_placeholder'),
-    );
+  );
+  final paypalGateway = PayPalPaymentGatewayClient(
+    clientId: AppSecrets.paypalClientId,
+  );
+  if (paypalGateway.isConfigured) {
+    subscriptionBillingManager.registerGateway(paypalGateway);
+  }
+  final stripeGateway = StripePaymentGatewayClient(
+    publishableKey: AppSecrets.stripePublishableKey,
+  );
+  if (stripeGateway.isConfigured) {
+    subscriptionBillingManager.registerGateway(stripeGateway);
+  }
 
   // 8) المزامنة السحابية.
   final cloudBackendClient = CloudBackendClient(
-    // TODO: استبدال هذا الرابط برابط خادم Lifex-AI الخلفي الفعلي.
-    baseUrl: 'https://backend.lifex-ai.example.com',
+    baseUrl: AppSecrets.backendBaseUrl,
   );
   final cloudSyncManager = CloudSyncManager(backendClient: cloudBackendClient);
 
   // 9) خدمات الترجمة الديناميكية والمصطلحات الطبية الرسمية والأجهزة الذكية.
   final translationService = TranslationService(
-    // TODO: استبدال هذا بمفتاح Google Cloud Translation حقيقي.
-    provider: GoogleTranslationProvider(apiKey: 'placeholder-translation-key'),
+    provider: GoogleTranslationProvider(
+      apiKey: AppSecrets.googleTranslationApiKey,
+    ),
   );
   SpeechToTextProcessor(
     provider: DeviceSpeechToTextProvider(),
@@ -346,13 +343,30 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   TextToSpeechManager(
     provider: DeviceTextToSpeechProvider(),
   ).registerWithVoiceEngine(VoiceEngine.instance);
+  PermissionTransparencyManager.instance.restore({
+    for (final permission in LifexSensitivePermission.values)
+      if (prefs.containsKey('lifex_consent_${permission.name}'))
+        permission.name:
+            prefs.getBool('lifex_consent_${permission.name}') ?? false,
+  });
+  PermissionTransparencyManager.instance.onDecided = (permission, granted) {
+    prefs.setBool('lifex_consent_${permission.name}', granted);
+  };
+  unawaited(AssistantSession.instance.announceReady(VoiceEngine.instance));
   await HardwareCueBridge.instance.attach();
   HardwareCueHost.bind();
   final healthDeviceReader = HealthDeviceReader();
   final terminologyConnector = TerminologyConnector()
     ..registerProvider(RxNormTerminologyProvider());
-  // ملاحظة: مزوّد ICD-11 يحتاج clientId/clientSecret حقيقيين من
-  // icd.who.int/icdapi قبل تسجيله هنا — غير مُفعَّل افتراضياً.
+  if (AppSecrets.icd11ClientId.isNotEmpty &&
+      AppSecrets.icd11ClientSecret.isNotEmpty) {
+    terminologyConnector.registerProvider(
+      Icd11TerminologyProvider(
+        clientId: AppSecrets.icd11ClientId,
+        clientSecret: AppSecrets.icd11ClientSecret,
+      ),
+    );
+  }
 
   ErrorHandler.instance.report(
     'APP_BOOTSTRAP_COMPLETED',
@@ -401,7 +415,8 @@ class LifexAiApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<MultiProfileEngine>.value(value: appContext.multiProfileEngine),
+        Provider<MultiProfileEngine>.value(
+            value: appContext.multiProfileEngine),
         Provider<AiModuleBundle>.value(value: appContext.aiModuleBundle),
         Provider<EmergencyManager>.value(value: appContext.emergencyManager),
         Provider<EnergyManager>.value(value: appContext.energyManager),
@@ -419,12 +434,15 @@ class LifexAiApp extends StatelessWidget {
         Provider<SubscriptionBillingManager>.value(
           value: appContext.subscriptionBillingManager,
         ),
-        Provider<TransactionService>.value(value: appContext.transactionService),
+        Provider<TransactionService>.value(
+            value: appContext.transactionService),
         // UnifiedAiHubGateway / AiServiceRouter غير معروضين للـ UI —
         // الوصول الحساس عبر LioSensitiveActionEntry فقط.
         Provider<CloudSyncManager>.value(value: appContext.cloudSyncManager),
-        Provider<TranslationService>.value(value: appContext.translationService),
-        Provider<HealthDeviceReader>.value(value: appContext.healthDeviceReader),
+        Provider<TranslationService>.value(
+            value: appContext.translationService),
+        Provider<HealthDeviceReader>.value(
+            value: appContext.healthDeviceReader),
         Provider<TerminologyConnector>.value(
           value: appContext.terminologyConnector,
         ),
@@ -449,36 +467,44 @@ class LifexAiApp extends StatelessWidget {
         ),
         Provider<TrialManager>.value(value: appContext.trialManager),
         Provider<LocalKnowledge>.value(value: appContext.localKnowledge),
-        Provider<LastingSearchIndex>.value(value: appContext.lastingSearchIndex),
+        Provider<LastingSearchIndex>.value(
+            value: appContext.lastingSearchIndex),
         Provider<LifexDeviceRuntime>.value(value: appContext.deviceRuntime),
       ],
-      child: MaterialApp(
-        navigatorKey: LifexNavigator.key,
-        title: 'Lifex-AI',
-        debugShowCheckedModeBanner: false,
-        locale: Locale(
-          AppConfig.instance.defaultLanguage == AppLanguage.arabic ? 'ar' : 'en',
-        ),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        theme: ThemeData(
-          colorSchemeSeed: Colors.teal,
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData(
-          colorSchemeSeed: Colors.teal,
-          brightness: Brightness.dark,
-          useMaterial3: true,
-        ),
-        themeMode: AppConfig.instance.darkModeEnabled
-            ? ThemeMode.dark
-            : ThemeMode.light,
-        home: const SplashScreen(),
+      child: ListenableBuilder(
+        listenable: StudioThemeController.instance,
+        builder: (context, _) {
+          final appearance = AppConfig.instance.appearance;
+          return MaterialApp(
+            navigatorKey: LifexNavigator.key,
+            navigatorObservers: [VoiceRouteObserver.instance],
+            title: AppConstants.systemName,
+            debugShowCheckedModeBanner: false,
+            locale: Locale(
+              AppConfig.instance.defaultLanguage == AppLanguage.arabic
+                  ? 'ar'
+                  : 'en',
+            ),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: StudioTheme.light(),
+            darkTheme: appearance == StudioAppearance.contrast
+                ? StudioTheme.contrast()
+                : StudioTheme.dark(),
+            themeMode: appearance == StudioAppearance.light
+                ? ThemeMode.light
+                : ThemeMode.dark,
+            home: const SplashScreen(),
+            builder: (context, child) => StudioWebCanvas(
+              child: child ?? const SizedBox.shrink(),
+            ),
+          );
+        },
       ),
     );
   }

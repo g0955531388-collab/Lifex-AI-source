@@ -23,8 +23,7 @@ class ClinicalPhrExportApplicationService {
     String Function()? exportIdFactory,
   })  : builder = builder ?? ClinicalPhrExportBuilder(clock: clock),
         _clock = clock ?? (() => DateTime.now().toUtc()),
-        _exportIdFactory = exportIdFactory ??
-            (() => 'exp_${DateTime.now().toUtc().microsecondsSinceEpoch}');
+        _exportIdFactory = exportIdFactory;
 
   static const serviceId = 'ClinicalPhrExportApplicationService';
 
@@ -34,7 +33,7 @@ class ClinicalPhrExportApplicationService {
   final ClinicalPhrExportBuilder builder;
   final ClinicalPhrExportIntegrity integrity;
   final DateTime Function() _clock;
-  final String Function() _exportIdFactory;
+  final String Function()? _exportIdFactory;
 
   Future<ClinicalPhrExportResult> export({
     required ClinicalPhrExportRequest request,
@@ -67,7 +66,8 @@ class ClinicalPhrExportApplicationService {
         if (p != null) provenanceById[o.provenanceId] = p;
       }
 
-      final exportId = _exportIdFactory();
+      final exportId = _exportIdFactory?.call() ??
+          'exp_${_clock().microsecondsSinceEpoch}';
       final artifact = builder.build(
         exportId: exportId,
         accountIdRef: accountIdRef,

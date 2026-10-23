@@ -2,6 +2,7 @@
 /// Lifex-AI — اختبار
 /// الملف: device_reasoning_test.dart
 /// =============================================================
+library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/device_reasoning/device_reasoning_engine.dart';
 import 'package:lifex_ai/core/device_reasoning/reasoning_types.dart';

@@ -1,7 +1,7 @@
 /// =============================================================
 /// Lifex-AI — واجهات التطبيق
 /// الملف: layered_lens_studio_screen.dart
-/// استوديو الشرائح: تكبير جلدي وعدستان إن سمح الجهاز. بلا تشخيص.
+/// تقريب العدسة الخلفية بما يسمح به العتاد. لقطة للملف. بلا تشخيص.
 /// =============================================================
 library lifex_ai.screens.layered_lens_studio_screen;
 
@@ -10,20 +10,13 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
-import '../core/license_manager.dart';
 import '../core/permission_transparency.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
-import '../features/vision/camera_rig_policy.dart';
-import '../features/vision/layered_lens_invention.dart';
-import '../features/vision/layered_slice_fusion.dart';
-import '../features/vision/optical_zoom_policy.dart';
 import '../features/voice/voice_engine.dart';
-import '../widgets/honesty_banner.dart';
 
 class LayeredLensStudioScreen extends StatefulWidget {
   const LayeredLensStudioScreen({super.key});
@@ -34,136 +27,52 @@ class LayeredLensStudioScreen extends StatefulWidget {
 }
 
 class _LayeredLensStudioScreenState extends State<LayeredLensStudioScreen> {
-  static const _invention = LayeredLensInvention();
-  static const _zoomPolicy = OpticalZoomPolicy();
-  static const _fusion = LayeredSliceFusion();
-  static const _rig = CameraRigPolicy();
-
-  CameraController? _lower;
-  CameraController? _overlay;
-  List<CameraDescription> _rear = const [];
-  SliceCaptureMode _mode = SliceCaptureMode.singleLens;
-  final _board = StudioSliceBoard();
+  CameraController? _lens;
   double _minZoom = 1;
   double _maxZoom = 1;
   double _zoom = 1;
   double _minExposure = 0;
   double _maxExposure = 0;
-  double _flashPercent = 0;
-  double _exposureSeconds = 0;
-  double _shutterUnit = 0.5;
-  double _brightness = 1;
-  double _contrast = 1;
-  int _timerSeconds = 0;
+  double _exposure = 0;
   bool _torchAvailable = false;
-  bool _exposureAvailable = false;
+  bool _torchOn = false;
   bool _busy = false;
   bool _voiceOn = true;
-  bool _printStamp = true;
-  bool _pinned = false;
-  bool _showMaster = true;
-  double _master = 50;
-  double _overlayAlpha = 0.45;
-  StudioMasterTarget _masterTarget = StudioMasterTarget.zoom;
-  Timer? _hideMaster;
-  Offset? _cropStart;
-  Offset? _cropEnd;
-  String _status = 'هذه الشاشة لتوثيق الجلد بتكبير حقيقي وشريحتين إن وُجدتا.';
-  String? _lowerPath;
-  String? _overlayPath;
+  String _status = 'عدسة واحدة للتقريب. اللقطة تُحفظ في الملف. ليست تشخيص جلد.';
+  String? _shotPath;
+
+  bool get _ready {
+    final lens = _lens;
+    return lens != null && lens.value.isInitialized;
+  }
+
+  bool get _canZoom => _maxZoom > _minZoom + 0.05;
+
+  bool get _canExpose => _maxExposure > _minExposure;
 
   @override
   void dispose() {
-    _hideMaster?.cancel();
-    unawaited(_lower?.dispose());
-    unawaited(_overlay?.dispose());
+    final lens = _lens;
+    _lens = null;
+    if (lens != null) unawaited(lens.dispose());
     super.dispose();
   }
 
-  void _announce(String line) {
+  Future<void> _say(String line) async {
+    if (!mounted) return;
+    setState(() => _status = line);
     if (!_voiceOn) return;
-    unawaited(VoiceEngine.instance.speak(line));
+    await VoiceEngine.instance.speak(line);
   }
 
-  void _bumpMaster() {
-    _hideMaster?.cancel();
-    setState(() => _showMaster = true);
-    if (_pinned) return;
-    _hideMaster = Timer(const Duration(seconds: 6), () {
-      if (!mounted || _pinned) return;
-      setState(() => _showMaster = false);
-    });
-  }
-
-  void _arm(StudioMasterTarget target) {
-    _masterTarget = target;
-    _bumpMaster();
-  }
-
-  void _onMaster(double value) {
-    final mapped = _rig.mapMaster(
-      target: _masterTarget,
-      master: value,
-      minZoom: _minZoom,
-      maxZoom: _maxZoom,
-    );
-    setState(() => _master = value);
-    switch (_masterTarget) {
-      case StudioMasterTarget.zoom:
-        unawaited(_applyZoom(mapped));
-        break;
-      case StudioMasterTarget.flash:
-        setState(() => _flashPercent = mapped);
-        break;
-      case StudioMasterTarget.exposure:
-        setState(() => _exposureSeconds = mapped);
-        break;
-      case StudioMasterTarget.shutter:
-        setState(() => _shutterUnit = mapped);
-        break;
-      case StudioMasterTarget.brightness:
-        setState(() => _brightness = mapped);
-        break;
-      case StudioMasterTarget.contrast:
-        setState(() => _contrast = mapped);
-        break;
-      case StudioMasterTarget.timer:
-        setState(() => _timerSeconds = mapped.round());
-        break;
-    }
-    _bumpMaster();
-  }
-
-  void _commitCrop(Size size) {
-    final start = _cropStart;
-    final end = _cropEnd;
-    if (start == null || end == null || size.width <= 0 || size.height <= 0) {
-      return;
-    }
-    final note = _board.addCrop(
-      left: start.dx / size.width,
-      top: start.dy / size.height,
-      width: (end.dx - start.dx) / size.width,
-      height: (end.dy - start.dy) / size.height,
-      path: _lowerPath,
-    );
-    setState(() {
-      _cropStart = null;
-      _cropEnd = null;
-      _status = note == null
-          ? 'المنطقة أصغر من أن تُحفظ كشريحة.'
-          : 'أُضيفت ${note.titleAr}. القصّ من اللقطة المحفوظة، لا من قماش 5000.';
-    });
-    _announce(_status);
-  }
-
-  Future<void> _openLenses() async {
+  Future<void> _open() async {
     final agreed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(LayeredLensInvention.titleAr),
-        content: Text(
-          '${_invention.methodAr()}\n\n${_invention.medicalLimitAr()}',
+        title: const Text('تقريب العدسة'),
+        content: const Text(
+          'تفتح العدسة الخلفية أمامك للتقريب والتقاط لقطة في الملف. '
+          'ليست تشخيص جلد، ولا تُركّب صورة من شريحتين.',
         ),
         actions: [
           TextButton(
@@ -172,7 +81,7 @@ class _LayeredLensStudioScreenState extends State<LayeredLensStudioScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('أوافق على التصوير الظاهر'),
+            child: const Text('أوافق'),
           ),
         ],
       ),
@@ -182,606 +91,291 @@ class _LayeredLensStudioScreenState extends State<LayeredLensStudioScreen> {
       permission: LifexSensitivePermission.camera,
       granted: true,
     );
-    final granted = await Permission.camera.request();
-    if (!granted.isGranted || !mounted) {
-      setState(() => _status = 'بدون إذن الكاميرا لا تُفتح العدسات.');
+    final permission = await Permission.camera.request();
+    if (!mounted) return;
+    if (permission.isPermanentlyDenied) {
+      await _say('إذن الكاميرا مرفوض من إعدادات الجهاز. سأفتح الإعدادات.');
+      await openAppSettings();
+      return;
+    }
+    if (!permission.isGranted) {
+      await _say('رُفض إذن الكاميرا. التقريب متوقف.');
       return;
     }
     try {
       final found = await availableCameras();
-      _rear = found
+      if (!mounted) return;
+      final rear = found
           .where((item) => item.lensDirection == CameraLensDirection.back)
           .toList();
-      if (_rear.isEmpty) {
-        setState(() => _status = 'لا عدسة خلفية ظاهرة على هذا الجهاز.');
+      if (rear.isEmpty) {
+        await _say('لا توجد عدسة خلفية على هذا الجهاز.');
         return;
       }
-      final first = CameraController(
-        _rear.first,
-        ResolutionPreset.high,
-        enableAudio: false,
-      );
-      await first.initialize();
-      final firstMin = await first.getMinZoomLevel();
-      final firstMax = await first.getMaxZoomLevel();
-      final firstZoom = _zoomPolicy.clampToHardware(
-        requested: firstMax,
-        minZoom: firstMin,
-        maxZoom: firstMax,
-      );
-      await first.setZoomLevel(firstZoom);
+      final lens = await _start(rear.first);
+      final minZoom = await lens.getMinZoomLevel();
+      final maxZoom = await lens.getMaxZoomLevel();
+      final zoom = minZoom;
+      await lens.setZoomLevel(zoom);
       var minExposure = 0.0;
       var maxExposure = 0.0;
-      var exposureAvailable = false;
-      var torchAvailable = false;
       try {
-        minExposure = await first.getMinExposureOffset();
-        maxExposure = await first.getMaxExposureOffset();
-        exposureAvailable = maxExposure > minExposure;
+        minExposure = await lens.getMinExposureOffset();
+        maxExposure = await lens.getMaxExposureOffset();
       } catch (_) {}
+      var torch = false;
       try {
-        await first.setFlashMode(FlashMode.off);
-        torchAvailable = true;
-      } catch (_) {
-        torchAvailable = false;
-      }
-      CameraController? second;
-      var mode = SliceCaptureMode.singleLens;
-      if (_rear.length >= 2) {
-        try {
-          second = CameraController(
-            _rear[1],
-            ResolutionPreset.high,
-            enableAudio: false,
-          );
-          await second.initialize();
-          final secondMax = await second.getMaxZoomLevel();
-          final secondMin = await second.getMinZoomLevel();
-          await second.setZoomLevel(
-            _zoomPolicy.clampToHardware(
-              requested: secondMax,
-              minZoom: secondMin,
-              maxZoom: secondMax,
-            ),
-          );
-          mode = SliceCaptureMode.concurrent;
-        } catch (_) {
-          await second?.dispose();
-          second = null;
-          mode = SliceCaptureMode.sequential;
-        }
-      }
+        await lens.setFlashMode(FlashMode.off);
+        torch = true;
+      } catch (_) {}
       if (!mounted) {
-        await first.dispose();
-        await second?.dispose();
+        await lens.dispose();
         return;
       }
+      final previous = _lens;
       setState(() {
-        _lower = first;
-        _overlay = second;
-        _mode = mode;
-        _minZoom = firstMin;
-        _maxZoom = firstMax;
-        _zoom = firstZoom;
+        _lens = lens;
+        _minZoom = minZoom;
+        _maxZoom = maxZoom < minZoom ? minZoom : maxZoom;
+        _zoom = zoom;
         _minExposure = minExposure;
         _maxExposure = maxExposure;
-        _exposureAvailable = exposureAvailable;
-        _torchAvailable = torchAvailable;
-        _status = _modeLine();
+        _exposure = 0;
+        _torchAvailable = torch;
+        _torchOn = false;
       });
-      _announce(_modeLine());
+      if (previous != null) unawaited(previous.dispose());
+      final ceiling = _maxZoom.toStringAsFixed(1);
+      await _say(
+        _canZoom
+            ? 'العدسة مفتوحة. التقريب من 1 حتى $ceiling×. قرّب ثم التقط.'
+            : 'العدسة مفتوحة. هذا الجهاز بلا تقريب بصري. اللقطة بالحجم الذي تتيحه العدسة.',
+      );
     } catch (error) {
-      setState(() => _status = 'تعذّر فتح العدسات: $error');
+      if (!mounted) return;
+      await _say('تعذّر فتح العدسة. $error');
     }
   }
 
-  String _modeLine() {
-    switch (_mode) {
-      case SliceCaptureMode.concurrent:
-        return 'عدستان خلفيتان مفتوحتان معاً. ${_zoomPolicy.honestyAr(zoom: _zoom, maxZoom: _maxZoom, hardwareRead: true)}';
-      case SliceCaptureMode.sequential:
-        return 'وُجدت عدسة ثانية لكن التزامن رُفض. سألتقط الشريحتين بالتتابع. ${_zoomPolicy.honestyAr(zoom: _zoom, maxZoom: _maxZoom, hardwareRead: true)}';
-      case SliceCaptureMode.singleLens:
-        return 'عدسة خلفية واحدة. التكبير الجلدي يعمل. الدمج الثلاثي ينتظر عدسة ثانية.';
+  Future<CameraController> _start(CameraDescription chosen) async {
+    Object? last;
+    for (final preset in const [
+      ResolutionPreset.high,
+      ResolutionPreset.medium,
+    ]) {
+      final lens = CameraController(
+        chosen,
+        preset,
+        enableAudio: false,
+      );
+      try {
+        await lens.initialize();
+        return lens;
+      } catch (error) {
+        last = error;
+        await lens.dispose();
+      }
     }
+    throw last ?? StateError('lens');
   }
 
   Future<void> _applyZoom(double value) async {
-    final clamped = _zoomPolicy.clampToHardware(
-      requested: value,
-      minZoom: _minZoom,
-      maxZoom: _maxZoom,
-    );
+    final lens = _lens;
+    if (lens == null || !lens.value.isInitialized) return;
+    final zoom = value.clamp(_minZoom, _maxZoom);
     try {
-      await _lower?.setZoomLevel(clamped);
-      await _overlay?.setZoomLevel(clamped);
-    } catch (_) {}
-    setState(() {
-      _zoom = clamped;
-      _status = _modeLine();
-    });
-  }
-
-  CameraRigApply _planned() {
-    return _rig.plan(
-      advertisedZoom: _zoom,
-      advertisedExposureSeconds: _exposureSeconds,
-      advertisedShutter: _shutterUnit,
-      advertisedFlashPercent: _flashPercent,
-      advertisedBrightness: _brightness,
-      advertisedContrast: _contrast,
-      minZoom: _minZoom,
-      maxZoom: _maxZoom,
-      minExposureOffset: _minExposure,
-      maxExposureOffset: _maxExposure,
-      torchAvailable: _torchAvailable,
-      exposureAvailable: _exposureAvailable,
-    );
-  }
-
-  Future<void> _applyRig() async {
-    final lower = _lower;
-    if (lower == null || !lower.value.isInitialized) {
-      const line =
-          'افتح العدسات أولاً. الشرائط وحدها لا تُطبَّق على كاميرا وهمية.';
-      setState(() => _status = line);
-      _announce(line);
-      return;
-    }
-    final planned = _planned();
-    try {
-      await lower.setZoomLevel(planned.zoom);
-      await _overlay?.setZoomLevel(planned.zoom);
-      if (_torchAvailable) {
-        await lower.setFlashMode(
-          planned.torchOn ? FlashMode.torch : FlashMode.off,
-        );
-      }
-      if (_exposureAvailable) {
-        await lower.setExposureOffset(planned.exposureOffset);
-      }
+      await lens.setZoomLevel(zoom);
     } catch (error) {
-      final line = 'رفض العتاد جزءاً من الضبط: $error';
-      setState(() => _status = line);
-      _announce(line);
+      await _say('رفضت العدسة هذا التقريب. $error');
       return;
     }
-    setState(() {
-      _zoom = planned.zoom;
-      _status = planned.messageAr;
-    });
-    _announce(planned.messageAr);
+    if (!mounted) return;
+    setState(() => _zoom = zoom);
   }
 
-  Future<void> _importFromStudio() async {
-    final file = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (file == null || !mounted) return;
-    _board.addGallery(file.path);
-    final controller = context.read<ActiveProfileController>();
-    final profile = controller.activeProfile;
-    if (profile != null) {
-      ProfileBoxStore(profile).add(BoxKeys.layeredSlices, {
-        'title': 'من الاستديو',
-        'detail': _printStamp
-            ? LicenseManager.instance.appendAr(
-                'خلفية من المعرض. بلا قماش 5000×5000 مختلق. ${_rig.stampMarkAr()}',
-              )
-            : 'خلفية من المعرض. بلا قماش 5000×5000 مختلق.',
-        'path': file.path,
-        'origin': 'gallery',
-      });
-      controller.saveActiveProfileChanges();
+  Future<void> _applyTorch(bool on) async {
+    final lens = _lens;
+    if (lens == null || !_torchAvailable) return;
+    try {
+      await lens.setFlashMode(on ? FlashMode.torch : FlashMode.off);
+    } catch (error) {
+      await _say('لا ضوء مستمر على هذه العدسة. $error');
+      return;
     }
-    setState(
-      () => _status =
-          'حُملت صورة الاستديو كشريحة محلية. الحجم حجم الملف، ليس 5000×5000.',
-    );
-    _announce(_status);
+    if (!mounted) return;
+    setState(() => _torchOn = on);
   }
 
-  Future<void> _capturePair() async {
-    if (_busy) return;
-    final lower = _lower;
-    if (lower == null || !lower.value.isInitialized) {
-      setState(() => _status = 'افتح العدسات أولاً.');
+  Future<void> _applyExposure(double value) async {
+    final lens = _lens;
+    if (lens == null || !_canExpose) return;
+    final offset = value.clamp(_minExposure, _maxExposure);
+    try {
+      await lens.setExposureOffset(offset);
+    } catch (error) {
+      await _say('لا إزاحة تعريض على هذه العدسة. $error');
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _exposure = offset);
+  }
+
+  Future<void> _shoot() async {
+    final lens = _lens;
+    if (_busy || lens == null || !lens.value.isInitialized) {
+      await _say('افتح العدسة أولاً.');
       return;
     }
     setState(() => _busy = true);
     try {
-      await _applyRig();
-      final wait = _rig.clampTimerSeconds(_timerSeconds);
-      if (wait > 0) {
-        setState(() => _status = 'مؤقت $wait ثانية...');
-        await Future<void>.delayed(Duration(seconds: wait));
-        if (!mounted) return;
-      }
-      await lower.setZoomLevel(_zoom);
-      final firstShot = await lower.takePicture();
-      var overlayPath = '';
-      var mode = _mode;
-      if (_overlay != null && _overlay!.value.isInitialized) {
-        await _overlay!.setZoomLevel(_zoom);
-        final secondShot = await _overlay!.takePicture();
-        overlayPath = secondShot.path;
-        mode = SliceCaptureMode.concurrent;
-      } else if (_rear.length >= 2) {
-        final swapped = CameraController(
-          _rear[1],
-          ResolutionPreset.high,
-          enableAudio: false,
-        );
-        await swapped.initialize();
-        await swapped.setZoomLevel(_zoom);
-        final secondShot = await swapped.takePicture();
-        overlayPath = secondShot.path;
-        await swapped.dispose();
-        mode = SliceCaptureMode.sequential;
-      }
-      final pair = LayeredSlicePair(
-        lowerPath: firstShot.path,
-        overlayPath: overlayPath,
-        zoomUsed: _zoom,
-        mode: overlayPath.isEmpty ? SliceCaptureMode.singleLens : mode,
-      );
-      final fused = await _fusion.merge(pair);
+      final shot = await lens.takePicture();
       if (!mounted) return;
       final controller = context.read<ActiveProfileController>();
       final profile = controller.activeProfile;
-      if (profile != null) {
-        ProfileBoxStore(profile).add(BoxKeys.layeredSlices, {
-          'title': 'شريحة جلد ×${_zoom.toStringAsFixed(1)}',
-          'detail': _printStamp
-              ? LicenseManager.instance.appendAr(
-                  '${fused.messageAr} ${_rig.stampMarkAr()}',
-                )
-              : fused.messageAr,
-          'path': firstShot.path,
-          'overlayPath': overlayPath,
-          'zoom': _zoom,
-          'mode': pair.mode.name,
-          'fused': fused.fused,
-        });
-        controller.saveActiveProfileChanges();
+      final zoomLabel = _zoom.toStringAsFixed(1);
+      if (profile == null) {
+        setState(() => _shotPath = shot.path);
+        await _say(
+          'أُخذت اللقطة ×$zoomLabel. أنشئ الملف الصحي ليُحفظ المسار في الأرشيف.',
+        );
+        return;
       }
-      _board.addCamera(path: firstShot.path, zoom: _zoom);
-      if (overlayPath.isNotEmpty) {
-        _board.addCamera(path: overlayPath, zoom: _zoom);
-      }
-      setState(() {
-        _lowerPath = firstShot.path;
-        _overlayPath = overlayPath.isEmpty ? null : overlayPath;
-        _status = fused.messageAr;
+      ProfileBoxStore(profile).add(BoxKeys.layeredSlices, {
+        'title': 'لقطة تقريب ×$zoomLabel',
+        'detail':
+            'لقطة تقريب من العدسة الخلفية. ليست تشخيص جلد ولا دمج شريحتين.',
+        'path': shot.path,
+        'zoom': _zoom,
+        'origin': 'camera',
       });
-      _announce(fused.messageAr);
+      controller.saveActiveProfileChanges();
+      setState(() => _shotPath = shot.path);
+      await _say('حُفظت لقطة التقريب ×$zoomLabel في الملف. ليست تشخيص جلد.');
     } catch (error) {
-      setState(() => _status = 'تعذّر التقاط الشرائح: $error');
+      if (!mounted) return;
+      await _say('تعذّر حفظ اللقطة. $error');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  String get _masterLabel {
-    switch (_masterTarget) {
-      case StudioMasterTarget.zoom:
-        return 'الزوم';
-      case StudioMasterTarget.flash:
-        return 'الفلاش';
-      case StudioMasterTarget.exposure:
-        return 'التعريض';
-      case StudioMasterTarget.shutter:
-        return 'الغالق';
-      case StudioMasterTarget.brightness:
-        return 'السطوع';
-      case StudioMasterTarget.contrast:
-        return 'التباين';
-      case StudioMasterTarget.timer:
-        return 'المؤقت';
+  Widget _preview() {
+    final lens = _lens;
+    if (lens != null && lens.value.isInitialized) {
+      final ratio =
+          lens.value.aspectRatio == 0 ? 3 / 4 : lens.value.aspectRatio;
+      return ColoredBox(
+        color: Colors.black,
+        child: Center(
+          child: AspectRatio(
+            aspectRatio: ratio,
+            child: CameraPreview(lens),
+          ),
+        ),
+      );
     }
-  }
-
-  Widget _cornerShutter() {
-    return Material(
-      color: Colors.black54,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: _busy || _lower == null ? null : () => unawaited(_capturePair()),
-        child: const SizedBox(
-          width: 48,
-          height: 48,
-          child: Icon(Icons.camera, color: Colors.white),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_status, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _busy ? null : () => unawaited(_open()),
+              icon: const Icon(Icons.photo_camera_outlined),
+              label: const Text('افتح العدسة'),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _cropStill() {
-    final path = _lowerPath;
-    if (path == null) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('اسحب على اللقطة لإضافة شريحة قصّ'),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 180,
-          width: double.infinity,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return GestureDetector(
-                onPanStart: (details) => setState(() {
-                  _cropStart = details.localPosition;
-                  _cropEnd = details.localPosition;
-                }),
-                onPanUpdate: (details) =>
-                    setState(() => _cropEnd = details.localPosition),
-                onPanEnd: (_) => _commitCrop(constraints.biggest),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.file(File(path), fit: BoxFit.contain),
-                    if (_cropStart != null && _cropEnd != null)
-                      Positioned.fromRect(
-                        rect: Rect.fromPoints(_cropStart!, _cropEnd!),
-                        child: IgnorePointer(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Theme.of(context).colorScheme.tertiary,
-                                width: 2,
-                              ),
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .tertiary
-                                  .withOpacity(0.18),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final lower = _lower;
+    final shot = _shotPath;
     return Scaffold(
-      appBar: AppBar(title: const Text(LayeredLensInvention.titleAr)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      appBar: AppBar(title: const Text('تقريب العدسة')),
+      body: Column(
         children: [
-          HonestyBanner(messageAr: _invention.inventorLineAr()),
-          const SizedBox(height: 8),
-          HonestyBanner(messageAr: _invention.wipoLineAr()),
-          const SizedBox(height: 8),
-          HonestyBanner(messageAr: _invention.medicalLimitAr()),
-          const SizedBox(height: 8),
-          HonestyBanner(messageAr: _rig.refuseCssZoomAr(_maxZoom)),
-          const SizedBox(height: 8),
-          HonestyBanner(messageAr: _rig.exportHonestyAr()),
-          const SizedBox(height: 8),
-          HonestyBanner(messageAr: _rig.overlayAlphaHonestyAr()),
-          const SizedBox(height: 16),
-          if (_showMaster)
-            Row(
-              children: [
-                Text('المفتاح العام ($_masterLabel)'),
-                Expanded(
-                  child: Slider(
-                    min: 0,
-                    max: 100,
-                    value: _master,
-                    onChanged: _busy ? null : _onMaster,
-                  ),
-                ),
-                IconButton(
-                  tooltip: _pinned ? 'مثبّت' : 'تثبيت',
-                  onPressed: () {
-                    setState(() => _pinned = !_pinned);
-                    _bumpMaster();
-                  },
-                  icon: Icon(
-                    _pinned ? Icons.push_pin : Icons.push_pin_outlined,
-                  ),
-                ),
-              ],
-            ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('النطق العربي'),
-            value: _voiceOn,
-            onChanged: (value) => setState(() => _voiceOn = value),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text('طباعة ${_rig.stampMarkAr()}'),
-            value: _printStamp,
-            onChanged: (value) => setState(() => _printStamp = value),
-          ),
-          if (lower != null && lower.value.isInitialized)
-            AspectRatio(
-              aspectRatio: lower.value.aspectRatio,
-              child: Stack(
-                fit: StackFit.expand,
+          Expanded(child: _preview()),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ColorFiltered(
-                    colorFilter: ColorFilter.matrix(
-                      _rig.previewColorMatrix(
-                        brightness: _brightness,
-                        contrast: _contrast,
-                      ),
-                    ),
-                    child: CameraPreview(lower),
+                  const Text(
+                    'لقطة تقريب للملف. ليست تشخيص جلد، ولا تركيب شريحتين.',
                   ),
-                  if (_overlay != null && _overlay!.value.isInitialized)
-                    Opacity(
-                      opacity: _overlayAlpha.clamp(0.0, 1.0),
-                      child: CameraPreview(_overlay!),
+                  if (_ready && _canZoom) ...[
+                    Text('التقريب ${_zoom.toStringAsFixed(1)}×'),
+                    Slider(
+                      min: _minZoom,
+                      max: _maxZoom,
+                      value: _zoom.clamp(_minZoom, _maxZoom),
+                      onChanged: _busy
+                          ? null
+                          : (value) => unawaited(_applyZoom(value)),
                     ),
-                  Positioned(top: 8, left: 8, child: _cornerShutter()),
-                  Positioned(bottom: 8, right: 8, child: _cornerShutter()),
+                  ],
+                  if (_ready && _torchAvailable)
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('ضوء مستمر'),
+                      value: _torchOn,
+                      onChanged: _busy
+                          ? null
+                          : (value) => unawaited(_applyTorch(value)),
+                    ),
+                  if (_ready && _canExpose) ...[
+                    Text(
+                      'إزاحة التعريض ${_exposure.toStringAsFixed(1)}',
+                    ),
+                    Slider(
+                      min: _minExposure,
+                      max: _maxExposure,
+                      value: _exposure.clamp(_minExposure, _maxExposure),
+                      onChanged: _busy
+                          ? null
+                          : (value) => unawaited(_applyExposure(value)),
+                    ),
+                  ],
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('النطق'),
+                    value: _voiceOn,
+                    onChanged: (value) => setState(() => _voiceOn = value),
+                  ),
+                  if (_ready)
+                    FilledButton.icon(
+                      onPressed: _busy ? null : () => unawaited(_shoot()),
+                      icon: const Icon(Icons.camera),
+                      label: Text(_busy ? 'يلتقط...' : 'التقط واحفظ'),
+                    )
+                  else
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : () => unawaited(_open()),
+                      icon: const Icon(Icons.photo_camera_outlined),
+                      label: const Text('افتح العدسة'),
+                    ),
+                  if (shot != null) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 96,
+                      child: Image.file(File(shot), fit: BoxFit.contain),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Text(_status),
                 ],
               ),
-            )
-          else
-            Container(
-              height: 180,
-              alignment: Alignment.center,
-              color: Colors.black12,
-              child: const Text('العدسة مغلقة حتى الموافقة'),
             ),
-          const SizedBox(height: 12),
-          Text(
-            'شفافية الشريحة العليا ${(_overlayAlpha * 100).round()}٪',
           ),
-          Slider(
-            min: 0,
-            max: 1,
-            value: _overlayAlpha,
-            onChanged: _busy
-                ? null
-                : (value) => setState(() => _overlayAlpha = value),
-          ),
-          Text('تكبير الجلد ${_zoom.toStringAsFixed(1)}×'),
-          Slider(
-            min: _minZoom,
-            max: _maxZoom <= _minZoom ? _minZoom + 0.01 : _maxZoom,
-            value: _zoom.clamp(
-              _minZoom,
-              _maxZoom <= _minZoom ? _minZoom : _maxZoom,
-            ),
-            onChangeStart: (_) => _arm(StudioMasterTarget.zoom),
-            onChanged: _busy || lower == null
-                ? null
-                : (value) => unawaited(_applyZoom(value)),
-          ),
-          Text('ضوء الفلاش ${_flashPercent.round()}٪ — تشغيل أو إيقاف، ليست تياراً'),
-          Slider(
-            min: 0,
-            max: 100,
-            value: _flashPercent,
-            onChangeStart: (_) => _arm(StudioMasterTarget.flash),
-            onChanged: _busy
-                ? null
-                : (value) => setState(() => _flashPercent = value),
-          ),
-          Text(
-            'شريط التعريض ${_exposureSeconds.toStringAsFixed(1)} — ليس ${AdvertisedCameraSliders.exposureSecondsMax.round()} ثانية',
-          ),
-          Slider(
-            min: 0,
-            max: AdvertisedCameraSliders.exposureSecondsMax,
-            value: _exposureSeconds,
-            onChangeStart: (_) => _arm(StudioMasterTarget.exposure),
-            onChanged: _busy
-                ? null
-                : (value) => setState(() => _exposureSeconds = value),
-          ),
-          Text('شريط الغالق ${_shutterUnit.toStringAsFixed(2)} — نفس إزاحة العتاد'),
-          Slider(
-            min: 0,
-            max: 1,
-            value: _shutterUnit,
-            onChangeStart: (_) => _arm(StudioMasterTarget.shutter),
-            onChanged: _busy
-                ? null
-                : (value) => setState(() => _shutterUnit = value),
-          ),
-          Text('سطوع المعاينة ${_brightness.toStringAsFixed(2)} — ليس الحسّاس'),
-          Slider(
-            min: 0,
-            max: AdvertisedCameraSliders.previewFactorMax,
-            value: _brightness,
-            onChangeStart: (_) => _arm(StudioMasterTarget.brightness),
-            onChanged: _busy
-                ? null
-                : (value) => setState(() => _brightness = value),
-          ),
-          Text('تباين المعاينة ${_contrast.toStringAsFixed(2)} — ليس الحسّاس'),
-          Slider(
-            min: 0,
-            max: AdvertisedCameraSliders.previewFactorMax,
-            value: _contrast,
-            onChangeStart: (_) => _arm(StudioMasterTarget.contrast),
-            onChanged: _busy
-                ? null
-                : (value) => setState(() => _contrast = value),
-          ),
-          Text('مؤقت الالتقاط $_timerSeconds ث'),
-          Slider(
-            min: 0,
-            max: AdvertisedCameraSliders.timerSecondsMax.toDouble(),
-            divisions: AdvertisedCameraSliders.timerSecondsMax,
-            value: _timerSeconds.toDouble(),
-            onChangeStart: (_) => _arm(StudioMasterTarget.timer),
-            onChanged: _busy
-                ? null
-                : (value) => setState(() => _timerSeconds = value.round()),
-          ),
-          FilledButton.icon(
-            onPressed: _busy ? null : () => unawaited(_applyRig()),
-            icon: const Icon(Icons.tune),
-            label: const Text('تطبيق الضبط على العدسة'),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: _busy ? null : () => unawaited(_importFromStudio()),
-            icon: const Icon(Icons.photo_library_outlined),
-            label: const Text('فتح من الاستديو'),
-          ),
-          const SizedBox(height: 8),
-          FilledButton.icon(
-            onPressed: lower == null ? _openLenses : null,
-            icon: const Icon(Icons.cameraswitch_outlined),
-            label: const Text('فتح العدسات الخلفية'),
-          ),
-          const SizedBox(height: 8),
-          FilledButton.tonalIcon(
-            onPressed: _busy || lower == null ? null : _capturePair,
-            icon: const Icon(Icons.filter_none_outlined),
-            label: Text(_busy ? 'يلتقط الشرائح...' : 'التقاط الشريحة ثم التي فوقها'),
-          ),
-          const SizedBox(height: 12),
-          Text(_status),
-          if (_lowerPath != null) ...[
-            ListTile(
-              title: const Text('الشريحة السفلى'),
-              subtitle: Text(_lowerPath!),
-            ),
-            _cropStill(),
-          ],
-          if (_overlayPath != null)
-            ListTile(
-              title: const Text('الشريحة فوقها'),
-              subtitle: Text(_overlayPath!),
-            ),
-          if (_board.tiles.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            const Text('الشرائح النشطة'),
-            ..._board.tiles.map((tile) {
-              final index = _board.tiles.indexOf(tile);
-              return SwitchListTile(
-                title: Text(tile.titleAr),
-                subtitle: Text(tile.path ?? tile.origin),
-                value: tile.visible,
-                onChanged: (value) =>
-                    setState(() => _board.toggle(tile.id, value)),
-                secondary: IconButton(
-                  tooltip: 'حذف الشريحة',
-                  onPressed: index <= 0
-                      ? null
-                      : () => setState(() => _board.remove(tile.id)),
-                  icon: const Icon(Icons.delete_outline),
-                ),
-              );
-            }),
-          ],
         ],
       ),
     );

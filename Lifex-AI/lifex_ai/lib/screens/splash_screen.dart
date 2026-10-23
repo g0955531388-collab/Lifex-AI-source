@@ -18,12 +18,15 @@ import 'package:provider/provider.dart';
 
 import '../core/app_constants.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../widgets/accessible_widgets.dart';
 import '../widgets/lifex_brand_mark.dart';
+import '../features/voice/hardware_cue_host.dart';
 import 'home_screen.dart';
 import 'profile_setup_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key, this.displayDuration = const Duration(seconds: 3)});
+  const SplashScreen(
+      {super.key, this.displayDuration = const Duration(seconds: 3)});
 
   /// مدة عرض الشاشة الافتتاحية قبل الانتقال تلقائياً للشاشة التالية.
   final Duration displayDuration;
@@ -33,84 +36,124 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Timer? _auto;
+  bool _left = false;
+
   @override
   void initState() {
     super.initState();
-    Timer(widget.displayDuration, () {
-      if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _left) return;
+      if (MediaQuery.accessibleNavigationOf(context)) return;
+      _auto = Timer(widget.displayDuration, _enter);
+    });
+  }
 
-      // التوجيه الذكي: إذا لم يُنشئ المستخدم أي ملف صحي بعد (أول
-      // تشغيل)، يبدأ بشاشة الإعداد الأولي بدلاً من الدخول مباشرة
-      // للشاشة الرئيسية بملف وهمي غير موجود فعلياً.
-      final controller = Provider.of<ActiveProfileController>(
-        context,
-        listen: false,
-      );
+  @override
+  void dispose() {
+    _auto?.cancel();
+    super.dispose();
+  }
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => controller.hasAnyProfile
-              ? const HomeScreen()
-              : const ProfileSetupScreen(),
-        ),
-      );
+  void _enter() {
+    if (_left || !mounted) return;
+    _left = true;
+    _auto?.cancel();
+    final controller = Provider.of<ActiveProfileController>(
+      context,
+      listen: false,
+    );
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => controller.hasAnyProfile
+            ? const HomeScreen()
+            : const ProfileSetupScreen(),
+      ),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(HardwareCueHost.consumeLauncherShortcut());
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+    final media = MediaQuery.of(context);
+    return ScreenArrival(
+      message: BlindNavigationCopy.splashArrival,
+      child: Scaffold(
+        body: SingleChildScrollView(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const LifexBrandMark(size: 168),
-              const SizedBox(height: 16),
-              Text(
-                AppConstants.appName,
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppConstants.studioBannerCredit,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const Spacer(),
-              // نص الإسناد والملكية — إلزامي الظهور في هذه الشاشة تحديداً
-              // لأنها أول شاشة يراها أي مستخدم عند فتح التطبيق.
-              Semantics(
-                label:
-                    '${AppConstants.ownershipStatement} ${AppConstants.humanitarianExemptionStatementAr}',
-                child: ExcludeSemantics(
-                  child: Column(
-                    children: [
-                      Text(
-                        AppConstants.ownershipStatement,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        AppConstants.humanitarianExemptionStatementAr,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
+              SizedBox(height: media.padding.top),
+              LifexBrandMark(size: media.size.width),
+              Padding(
+                padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + media.padding.bottom),
+                child: Column(
+                  children: [
+                    Text(
+                      AppConstants.appName,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      AppConstants.studioBannerCredit,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 24),
+                    Semantics(
+                      button: true,
+                      label: 'دخول',
+                      hint: 'ينتقل لإنشاء الملف أو للرئيسية',
+                      onTap: _enter,
+                      child: ExcludeSemantics(
+                        child: FilledButton(
+                          onPressed: _enter,
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 28,
                             ),
+                            child: Text('دخول'),
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${AppConstants.academyNameAr} — ${AppConstants.ownerEmail} — ${AppConstants.ownerPhoneNumber}',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 24),
+                    Semantics(
+                      label:
+                          '${AppConstants.ownershipStatement} ${AppConstants.humanitarianExemptionStatementAr}',
+                      child: ExcludeSemantics(
+                        child: Column(
+                          children: [
+                            Text(
+                              AppConstants.ownershipStatement,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              AppConstants.humanitarianExemptionStatementAr,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${AppConstants.academyNameAr} — ${AppConstants.ownerEmail} — ${AppConstants.ownerPhoneNumber}',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
             ],
           ),
         ),

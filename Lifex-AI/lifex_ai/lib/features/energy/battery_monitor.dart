@@ -6,6 +6,7 @@
 /// وحدات الطاقة بأي تغيّر. التنفيذ الفعلي لقراءة البطارية من نظام
 /// التشغيل يُربط لاحقاً عبر [BatteryReader]؛ هذا الملف تنظيمي فقط.
 /// =============================================================
+library;
 
 class BatteryStatus {
   final int level; // 0-100
@@ -38,6 +39,10 @@ class BatteryMonitor {
   BatteryStatus _lastKnownStatus =
       BatteryStatus(level: 100, isCharging: false);
 
+  bool _hasDeviceReading = false;
+
+  bool get hasDeviceReading => _hasDeviceReading;
+
   BatteryStatus get lastKnownStatus => _lastKnownStatus;
 
   void addListener(BatteryStatusListener listener) => _listeners.add(listener);
@@ -47,6 +52,7 @@ class BatteryMonitor {
   /// تحديث الحالة يدوياً (يُستدعى من مستمع stream فعلي عند ربط
   /// [BatteryReader] حقيقي، أو من الاختبارات).
   void updateStatus(BatteryStatus status) {
+    _hasDeviceReading = true;
     _lastKnownStatus = status;
     for (final listener in List<BatteryStatusListener>.from(_listeners)) {
       listener(status);

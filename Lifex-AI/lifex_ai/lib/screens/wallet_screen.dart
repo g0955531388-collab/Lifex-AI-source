@@ -462,10 +462,18 @@ class _WalletScreenState extends State<WalletScreen> {
       _statusMessageAr = null;
     });
     final entry = _entry;
+    final country = profile.accountCountry.trim();
+    if (country.isEmpty) {
+      setState(() {
+        _isProcessing = false;
+        _statusMessageAr =
+            'دولة الحساب فارغة. صاحب الحساب يكتبها في ملفه، ولا تُفترض دولة.';
+      });
+      return;
+    }
     final gateways = await entry.listBillingGateways(
       gatewayRequest: _req(action: 'list_billing_gateways', risk: LioActionRisk.low),
-      countryCode:
-          profile.accountCountry.trim().isEmpty ? 'US' : profile.accountCountry,
+      countryCode: country,
     );
     if (!gateways.executed || (gateways.value?.isEmpty ?? true)) {
       setState(() {
@@ -560,7 +568,7 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<ActiveProfileController>().activeProfile;
-    final catalog = const SubscriptionCatalog();
+    const catalog = SubscriptionCatalog();
     final seat = catalog.parseSeat(profile?.billingSeat ?? 'individual');
     final plan = catalog.planFor(seat);
     final exemption = profile == null
@@ -798,7 +806,9 @@ class _WalletScreenState extends State<WalletScreen> {
                             isCredit
                                 ? Icons.arrow_downward
                                 : Icons.arrow_upward,
-                            color: isCredit ? Colors.green : Colors.red,
+                            color: isCredit
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.error,
                           ),
                           title: Text(_transactionLabelAr(tx.type)),
                           subtitle: Text(
@@ -810,7 +820,9 @@ class _WalletScreenState extends State<WalletScreen> {
                             '${isCredit ? '+' : '-'}\$'
                             '${(tx.amountInSmallestUnit / 100).toStringAsFixed(2)}',
                             style: TextStyle(
-                              color: isCredit ? Colors.green : Colors.red,
+                              color: isCredit
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).colorScheme.error,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

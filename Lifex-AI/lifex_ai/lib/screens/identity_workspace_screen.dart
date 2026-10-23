@@ -8,6 +8,7 @@ library lifex_ai.screens.identity_workspace_screen;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/admin/admin_manager.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/network_box/unit_branch_catalog.dart';
 import '../features/profile/active_profile_controller.dart';
@@ -101,9 +102,27 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
       BoxKeys.publicIdentityMode,
       _publicAliasMode ? 'alias' : 'real',
     );
-    controller.saveActiveProfileChanges();
+    controller.updateAccountIdentity(
+      email: _email.text.trim(),
+      phoneNumber: _phone.text.trim(),
+    );
+    final lifexId = controller.engine.activeProfile == null
+        ? null
+        : HealthIdentityManager.instance
+            .getByProfileId(controller.engine.activeProfile!.profileId)
+            ?.lifexId;
+    final opened =
+        lifexId != null && GlobalAdminManager.instance.isOwner(lifexId);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('حُفظت الهوية في ملفك على هذا الجهاز.')),
+      SnackBar(
+        content: Text(
+          opened
+              ? 'حُفظت وسيلة الاتصال. دور المالك التشغيلي مفتوح لهذه الهوية. '
+                  'الصلاحية للصيانة وتعيين الطاقم، وليست فتحاً لملفات المرضى.'
+              : 'حُفظت وسيلة الاتصال. لم تطابق بريد المالك أو هاتفه تطابقاً كاملاً، '
+                  'فبقي الدور مغلقاً.',
+        ),
+      ),
     );
   }
 
@@ -125,6 +144,10 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
                     const HonestyBanner(
                       messageAr:
                           'الهوية الحقيقية للجهات الصحية المخوّلة فقط. الهوية المستعارة للمجتمع والتعليم. التحقق الوثائقي يحتاج خادماً.',
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'مالك النظام: أدخل البريد الإلكتروني أو الهاتف المسجّل للمالك ثم احفظ. عند المطابقة تُفعّل صلاحيات المالك فوراً على هذا الجهاز.',
                     ),
                     const SizedBox(height: 12),
                     Center(

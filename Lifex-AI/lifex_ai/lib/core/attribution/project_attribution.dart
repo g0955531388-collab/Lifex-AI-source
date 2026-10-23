@@ -6,9 +6,8 @@
 /// أو رسالة رسمية يجب أن تقرأ من هنا (عبر AppConstants) دون إعادة صياغة.
 ///
 /// قواعد ملزمة:
-/// - المالك والمخترع: غازي سليم بكفلاوي فقط.
-/// - المرشدة رباب الحايك: صفة إرشاد فقط، وليست مالكة ولا مخترعة ولا
-///   شريكة في الملكية ما لم يصدر توجيه صريح من المالك.
+/// - الملكية والشراكة مناصفة بين غازي سليم بكفلاوي ورباب الحايك.
+/// - المخترع: غازي سليم بكفلاوي. صلاحية التفعيل التشغيلي تبقى لمعرّفاته.
 /// - ممنوع: ورثة، مواريث، خلفاء، شركاء مفترضون، مالكون سابقون، أسماء
 ///   مولّدة آلياً، أو أي إضافة مستنتَجة من Git أو الحساب أو الاشتراك.
 /// - الإسناد لا يتغيّر بالاشتراك ولا بالحساب الإداري ولا بالذكاء الاصطناعي.
@@ -26,29 +25,30 @@ abstract final class ProjectAttribution {
   static const String inventorTitleEn = 'Biomedical Engineering Expert';
   static const String guideAr = 'رباب الحايك';
   static const String guideEn = 'Rabab Al-Hayek';
-  static const String guideRoleAr = 'المرشدة';
-  static const String guideRoleEn = 'Guide';
+  static const String guideRoleAr = 'الشريكة';
+  static const String guideRoleEn = 'Partner';
+
+  /// اسم النظام. الإسناد يبقى الجملة الرسمية دونه.
+  static const String systemName = 'Lifex-AI Global Health Network';
 
   /// الصيغة العربية الرسمية الوحيدة للإسناد.
   static const String officialStatementAr =
       'Lifex-AI\n'
-      'المالك والمخترع: غازي سليم بكفلاوي\n'
-      'خبير الهندسة الطبية الحيوية\n'
-      'المرشدة: رباب الحايك';
+      'الملكية والشراكة مناصفة: غازي سليم بكفلاوي ورباب الحايك\n'
+      'المخترع: غازي سليم بكفلاوي\n'
+      'خبير الهندسة الطبية الحيوية';
 
-  /// الصيغة الإنجليزية الرسمية الوحيدة للإسناد.
   static const String officialStatementEn =
       'Lifex-AI\n'
-      'Inventor & Owner: Ghazi Salim Bekfalawi\n'
-      'Biomedical Engineering Expert\n'
-      'Guide: Rabab Al-Hayek';
+      'Equal ownership and partnership: Ghazi Salim Bekfalawi and Rabab Al-Hayek\n'
+      'Inventor: Ghazi Salim Bekfalawi\n'
+      'Biomedical Engineering Expert';
 
-  /// صيغة سطر واحد للأماكن الضيقة — نفس المعنى الرسمي بلا أسماء إضافية.
   static const String officialStatementShortAr =
-      'Lifex-AI — المالك والمخترع: غازي سليم بكفلاوي | المرشدة: رباب الحايك';
+      'Lifex-AI — الملكية والشراكة مناصفة: غازي سليم بكفلاوي ورباب الحايك | المخترع: غازي سليم بكفلاوي';
 
   static const String officialStatementShortEn =
-      'Lifex-AI — Inventor & Owner: Ghazi Salim Bekfalawi | Guide: Rabab Al-Hayek';
+      'Lifex-AI — Equal ownership and partnership: Ghazi Salim Bekfalawi and Rabab Al-Hayek | Inventor: Ghazi Salim Bekfalawi';
 
   /// كلمات/صيغ محظورة في نص الإسناد الرسمي (حراسة اختبارات).
   static const List<String> forbiddenAttributionFragments = [

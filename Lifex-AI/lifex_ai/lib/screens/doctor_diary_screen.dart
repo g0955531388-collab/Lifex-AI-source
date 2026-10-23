@@ -536,10 +536,10 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
               trailing: Chip(
                 label: Text(mark.badgeAr()),
                 backgroundColor: special
-                    ? Colors.orange.shade200
+                    ? Theme.of(context).colorScheme.error.withOpacity(0.25)
                     : booked
-                        ? Colors.teal.shade100
-                        : Colors.green.shade100,
+                        ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                        : Theme.of(context).colorScheme.secondary.withOpacity(0.2),
               ),
               onTap: () => _say(
                 mark.spokenAr(

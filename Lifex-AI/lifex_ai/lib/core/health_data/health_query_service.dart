@@ -2,6 +2,7 @@
 /// Lifex-AI — استعلام
 /// الملف: health_query_service.dart
 /// =============================================================
+library;
 import 'health_data_engine.dart';
 import 'health_data_types.dart';
 import 'health_schema.dart';

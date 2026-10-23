@@ -16,8 +16,14 @@
 /// =============================================================
 library lifex_ai.widgets.accessible_widgets;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+
+import '../core/app_config.dart';
+import '../features/accessibility/screen_voice_board.dart';
+import '../features/voice/voice_engine.dart';
 
 /// زر إجراء كبير بتسمية دلالية واضحة وحجم لمسة كافٍ (لا يقل عن 48×48
 /// نقطة منطقية، وهو الحد الأدنى الموصى به عالمياً لإمكانية الوصول).
@@ -29,6 +35,7 @@ class AccessibleActionButton extends StatelessWidget {
     required this.semanticHint,
     this.onTap,
     this.isUrgent = false,
+    this.disabledHint = 'هذه الميزة غير متاحة بعد.',
   });
 
   final IconData icon;
@@ -40,6 +47,9 @@ class AccessibleActionButton extends StatelessWidget {
   final VoidCallback? onTap;
   final bool isUrgent;
 
+  /// يُقرأ عندما يكون الزر بلا فعل. الافتراضي للميزة غير المبنية.
+  final String disabledHint;
+
   @override
   Widget build(BuildContext context) {
     final isDisabled = onTap == null;
@@ -49,54 +59,78 @@ class AccessibleActionButton extends StatelessWidget {
     // حدث ذلك مستقبلاً في أي زر آخر.
     final color = isDisabled
         ? Theme.of(context).disabledColor
-        : (isUrgent ? Colors.red : Theme.of(context).colorScheme.primary);
+        : (isUrgent
+            ? Theme.of(context).colorScheme.error
+            : Theme.of(context).colorScheme.primary);
 
     // قارئ الشاشة يجب أن يُعلن صراحة أن العنصر "معطَّل" (disabled: true
     // في Semantics)، وليس مجرد صمت أو رسالة عامة — هذا يمنع خلط
     // المستخدم الكفيف بين "هذا الزر لا يعمل بعد" و"حدث خطأ عند الضغط".
-    final effectiveHint = isDisabled
-        ? 'هذه الميزة غير متاحة بعد.'
-        : semanticHint;
+    final effectiveHint = isDisabled ? disabledHint : semanticHint;
 
+    final forward = Directionality.of(context) == TextDirection.rtl
+        ? Icons.chevron_left
+        : Icons.chevron_right;
     return Semantics(
       button: true,
       label: label,
       hint: effectiveHint,
       enabled: !isDisabled,
-      // إعلام قارئ الشاشة أن هذا عنصر تفاعلي منفصل، وليس نصاً عادياً
-      // ضمن قائمة أطول يصعب تمييز حدوده صوتياً.
       container: true,
       child: Opacity(
         opacity: isDisabled ? 0.5 : 1.0,
-        child: Card(
-          elevation: isUrgent && !isDisabled ? 4 : 1,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // ExcludeSemantics هنا لأن Semantics الأب فوق بالفعل
-                  // يوفر التسمية الكاملة؛ تكرار قراءة الأيقونة والنص
-                  // منفصلين يجعل تجربة قارئ الشاشة مزعجة ومكرَّرة.
-                  ExcludeSemantics(
-                    child: Icon(icon, size: 40, color: color),
-                  ),
-                  const SizedBox(height: 8),
-                  ExcludeSemantics(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontWeight:
-                            isUrgent && !isDisabled ? FontWeight.bold : FontWeight.normal,
-                        color: isDisabled ? Theme.of(context).disabledColor : (isUrgent ? Colors.red : null),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Card(
+            elevation: 0,
+            child: InkWell(
+              onTap: onTap,
+              focusColor: color.withOpacity(0.22),
+              borderRadius: BorderRadius.circular(16),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 64),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      ExcludeSemantics(
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.16),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(icon, size: 24, color: color),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ExcludeSemantics(
+                          child: Text(
+                            label,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: isUrgent && !isDisabled
+                                  ? FontWeight.bold
+                                  : FontWeight.w600,
+                              color: isDisabled
+                                  ? Theme.of(context).disabledColor
+                                  : (isUrgent ? color : null),
+                            ),
+                          ),
+                        ),
+                      ),
+                      ExcludeSemantics(
+                        child: Icon(forward, color: color),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -138,4 +172,95 @@ void announceForScreenReader(BuildContext context, String message) {
     message,
     Directionality.of(context),
   );
+}
+
+/// عبارات الوصول التي يسمعها المكفوف. بلا مشهد أو مسافة مخترعة.
+class BlindNavigationCopy {
+  const BlindNavigationCopy._();
+
+  static const needsProfile = 'أنشئ ملفك الصحي أولاً من زر ملفي الصحي.';
+
+  static const splashArrival =
+      'Lifex-AI. زر الدخول ينقلك للخطوة التالية. نص الملكية أسفل الشاشة.';
+
+  static const obstacleUnavailable =
+      'كشف المسافة غير متاح على هذا الهاتف. العصا البيضاء تبقى وسيلة السلامة. الكاميرا لا تعطي متراً.';
+
+  static const profileArrival =
+      'إنشاء الملف. ابدأ بالاسم الكامل، ثم العمر بعدد السنوات. تاريخ الميلاد اختياري.';
+
+  static String homeArrival({required bool hasProfile}) {
+    if (hasProfile) {
+      return 'الرئيسية. مرّر بين الأزرار. كل زر يعلن اسمه وما يفتحه.';
+    }
+    return 'الرئيسية. ابدأ بزر ملفي الصحي. بقية الأزرار تنتظر هذا الملف.';
+  }
+}
+
+/// يعلن عنوان الشاشة مرة لقارئ الشاشة. النطق الإضافي يبقى إذا كان
+/// الإرشاد الصوتي مفتوحاً وقارئ الشاشة نفسه غير شغّال، حتى لا يُكرَّر الصوت.
+class ScreenArrival extends StatefulWidget {
+  const ScreenArrival({
+    super.key,
+    required this.message,
+    this.controls = const [],
+    this.body = '',
+    required this.child,
+  });
+
+  final String message;
+  final List<String> controls;
+  final String body;
+  final Widget child;
+
+  @override
+  State<ScreenArrival> createState() => _ScreenArrivalState();
+}
+
+class _ScreenArrivalState extends State<ScreenArrival> {
+  @override
+  void initState() {
+    super.initState();
+    _publish();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.message.isEmpty) return;
+      announceForScreenReader(context, widget.message);
+      final talkBack = MediaQuery.accessibleNavigationOf(context);
+      if (!talkBack && AppConfig.instance.voiceGuidanceEnabledByDefault) {
+        unawaited(VoiceEngine.instance.speak(widget.message));
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(ScreenArrival oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _publish();
+  }
+
+  @override
+  void dispose() {
+    ScreenVoiceBoard.instance.remove(this);
+    super.dispose();
+  }
+
+  void _publish() {
+    ScreenVoiceBoard.instance.upsert(
+      ScreenVoiceCard(
+        token: this,
+        titleAr: widget.message,
+        controlsAr: widget.controls,
+        bodyAr: widget.body,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      explicitChildNodes: true,
+      label: widget.message,
+      child: widget.child,
+    );
+  }
 }

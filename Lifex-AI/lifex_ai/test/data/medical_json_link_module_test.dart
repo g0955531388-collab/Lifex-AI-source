@@ -74,6 +74,7 @@ void main() {
     );
 
     expect(MedicalJsonLinkIndex.automaticPrescribingAllowed, isFalse);
+    expect(MedicalJsonLinkIndex.automaticDiagnosisAllowed, isFalse);
     final listed = index.from(MedicalBundleFiles.diseases, 'd001');
     expect(listed.map((link) => link.toId), containsAll(['s001', 's404']));
     expect(
@@ -112,7 +113,43 @@ void main() {
         for (final name in MedicalBundleFiles.all) name: read(name),
       },
       biometricCatalog: read(MedicalBundleFiles.biometrics),
+      skinHairCatalog: read(MedicalBundleFiles.skinHair),
     );
+    final skin = read(MedicalBundleFiles.skinHair);
+    expect(skin['_meta']['automatic_diagnosis_allowed'], isFalse);
+    final skinLinks = index.links
+        .where((link) => link.relation == 'skin_hair_name_reference');
+    expect(skinLinks, isNotEmpty);
+    expect(
+      skinLinks.every(
+        (link) =>
+            link.resolved &&
+            link.noteAr == MedicalJsonLinkModule.skinHairNoteAr &&
+            link.toFile == MedicalBundleFiles.diseases,
+      ),
+      isTrue,
+    );
+    final hinted = (skin['records'] as List).cast<Map>().where(
+          (row) => row['kind'] == 'hair_sign_note',
+        );
+    expect(hinted, isNotEmpty);
+    expect(
+      hinted.every((row) => row['hint_is_diagnosis'] == false),
+      isTrue,
+    );
+    for (final row in hinted) {
+      final referenceId = row['reference_id'] as String;
+      final linked = index.diseaseIdForSkinHairReference(referenceId);
+      if (linked != null) {
+        expect(
+          index
+              .from(MedicalBundleFiles.skinHair, referenceId)
+              .single
+              .noteAr,
+          MedicalJsonLinkModule.skinHairNoteAr,
+        );
+      }
+    }
 
     final symptoms = index
         .from(MedicalBundleFiles.knowledge, 'd001')

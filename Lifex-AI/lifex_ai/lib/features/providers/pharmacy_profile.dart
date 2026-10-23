@@ -4,6 +4,7 @@
 /// المسار: lib/features/providers/pharmacy_profile.dart
 /// الوصف: الملف العام (الخارجي) للصيدلية.
 /// =============================================================
+library;
 
 class PharmacyProfile {
   final String pharmacyId;

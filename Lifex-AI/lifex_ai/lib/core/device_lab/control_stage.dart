@@ -13,6 +13,6 @@ enum DeviceControlStage {
 }
 
 extension DeviceControlStageX on DeviceControlStage {
-  bool get mayRead => this.index >= DeviceControlStage.connected.index;
+  bool get mayRead => index >= DeviceControlStage.connected.index;
   bool get mayControl => this == DeviceControlStage.controllable;
 }

@@ -15,18 +15,22 @@ import '../core/admin/admin_manager.dart';
 import '../core/admin/admin_permissions.dart';
 import '../core/admin/owner_identity_policy.dart';
 import '../core/app_config.dart';
+import '../core/studio_theme.dart';
 import '../core/app_constants.dart';
-import '../core/attribution/project_attribution.dart';
 import '../core/orchestrator/lio_gateway_contracts.dart';
 import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/trial_manager.dart';
 import '../features/finance/billing_exemption_policy.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_identity_manager.dart';
+import '../widgets/accessible_widgets.dart';
 import '../widgets/lifex_brand_mark.dart';
+import 'ai_hub_screen.dart';
+import 'system_search_screen.dart';
 import 'admin_dashboard_screen.dart';
 import 'clinical_watch_screen.dart';
 import 'family_management_screen.dart';
+import 'identity_workspace_screen.dart';
 import 'layered_lens_studio_screen.dart';
 import 'partner_sign_in_screen.dart';
 import 'permission_transparency_screen.dart';
@@ -42,7 +46,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late bool _darkModeEnabled;
+  late StudioAppearance _appearance;
   late bool _voiceGuidanceEnabled;
   late AppLanguage _selectedLanguage;
 
@@ -55,7 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     final config = AppConfig.instance;
-    _darkModeEnabled = config.darkModeEnabled;
+    _appearance = config.appearance;
     _voiceGuidanceEnabled = config.voiceGuidanceEnabledByDefault;
     _selectedLanguage = config.defaultLanguage;
   }
@@ -67,8 +71,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _persist() {
+    StudioThemeController.instance.setAppearance(_appearance);
     AppConfig.instance.updateFrom(
-      darkModeEnabled: _darkModeEnabled,
+      appearance: _appearance,
       voiceGuidanceEnabledByDefault: _voiceGuidanceEnabled,
       defaultLanguage: _selectedLanguage,
     );
@@ -171,73 +176,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return HealthIdentityManager.instance.getByProfileId(activeProfileId)?.lifexId;
   }
 
-  Future<void> _showInventorActivationDialog(String profileId) async {
-    final emailCtrl = TextEditingController(text: AppConstants.ownerEmail);
-    final phoneCtrl = TextEditingController(text: AppConstants.ownerPhoneNumber);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('تفعيل حساب المخترع / المالك'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(ProjectAttribution.officialStatementShortAr),
-              const SizedBox(height: 12),
-              const Text(
-                'أدخل البريد أو الهاتف المسجَّلين للمالك فقط. '
-                'الاسم وحده لا يفعّل الصلاحيات.',
-                style: TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: emailCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'البريد',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: phoneCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'الهاتف',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('إلغاء'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('تفعيل'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
-    final identity =
-        HealthIdentityManager.instance.ensureIdentityAndMaybeActivateOwner(
-      profileId: profileId,
-      email: emailCtrl.text.trim(),
-      phoneNumber: phoneCtrl.text.trim(),
-    );
-    final role = GlobalAdminManager.instance.roleOf(identity.lifexId);
-    setState(() {});
+  void _showOwnerActivationClosed() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          role == GlobalAdminRole.owner
-              ? 'تم تفعيل دور المالك التشغيلي. يمكنك الآن تعيين أدمنز ومشرفين.'
-              : const OwnerIdentityPolicy().activationHintAr(),
-        ),
-      ),
+      SnackBar(content: Text(const OwnerIdentityPolicy().activationHintAr())),
     );
   }
 
@@ -246,37 +187,116 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final activeLifexId = _activeLifexId(context);
     final activeProfile =
         Provider.of<ActiveProfileController>(context).activeProfile;
-    // إعادة محاولة التفعيل إن كانت الهوية تحمل بريد/هاتف المالك مسبقاً.
-    if (activeLifexId != null) {
-      final id = HealthIdentityManager.instance.getByLifexId(activeLifexId);
-      if (id != null) {
-        GlobalAdminManager.instance.autoActivateOwnerIfMatches(
-          lifexId: activeLifexId,
-          email: id.email,
-          phoneNumber: id.phoneNumber,
-        );
-      }
-    }
     final hasAdminRole = activeLifexId != null &&
         GlobalAdminManager.instance.roleOf(activeLifexId) != GlobalAdminRole.none;
     final isOwner = activeLifexId != null &&
         GlobalAdminManager.instance.isOwner(activeLifexId);
+    final adminAccess = activeLifexId != null &&
+        GlobalAdminManager.instance.hasFullSystemAccess(activeLifexId);
 
-    return Scaffold(
+    return ScreenArrival(
+      message: 'الإعدادات',
+      controls: const ['المظهر', 'محركات الذكاء', 'بحث داخل وخارج', 'الصلاحيات'],
+      body: 'البحث بلا مفتاح يعمل. المفتاح اختياري ويبقى على هذا الجهاز.',
+      child: Scaffold(
       appBar: AppBar(title: const Text('الإعدادات')),
       body: ListView(
         children: [
-          SwitchListTile(
-            title: const Text('الوضع الليلي'),
-            value: _darkModeEnabled,
+          ListTile(
+            leading: const Icon(Icons.hub_outlined),
+            title: const Text('محركات الذكاء'),
+            subtitle: const Text(
+              'بلا مفتاح: المرجع المحلي ومحرك عام. بمفتاح: Gemini أو ChatGPT أو Claude على هذا الجهاز',
+            ),
+            onTap: () {
+              final profileId = activeProfile?.profileId;
+              if (profileId == null || profileId.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'البحث بلا مفتاح متاح من بحث المنظومة. حفظ المفتاح يحتاج ملفاً صحياً.',
+                    ),
+                  ),
+                );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SystemSearchScreen(),
+                  ),
+                );
+                return;
+              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AiHubScreen(profileId: profileId),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.manage_search),
+            title: const Text('بحث داخل المنظومة وخارجها'),
+            subtitle: const Text(
+              'نتائج الجهاز أولاً، ثم خلاصة محرك عام بلا مفتاح. الملف الصحي لا يُرسل',
+            ),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const SystemSearchScreen(),
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.travel_explore),
+            title: const Text('البحث على الإنترنت'),
+            subtitle: const Text('اختيار المحرك وإضافة رابط https'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const SystemSearchScreen(startOnWeb: true),
+              ),
+            ),
+          ),
+          const ListTile(
+            title: Text('مظهر الاستوديو'),
+            subtitle: Text('ليلي أردوازي، نهاري، أو تباين عالٍ.'),
+          ),
+          RadioListTile<StudioAppearance>(
+            title: const Text('ليلي'),
+            value: StudioAppearance.dark,
+            groupValue: _appearance,
             onChanged: (value) {
-              setState(() => _darkModeEnabled = value);
+              if (value == null) return;
+              setState(() => _appearance = value);
+              _persist();
+            },
+          ),
+          RadioListTile<StudioAppearance>(
+            title: const Text('نهاري'),
+            value: StudioAppearance.light,
+            groupValue: _appearance,
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _appearance = value);
+              _persist();
+            },
+          ),
+          RadioListTile<StudioAppearance>(
+            title: const Text('تباين عالٍ'),
+            value: StudioAppearance.contrast,
+            groupValue: _appearance,
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _appearance = value);
               _persist();
             },
           ),
           SwitchListTile(
             title: const Text('الإرشاد الصوتي'),
-            subtitle: const Text('قراءة التنبيهات صوتياً تلقائياً'),
+            subtitle: const Text(
+              'طبقة الإرشاد تبقى. الإيقاف يكتم النطق العادي. تنبيهات الطوارئ تُنطق.',
+            ),
             value: _voiceGuidanceEnabled,
             onChanged: (value) {
               setState(() => _voiceGuidanceEnabled = value);
@@ -313,6 +333,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const Divider(),
           ListTile(
+            leading: const Icon(Icons.badge_outlined),
+            title: const Text('هوية الحساب وبيانات الاتصال'),
+            subtitle: const Text(
+              'تحديث البريد أو الهاتف وتفعيل وصول المالك عند مطابقته',
+            ),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const IdentityWorkspaceScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.image_outlined),
             title: const Text('Manage the thumbnail'),
             subtitle: const Text('إدارة الصورة المصغّرة للملف والختم الرسمي'),
@@ -327,8 +362,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.filter_none_outlined),
-            title: const Text('عدسة الشرائح المتراكبة'),
-            subtitle: const Text('تكبير جلدي وعدستان. بلا تشخيص وبلا دمج وهمي'),
+            title: const Text('تقريب العدسة'),
+            subtitle: const Text('معاينة حية وزوم العتاد. ليست تشخيص جلد'),
             trailing: const Icon(Icons.chevron_left),
             onTap: () {
               Navigator.of(context).push(
@@ -357,9 +392,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (profile == null) return const SizedBox.shrink();
               return SwitchListTile(
                 secondary: const Icon(Icons.bloodtype_outlined),
-                title: const Text('استقبال طلبات التبرع بالدم'),
+                title: const Text('إشعارات التبرع بالدم'),
                 subtitle: const Text(
-                  'التبرع مجاني. يمكنك إيقاف الإشعارات في أي وقت.',
+                  'موقفة حتى تفعيلها. التبرع مجاني، والإيقاف لا يحذف محادثاتك.',
                 ),
                 value: profile.acceptsBloodDonationAlerts,
                 onChanged: (value) {
@@ -382,12 +417,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const BillingExemptionPolicy().evaluate(profile).isExempt;
               final allowed = const SessionAccessPolicy().canOpenUnit(
                 'box',
-                phase: trial.phase(feeExempt: exempt),
+                phase: trial.phase(
+                  feeExempt: exempt,
+                  adminAccess: adminAccess,
+                ),
                 feeExempt: exempt,
+                adminAccess: adminAccess,
               );
               if (!allowed) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(trial.statusLineAr(feeExempt: exempt))),
+                  SnackBar(
+                    content: Text(
+                      trial.statusLineAr(
+                        feeExempt: exempt,
+                        adminAccess: adminAccess,
+                      ),
+                    ),
+                  ),
                 );
                 return;
               }
@@ -403,17 +449,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('حالة النسخة والاشتراك'),
             subtitle: Text(
               context.read<TrialManager>().statusLineAr(
-                    feeExempt: context
-                                .read<ActiveProfileController>()
-                                .activeProfile !=
-                            null &&
+                    feeExempt: activeProfile != null &&
                         const BillingExemptionPolicy()
-                            .evaluate(
-                              context
-                                  .read<ActiveProfileController>()
-                                  .activeProfile!,
-                            )
+                            .evaluate(activeProfile)
                             .isExempt,
+                    adminAccess: adminAccess,
                   ),
             ),
           ),
@@ -429,8 +469,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               final profile = profiles.activeProfile;
               final exempt = profile != null &&
                   const BillingExemptionPolicy().evaluate(profile).isExempt;
-              final subscribed =
-                  trial.phase(feeExempt: exempt) == TrialPhase.subscribed;
+              final subscribed = trial.phase(
+                    feeExempt: exempt,
+                    adminAccess: adminAccess,
+                  ) ==
+                  TrialPhase.subscribed;
               return Column(
                 children: [
                   ListTile(
@@ -474,7 +517,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                     child: const Text('تفعيل نسخة الإهداء'),
                   ),
-                  if (trial.phase(feeExempt: exempt) == TrialPhase.giftFrozen)
+                  if (trial.phase(
+                        feeExempt: exempt,
+                        adminAccess: adminAccess,
+                      ) ==
+                      TrialPhase.giftFrozen)
                     FilledButton(
                       onPressed: () {
                         final result = trial.claimAsNewSubscriber();
@@ -555,7 +602,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               subtitle: Text(
                 isOwner
-                    ? 'تعيين أدمنز ومشرفين + كل الصلاحيات التشغيلية'
+                    ? 'صيانة النظام وتعيين مدير وموظف ومشرف، مأجورين أو متطوعين'
                     : 'إدارة الأدوار ومفاتيح الأحداث الدقيقة',
               ),
               trailing: const Icon(Icons.chevron_left),
@@ -572,24 +619,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.vpn_key_outlined),
-              title: const Text('تفعيل حساب المخترع / المالك'),
-              subtitle: Text(
-                'الإسناد: ${ProjectAttribution.inventorOwnerAr}. '
-                'فعّل بالبريد أو الهاتف الرسميين لتعيين أدمنز.',
-              ),
+              title: const Text('دور المالك التشغيلي'),
+              subtitle: Text(const OwnerIdentityPolicy().activationHintAr()),
               trailing: const Icon(Icons.chevron_left),
-              onTap: () {
-                final profileId = activeProfile?.profileId;
-                if (profileId == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('أنشئ ملفاً صحياً أولاً ثم فعّل الهوية.'),
-                    ),
-                  );
-                  return;
-                }
-                _showInventorActivationDialog(profileId);
-              },
+              onTap: _showOwnerActivationClosed,
             ),
           ],
           const Divider(),
@@ -598,7 +631,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('حول التطبيق'),
-            subtitle: const Text('Lifex-AI'),
+            subtitle: const Text(AppConstants.systemName),
             onTap: () {
               showAboutDialog(
                 context: context,
@@ -627,16 +660,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     textAlign: TextAlign.right,
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    '${AppConstants.academyNameAr}\n${AppConstants.ownerEmail}\n${AppConstants.officialContactEmail}\n${AppConstants.ownerPhoneNumber}',
+                  const Text(
+                    AppConstants.academyNameAr,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: 12),
                   ),
                 ],
               );
             },
           ),
         ],
+      ),
       ),
     );
   }

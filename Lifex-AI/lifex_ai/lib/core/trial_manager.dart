@@ -94,8 +94,10 @@ class TrialManager {
     return DateTime.tryParse(raw);
   }
 
-  TrialPhase phase({bool feeExempt = false}) {
-    if (feeExempt || paidYearActive) return TrialPhase.subscribed;
+  TrialPhase phase({bool feeExempt = false, bool adminAccess = false}) {
+    if (feeExempt || adminAccess || paidYearActive) {
+      return TrialPhase.subscribed;
+    }
     if (isGiftCopy) {
       final started = giftStartedAt ?? installedAt;
       final giftDays = DateTime.now().difference(started).inDays;
@@ -122,8 +124,11 @@ class TrialManager {
   bool get asksForSubscription =>
       phase() == TrialPhase.reducedMonth || phase() == TrialPhase.residual;
 
-  String statusLineAr({bool feeExempt = false}) {
-    switch (phase(feeExempt: feeExempt)) {
+  String statusLineAr({bool feeExempt = false, bool adminAccess = false}) {
+    if (adminAccess) {
+      return 'وصول المالك/الأدمن الكامل مفعّل على هذا الحساب؛ لا تنطبق عليه مدة التجربة.';
+    }
+    switch (phase(feeExempt: feeExempt, adminAccess: adminAccess)) {
       case TrialPhase.subscribed:
         return feeExempt
             ? 'نسخة كاملة بإعفاء إنساني مسجّل على هذا الجهاز.'
@@ -282,7 +287,9 @@ class SessionAccessPolicy {
     String unitId, {
     required TrialPhase phase,
     required bool feeExempt,
+    bool adminAccess = false,
   }) {
+    if (adminAccess) return true;
     // giftFrozen: نسخة إهداء غير مخصّصة — الإعدادات فقط حتى التخصيص
     // (REQUIRES_EXTERNAL_SETUP وليس LOCKED بسبب Premium).
     if (phase == TrialPhase.giftFrozen) {

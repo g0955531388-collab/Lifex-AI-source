@@ -16,6 +16,7 @@ import '../features/network_box/unit_branch_catalog.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
 import '../features/profile/multi_profile_engine.dart';
+import '../services/cloud/cloud_sync_manager.dart';
 import 'unit_branch_navigator.dart';
 import 'marriage_request_screen.dart';
 
@@ -277,7 +278,7 @@ class _AddFamilyMemberSheetState extends State<_AddFamilyMemberSheet> {
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     setState(() => _errorMessageAr = null);
     if (!_formKey.currentState!.validate()) return;
     if (_dateOfBirth == null) {
@@ -289,15 +290,33 @@ class _AddFamilyMemberSheetState extends State<_AddFamilyMemberSheet> {
       context,
       listen: false,
     );
+    final fullName = _nameController.text.trim();
+    final sync = Provider.of<CloudSyncManager>(context, listen: false);
+    final serverProfileId =
+        await sync.requestServerProfileId(displayName: fullName);
+    if (!mounted) return;
 
     final profile = HealthProfile(
-      profileId: 'local-${DateTime.now().millisecondsSinceEpoch}',
-      fullName: _nameController.text.trim(),
+      profileId: serverProfileId ??
+          'local-${DateTime.now().millisecondsSinceEpoch}',
+      fullName: fullName,
       dateOfBirth: _dateOfBirth!,
       biologicalSex: _sex,
     );
 
     final result = controller.addFamilyMember(profile, role: _role);
+    if (result.success && sync.isEndpointConfigured) {
+      sync.enqueue(
+        entityType: SyncEntityType.healthProfile,
+        entityId: profile.profileId,
+        payload: {
+          'profileId': profile.profileId,
+          'fullName': profile.fullName,
+        },
+      );
+      await sync.syncPendingOperations();
+    }
+    if (!mounted) return;
     if (!result.success) {
       setState(() {
         _errorMessageAr = result.errorMessage ?? 'تعذّر إضافة فرد العائلة.';

@@ -53,15 +53,37 @@ void main() {
     expect(result.reasonAr, isNotNull);
   });
 
-  test('مكفوف: مُعفى بلا رسوم', () {
-    expect(policy.evaluate(_buildProfile(isBlind: true)).isExempt, isTrue);
+  test('علم المكفوف بلا بطاقة في وحدة المعاقين: غير مُعفى', () {
+    expect(policy.evaluate(_buildProfile(isBlind: true)).isExempt, isFalse);
   });
 
-  test('مريض بحالة مزمنة نشطة: مُعفى', () {
+  test('حالة مزمنة مكتوبة في الملف بلا بطاقة مريض دائم: غير مُعفى', () {
     final profile = _buildProfile(chronicConditions: [
       ChronicConditionRecord(conditionName: 'السكري', diagnosedAt: DateTime(2020, 1, 1)),
     ]);
+    expect(policy.evaluate(profile).isExempt, isFalse);
+  });
+
+  test('بطاقة مريض دائم من البلد المسجّل: مُعفى', () {
+    final profile = _buildProfile(
+      isPersonOfDetermination: true,
+      accountCountry: 'سوريا',
+      determinationCardKind: 'chronicIllnessCard',
+      determinationCardCountry: 'سوريا',
+      determinationCardRef: 'CH-1',
+    );
     expect(policy.evaluate(profile).isExempt, isTrue);
+  });
+
+  test('البطاقة الوطنية وحدها لا تثبّت', () {
+    final profile = _buildProfile(
+      isPersonOfDetermination: true,
+      accountCountry: 'سوريا',
+      determinationCardKind: 'nationalId',
+      determinationCardCountry: 'سوريا',
+      determinationCardRef: 'N-1',
+    );
+    expect(policy.evaluate(profile).isExempt, isFalse);
   });
 
   test('حالة مزمنة غير نشطة (isActive=false): لا تُعفي', () {

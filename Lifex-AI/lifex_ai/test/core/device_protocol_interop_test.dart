@@ -2,6 +2,7 @@
 /// Lifex-AI — اختبار
 /// الملف: device_protocol_interop_test.dart
 /// =============================================================
+library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/device_interoperability/interoperability_engine.dart';
 import 'package:lifex_ai/core/device_protocol/lifex_protocol.dart';

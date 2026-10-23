@@ -5,8 +5,11 @@
 /// الوصف: إرسال إشعار فوري "استغاثة دم" لمتبرع مؤهل، بأولوية عالية في
 /// نظام الإشعارات (لا تندرج ضمن الإشعارات العادية القابلة للتأجيل).
 /// =============================================================
+library;
 
 import 'blood_request_engine.dart';
+import 'blood_type_match.dart';
+import 'donor_eligibility_filter.dart';
 
 typedef FlashAlertSendFunction = Future<bool> Function(
   String recipientLifexId,
@@ -38,12 +41,23 @@ class FlashAlertNotifier {
       requestId: request.requestId,
     ));
 
-    final urgencyLabel = request.urgency == BloodRequestUrgency.critical
-        ? '🚨 عاجل جداً'
-        : '⚠️ عاجل';
-
-    final message = '$urgencyLabel: حالة قريبة منك تحتاج تبرعاً بفصيلة دم '
-        'تطابق فصيلتك. هل يمكنك المساعدة؟';
+    final unit = request.healthUnitName.trim().isEmpty
+        ? 'الوحدة الصحية'
+        : request.healthUnitName.trim();
+    final place = request.address.trim().isEmpty
+        ? 'العنوان لدى الوحدة'
+        : request.address.trim();
+    final type = BloodTypeMatch.label(request.bloodType);
+    final spot = DonorEligibilityFilter.coordinatesUsable(
+      request.requestLatitude,
+      request.requestLongitude,
+    )
+        ? ' الموقع: ${request.requestLatitude}, ${request.requestLongitude}.'
+        : '';
+    final message = 'نداء للتبرع بالدم: $unit، العنوان: $place. '
+        'الزمرة المطلوبة: $type.$spot '
+        'اضغط للاطلاع على التفاصيل والتواصل مع الوحدة الصحية. '
+        'هذه دعوة أولية، وبنك الدم يتحقق من الأهلية.';
 
     await sendFunction?.call(recipientLifexId, message);
   }

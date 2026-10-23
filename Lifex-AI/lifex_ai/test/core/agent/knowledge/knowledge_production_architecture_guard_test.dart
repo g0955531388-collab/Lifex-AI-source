@@ -8,7 +8,7 @@ import 'package:lifex_ai/core/lio/lio_canon.dart';
 void main() {
   final libRoot = Directory('lib');
 
-  List<File> _dartFilesUnder(Directory dir) {
+  List<File> dartFilesUnder(Directory dir) {
     if (!dir.existsSync()) return const [];
     return dir
         .listSync(recursive: true)
@@ -19,7 +19,7 @@ void main() {
 
   test('Production lib must not import test/support doubles', () {
     final offenders = <String>[];
-    for (final f in _dartFilesUnder(libRoot)) {
+    for (final f in dartFilesUnder(libRoot)) {
       final text = f.readAsStringSync();
       if (text.contains('test/support/') ||
           text.contains('knowledge_retriever_test_doubles')) {
@@ -31,7 +31,7 @@ void main() {
 
   test('Production lib must not define Stub/Fake KnowledgeRetriever', () {
     final offenders = <String>[];
-    for (final f in _dartFilesUnder(libRoot)) {
+    for (final f in dartFilesUnder(libRoot)) {
       final text = f.readAsStringSync();
       if (RegExp(r'class\s+(Fake|Stub)\w*KnowledgeRetriever\b')
           .hasMatch(text)) {

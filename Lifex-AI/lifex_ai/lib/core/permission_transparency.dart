@@ -49,16 +49,16 @@ class PermissionTransparencyManager {
   static const Map<LifexSensitivePermission, String> explanationsAr = {
     LifexSensitivePermission.camera:
         'تُستخدم لقراءة الأوراق الطبية والأدوية ومساعدة المكفوفين والرادار الضوئي، '
-        'وليس للبث المستمر بدون موافقتك.',
+            'وليس للبث المستمر بدون موافقتك.',
     LifexSensitivePermission.microphone:
         'يُستخدم للأوامر الصوتية وتنبيهات الطوارئ الصوتية. لا يُرسل '
-        'مقطع صوتي لأي خادم دون موافقة منفصلة.',
+            'مقطع صوتي لأي خادم دون موافقة منفصلة.',
     LifexSensitivePermission.location:
         'يُستخدم في الطوارئ وشبكة الدم لإرشاد أقرب مساعدة. يمكن إيقافه '
-        'في أي وقت من هذه الشاشة.',
+            'في أي وقت من هذه الشاشة.',
     LifexSensitivePermission.healthData:
         'تبقى في ملفك الصحي المحلي. لا تُشارك مع طبيب أو عائلة إلا حسب '
-        'قواعد الخصوصية التي تضبطها أنت.',
+            'قواعد الخصوصية التي تضبطها أنت.',
   };
 
   PermissionDecisionRecord? recordOf(LifexSensitivePermission permission) =>
@@ -78,10 +78,25 @@ class PermissionTransparencyManager {
         granted: granted,
         reasonAr: explanationsAr[permission] ?? '',
       );
-      return;
+    } else {
+      existing.granted = granted;
+      existing.decidedAt = DateTime.now();
     }
-    existing.granted = granted;
-    existing.decidedAt = DateTime.now();
+    onDecided?.call(permission, granted);
+  }
+
+  /// يُستدعى بعد الحفظ حتى تبقى موافقة التطبيق بعد إعادة التشغيل.
+  void Function(LifexSensitivePermission permission, bool granted)? onDecided;
+
+  void restore(Map<String, bool> saved) {
+    final hook = onDecided;
+    onDecided = null;
+    for (final permission in LifexSensitivePermission.values) {
+      final granted = saved[permission.name];
+      if (granted == null) continue;
+      decide(permission: permission, granted: granted);
+    }
+    onDecided = hook;
   }
 
   bool useIfGranted(LifexSensitivePermission permission) {

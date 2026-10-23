@@ -2,12 +2,17 @@
 /// Lifex-AI — مستودع
 /// الملف: personal_health_repository.dart
 /// =============================================================
+library;
 import 'personal_health_engine.dart';
 import 'personal_health_types.dart';
 
 abstract class PersonalHealthRepository {
   Future<void> savePatient(PatientRecord patient);
-  Future<PatientRecord?> getPatient(String patientId);
+  Future<PatientRecord?> getPatient({
+    required String actorId,
+    required String patientId,
+    required DateTime at,
+  });
   Future<void> saveCondition(PatientCondition condition);
   Future<void> saveMedication(PatientMedication medication);
   Future<void> saveObservation(PatientObservation observation);
@@ -36,8 +41,22 @@ class InMemoryPersonalHealthRepository implements PersonalHealthRepository {
   Future<void> savePatient(PatientRecord patient) => engine.createPatient(patient);
 
   @override
-  Future<PatientRecord?> getPatient(String patientId) async =>
-      engine.patients[patientId];
+  Future<PatientRecord?> getPatient({
+    required String actorId,
+    required String patientId,
+    required DateTime at,
+  }) async {
+    if (!engine.authorize(
+      actorId: actorId,
+      patientId: patientId,
+      scope: HealthDataScope.profile,
+      purpose: ConsentPurpose.care,
+      at: at,
+    )) {
+      return null;
+    }
+    return engine.patients[patientId];
+  }
 
   @override
   Future<void> saveCondition(PatientCondition condition) =>

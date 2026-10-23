@@ -42,6 +42,14 @@ class LocalKnowledge {
   final List<Map<String, dynamic>> cameraSigns;
   final String disclaimerAr;
 
+  bool get sourcesReady =>
+      diseases.isNotEmpty ||
+      medications.isNotEmpty ||
+      symptoms.isNotEmpty ||
+      tests.isNotEmpty ||
+      namedConditions.isNotEmpty ||
+      cameraSigns.isNotEmpty;
+
   static Future<List<Map<String, dynamic>>> _readList(String asset) async {
     try {
       final decoded = jsonDecode(await rootBundle.loadString(asset));
@@ -115,7 +123,7 @@ class LocalKnowledge {
         final blob = MedicalRecordCanon.normalize(
           keys.map((k) => '${row[k] ?? ''}').join(' '),
         );
-        if (!blob.contains(q)) continue;
+        if (!MedicalRecordCanon.queryMatches(blob, q)) continue;
         hits.add(
           KnowledgeHit(
             kindAr: kind,

@@ -63,7 +63,7 @@ class HardwareCueCalibrator {
   Map<String, dynamic> toMap() => {
         'kind': kind.name,
         'tapCount': tapCount.clamp(2, 4),
-        'windowMs': windowMs.clamp(250, 900),
+        'windowMs': windowMs.clamp(250, 1800),
         'startSignal': startSignal.name,
       };
 
@@ -74,7 +74,7 @@ class HardwareCueCalibrator {
     final taps = raw['tapCount'];
     if (taps is int) tapCount = taps.clamp(2, 4);
     final window = raw['windowMs'];
-    if (window is int) windowMs = window.clamp(250, 900);
+    if (window is int) windowMs = window.clamp(250, 1800);
     for (final value in StartSignalKind.values) {
       if (value.name == raw['startSignal']) startSignal = value;
     }

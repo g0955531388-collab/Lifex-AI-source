@@ -6,6 +6,18 @@
 /// =============================================================
 library lifex_ai.features.voice.wake_word_detector;
 
+/// الاستماع الدائم غير مبني. الخدمة الأمامية الحالية إشعار فقط.
+class WakeListenLimit {
+  const WakeListenLimit();
+
+  bool get continuousWhileScreenOff => false;
+
+  String get requirementAr =>
+      'كلمة التنبيه المستمرة تحتاج خدمة أمامية بنوع ميكروفون وإشعاراً دائماً '
+      'وإذناً صريحاً. أندرويد قد يوقفها مع الشاشة المقفلة، وهي تستهلك البطارية. '
+      'غير مفعّلة في هذا البناء.';
+}
+
 class WakeWordDetector {
   WakeWordDetector({this.customWakeWord = 'ليفكس'});
 

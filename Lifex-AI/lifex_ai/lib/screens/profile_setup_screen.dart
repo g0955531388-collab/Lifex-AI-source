@@ -17,8 +17,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/app_config.dart';
 import '../features/accessibility/access_mode_preference.dart';
+import '../features/accessibility/boot_access_preference.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../features/voice/hardware_cue_bridge.dart';
 import '../features/profile/health_profile.dart';
+import '../features/profile/inventor_owner_profile.dart';
+import '../services/cloud/cloud_sync_manager.dart';
 import '../widgets/accessible_widgets.dart';
 import 'home_screen.dart';
 
@@ -42,6 +46,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   bool _isBlind = false;
   bool _accessEnabled = false;
   bool _accessUserChose = false;
+  bool _bootAccess = false;
   bool _acceptsBloodDonationAlerts = false;
   String? _errorMessageAr;
 
@@ -58,10 +63,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final prefs = await SharedPreferences.getInstance();
     final memory = AccessModeMemory()..readPrefs(prefs);
     final decision = memory.load(profileNeedsAccess: _isBlind);
+    final boot = prefs.getBool(BootAccessPreference.key) ?? false;
     if (!mounted) return;
     setState(() {
       _accessEnabled = decision.enabled;
       _accessUserChose = decision.userChose;
+      _bootAccess = boot;
     });
   }
 
@@ -82,6 +89,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     }
     final prefs = await SharedPreferences.getInstance();
     await memory.writePrefs(prefs);
+    await prefs.setBool(BootAccessPreference.key, _bootAccess);
+    await HardwareCueBridge.instance.refreshBlindArm();
   }
 
   @override
@@ -107,6 +116,31 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     }
   }
 
+  Future<void> _createInventorOwnerFile() async {
+    setState(() => _errorMessageAr = null);
+    final draft = InventorOwnerProfileDraft.official();
+    final controller = Provider.of<ActiveProfileController>(
+      context,
+      listen: false,
+    );
+    final result = controller.createInitialProfile(
+      draft.profile,
+      email: draft.email,
+      phoneNumber: draft.phone,
+    );
+    if (!result.success) {
+      setState(() {
+        _errorMessageAr = result.errorMessage ?? 'تعذّر إنشاء ملف المخترع.';
+      });
+      return;
+    }
+    await _persistAccessMode();
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
+  }
+
   Future<void> _submit() async {
     setState(() => _errorMessageAr = null);
 
@@ -117,12 +151,16 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       context,
       listen: false,
     );
+    final fullName = _nameController.text.trim();
+    final sync = Provider.of<CloudSyncManager>(context, listen: false);
+    final serverProfileId =
+        await sync.requestServerProfileId(displayName: fullName);
+    if (!mounted) return;
 
     final profile = HealthProfile(
-      // معرّف بسيط ومحلي كافٍ لهذه المرحلة؛ يُستبدل لاحقاً بمعرّف صادر
-      // من خادم Lifex-AI الخلفي عند ربط الحساب بمصادقة حقيقية.
-      profileId: 'local-${DateTime.now().millisecondsSinceEpoch}',
-      fullName: _nameController.text.trim(),
+      profileId: serverProfileId ??
+          'local-${DateTime.now().millisecondsSinceEpoch}',
+      fullName: fullName,
       statedAgeYears: ageYears,
       dateOfBirth: _dateOfBirth,
       biologicalSex: _sex,
@@ -145,6 +183,18 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         _errorMessageAr = result.errorMessage ?? 'تعذّر إنشاء الملف الصحي.';
       });
       return;
+    }
+
+    if (sync.isEndpointConfigured) {
+      sync.enqueue(
+        entityType: SyncEntityType.healthProfile,
+        entityId: profile.profileId,
+        payload: {
+          'profileId': profile.profileId,
+          'fullName': profile.fullName,
+        },
+      );
+      unawaited(sync.syncPendingOperations());
     }
 
     await _persistAccessMode();
@@ -172,6 +222,24 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     'مرحباً بك في Lifex-AI. لنبدأ بإنشاء ملفك الصحي '
                     'الأساسي. يمكنك إضافة أفراد عائلتك لاحقاً من الإعدادات.',
                     style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _createInventorOwnerFile,
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        child: Text(
+                          'ملف شخص للمخترع والأدمن: غازي سليم بكفلاوي',
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'يستخدم البريد والهاتف المعتمدين. لا يُكتب عمر ولا فصيلة دم. الاسم وحده لا يفتح الصلاحية.',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 24),
                   TextFormField(
@@ -309,6 +377,20 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       _accessEnabled = value;
                       _accessUserChose = true;
                     }),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(_english
+                        ? 'Resume accessibility after phone boot'
+                        : 'استئناف وضع الوصول بعد إقلاع الهاتف'),
+                    subtitle: Text(
+                      BootAccessPreference.decide(
+                        userEnabled: _bootAccess,
+                        english: _english,
+                      ).speech,
+                    ),
+                    value: _bootAccess,
+                    onChanged: (value) => setState(() => _bootAccess = value),
                   ),
                   TextFormField(
                     controller: _accountCountryController,

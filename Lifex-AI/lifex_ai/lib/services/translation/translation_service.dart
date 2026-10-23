@@ -61,6 +61,11 @@ class GoogleTranslationProvider implements TranslationProvider {
     required String targetLanguageCode,
     String? sourceLanguageCode,
   }) async {
+    if (apiKey.trim().isEmpty || apiKey.contains('placeholder')) {
+      return const TranslationResult.failure(
+        'الترجمة السحابية غير موصولة. النص يبقى كما كُتب.',
+      );
+    }
     try {
       final response = await _httpClient.post(
         Uri.parse('$_endpoint?key=$apiKey'),

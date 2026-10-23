@@ -11,8 +11,11 @@ import 'package:provider/provider.dart';
 import '../features/doctors/doctor_directory.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../features/profile/health_identity_manager.dart';
+import '../widgets/barcode_scan_button.dart';
 import '../widgets/honesty_banner.dart';
 import 'doctor_diary_screen.dart';
+import 'nearby_care_screen.dart';
 import 'public_doctor_face_screen.dart';
 
 class DoctorDirectoryScreen extends StatefulWidget {
@@ -30,7 +33,23 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
   final _km = TextEditingController(text: '1');
   final _license = TextEditingController();
   final _brief = TextEditingController();
+  final _barcode = TextEditingController();
+  final _city = TextEditingController();
+  final _address = TextEditingController();
+  final _email = TextEditingController();
+  final _note = TextEditingController();
+  final _disabilityNote = TextEditingController();
+  final _discount = TextEditingController();
   String? _linkedProfileId;
+
+  String _listedId(Map<String, dynamic> doctor) {
+    final profileId = doctor['profileId']?.toString() ?? '';
+    if (profileId.isEmpty) return '';
+    final lifexId =
+        HealthIdentityManager.instance.getByProfileId(profileId)?.lifexId;
+    final shown = (lifexId == null || lifexId.isEmpty) ? profileId : lifexId;
+    return '  ID $shown';
+  }
 
   @override
   void dispose() {
@@ -39,6 +58,13 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
     _km.dispose();
     _license.dispose();
     _brief.dispose();
+    _city.dispose();
+    _address.dispose();
+    _email.dispose();
+    _note.dispose();
+    _disabilityNote.dispose();
+    _discount.dispose();
+    _barcode.dispose();
     super.dispose();
   }
 
@@ -75,7 +101,7 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
             children: [
               const HonestyBanner(
                 messageAr:
-                    'الصفحة العامة: اسم واختصاص وتواصل. بلا أسماء مرضى. الموقع الآلي يحتاج إذناً وخادماً؛ المسافة هنا يدوية.',
+                    'الصفحة العامة: اسم واختصاص وتواصل. بلا أسماء مرضى. الأقرب من موقع الجهاز في شاشة الاقتراح، وبلا إحداثيات مختلقة.',
               ),
               if (doctors.isEmpty)
                 const Card(
@@ -88,6 +114,17 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                     ),
                   ),
                 ),
+              ListTile(
+                leading: const Icon(Icons.near_me_outlined),
+                title: const Text('الأقرب من موقعي'),
+                subtitle: const Text('الأقرب ضمن الاختصاص ثم ضمن موقع الجهاز'),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const NearbyCareScreen(),
+                  ),
+                ),
+              ),
               ListTile(
                 leading: const Icon(Icons.event_note_outlined),
                 title: const Text('يوميات الطبيب'),
@@ -110,12 +147,14 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                 onChanged: (value) => setState(
                   () => _filter = value == '__all__' ? null : value,
                 ),
-                decoration:
-                    const InputDecoration(labelText: 'كل الاختصاصات'),
+                decoration: const InputDecoration(labelText: 'كل الاختصاصات'),
               ),
               for (final doctor in doctors)
                 ListTile(
-                  title: Text(doctor['title']?.toString() ?? ''),
+                  title: Text(
+                    '${doctor['title'] ?? ''}'
+                    '${_listedId(doctor)}',
+                  ),
                   subtitle: Text(
                     '${doctor['detail']} · ${doctor['km'] ?? '—'} كم',
                   ),
@@ -152,6 +191,37 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                 decoration: const InputDecoration(labelText: 'المسافة كم'),
               ),
               TextField(
+                controller: _city,
+                decoration: const InputDecoration(labelText: 'المدينة'),
+              ),
+              TextField(
+                controller: _address,
+                decoration: const InputDecoration(labelText: 'العنوان'),
+              ),
+              TextField(
+                controller: _email,
+                decoration: const InputDecoration(labelText: 'البريد'),
+              ),
+              TextField(
+                controller: _note,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظة الحضور التي يكتبها الطبيب',
+                ),
+              ),
+              TextField(
+                controller: _disabilityNote,
+                decoration: const InputDecoration(
+                  labelText: 'دعم ذوي الإعاقة الذي يعلنه الطبيب',
+                ),
+              ),
+              TextField(
+                controller: _discount,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'اقتراح خصم بالمئة، إن كتبه الطبيب',
+                ),
+              ),
+              TextField(
                 controller: _license,
                 decoration: const InputDecoration(
                   labelText: 'رقم الاعتماد الوطني',
@@ -178,12 +248,17 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                     ),
                   ),
                 ],
-                onChanged: (value) =>
-                    setState(() => _linkedProfileId = value == '' ? null : value),
+                onChanged: (value) => setState(
+                    () => _linkedProfileId = value == '' ? null : value),
                 decoration: const InputDecoration(
                   labelText: 'ربط بملف الطبيب لاستلام الإشعار والسي في',
                 ),
               ),
+              BarcodeScanButton(
+                current: _barcode.text,
+                onCode: (code) => setState(() => _barcode.text = code),
+              ),
+              const SizedBox(height: 8),
               FilledButton(
                 onPressed: () {
                   if (_name.text.trim().isEmpty) return;
@@ -193,6 +268,15 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                     'km': _km.text.trim(),
                     'license': _license.text.trim(),
                     'brief': _brief.text.trim(),
+                    'city': _city.text.trim(),
+                    'address': _address.text.trim(),
+                    'email': _email.text.trim(),
+                    'phone': _phone.text.trim(),
+                    'note': _note.text.trim(),
+                    'disabilityNote': _disabilityNote.text.trim(),
+                    'discountSuggestion': _discount.text.trim(),
+                    if (_barcode.text.trim().isNotEmpty)
+                      'barcode': _barcode.text.trim(),
                     'profileId': _linkedProfileId ?? '',
                     'workHours': '12',
                     'slotMinutes': '30',
@@ -204,6 +288,13 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                   _phone.clear();
                   _license.clear();
                   _brief.clear();
+                  _barcode.clear();
+                  _city.clear();
+                  _address.clear();
+                  _email.clear();
+                  _note.clear();
+                  _disabilityNote.clear();
+                  _discount.clear();
                 },
                 child: const Text('حفظ طبيب محلي'),
               ),

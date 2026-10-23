@@ -21,6 +21,26 @@ class LiveSightPulse {
   final bool waitingForFrame;
 }
 
+class LiveSightScheduler {
+  LiveSightScheduler({this.interval = const Duration(seconds: 2)});
+
+  Duration interval;
+  bool busy = false;
+  bool narrationEnabled = true;
+  DateTime nextAllowed = DateTime.fromMillisecondsSinceEpoch(0);
+
+  bool claim(DateTime now) {
+    if (!narrationEnabled || busy || now.isBefore(nextAllowed)) return false;
+    busy = true;
+    nextAllowed = now.add(interval);
+    return true;
+  }
+
+  void release() {
+    busy = false;
+  }
+}
+
 /// موصل البث: الكاميرا المفتوحة ليست وصفاً، والمحرك الغائب ليس مشهداً.
 class LiveSightConductor {
   bool _alreadyToldEngineMissing = false;
@@ -31,6 +51,7 @@ class LiveSightConductor {
     required bool userConsentedOnThisScreen,
     List<int>? frameBytes,
     AssistiveVisionResult? vision,
+    bool force = false,
   }) {
     if (!userConsentedOnThisScreen) {
       return const LiveSightPulse(
@@ -68,7 +89,7 @@ class LiveSightConductor {
     }
     _alreadyToldEngineMissing = false;
     final spoken = vision.spokenMessageAr.trim();
-    final speak = spoken.isNotEmpty && spoken != _lastSpoken;
+    final speak = force || (spoken.isNotEmpty && spoken != _lastSpoken);
     _lastSpoken = spoken;
     return LiveSightPulse(
       spokenAr: spoken,

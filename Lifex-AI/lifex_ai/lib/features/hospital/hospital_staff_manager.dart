@@ -5,6 +5,7 @@
 /// الوصف: إدارة الأطباء والطاقم الطبي الداخلي للمستشفى ومناوباتهم،
 /// منفصل عن doctor_schedule_manager.dart الخاص بالأطباء المستقلين.
 /// =============================================================
+library;
 
 enum StaffRole { physician, nurse, technician, administrator }
 

@@ -63,6 +63,7 @@ enum UnitShortcut {
   clinicalWatch,
   manualVitals,
   medicationAlarms,
+  disabilityFixation,
 }
 
 class UnitBranch {
@@ -295,7 +296,9 @@ class UnitBranchCatalog {
     UnitBranch(
       id: 'publicCv',
       titleAr: 'الملف العام للطبيب',
-      subtitleAr: 'ما يراه غير المرتبط: اختصاص، مكان، دوام، لغات',
+      subtitleAr:
+          'منظومة Lifex-AI للخدمات الصحية العالمية. '
+          'الاختصاص والمكان يكتبهما صاحب الحساب',
       icon: Icons.badge_outlined,
       storageKey: BoxKeys.doctors,
       primaryLabelAr: 'اسم الطبيب أو العيادة',
@@ -395,7 +398,9 @@ class UnitBranchCatalog {
     UnitBranch(
       id: 'publicLab',
       titleAr: 'الملف العام للمخبر',
-      subtitleAr: 'اسم، عنوان، أنواع التحاليل، دوام. بلا نتائج مرضى',
+      subtitleAr:
+          'منظومة Lifex-AI للخدمات الصحية العالمية. '
+          'الاسم والمكان يكتبهما صاحب الحساب. بلا نتائج مرضى',
       icon: Icons.storefront_outlined,
       storageKey: BoxKeys.labs,
       primaryLabelAr: 'اسم المخبر',
@@ -404,6 +409,8 @@ class UnitBranchCatalog {
         UnitBranchField(key: 'hours', labelAr: 'أوقات العمل'),
         UnitBranchField(key: 'contact', labelAr: 'التواصل'),
         UnitBranchField(key: 'license', labelAr: 'الترخيص والدولة'),
+        UnitBranchField(key: 'place', labelAr: 'المدينة أو المسافة'),
+        UnitBranchField(key: 'research', labelAr: 'ملاحظة تجربة بحثية'),
         UnitBranchField(key: 'sendingDoctor', labelAr: 'الطبيب المرسل إن وُجد'),
       ],
       needsServer: true,
@@ -447,7 +454,7 @@ class UnitBranchCatalog {
     UnitBranch(
       id: 'urineNote',
       titleAr: 'ملاحظة لون البول',
-      subtitleAr: 'تدخلها أنت. ليست من الكاميرا وليست تحليلاً',
+      subtitleAr: 'ملاحظات مظهر تكتبها أنت. ليست نتيجة تحليل ولا قراءة من الكاميرا',
       icon: Icons.opacity_outlined,
       shortcut: UnitShortcut.manualVitals,
     ),
@@ -501,8 +508,8 @@ class UnitBranchCatalog {
     ),
     UnitBranch(
       id: 'layeredLens',
-      titleAr: 'عدسة الشرائح المتراكبة',
-      subtitleAr: 'عدستان وضبط عتاد صادق. بلا ×200 ولا تعريض 20 ثانية مختلق',
+      titleAr: 'تقريب العدسة',
+      subtitleAr: 'معاينة حية وزوم العتاد. ليست تشخيص جلد',
       icon: Icons.filter_none_outlined,
       shortcut: UnitShortcut.layeredLens,
     ),
@@ -527,7 +534,9 @@ class UnitBranchCatalog {
     UnitBranch(
       id: 'publicPharm',
       titleAr: 'الملف العام للصيدلية',
-      subtitleAr: 'الاسم والمكان والدوام. بلا أرباح أو مخزون داخلي',
+      subtitleAr:
+          'اتحاد الصيادلة العالمي الإلكتروني عبر منظومة Lifex-AI. '
+          'الاسم والمكان والدوام. بلا أرباح أو مخزون داخلي',
       icon: Icons.storefront_outlined,
       storageKey: BoxKeys.pharmacy,
       primaryLabelAr: 'اسم الصيدلية أو الصيدلاني',
@@ -538,6 +547,8 @@ class UnitBranchCatalog {
         UnitBranchField(key: 'license', labelAr: 'الترخيص والدولة'),
         UnitBranchField(key: 'shifts', labelAr: 'مناوبات أو عطل'),
         UnitBranchField(key: 'shipping', labelAr: 'ملاحظة الشحن للعموم'),
+        UnitBranchField(key: 'contact', labelAr: 'البريد أو رقم التواصل'),
+        UnitBranchField(key: 'note', labelAr: 'ملاحظة اختيارية'),
       ],
       needsServer: true,
     ),
@@ -577,7 +588,9 @@ class UnitBranchCatalog {
     UnitBranch(
       id: 'publicHosp',
       titleAr: 'الملف العام للمستشفى',
-      subtitleAr: 'أقسام، طوارئ، خدمات ظاهرة. بلا ملفات مرضى',
+      subtitleAr:
+          'منظومة Lifex-AI للخدمات الصحية العالمية. '
+          'الأقسام والخدمات يكتبها صاحب الحساب. بلا ملفات مرضى',
       icon: Icons.local_hospital_outlined,
       storageKey: BoxKeys.hospital,
       primaryLabelAr: 'اسم المستشفى',
@@ -586,6 +599,9 @@ class UnitBranchCatalog {
         UnitBranchField(key: 'emergency', labelAr: 'قسم الطوارئ'),
         UnitBranchField(key: 'hours', labelAr: 'أوقات العمل'),
         UnitBranchField(key: 'ambulance', labelAr: 'رقم الإسعاف كما تعرفه'),
+        UnitBranchField(key: 'place', labelAr: 'المدينة أو المسافة'),
+        UnitBranchField(key: 'staffNote', labelAr: 'ملاحظة الطاقم'),
+        UnitBranchField(key: 'achievement', labelAr: 'إنجاز يكتبه صاحب الحساب'),
         UnitBranchField(key: 'freeServices', labelAr: 'خدمات مجانية ظاهرة'),
         UnitBranchField(key: 'paidServices', labelAr: 'خدمات مأجورة ظاهرة'),
       ],
@@ -668,7 +684,9 @@ class UnitBranchCatalog {
     UnitBranch(
       id: 'publicDental',
       titleAr: 'الملف العام للعيادة',
-      subtitleAr: 'اختصاص، دوام، خدمات. بلا خطة علاج للآخرين',
+      subtitleAr:
+          'منظومة Lifex-AI للخدمات الصحية العالمية. '
+          'الاختصاص والمكان يكتبهما صاحب الحساب. بلا خطة علاج للآخرين',
       icon: Icons.storefront_outlined,
       storageKey: BoxKeys.dental,
       primaryLabelAr: 'اسم الطبيب أو المركز',
@@ -676,6 +694,8 @@ class UnitBranchCatalog {
       extraFields: [
         UnitBranchField(key: 'specialty', labelAr: 'تقويم / جذور / أطفال / زراعة…'),
         UnitBranchField(key: 'license', labelAr: 'الترخيص والدولة'),
+        UnitBranchField(key: 'place', labelAr: 'المدينة أو المسافة'),
+        UnitBranchField(key: 'labNote', labelAr: 'ملاحظة المخبر السني'),
         UnitBranchField(key: 'contact', labelAr: 'التواصل'),
       ],
       needsServer: true,
@@ -943,15 +963,13 @@ class UnitBranchCatalog {
     ),
     UnitBranch(
       id: 'disability',
-      titleAr: 'نوع الإعاقة ونسبة العجز',
-      subtitleAr: 'تصريح صاحب الملف فقط. ليس تقييماً طبياً من التطبيق',
+      titleAr: 'تثبيت المعاقين والمرضى الدائمين',
+      subtitleAr:
+          'بطاقة إعاقة أو بطاقة مريض دائم من البلد المسجّل فيه صاحب الحساب',
       icon: Icons.accessible_outlined,
+      shortcut: UnitShortcut.disabilityFixation,
       storageKey: BoxKeys.disabilityRecords,
-      primaryLabelAr: 'النوع: حركية / سمعية / بصرية / عقلية / متعددة / أخرى',
-      extraFields: [
-        UnitBranchField(key: 'percent', labelAr: 'نسبة العجز كما صرّحت (0–100)'),
-      ],
-      detailLabelAr: 'ملاحظة أو وثيقة محلية',
+      primaryLabelAr: 'حركية، سمعية، بصرية، عقلية، متعددة، أخرى',
     ),
     UnitBranch(
       id: 'access',

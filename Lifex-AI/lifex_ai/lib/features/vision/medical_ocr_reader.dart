@@ -10,6 +10,7 @@
 /// [OcrTextExtractor] كنقطة استبدال واضحة (Dependency injection)
 /// دون الحاجة لتعديل هذا الملف.
 /// =============================================================
+library;
 
 import 'smart_vision_engine.dart';
 
@@ -20,8 +21,7 @@ abstract class OcrTextExtractor {
   Future<String> extractText(List<int> imageBytes);
 }
 
-/// تصنيف نوع المستند الطبي المُقروء، يُستنتج من الكلمات المفتاحية
-/// الموجودة في النص المستخرج.
+/// اسم محتمل لنوع المستند. الكلمة المفتاحية لا تُثبته.
 enum MedicalDocumentType {
   prescription,
   labReport,
@@ -30,8 +30,13 @@ enum MedicalDocumentType {
   unknown,
 }
 
-/// قارئ النصوص الطبية — يستخدم [OcrTextExtractor] لاستخراج النص الخام
-/// ثم يحاول تصنيف نوع المستند ويستخرج أهم الحقول المحتملة.
+/// دليل النوع. الكلمة المفتاحية تُبقي الحالة غير مؤكدة.
+enum DocumentTypeEvidence {
+  unknown,
+  unverified,
+}
+
+/// يستخرج النص الخام. الكلمة المفتاحية تبقى تخميناً غير مؤكد، بلا حقول مخترعة.
 class MedicalOcrReader {
   MedicalOcrReader({required this.ocrExtractor});
 
@@ -55,7 +60,7 @@ class MedicalOcrReader {
     );
   }
 
-  /// قراءة المستند الطبي وتصنيفه، وإرجاع نتيجة موحّدة.
+  /// استخراج النص. النوع المحتمل يُعاد غير مؤكد، وبلا ثقة رقمية ثابتة.
   Future<VisionResult> readDocument(List<int> imageBytes) async {
     final rawText = await ocrExtractor.extractText(imageBytes);
 
@@ -67,19 +72,30 @@ class MedicalOcrReader {
     }
 
     final docType = _classifyDocument(rawText);
+    final evidence = docType == MedicalDocumentType.unknown
+        ? DocumentTypeEvidence.unknown
+        : DocumentTypeEvidence.unverified;
+    final label = _docTypeLabelAr(docType);
+    final summary = evidence == DocumentTypeEvidence.unknown
+        ? 'استُخرج نص. نوع الوثيقة unknown. '
+            'الاستخراج ليس فهماً طبياً ولا تشخيصاً.'
+        : 'استُخرج نص. النوع المحتمل غير مؤكد: $label. '
+            'هذا تخمين من كلمة في النص، وليس حقيقة ولا تشخيصاً.';
 
     return VisionResult(
       success: true,
-      extractedSummaryAr:
-          'تم استخراج نص من مستند مصنّف كـ "${_docTypeLabelAr(docType)}".',
+      extractedSummaryAr: summary,
       structuredData: {
         'documentType': docType.name,
+        'documentTypeEvidence': evidence.name,
+        'classificationBasis':
+            evidence == DocumentTypeEvidence.unknown ? 'none' : 'keyword',
         'rawText': rawText,
       },
-      confidence: docType == MedicalDocumentType.unknown ? 0.4 : 0.75,
+      confidence: 0,
       disclaimer:
-          'النص المستخرج آلياً وقد يحتوي أخطاء قراءة. يُرجى مراجعة المستند '
-          'الأصلي أو الطبيب المعالج قبل الاعتماد على أي معلومة منه.',
+          'النص المستخرج آلياً وقد يحتوي أخطاء قراءة. نوع الوثيقة غير مؤكد. '
+          'يُرجى مراجعة المستند الأصلي. هذه القراءة ليست تشخيصاً ولا تغيّر جرعة.',
     );
   }
 

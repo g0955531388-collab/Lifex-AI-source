@@ -5,6 +5,7 @@
 /// الوصف: الثوابت العامة المستخدمة عبر كامل التطبيق. أي قيمة ثابتة
 /// يحتاجها أكثر من ملف واحد يجب أن تُعرَّف هنا وليس مكررة محلياً.
 /// =============================================================
+library;
 
 import 'attribution/project_attribution.dart';
 
@@ -14,31 +15,33 @@ class AppConstants {
   // ---------------------------------------------------------------
   // معلومات التطبيق
   // ---------------------------------------------------------------
-  static const String appName = 'Lifex-AI';
+  static const String appName = systemName;
+  static const String systemName = ProjectAttribution.systemName;
   static const String packageName = 'lifex_ai';
   static const String appVersion = '0.1.0';
 
   /// الختم الرسمي الدائري كما اعتمده المالك — يُعرض في الشاشة الافتتاحية
   /// وحول التطبيق دون اختصار نصوص الملكية.
   static const String officialSealAsset = 'assets/branding/lifex_seal.jpg';
-  static const String officialContactEmail = 'G095553388@gmail.com';
+  static const String officialContactEmail = 'g0955531388@gmail.com';
   static const String academyHandle = 'Ghazi_Rabab_AlrohAccademy999';
   static const String academyNameAr = 'أكاديمية الروح 999';
   static const String studioBannerCredit =
       'Lifex-AI | غازي سليم بكفلاوي | G0955531388@gmail.com';
 
-  /// Alias للإسناد الرسمي — لا صيغة بديلة ولا حقوق ملكية مشتركة.
+  /// الختم الرسمي. الملكية والشراكة مناصفة بالنص الرسمي فقط.
   static const String builderAttributionAr =
       ProjectAttribution.officialStatementAr;
 
   static const String humanitarianExemptionStatementAr =
-      'يُعفى ذوو الإعاقة بعد بطاقة من بلد صاحب الحساب، والمرضى الدائمون '
-      'في الملف، والمكفوفون: لا أجور ولا رسوم. اشتراك الأفراد 100 دولار '
+      'يُعفى ذوو الإعاقة ومرضى الأمراض المستعصية بعد التثبيت في وحدة المعاقين '
+      'ببطاقة إعاقة أو بطاقة مريض دائم من البلد المسجّل فيه صاحب الحساب: '
+      'لا أجور ولا رسوم. اشتراك الأفراد 100 دولار '
       'سنوياً عادي بلا إعلانات ولا خدمات خاصة. الوحدة الصحية 300 والمستشفى 600.';
 
   /// نص الإسناد والملكية الرسمي الوحيد (عربي).
   /// المصدر: [ProjectAttribution.officialStatementAr]
-  /// ممنوع إعادة الصياغة أو إضافة ورثة/شركاء/أسماء عائلية.
+  /// ممنوع إعادة الصياغة أو إضافة ورثة أو أسماء عائلية.
   static const String ownershipStatement =
       ProjectAttribution.officialStatementAr;
 
@@ -53,10 +56,10 @@ class AppConstants {
   static const String ownershipStatementShortEn =
       ProjectAttribution.officialStatementShortEn;
 
-  /// اسم المخترع/المالك فقط — للاختراعات التقنية داخل المشروع.
+  /// اسم المخترع للاختراعات التقنية. الملكية مناصفة في نص الإسناد.
   static const String developerCredit = ProjectAttribution.inventorOwnerAr;
 
-  /// صفة المرشدة فقط — ليست ملكية ولا اختراع.
+  /// صفة الشريكة — ليست اختراعاً ولا صلاحية مالك تشغيلية.
   static const String guideCreditAr =
       '${ProjectAttribution.guideRoleAr} ${ProjectAttribution.guideAr}';
 
@@ -69,7 +72,6 @@ class AppConstants {
   static const String ownerPhoneNumber = '+963955531388';
   static const List<String> ownerEmails = [
     'g0955531388@gmail.com',
-    'G095553388@gmail.com',
   ];
 
   // ---------------------------------------------------------------

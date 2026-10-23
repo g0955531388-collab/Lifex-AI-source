@@ -9,6 +9,7 @@
 /// المتخصصين (Medical/Vision/Knowledge/Report) متاحين لخطوات التنفيذ
 /// الفعلية داخل الأدوات دون الحاجة لأن تعرف الواجهة بوجودهم.
 /// =============================================================
+library;
 
 import '../agent_confidence.dart';
 import '../agent_context.dart';

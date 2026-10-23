@@ -11,6 +11,7 @@
 /// حقل 'extractedText' فقط، ولا يُدمج أبداً كتعليمات نظام لأي مزوّد
 /// ذكاء اصطناعي. أي علامة حقن تعليمات تُكتشف تُضاف كملاحظة تحذيرية.
 /// =============================================================
+library;
 
 import '../../../features/vision/medical_ocr_reader.dart';
 import '../agent_context.dart';
@@ -33,7 +34,7 @@ class DocumentReaderTool implements AgentTool {
 
   @override
   String get descriptionAr =>
-      'قراءة مستند طبي (تقرير/وصفة/نتيجة تحليل) واستخراج نصه وتصنيفه.';
+      'استخراج نص مستند. أي نوع مذكور تخمين من كلمة وليس فهماً طبياً.';
 
   @override
   Map<String, String> get inputSchema => const {
@@ -76,6 +77,8 @@ class DocumentReaderTool implements AgentTool {
         'dataType': 'document_ocr',
         'extractedText': extractedText,
         'documentType': visionResult.structuredData['documentType'],
+        'documentTypeEvidence':
+            visionResult.structuredData['documentTypeEvidence'],
         'confidence': _mapNumericConfidence(visionResult.confidence),
         'untrustedContentWarning': hasInjectionMarkers,
       },

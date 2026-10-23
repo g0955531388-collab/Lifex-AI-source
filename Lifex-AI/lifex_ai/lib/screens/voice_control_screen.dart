@@ -8,16 +8,26 @@ library lifex_ai.screens.voice_control_screen;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../app_navigator.dart';
 
 import '../core/orchestrator/lio_gateway_contracts.dart';
 import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/permission_transparency.dart';
+import '../features/energy/energy_manager.dart';
+import '../features/energy/phone_battery_brief.dart';
 import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/medications/medication_alarm_engine.dart';
 import '../features/medications/medication_alarm_ledger.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../features/accessibility/screen_voice_board.dart';
+import '../features/device_guardian/lost_phone_desk.dart';
+import '../features/accessibility/vision_model_update_desk.dart';
+import '../features/search/external_search_catalog.dart';
 import '../features/voice/command_parser.dart';
 import '../features/voice/conversation_manager.dart';
 import '../features/voice/emergency_voice_handler.dart';
@@ -25,6 +35,7 @@ import '../features/voice/hardware_cue_bridge.dart';
 import '../features/voice/hardware_cue_calibrator.dart';
 import '../features/voice/language_detector.dart';
 import '../features/voice/voice_engine.dart';
+import '../features/voice/voice_turn_desk.dart';
 import '../features/voice/voice_locale_policy.dart';
 import '../features/voice/voice_privacy_manager.dart';
 import '../features/voice/voice_reply.dart';
@@ -53,30 +64,53 @@ import 'knowledge_arcade_screen.dart';
 import 'personal_shelf_screen.dart';
 import 'royal_intelligence_screen.dart';
 import 'youth_guide_screen.dart';
+import 'health_guidance_screen.dart';
+import 'epidemic_surveillance_screen.dart';
 import 'health_profile_screen.dart';
 import 'layered_lens_studio_screen.dart';
+import '../features/voice/assistant_session.dart';
+import '../features/voice/voice_action_router.dart';
+import 'lifex_unified_web_portal_screen.dart';
+import '../features/accessibility/live_vision_provider.dart';
 import 'live_sight_screen.dart';
+import 'messenger_screen.dart';
 import 'medication_alarm_screen.dart';
 import 'medications_screen.dart';
 import 'permission_transparency_screen.dart';
 import 'pharmacy_stock_screen.dart';
 import 'project_box_hub_screen.dart';
 import 'smart_health_questionnaire_screen.dart';
+import 'book_library_screen.dart';
 import 'system_search_screen.dart';
+import 'vision_resource_screen.dart';
 import 'thumbnail_manage_screen.dart';
 
 class VoiceControlScreen extends StatefulWidget {
-  const VoiceControlScreen({super.key, this.listenOnOpen = false});
+  const VoiceControlScreen({
+    super.key,
+    this.listenOnOpen = false,
+    this.seedText,
+  });
 
   final bool listenOnOpen;
+  final String? seedText;
 
   static VoidCallback? _listenIfOpen;
+  static Future<void> Function(String text)? _handleIfOpen;
 
   /// يستدعي الاستماع إن كانت الشاشة ظاهرة، دون تكديس صفحة ثانية.
   static bool requestListenIfOpen() {
     final listen = _listenIfOpen;
     if (listen == null) return false;
     listen();
+    return true;
+  }
+
+  /// يمرّر كلاماً مسموعاً إلى الشاشة المفتوحة. وإلا تُفتح شاشة جديدة.
+  static bool offerHeardText(String text) {
+    final handle = _handleIfOpen;
+    if (handle == null || text.trim().isEmpty) return false;
+    unawaited(handle(text.trim()));
     return true;
   }
 
@@ -97,6 +131,8 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
   String? _lastText;
   String? _replyAr;
   bool _sessionBusy = false;
+  bool _manualField = false;
+  bool _stopEar = false;
 
   VoiceEngine get _engine => VoiceEngine.instance;
 
@@ -108,8 +144,17 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
       duration: const Duration(milliseconds: 900),
     );
     _engine.addStateListener(_onEngine);
+    _typedFocus.addListener(() {
+      if (_typedFocus.hasFocus) _manualField = true;
+    });
+    unawaited(_restoreSpeechPrefs());
     VoiceControlScreen._listenIfOpen = _cueListen;
-    if (widget.listenOnOpen) {
+    VoiceControlScreen._handleIfOpen = _handleText;
+    if (widget.seedText != null && widget.seedText!.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_handleText(widget.seedText!.trim()));
+      });
+    } else if (widget.listenOnOpen) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _cueListen();
       });
@@ -124,9 +169,11 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
   @override
   void dispose() {
     VoiceControlScreen._listenIfOpen = null;
+    VoiceControlScreen._handleIfOpen = null;
     _privacy.screenEarEnabled = false;
     _engine.removeStateListener(_onEngine);
-    _engine.stopListening();
+    unawaited(_engine.stopListening());
+    unawaited(_engine.interruptIfSpeaking());
     _typed.dispose();
     _typedFocus.dispose();
     _pulse.dispose();
@@ -142,17 +189,27 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
       _pulse.stop();
       _pulse.reset();
     }
+    final partial = _engine.partialTranscript?.trim() ?? '';
+    if (state == VoiceEngineState.listening &&
+        partial.isNotEmpty &&
+        !_manualField) {
+      _typed.value = TextEditingValue(
+        text: partial,
+        selection: TextSelection.collapsed(offset: partial.length),
+      );
+      _lastText = partial;
+    }
     setState(() {});
   }
 
   Color _signalColor(BuildContext context) {
     switch (_engine.state) {
       case VoiceEngineState.listening:
-        return Colors.red;
+        return Theme.of(context).colorScheme.error;
       case VoiceEngineState.speaking:
-        return Colors.green;
+        return Theme.of(context).colorScheme.primary;
       case VoiceEngineState.processing:
-        return Colors.orange;
+        return Theme.of(context).colorScheme.secondary;
       case VoiceEngineState.error:
         return Theme.of(context).colorScheme.error;
       case VoiceEngineState.idle:
@@ -216,11 +273,12 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
       setState(() => _replyAr = 'بدون إذن الميكروفون لا أسمع ولا أسجّل.');
       return;
     }
-    if (_engine.state == VoiceEngineState.listening ||
-        _engine.state == VoiceEngineState.speaking) {
-      return;
+    if (_engine.state == VoiceEngineState.speaking) {
+      await _engine.stopSpeaking();
     }
     _sessionBusy = true;
+    _stopEar = false;
+    if (!_typedFocus.hasFocus) _manualField = false;
     try {
       do {
         if (!mounted) break;
@@ -230,9 +288,15 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         HapticFeedback.mediumImpact();
         PermissionTransparencyManager.instance
             .useIfGranted(LifexSensitivePermission.microphone);
-        final result = await _engine.startListening();
+        final result = await _engine.listenFresh();
         if (!mounted) break;
         final heard = result.textResult?.trim() ?? '';
+        if (heard.isNotEmpty && !_manualField) {
+          _typed.value = TextEditingValue(
+            text: heard,
+            selection: TextSelection.collapsed(offset: heard.length),
+          );
+        }
         setState(() {
           _lastText = heard.isEmpty ? _engine.partialTranscript : heard;
         });
@@ -256,10 +320,215 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
             });
           }
         }
-      } while (_privacy.screenEarEnabled && mounted);
+      } while (_privacy.screenEarEnabled && mounted && !_stopEar);
     } finally {
       _sessionBusy = false;
     }
+  }
+
+  Future<void> _say(VoiceReply copy) async {
+    if (!mounted) return;
+    final code = Localizations.localeOf(context).languageCode;
+    final message = copy.of(code);
+    setState(() => _replyAr = message);
+    final epoch = _engine.speechEpoch;
+    final spoken = await _engine.speak(message);
+    if (!mounted || epoch != _engine.speechEpoch) return;
+    if (!spoken.success) {
+      setState(() {
+        _replyAr = '${spoken.errorMessageAr ?? 'تعذّر النطق.'}\n$message';
+      });
+    }
+  }
+
+  Future<void> _restoreSpeechPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rate = prefs.getDouble('lifex_speech_rate');
+      final volume = prefs.getDouble('lifex_speech_volume');
+      if (!mounted) return;
+      if (rate != null) {
+        AssistantSession.instance.speechRate = rate.clamp(0.2, 1.0);
+      }
+      if (volume != null) {
+        AssistantSession.instance.outputVolume = volume.clamp(0.2, 1.0);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _storeSpeechPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(
+        'lifex_speech_rate',
+        AssistantSession.instance.speechRate,
+      );
+      await prefs.setDouble(
+        'lifex_speech_volume',
+        AssistantSession.instance.outputVolume,
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _runVoiceTurn(VoiceTurn turn) async {
+    switch (turn.kind) {
+      case VoiceTurnKind.pass:
+        return;
+      case VoiceTurnKind.slower:
+        AssistantSession.instance.slowSpeech();
+        unawaited(_storeSpeechPrefs());
+        await _say(VoiceReply(
+          ar: 'أبطأت القراءة. السرعة ${AssistantSession.instance.speechRate.toStringAsFixed(1)}.',
+          en: 'Reading is slower.',
+        ));
+        return;
+      case VoiceTurnKind.faster:
+        AssistantSession.instance.raiseSpeech();
+        unawaited(_storeSpeechPrefs());
+        await _say(VoiceReply(
+          ar: 'رفعت سرعة القراءة. السرعة ${AssistantSession.instance.speechRate.toStringAsFixed(1)}.',
+          en: 'Reading is faster.',
+        ));
+        return;
+      case VoiceTurnKind.disableAuto:
+        await _loadVisionUpdatePrefs();
+        VisionModelUpdateDesk.instance.autoEnabled = false;
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool(VisionModelUpdateDesk.autoKey, false);
+        } catch (_) {}
+        if (!mounted) return;
+        await _say(VoiceReply(ar: turn.messageAr, en: turn.messageAr));
+        return;
+      case VoiceTurnKind.updateModel:
+        await _loadVisionUpdatePrefs();
+        final report = await VisionModelUpdateDesk.instance.request(manual: true);
+        if (!mounted) return;
+        await _say(VoiceReply(ar: report.messageAr, en: report.messageAr));
+        return;
+      case VoiceTurnKind.findPhone:
+        var ear = false;
+        try {
+          ear = await Permission.microphone.isGranted;
+        } catch (_) {
+          ear = false;
+        }
+        if (!mounted) return;
+        await _say(VoiceReply(
+          ar: LostPhoneDesk().nearbyReply(earAvailable: ear),
+          en: LostPhoneDesk().nearbyReply(earAvailable: ear),
+        ));
+        return;
+      case VoiceTurnKind.scene:
+      case VoiceTurnKind.barcode:
+      case VoiceTurnKind.openBlindCamera:
+      case VoiceTurnKind.details:
+      case VoiceTurnKind.readText:
+      case VoiceTurnKind.pauseDescription:
+      case VoiceTurnKind.resumeDescription:
+      case VoiceTurnKind.frontCamera:
+      case VoiceTurnKind.backCamera:
+      case VoiceTurnKind.askCloud:
+      case VoiceTurnKind.grantCloud:
+      case VoiceTurnKind.revokeCloud:
+        final sight = AssistantSession.instance.applySightTurn;
+        if (sight != null) {
+          await sight(turn);
+          return;
+        }
+        if (!mounted) return;
+        final profileId =
+            context.read<ActiveProfileController>().activeProfileId ?? '';
+        if (turn.messageAr.isNotEmpty) {
+          await _say(VoiceReply(ar: turn.messageAr, en: turn.messageAr));
+        }
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LiveSightScreen(
+              profileId: profileId,
+              ask: turn.kind == VoiceTurnKind.readText
+                  ? BlindCameraAsk.text
+                  : BlindCameraAsk.scene,
+              readBarcode: turn.kind == VoiceTurnKind.barcode,
+              initialOrder: _sightOrder(turn.kind),
+            ),
+          ),
+        );
+        return;
+      case VoiceTurnKind.openLens:
+        final openLens = AssistantSession.instance.applySightTurn;
+        if (openLens != null) {
+          await openLens(turn);
+          return;
+        }
+        final spoken = await const ExternalVisionHandoff().openEngine('lens');
+        if (!mounted) return;
+        await _say(VoiceReply(ar: spoken, en: spoken));
+        return;
+    }
+  }
+
+  BlindCameraOrder _sightOrder(VoiceTurnKind kind) {
+    switch (kind) {
+      case VoiceTurnKind.details:
+        return BlindCameraOrder.details;
+      case VoiceTurnKind.readText:
+        return BlindCameraOrder.readText;
+      case VoiceTurnKind.pauseDescription:
+        return BlindCameraOrder.pause;
+      case VoiceTurnKind.resumeDescription:
+        return BlindCameraOrder.resume;
+      case VoiceTurnKind.frontCamera:
+        return BlindCameraOrder.front;
+      case VoiceTurnKind.backCamera:
+        return BlindCameraOrder.back;
+      case VoiceTurnKind.askCloud:
+        return BlindCameraOrder.cloud;
+      case VoiceTurnKind.grantCloud:
+        return BlindCameraOrder.grantCloud;
+      case VoiceTurnKind.revokeCloud:
+        return BlindCameraOrder.revokeCloud;
+      case VoiceTurnKind.barcode:
+        return BlindCameraOrder.barcode;
+      default:
+        return BlindCameraOrder.none;
+    }
+  }
+
+  Future<void> _loadVisionUpdatePrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      VisionModelUpdateDesk.instance.applyPrefs(
+        auto: prefs.getBool(VisionModelUpdateDesk.autoKey) ?? true,
+        wifi: prefs.getBool(VisionModelUpdateDesk.wifiKey) ?? true,
+      );
+    } catch (_) {}
+  }
+
+  String _operationStatusAr() {
+    final signal = _engine.lastSignalAr.trim();
+    final state = switch (_engine.state) {
+      VoiceEngineState.idle => 'الانتظار',
+      VoiceEngineState.listening => 'الاستماع',
+      VoiceEngineState.processing => 'التعرف',
+      VoiceEngineState.speaking => 'القراءة',
+      VoiceEngineState.error => 'تعذر آخر خطوة',
+    };
+    final detail = signal.isEmpty ? 'لا إشارة أحدث من هذه.' : signal;
+    return 'حالة العملية: $state. $detail';
+  }
+
+  Future<void> _stopReading() async {
+    final shown = _replyAr?.trim() ?? '';
+    AssistantSession.instance.holdForResume(shown);
+    await _engine.stopSpeaking();
+    if (!mounted) return;
+    await _say(const VoiceReply(
+      ar: 'أوقفت القراءة. قل: تابع القراءة.',
+      en: 'Reading stopped. Say: continue reading.',
+    ));
   }
 
   Future<void> _submitTyped() async {
@@ -280,8 +549,75 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
   }
 
   Future<void> _handleText(String text) async {
+    final folded = text.trim().toLowerCase();
+    final turn = planVoiceTurn(text);
+    if (turn.kind != VoiceTurnKind.pass) {
+      await _runVoiceTurn(turn);
+      return;
+    }
+    if (text.contains('كرر آخر') ||
+        text.contains('كرر الرد') ||
+        folded.contains('repeat that') ||
+        folded.contains('repeat the reply')) {
+      final last = _replyAr?.trim() ?? '';
+      await _say(VoiceReply(
+        ar: last.isEmpty ? 'لا رد مكتمل لأعيده.' : last,
+        en: last.isEmpty ? 'There is no completed reply to repeat.' : last,
+      ));
+      return;
+    }
+    if (text.contains('أعد المحاولة') ||
+        text.contains('اعد المحاولة') ||
+        folded.contains('try again')) {
+      await _say(
+          const VoiceReply(ar: 'أعيد الاستماع.', en: 'Listening again.'));
+      if (mounted) unawaited(_listen());
+      return;
+    }
+    if (text.contains('ابدأ الاستماع') || folded.contains('start listening')) {
+      if (mounted) unawaited(_listen());
+      return;
+    }
+    if (text.contains('توقف عن الاستماع') ||
+        folded.contains('stop listening')) {
+      _stopEar = true;
+      _privacy.screenEarEnabled = false;
+      await _engine.stopListening();
+      await _say(
+          const VoiceReply(ar: 'أوقفت الاستماع.', en: 'Listening stopped.'));
+      return;
+    }
+    if (text.contains('أعد القراءة') || folded.contains('read it again')) {
+      final held = AssistantSession.instance.heldReading?.trim();
+      final spoken = (held != null && held.isNotEmpty)
+          ? held
+          : ScreenVoiceBoard.instance.readingAr();
+      await _say(VoiceReply(ar: spoken, en: spoken));
+      return;
+    }
+    if (text.contains('تابع القراءة') ||
+        text.contains('أكمل القراءة') ||
+        folded.contains('continue reading') ||
+        folded.contains('resume reading')) {
+      final held = AssistantSession.instance.takeHeldReading();
+      await _say(VoiceReply(
+        ar: held ?? 'لا قراءة موقوفة. قل أمراً ثم أوقف القراءة إن أردت المتابعة.',
+        en: held ?? 'There is no paused reading.',
+      ));
+      return;
+    }
+    if (text.contains('ما حالة هذه العملية') ||
+        text.contains('حالة هذه العملية') ||
+        folded.contains('operation status')) {
+      await _say(VoiceReply(
+        ar: _operationStatusAr(),
+        en: _engine.lastSignalAr,
+      ));
+      return;
+    }
     final profiles = context.read<ActiveProfileController>();
     final detection = await LanguageDetector.instance.detect(text);
+    if (!mounted) return;
     final lang = detection.preciseLanguageCode ??
         LanguageDetector.instance.localeCodeFor(detection.language);
     _conversation.rememberLanguage(lang);
@@ -294,8 +630,9 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
     Future<void> reply(VoiceReply copy, {VoidCallback? thenOpen}) async {
       final message = copy.of(lang);
       setState(() => _replyAr = message);
+      final epoch = _engine.speechEpoch;
       final spoken = await _engine.speak(message);
-      if (!mounted) return;
+      if (!mounted || epoch != _engine.speechEpoch) return;
       if (!spoken.success) {
         setState(() {
           _replyAr =
@@ -322,19 +659,28 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
           break;
         }
         final alarm = due.first;
+        final name = alarm.personName.trim();
+        if (name.isEmpty) {
+          await reply(
+            const VoiceReply(
+              ar: 'اسم المريض فارغ. لن أسجّل التناول حتى يُكتب الاسم، منعاً للخلط.',
+              en: 'The patient name is empty. The dose stays unmarked until the name is written.',
+            ),
+          );
+          break;
+        }
         final person = profiles.profileById(alarm.profileId);
         if (person != null) {
           MedicationAlarmLedger().replace(
             person,
-            const MedicationAlarmEngine()
-                .acknowledge(alarm, DateTime.now()),
+            const MedicationAlarmEngine().acknowledge(alarm, DateTime.now()),
           );
           profiles.saveActiveProfileChanges();
         }
         await reply(
           VoiceReply(
-            ar: 'تم. سكت المنبّه حتى الجرعة التالية. ${alarm.personName} أخذ ${alarm.medicine}.',
-            en: 'Taken. The reminder is quiet until the next dose.',
+            ar: 'تم. سكت المنبّه حتى الجرعة التالية. المريض $name أخذ ${alarm.medicine}.',
+            en: 'Taken. Patient $name took ${alarm.medicine}. The reminder stays quiet until the next dose.',
           ),
           thenOpen: () {
             Navigator.push(
@@ -487,8 +833,8 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         _conversation.clear();
         await reply(
           const VoiceReply(
-            ar: 'لا توجد نتيجة مخبرية مرتبطة بملفك حتى الآن.',
-            en: 'No lab result is linked to your profile yet.',
+            ar: 'من المساعد الصوتي لا أفتح سجل الفحص المخزن. افتح الملف الصحي لترى النتيجة المسجّلة كما هي. لن أخترع نتيجة.',
+            en: 'This voice path does not open the stored lab record. Open the health file to see the recorded result. No result is invented.',
           ),
         );
         break;
@@ -520,14 +866,103 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         _conversation.clear();
         await reply(
           const VoiceReply(
-            ar: 'سأفتح البحث',
-            en: 'Opening search.',
+            ar: 'سأفتح البحث داخل Lifex-AI',
+            en: 'Opening search inside Lifex-AI.',
           ),
           thenOpen: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const SystemSearchScreen()),
+              MaterialPageRoute(
+                builder: (_) => SystemSearchScreen(
+                  initialQuery: ExternalSearchCatalog.phraseOf(text),
+                ),
+              ),
             );
+          },
+        );
+        break;
+      case VoiceCommandIntent.openWebSearch:
+        _conversation.clear();
+        await reply(
+          const VoiceReply(
+            ar: 'جهزت البحث الخارجي. اضغط فتح المتصفح ليُرسل نص البحث فقط، بلا ملفك الصحي.',
+            en: 'Web search is ready. The button sends only the search phrase, not the health file.',
+          ),
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SystemSearchScreen(
+                  initialQuery: ExternalSearchCatalog.phraseOf(text),
+                  startOnWeb: true,
+                ),
+              ),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.openLibrary:
+        _conversation.clear();
+        await reply(
+          const VoiceReply(
+            ar: 'سأفتح مكتبة الفهارس. الكتاب يُفتح عند الناشر إذا سمح مصدره.',
+            en: 'Opening the catalog library. A book opens at its publisher when that source allows it.',
+          ),
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BookLibraryScreen(
+                  initialPhrase: ExternalSearchCatalog.phraseOf(text),
+                ),
+              ),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.openVisionResources:
+        _conversation.clear();
+        await reply(
+          const VoiceReply(
+            ar: 'سأفتح دليل موارد الرؤية. الصفحات رسمية ولا يُثبَّت نموذج تلقائياً.',
+            en: 'Opening the vision resource guide. The pages are official and no model is installed automatically.',
+          ),
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => VisionResourceScreen(
+                  profileId: profiles.activeProfileId ?? '',
+                ),
+              ),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.goHome:
+        _conversation.clear();
+        final homeNav = LifexNavigator.key.currentState;
+        await reply(
+          const VoiceReply(
+            ar: 'رجعت إلى الشاشة الرئيسية.',
+            en: 'Back at the home screen.',
+          ),
+          thenOpen: () => homeNav?.popUntil((route) => route.isFirst),
+        );
+        break;
+      case VoiceCommandIntent.goBack:
+        _conversation.clear();
+        final navigator = LifexNavigator.key.currentState;
+        final canLeave = navigator?.canPop() ?? false;
+        await reply(
+          VoiceReply(
+            ar: canLeave
+                ? 'رجعت إلى الشاشة السابقة.'
+                : 'لا شاشة سابقة. بقيت حيث أنت.',
+            en: canLeave ? 'Went back.' : 'There is no previous screen.',
+          ),
+          thenOpen: () {
+            if (canLeave) navigator?.pop();
           },
         );
         break;
@@ -577,28 +1012,78 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         );
         break;
       case VoiceCommandIntent.openLiveSight:
+      case VoiceCommandIntent.readVisibleText:
         _conversation.clear();
+        final sight = const VoiceActionRouter().route(command.intent);
         await reply(
-          const VoiceReply(
-            ar: 'سأفتح البث الحي على الشاشة. أصف الإطار فقط إن وُجد محرك معتمد.',
-            en: 'Opening on-screen live sight. I describe a frame only if a real engine is bound.',
-          ),
+          VoiceReply(ar: sight.spokenAr, en: sight.spokenAr),
           thenOpen: () {
-            final id = profiles.activeProfileId;
-            if (id == null) return;
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => LiveSightScreen(profileId: id)),
+              MaterialPageRoute(
+                builder: (_) => LiveSightScreen(
+                  profileId: profiles.activeProfileId ?? '',
+                  ask: command.intent == VoiceCommandIntent.readVisibleText
+                      ? BlindCameraAsk.text
+                      : BlindCameraAsk.both,
+                ),
+              ),
             );
           },
+        );
+        break;
+      case VoiceCommandIntent.repeatScene:
+        _conversation.clear();
+        AssistantSession.instance.repeatSight?.call();
+        await reply(
+          VoiceReply(
+            ar: AssistantSession.instance.repeatSight == null
+                ? 'المساعد البصري غير مفتوح. قل: افتح الكاميرا.'
+                : 'أعيد الوصف الأخير.',
+            en: 'Repeating the last description.',
+          ),
+        );
+        break;
+      case VoiceCommandIntent.pauseScene:
+        _conversation.clear();
+        AssistantSession.instance.pauseSight?.call();
+        await reply(
+            const VoiceReply(ar: 'أوقفت الوصف.', en: 'Description paused.'));
+        break;
+      case VoiceCommandIntent.resumeScene:
+        _conversation.clear();
+        AssistantSession.instance.resumeSight?.call();
+        await reply(
+            const VoiceReply(ar: 'استأنفت الوصف.', en: 'Description resumed.'));
+        break;
+      case VoiceCommandIntent.stopReading:
+        _conversation.clear();
+        await _stopReading();
+        break;
+      case VoiceCommandIntent.readScreen:
+        _conversation.clear();
+        await reply(VoiceReply(
+          ar: ScreenVoiceBoard.instance.readingAr(),
+          en: ScreenVoiceBoard.instance.readingAr(),
+        ));
+        break;
+      case VoiceCommandIntent.raiseVolume:
+        _conversation.clear();
+        AssistantSession.instance.raiseVolume();
+        unawaited(_storeSpeechPrefs());
+        await reply(
+          VoiceReply(
+            ar: 'مستوى الصوت ${AssistantSession.instance.outputVolume.toStringAsFixed(2)}.',
+            en: 'Volume raised.',
+          ),
         );
         break;
       case VoiceCommandIntent.openLayeredLens:
         _conversation.clear();
         await reply(
           const VoiceReply(
-            ar: 'سأفتح عدسة الشرائح. الزوم من العتاد. بلا ×200 ولا تعريض 20 ثانية مختلق.',
-            en: 'Opening the slice studio. Zoom is hardware. No fake 200x or 20-second exposure.',
+            ar: 'سأفتح تقريب العدسة. الزوم من العتاد. اللقطة للملف وليست تشخيص جلد.',
+            en: 'Opening the close-up lens. Zoom follows the hardware. The shot is a file note, not a skin diagnosis.',
           ),
           thenOpen: () {
             Navigator.push(
@@ -753,13 +1238,46 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         _conversation.clear();
         await reply(
           const VoiceReply(
-            ar: 'سأفتح المراقبة السريرية الظاهرة. بلا تصوير خفي وبلا حفظ صور.',
-            en: 'Opening visible clinical watch. No hidden capture and no image archive.',
+            ar: 'سأفتح الحماية الظاهرة في الخلفية. إشعار دائم، بلا تصوير خفي وبلا اتصال صامت.',
+            en: 'Opening the visible background guard. A persistent notice, no hidden capture and no silent call.',
           ),
           thenOpen: () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ClinicalWatchScreen()),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.openMessenger:
+        _conversation.clear();
+        await reply(
+          const VoiceReply(
+            ar: 'سأفتح المسنجر. التراسل بالمعرّف على هذا الجهاز فقط.',
+            en: 'Opening messenger. Messaging by ID stays on this device.',
+          ),
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MessengerScreen()),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.openSite:
+        _conversation.clear();
+        await reply(
+          const VoiceReply(
+            ar: 'سأشغّل بوابة الموقع داخل التطبيق. ليست موقعاً على الإنترنت.',
+            en: 'Opening the in-app site. It is not a website on the internet.',
+          ),
+          thenOpen: () {
+            final id = profiles.activeProfileId ?? '';
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LifexUnifiedWebPortalScreen(profileId: id),
+              ),
             );
           },
         );
@@ -883,6 +1401,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         break;
       case VoiceCommandIntent.listConnectedDevices:
         {
+          if (!mounted) return;
           final runtime = context.read<LifexDeviceRuntime>();
           final o = await runtime.listConnectedSpoken();
           if (!mounted) return;
@@ -891,6 +1410,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         break;
       case VoiceCommandIntent.showWheelchair:
         {
+          if (!mounted) return;
           final runtime = context.read<LifexDeviceRuntime>();
           final o = await runtime.attachSimulatedWheelchair();
           if (!mounted) return;
@@ -899,6 +1419,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         break;
       case VoiceCommandIntent.wheelchairStatus:
         {
+          if (!mounted) return;
           final runtime = context.read<LifexDeviceRuntime>();
           final o = await runtime.wheelchairStatusSpoken();
           if (!mounted) return;
@@ -907,6 +1428,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         break;
       case VoiceCommandIntent.wheelchairMoveForward:
         {
+          if (!mounted) return;
           final runtime = context.read<LifexDeviceRuntime>();
           final o = await runtime.runWheelchairAction('MOVE_FORWARD');
           if (!mounted) return;
@@ -915,6 +1437,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         break;
       case VoiceCommandIntent.wheelchairStop:
         {
+          if (!mounted) return;
           final runtime = context.read<LifexDeviceRuntime>();
           final o = await runtime.runWheelchairAction('STOP');
           if (!mounted) return;
@@ -923,6 +1446,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         break;
       case VoiceCommandIntent.wheelchairEmergencyStop:
         {
+          if (!mounted) return;
           final runtime = context.read<LifexDeviceRuntime>();
           final o = await runtime.runWheelchairAction('EMERGENCY_STOP');
           if (!mounted) return;
@@ -931,6 +1455,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         break;
       case VoiceCommandIntent.wheelchairReadBattery:
         {
+          if (!mounted) return;
           final runtime = context.read<LifexDeviceRuntime>();
           final o = await runtime.runWheelchairAction('READ_BATTERY');
           if (!mounted) return;
@@ -939,6 +1464,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         break;
       case VoiceCommandIntent.confirmDeviceMotion:
         {
+          if (!mounted) return;
           final runtime = context.read<LifexDeviceRuntime>();
           final o = await runtime.confirmPendingMotion();
           if (!mounted) return;
@@ -1000,8 +1526,8 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
       case VoiceCommandIntent.openWallet:
       case VoiceCommandIntent.walletTopUp:
         {
-          final profile =
-              context.read<ActiveProfileController>().activeProfile;
+          if (!mounted) return;
+          final profile = context.read<ActiveProfileController>().activeProfile;
           final pid = profile?.profileId ?? '';
           await reply(
             VoiceReply(
@@ -1027,8 +1553,8 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         break;
       case VoiceCommandIntent.walletBalance:
         {
-          final profile =
-              context.read<ActiveProfileController>().activeProfile;
+          if (!mounted) return;
+          final profile = context.read<ActiveProfileController>().activeProfile;
           final pid = profile?.profileId;
           if (pid == null) {
             await reply(
@@ -1039,35 +1565,34 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
             );
             break;
           }
-          final balOutcome = await context
-              .read<LioSensitiveActionEntry>()
-              .readWalletBalances(
-                gatewayRequest: LioGatewayRequest(
-                  requestId:
-                      'voice_bal_${pid}_${DateTime.now().millisecondsSinceEpoch}',
-                  correlationId: 'voice_wallet_$pid',
-                  identityAccountId: pid,
-                  purpose: 'wallet_ops',
-                  requestedAction: 'read_wallet_balances',
-                  dataScope: 'wallet_balance_view',
-                  sensitivity: LioDataSensitivity.personal,
-                  consent: const LioConsentContext(
-                    consentGranted: true,
-                    purposeAligned: true,
-                  ),
-                  riskLevel: LioActionRisk.low,
-                  timestamp: DateTime.now().toUtc(),
-                  authenticated: true,
-                  authorized: true,
-                  minimumNecessarySatisfied: true,
-                ),
-                profileId: pid,
-              );
+          if (!mounted) return;
+          final walletEntry = context.read<LioSensitiveActionEntry>();
+          final balOutcome = await walletEntry.readWalletBalances(
+                    gatewayRequest: LioGatewayRequest(
+                      requestId:
+                          'voice_bal_${pid}_${DateTime.now().millisecondsSinceEpoch}',
+                      correlationId: 'voice_wallet_$pid',
+                      identityAccountId: pid,
+                      purpose: 'wallet_ops',
+                      requestedAction: 'read_wallet_balances',
+                      dataScope: 'wallet_balance_view',
+                      sensitivity: LioDataSensitivity.personal,
+                      consent: const LioConsentContext(
+                        consentGranted: true,
+                        purposeAligned: true,
+                      ),
+                      riskLevel: LioActionRisk.low,
+                      timestamp: DateTime.now().toUtc(),
+                      authenticated: true,
+                      authorized: true,
+                      minimumNecessarySatisfied: true,
+                    ),
+                    profileId: pid,
+                  );
           if (!balOutcome.executed || balOutcome.value == null) {
             await reply(
               VoiceReply(
-                ar:
-                    'توقف عرض الرصيد عند LIO (${balOutcome.decision.wireDecision}).',
+                ar: 'توقف عرض الرصيد عند LIO (${balOutcome.decision.wireDecision}).',
                 en: 'Balance blocked by LIO.',
               ),
             );
@@ -1076,21 +1601,118 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
           final bal = balOutcome.value!;
           await reply(
             VoiceReply(
-              ar:
-                  'الرصيد المتاح ${(bal.availableMinor / 100).toStringAsFixed(2)} دولار. '
+              ar: 'الرصيد المتاح ${(bal.availableMinor / 100).toStringAsFixed(2)} دولار. '
                   'المعلّق ${(bal.pendingMinor / 100).toStringAsFixed(2)}. '
                   'المزوّد Sandbox إن لم يُربط مزود إنتاجي.',
-              en:
-                  'Available ${(bal.availableMinor / 100).toStringAsFixed(2)}. '
+              en: 'Available ${(bal.availableMinor / 100).toStringAsFixed(2)}. '
                   'Pending ${(bal.pendingMinor / 100).toStringAsFixed(2)}.',
             ),
           );
         }
         break;
+      case VoiceCommandIntent.openEpidemicDesk:
+        _conversation.clear();
+        await reply(
+          const VoiceReply(
+            ar: 'سأفتح رصد الأوبئة. العدد وحده ليس إعلاناً.',
+            en: 'Opening epidemic watch. A raw count is not a declaration.',
+          ),
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EpidemicSurveillanceScreen(
+                  profileId: profiles.activeProfileId,
+                ),
+              ),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.slowReading:
+        _conversation.clear();
+        AssistantSession.instance.slowSpeech();
+        unawaited(_storeSpeechPrefs());
+        await reply(VoiceReply(
+          ar: 'أبطأت القراءة. السرعة ${AssistantSession.instance.speechRate.toStringAsFixed(1)}.',
+          en: 'Reading is slower.',
+        ));
+        break;
+      case VoiceCommandIntent.fasterReading:
+        _conversation.clear();
+        AssistantSession.instance.raiseSpeech();
+        unawaited(_storeSpeechPrefs());
+        await reply(VoiceReply(
+          ar: 'رفعت سرعة القراءة. السرعة ${AssistantSession.instance.speechRate.toStringAsFixed(1)}.',
+          en: 'Reading is faster.',
+        ));
+        break;
+      case VoiceCommandIntent.updateCameraMind:
+        _conversation.clear();
+        await _loadVisionUpdatePrefs();
+        final report = await VisionModelUpdateDesk.instance.request(manual: true);
+        await reply(VoiceReply(ar: report.messageAr, en: report.messageAr));
+        break;
+      case VoiceCommandIntent.disableAutoModelUpdate:
+        _conversation.clear();
+        await _loadVisionUpdatePrefs();
+        VisionModelUpdateDesk.instance.autoEnabled = false;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(VisionModelUpdateDesk.autoKey, false);
+        await reply(const VoiceReply(
+          ar: 'أوقفت التحديث التلقائي. لن يعود إلا إذا فعّلته أنت.',
+          en: 'Automatic model updates stay off until you turn them on.',
+        ));
+        break;
+      case VoiceCommandIntent.readBarcode:
+        _conversation.clear();
+        await reply(
+          const VoiceReply(
+            ar: 'سأفتح العدسة لقراءة الرمز. النص المقروء ليس تفسيراً لدواء.',
+            en: 'Opening the lens for a barcode. The code is not a medication explanation.',
+          ),
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LiveSightScreen(
+                  profileId: profiles.activeProfileId ?? '',
+                  readBarcode: true,
+                ),
+              ),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.openHealthGuidance:
+        _conversation.clear();
+        await reply(
+          const VoiceReply(
+            ar: 'سأفتح الإرشاد الصحي. بلا تشخيص وبلا أجر على هذه الاستشارة.',
+            en: 'Opening health guidance. No diagnosis, and this consult has no fee.',
+          ),
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => HealthGuidanceScreen(
+                  profileId: profiles.activeProfileId,
+                ),
+              ),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.phoneBattery:
+        final speech = PhoneBatterySpeech.fromMonitor(
+          context.read<EnergyManager>().batteryMonitor,
+        );
+        await reply(VoiceReply(ar: speech.arabic, en: speech.english));
+        break;
       case VoiceCommandIntent.unknown:
         await reply(
           const VoiceReply(
-            ar: 'لم أفهم الأمر. قل ليفكس ثم: ملفي الصحي، أدويتي، مركز الأجهزة، أو أظهر الكرسي.',
+            ar: 'لم أفهم الأمر. جرّب: افتح الكاميرا، ماذا أمامي، اقرأ هذا النص، أعد الوصف، أو أوقف القراءة.',
             en: 'I did not catch that. Say Lifex then: my health, medications, devices, or show wheelchair.',
           ),
         );
@@ -1104,7 +1726,11 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         const VoiceLocalePolicy().preferredListenCode();
     final listening = _engine.state == VoiceEngineState.listening;
     final speaking = _engine.state == VoiceEngineState.speaking;
-    return Scaffold(
+    return ScreenArrival(
+      message: 'التحكم الصوتي',
+      controls: const ['تحدث الآن', 'أوقف القراءة', 'اختبر النطق', 'اقرأ الشاشة'],
+      body: _replyAr ?? _engine.lastSignalAr,
+      child: Scaffold(
       appBar: AppBar(title: const Text('التحكم الصوتي')),
       body: Center(
         child: SingleChildScrollView(
@@ -1166,33 +1792,43 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Text('سمعت: $_lastText',
-                        textAlign: TextAlign.center),
+                    child:
+                        Text('سمعت: $_lastText', textAlign: TextAlign.center),
                   ),
                 ),
               ],
               if (_replyAr != null) ...[
                 const SizedBox(height: 12),
-                Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('الرد: $_replyAr', textAlign: TextAlign.center),
+                Semantics(
+                  liveRegion: true,
+                  label: 'الرد: $_replyAr',
+                  child: Card(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child:
+                          Text('الرد: $_replyAr', textAlign: TextAlign.center),
+                    ),
                   ),
                 ),
               ],
               const SizedBox(height: 20),
-              TextField(
-                controller: _typed,
-                focusNode: _typedFocus,
-                textInputAction: TextInputAction.send,
-                enabled: !_sessionBusy,
-                decoration: const InputDecoration(
-                  labelText: 'اكتب الأمر نفسه',
-                  hintText: 'مثل: ملفي الصحي، بنك الدم، ما الموجود أمامي',
-                  border: OutlineInputBorder(),
+              Semantics(
+                textField: true,
+                label: 'مربع الأمر. الكتابة والصوت يصلان إلى المسار نفسه.',
+                child: TextField(
+                  controller: _typed,
+                  focusNode: _typedFocus,
+                  textInputAction: TextInputAction.send,
+                  enabled: !_sessionBusy,
+                  decoration: const InputDecoration(
+                    labelText: 'اكتب الأمر نفسه',
+                    hintText: 'مثل: ملفي الصحي، بنك الدم، ما الموجود أمامي',
+                    border: OutlineInputBorder(),
+                  ),
+                  onSubmitted: (_) => unawaited(_submitTyped()),
                 ),
-                onSubmitted: (_) => unawaited(_submitTyped()),
               ),
               const SizedBox(height: 8),
               Align(
@@ -1210,15 +1846,49 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 28),
-              FilledButton.icon(
-                onPressed: listening || speaking ? null : _listen,
-                icon: Icon(listening ? Icons.hearing : Icons.mic),
-                label: Text(
-                  listening
-                      ? 'جارٍ الاستماع والتسجيل...'
-                      : speaking
-                          ? 'جارٍ الرد...'
-                          : 'تحدث الآن',
+              Semantics(
+                button: true,
+                label: speaking
+                    ? 'أوقف القراءة'
+                    : listening
+                        ? 'أوقف الاستماع'
+                        : 'تحدث الآن',
+                child: FilledButton.icon(
+                  onPressed: speaking
+                      ? () => unawaited(_stopReading())
+                      : listening
+                          ? () {
+                              _stopEar = true;
+                              unawaited(_engine.stopListening());
+                            }
+                          : _listen,
+                  icon: Icon(speaking
+                      ? Icons.stop
+                      : listening
+                          ? Icons.stop_circle
+                          : Icons.mic),
+                  label: Text(
+                    speaking
+                        ? 'أوقف القراءة'
+                        : listening
+                            ? 'أوقف الاستماع'
+                            : 'تحدث الآن',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Semantics(
+                button: true,
+                label: 'اختبر النطق',
+                child: OutlinedButton.icon(
+                  onPressed: speaking
+                      ? null
+                      : () => unawaited(_say(const VoiceReply(
+                            ar: 'هذا اختبار النطق. إذا سمعت هذه الجملة فالمحرك يرد.',
+                            en: 'This is a speech test. Hearing this sentence means the engine replied.',
+                          ))),
+                  icon: const Icon(Icons.record_voice_over),
+                  label: const Text('اختبر النطق'),
                 ),
               ),
               const SizedBox(height: 18),
@@ -1238,7 +1908,8 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
               ),
               SwitchListTile(
                 title: const Text('إبقاء نص الأوامر على الشاشة'),
-                subtitle: const Text('لا يُحفظ مقطع صوتي. النص يظهر هنا فقط إن فعّلت هذا.'),
+                subtitle: const Text(
+                    'لا يُحفظ مقطع صوتي. النص يظهر هنا فقط إن فعّلت هذا.'),
                 value: _privacy.storeTranscripts,
                 onChanged: (value) =>
                     setState(() => _privacy.storeTranscripts = value),
@@ -1283,8 +1954,10 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                           ),
                           items: const [
                             DropdownMenuItem(value: 2, child: Text('مرتين')),
-                            DropdownMenuItem(value: 3, child: Text('ثلاث مرات')),
-                            DropdownMenuItem(value: 4, child: Text('أربع مرات')),
+                            DropdownMenuItem(
+                                value: 3, child: Text('ثلاث مرات')),
+                            DropdownMenuItem(
+                                value: 4, child: Text('أربع مرات')),
                           ],
                           onChanged: (value) {
                             if (value == null) return;
@@ -1354,6 +2027,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
             ],
           ),
         ),
+      ),
       ),
     );
   }

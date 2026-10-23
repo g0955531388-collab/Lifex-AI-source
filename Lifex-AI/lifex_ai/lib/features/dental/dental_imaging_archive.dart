@@ -5,6 +5,7 @@
 /// الوصف: أرشيف صور الأسنان والأشعة البانورامية عبر الزمن لنفس المريض،
 /// لمقارنة تطوّر الحالة بين الزيارات.
 /// =============================================================
+library;
 
 enum DentalImageType { panoramicXray, periapicalXray, intraoralPhoto, panoramicScan }
 

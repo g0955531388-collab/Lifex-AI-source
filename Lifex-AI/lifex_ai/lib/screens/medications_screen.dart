@@ -8,14 +8,19 @@
 /// =============================================================
 library lifex_ai.screens.medications_screen;
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/orchestrator/lio_gateway_contracts.dart';
 import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../data/medical_database_manager.dart';
+import '../features/medications/pharmacopoeia_reference.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
+import '../widgets/accessible_widgets.dart';
 import 'medication_alarm_screen.dart';
 
 class MedicationsScreen extends StatefulWidget {
@@ -29,6 +34,7 @@ class MedicationsScreen extends StatefulWidget {
 
 class _MedicationsScreenState extends State<MedicationsScreen> {
   List<Map<String, dynamic>> _catalog = const [];
+  PharmacopoeiaReference? _pharmacopoeia;
   bool _loading = true;
 
   @override
@@ -61,9 +67,20 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
       fileName: MedicalBundleFiles.medications,
     );
     if (!mounted) return;
+    PharmacopoeiaReference? book;
+    try {
+      final raw = await rootBundle.loadString(PharmacopoeiaReference.assetPath);
+      book = PharmacopoeiaReference.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      book = null;
+    }
+    if (!mounted) return;
     if (!outcome.executed) {
       setState(() {
         _catalog = const [];
+        _pharmacopoeia = book;
         _loading = false;
       });
       return;
@@ -74,6 +91,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
           .whereType<Map>()
           .map((e) => Map<String, dynamic>.from(e))
           .toList();
+      _pharmacopoeia = book;
       _loading = false;
     });
   }
@@ -121,6 +139,20 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     return warnings.toSet().toList();
   }
 
+  List<String> _pharmacopoeiaWarnings(HealthProfile profile) {
+    final book = _pharmacopoeia;
+    if (book == null) {
+      return const [
+        'دستور الأدوية المرجعي غير محمّل. لا يُعد ذلك سلامة للأدوية المسجّلة.',
+      ];
+    }
+    final lines = book.cvCautions(profile);
+    if (profile.questionnaireData['isPregnant'] == true) {
+      lines.addAll(book.pregnancyCautions(profile));
+    }
+    return lines;
+  }
+
   Future<void> _addMedication(HealthProfile profile) async {
     final controller = TextEditingController();
     final added = await showDialog<bool>(
@@ -164,7 +196,11 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     return Consumer<ActiveProfileController>(
       builder: (context, profiles, _) {
         final profile = profiles.profileById(widget.profileId);
-        return Scaffold(
+        return ScreenArrival(
+          message: 'أدويتي',
+          controls: const ['إضافة دواء', 'منبّه الأدوية'],
+          body: 'سجل شخصي. لا يصف دواء ولا يغيّر جرعة.',
+          child: Scaffold(
           appBar: AppBar(
             title: const Text('أدويتي'),
             actions: [
@@ -209,7 +245,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                           ),
                           child: const Text('منبّه الأدوية الذكي لكل أفراد الحساب'),
                         ),
-                        for (final warning in _interactionWarnings(profile))
+                        for (final warning in [
+                          ..._interactionWarnings(profile),
+                          ..._pharmacopoeiaWarnings(profile),
+                        ])
                           Card(
                             color: Colors.red.withOpacity(0.08),
                             child: ListTile(
@@ -297,6 +336,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                           ),
                       ],
                     ),
+          ),
         );
       },
     );

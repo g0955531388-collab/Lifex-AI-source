@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import '../core/permission_transparency.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/voice/clinical_watch_bridge.dart';
+import '../features/voice/clinical_watch_command_relay.dart';
 import '../features/voice/clinical_watch_policy.dart';
 import '../widgets/honesty_banner.dart';
 import 'live_sight_screen.dart';
@@ -82,12 +83,14 @@ class _ClinicalWatchScreenState extends State<ClinicalWatchScreen> {
             ? '$message\n${_policy.engineHonestyAr(ClinicalWatchPurpose.commands)}'
             : message;
       });
+      if (allowed) ClinicalWatchCommandRelay.instance.start();
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _stop() async {
+    await ClinicalWatchCommandRelay.instance.stop();
     await ClinicalWatchBridge.instance.stop();
     if (!mounted) return;
     setState(() {
@@ -144,8 +147,9 @@ class _ClinicalWatchScreenState extends State<ClinicalWatchScreen> {
           const SizedBox(height: 8),
           const HonestyBanner(
             messageAr:
-                'الخدمة الحالية تُظهر إشعاراً دائماً. الاستماع للأوامر يعمل بعد إشارة الزر والتطبيق ظاهر. '
-                'لن أختلق سقوطاً أو تنفساً أو إنذاراً بلا محرك معتمد.',
+                'مع الإشعار الدائم يستمر الاستماع للأوامر في الخلفية لحماية من يستخدم هذا الهاتف. '
+                'إيقاف الإشعار أو انتهاء العملية يوقف الميكروفون. '
+                'لا أختلق سقوطاً أو تنفساً، ولا أتصل بأحد من تلقاء نفسي.',
           ),
           SwitchListTile(
             title: const Text('أوافق على مراقبة ظاهرة بجانب المريض'),

@@ -6,6 +6,7 @@
 /// المسؤول عنهم. يشير فقط لمعرّف الملف الصحي؛ البيانات الطبية نفسها
 /// تبقى في health_profile.dart احتراماً لفصل الاهتمامات والخصوصية.
 /// =============================================================
+library;
 
 enum AdmissionStatus { admitted, dischargedHome, transferred, deceased }
 

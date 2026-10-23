@@ -84,7 +84,7 @@ class HealthChatScreen extends StatelessWidget {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => _ThreadPage(me: me, other: other),
+                        builder: (_) => HealthThreadPage(me: me, other: other),
                       ),
                     ),
                   ),
@@ -164,18 +164,19 @@ class HealthChatScreen extends StatelessWidget {
   }
 }
 
-class _ThreadPage extends StatefulWidget {
-  const _ThreadPage({required this.me, required this.other});
+class HealthThreadPage extends StatefulWidget {
+  const HealthThreadPage({super.key, required this.me, required this.other});
 
   final HealthProfile me;
   final HealthProfile other;
 
   @override
-  State<_ThreadPage> createState() => _ThreadPageState();
+  State<HealthThreadPage> createState() => _ThreadPageState();
 }
 
-class _ThreadPageState extends State<_ThreadPage> {
+class _ThreadPageState extends State<HealthThreadPage> {
   final _input = TextEditingController();
+  final _scroll = ScrollController();
   String? _fileName;
   int _sizeBytes = 0;
   String? _statusAr;
@@ -197,9 +198,23 @@ class _ThreadPageState extends State<_ThreadPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _scrollToEnd();
+  }
+
+  @override
   void dispose() {
     _input.dispose();
+    _scroll.dispose();
     super.dispose();
+  }
+
+  void _scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+    });
   }
 
   Future<void> _pickFile() async {
@@ -228,6 +243,7 @@ class _ThreadPageState extends State<_ThreadPage> {
     _input.clear();
     _fileName = null;
     _sizeBytes = 0;
+    _scrollToEnd();
     controller.saveActiveProfileChanges();
     try {
       final engine = InternalSearchEngine(
@@ -261,6 +277,7 @@ class _ThreadPageState extends State<_ThreadPage> {
             ),
           Expanded(
             child: ListView.builder(
+              controller: _scroll,
               padding: const EdgeInsets.all(12),
               itemCount: posts.length,
               itemBuilder: (_, index) {
@@ -270,7 +287,9 @@ class _ThreadPageState extends State<_ThreadPage> {
                   alignment:
                       mine ? Alignment.centerLeft : Alignment.centerRight,
                   child: Card(
-                    color: mine ? Colors.green.withOpacity(0.12) : null,
+                    color: mine
+                        ? Theme.of(context).colorScheme.primary.withOpacity(0.16)
+                        : null,
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: Column(

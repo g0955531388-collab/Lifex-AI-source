@@ -19,6 +19,7 @@ import '../features/doctors/public_slot_policy.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/cv_document_vault.dart';
+import '../features/profile/health_identity_manager.dart';
 import '../features/profile/cv_report_engine.dart';
 import '../features/profile/health_profile.dart';
 import '../features/voice/voice_engine.dart';
@@ -38,6 +39,7 @@ class _PublicDoctorFaceScreenState extends State<PublicDoctorFaceScreen> {
   static const _policy = PublicSlotPolicy();
   DateTime _day = DateTime.now();
   String? _statusAr;
+  String _period = 'all';
 
   String get _doctorName => widget.doctor['title']?.toString() ?? 'طبيب';
 
@@ -53,6 +55,44 @@ class _PublicDoctorFaceScreenState extends State<PublicDoctorFaceScreen> {
       int.tryParse(widget.doctor['slotMinutes']?.toString() ?? '') ?? 30;
   int get _startHour =>
       int.tryParse(widget.doctor['startHour']?.toString() ?? '') ?? 9;
+
+  String _publicId(HealthProfile? doctor) {
+    if (doctor == null) return '';
+    return HealthIdentityManager.instance
+            .getByProfileId(doctor.profileId)
+            ?.lifexId ??
+        doctor.profileId;
+  }
+
+  Widget _line(String label, Object? value) {
+    final text = value?.toString().trim() ?? '';
+    if (text.isEmpty) return const SizedBox.shrink();
+    return Text('$label: $text');
+  }
+
+  String _discountLabel() {
+    final raw = widget.doctor['discountSuggestion']?.toString().trim() ?? '';
+    final percent = int.tryParse(raw);
+    if (percent == null || percent < 0 || percent > 100) return '';
+    return 'اقتراح خصم كتبه الطبيب: $percent٪. ليس تحصيلاً وليس إعفاءً مؤكداً.';
+  }
+
+  bool _inPeriod(String clock) {
+    final hour = int.tryParse(clock.split(':').first) ?? 0;
+    if (_period == 'am') return hour < 15;
+    if (_period == 'pm') return hour >= 15;
+    return true;
+  }
+
+  String _spokenCard(HealthProfile? doctor) {
+    final id = _publicId(doctor);
+    final parts = <String>[
+      'الملف العام للطبيب $_doctorName.',
+      if (id.isNotEmpty) 'المعرف $id.',
+      'أسماء المرضى لا تُنطق هنا.',
+    ];
+    return parts.join(' ');
+  }
 
   List<String> get _photos {
     final raw = widget.doctor['photos'];
@@ -90,13 +130,51 @@ class _PublicDoctorFaceScreenState extends State<PublicDoctorFaceScreen> {
                 messageAr:
                     'عامة: اسم واختصاص واعتماد وصور عمل وتواصل. قوائم المرضى والأمراض داخل يوميات الطبيب فقط.',
               ),
-              Text(AppConstants.studioBannerCredit,
+              Text(AppConstants.ownershipStatementShort,
                   style: Theme.of(context).textTheme.labelMedium),
               const SizedBox(height: 8),
-              Text(_doctorName, style: Theme.of(context).textTheme.headlineSmall),
+              Semantics(
+                header: true,
+                label: '$_doctorName. المعرف ${_publicId(doctorProfile)}',
+                child: Wrap(
+                  spacing: 12,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(_doctorName,
+                        style: Theme.of(context).textTheme.headlineSmall),
+                    if (_publicId(doctorProfile).isNotEmpty)
+                      SelectableText(
+                        'ID ${_publicId(doctorProfile)}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                  ],
+                ),
+              ),
               Text(widget.doctor['detail']?.toString() ?? ''),
-              if ((widget.doctor['license']?.toString() ?? '').isNotEmpty)
-                Text('رقم الاعتماد الوطني: ${widget.doctor['license']}'),
+              _line('المدينة', widget.doctor['city']),
+              _line('العنوان', widget.doctor['address']),
+              _line('البريد', widget.doctor['email']),
+              _line('الهاتف', widget.doctor['phone']),
+              _line('رقم الاعتماد الوطني', widget.doctor['license']),
+              _line('ملاحظة الطبيب', widget.doctor['note']),
+              _line('دعم ذوي الإعاقة', widget.doctor['disabilityNote']),
+              if (_discountLabel().isNotEmpty) Text(_discountLabel()),
+              const Text(
+                'الخصوصية: الجدول ظاهر، وأسماء المرضى لا تظهر في هذا الملف العام.',
+              ),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  onPressed: () => VoiceEngine.instance.speak(
+                    _spokenCard(doctorProfile),
+                  ),
+                  icon: const Icon(Icons.volume_up_outlined),
+                  label: const Text('انطق الملف العام'),
+                ),
+              ),
               if ((widget.doctor['brief']?.toString() ?? '').isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -118,8 +196,8 @@ class _PublicDoctorFaceScreenState extends State<PublicDoctorFaceScreen> {
                             width: 120,
                             height: 120,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                const SizedBox(width: 120, child: Icon(Icons.image)),
+                            errorBuilder: (_, __, ___) => const SizedBox(
+                                width: 120, child: Icon(Icons.image)),
                           ),
                         ),
                     ],
@@ -137,13 +215,15 @@ class _PublicDoctorFaceScreenState extends State<PublicDoctorFaceScreen> {
                 runSpacing: 8,
                 children: [
                   FilledButton(
-                    onPressed: () => _accredit(controller, profile, doctorProfile),
+                    onPressed: () =>
+                        _accredit(controller, profile, doctorProfile),
                     child: const Text('طبيبي المعتمد'),
                   ),
                   FilledButton.tonal(
                     onPressed: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const HealthChatScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const HealthChatScreen()),
                     ),
                     child: const Text('محادثة'),
                   ),
@@ -174,11 +254,22 @@ class _PublicDoctorFaceScreenState extends State<PublicDoctorFaceScreen> {
                   child: Text(_statusAr!,
                       style: const TextStyle(color: Colors.orange)),
                 ),
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'all', label: Text('الفترتان')),
+                  ButtonSegment(value: 'am', label: Text('صباحي')),
+                  ButtonSegment(value: 'pm', label: Text('مسائي')),
+                ],
+                selected: {_period},
+                onSelectionChanged: (value) =>
+                    setState(() => _period = value.first),
+              ),
+              const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final clock in clocks)
+                  for (final clock in clocks.where(_inPeriod))
                     ActionChip(
                       label: Text(
                         doctorProfile != null &&
@@ -284,7 +375,8 @@ class _PublicDoctorFaceScreenState extends State<PublicDoctorFaceScreen> {
       startHour: _startHour,
     );
     controller.saveActiveProfileChanges();
-    setState(() => _statusAr = error ?? 'حُجزت $clock باسمك الحقيقي على يوميات الطبيب.');
+    setState(() =>
+        _statusAr = error ?? 'حُجزت $clock باسمك الحقيقي على يوميات الطبيب.');
     VoiceEngine.instance.speak(_statusAr!);
   }
 }

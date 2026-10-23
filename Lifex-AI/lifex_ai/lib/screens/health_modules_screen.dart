@@ -119,8 +119,8 @@ class HealthModulesScreen extends StatelessWidget {
             child: ListTile(
               leading:
                   const CircleAvatar(child: Icon(Icons.filter_none_outlined)),
-              title: const Text('عدسة الشرائح المتراكبة'),
-              subtitle: const Text('تكبير جلدي وعدستان. ليست تشخيصاً جلدياً'),
+              title: const Text('تقريب العدسة'),
+              subtitle: const Text('معاينة حية وزوم العتاد. ليست تشخيص جلد'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const LayeredLensStudioScreen(),

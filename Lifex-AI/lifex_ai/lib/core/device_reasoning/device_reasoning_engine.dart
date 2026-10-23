@@ -75,12 +75,12 @@ class DeviceReasoningEngine {
         feasibility: readEcg ? OptionFeasibility.unknown : OptionFeasibility.unsupported,
         missing: const ['other_source_authorization'],
       ),
-      DecisionOption(
+      const DecisionOption(
         id: 'continue_without',
         label: 'Continue without ECG',
         feasibility: OptionFeasibility.feasible,
       ),
-      DecisionOption(
+      const DecisionOption(
         id: 'ask_user',
         label: 'Ask user for intervention',
         feasibility: OptionFeasibility.feasible,

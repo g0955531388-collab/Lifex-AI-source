@@ -9,6 +9,7 @@
 /// ⚠️ هذه القناة من ضمن alwaysActiveFeatures في survival_energy_mode.dart
 /// ويجب ألا تُعطَّل أبداً حتى في أحرج ظروف البطارية أو انقطاع الشبكة.
 /// =============================================================
+library;
 
 typedef SmsSendFunction = Future<bool> Function(String phoneNumber, String message);
 

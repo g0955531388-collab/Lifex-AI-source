@@ -24,6 +24,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final _admin = GlobalAdminManager.instance;
   final _targetIdController = TextEditingController();
   String? _statusMessageAr;
+  StaffEngagement _engagement = StaffEngagement.volunteer;
 
   @override
   void dispose() {
@@ -46,6 +47,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       granterLifexId: widget.currentUserLifexId,
       targetLifexId: targetId,
       role: role,
+      engagement: _engagement,
     );
     _showStatus(result.messageAr);
     setState(() {});
@@ -87,6 +89,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       widget.currentUserLifexId,
       GlobalAdminPermission.grantModeratorRole,
     );
+    final canGrantEmployee = _admin.hasPermission(
+      widget.currentUserLifexId,
+      GlobalAdminPermission.grantStaffRole,
+    );
     final canManageToggles = _admin.hasPermission(
       widget.currentUserLifexId,
       GlobalAdminPermission.manageSystemEventToggles,
@@ -106,15 +112,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
+                  const Text(
                     ProjectAttribution.officialStatementShortAr,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     myRole == GlobalAdminRole.owner
-                        ? 'أنت مفعَّل كـ مالك تشغيلي (Owner) — كل صلاحيات الإدارة العالمية، '
-                            'بما فيها تعيين أدمن ومشرفين.'
+                        ? 'أنت المالك التشغيلي. الصيانة ومفاتيح التشغيل وتعيين '
+                            'مدير وموظف ومشرف، مأجورين أو متطوعين. '
+                            'هذا لا يفتح ملفات المرضى.'
                         : 'دورك: ${_roleLabelAr(myRole)}',
                   ),
                   Text(
@@ -151,16 +158,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          if (canGrantAdmin || canGrantModerator) ...[
-            Text('تعيين أدمن ومشرفين',
+          if (canGrantAdmin || canGrantModerator || canGrantEmployee) ...[
+            Text('تعيين الطاقم',
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
             Text(
               canGrantAdmin
-                  ? 'كمالك مخترع: يمكنك منح أدمن كامل أو مشرف، وسحب أدوارهم. '
-                      'دور المالك نفسه لا يُمنح يدوياً.'
-                  : 'كأدمن: يمكنك منح مشرفين فقط. منح أدمن جديد حصري للمالك.',
+                  ? 'كمالك: تعيّن مديراً أو موظفاً أو مشرفاً، مأجوراً أو متطوعاً، '
+                      'وتسحب أدوارهم. دور المالك لا يُمنح يدوياً.'
+                  : 'كمدير: يمكنك تعيين مشرفين فقط. المدير والموظف للمالك.',
               style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            SegmentedButton<StaffEngagement>(
+              segments: const [
+                ButtonSegment(
+                  value: StaffEngagement.paid,
+                  label: Text('مأجور'),
+                ),
+                ButtonSegment(
+                  value: StaffEngagement.volunteer,
+                  label: Text('متطوع'),
+                ),
+              ],
+              selected: {_engagement},
+              onSelectionChanged: (selected) {
+                setState(() => _engagement = selected.first);
+              },
             ),
             const SizedBox(height: 8),
             TextField(
@@ -179,13 +203,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 if (canGrantAdmin)
                   FilledButton.icon(
                     icon: const Icon(Icons.admin_panel_settings_outlined),
-                    label: const Text('منح دور أدمن'),
+                    label: const Text('تعيين مدير'),
                     onPressed: () => _grant(GlobalAdminRole.admin),
+                  ),
+                if (canGrantEmployee)
+                  FilledButton.icon(
+                    icon: const Icon(Icons.badge_outlined),
+                    label: const Text('تعيين موظف'),
+                    onPressed: () => _grant(GlobalAdminRole.employee),
                   ),
                 if (canGrantModerator)
                   OutlinedButton.icon(
                     icon: const Icon(Icons.shield_outlined),
-                    label: const Text('منح دور مشرف'),
+                    label: const Text('تعيين مشرف'),
                     onPressed: () => _grant(GlobalAdminRole.moderator),
                   ),
                 OutlinedButton.icon(
@@ -212,7 +242,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       : Icons.person_outline,
                 ),
                 title: Text(e.key),
-                subtitle: Text(_roleLabelAr(e.value)),
+                subtitle: Text(_staffLine(e.key, e.value)),
               ),
             ),
           const Divider(height: 32),
@@ -225,7 +255,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 8),
-            ..._admin.allEventToggles.entries.map(
+            ..._admin.allEventToggles.entries.where((entry) {
+              if (entry.key != GlobalAdminManager.remoteCameraEventKey) {
+                return true;
+              }
+              return _admin.hasPermission(
+                widget.currentUserLifexId,
+                GlobalAdminPermission.manageRemoteCameraMonitoring,
+              );
+            }).map(
               (entry) => SwitchListTile(
                 title: Text(_eventLabelAr(entry.key)),
                 value: entry.value,
@@ -245,9 +283,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   String _roleLabelAr(GlobalAdminRole role) {
     switch (role) {
       case GlobalAdminRole.owner:
-        return 'مالك تشغيلي / مخترع مفعَّل (Owner)';
+        return 'مالك تشغيلي / مخترع مفعَّل';
       case GlobalAdminRole.admin:
-        return 'أدمن';
+        return 'مدير';
+      case GlobalAdminRole.employee:
+        return 'موظف';
       case GlobalAdminRole.moderator:
         return 'مشرف';
       case GlobalAdminRole.none:
@@ -255,12 +295,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  String _staffLine(String lifexId, GlobalAdminRole role) {
+    final engagement = _admin.engagementOf(lifexId);
+    final roleAr = _roleLabelAr(role);
+    if (engagement == null) return roleAr;
+    final pay = engagement == StaffEngagement.paid ? 'مأجور' : 'متطوع';
+    return '$roleAr · $pay';
+  }
+
   String _permissionLabelAr(GlobalAdminPermission p) {
     switch (p) {
       case GlobalAdminPermission.grantModeratorRole:
         return 'تعيين / سحب مشرفين';
       case GlobalAdminPermission.grantAdminRole:
-        return 'تعيين / سحب أدمنز';
+        return 'تعيين / سحب المدراء';
+      case GlobalAdminPermission.grantStaffRole:
+        return 'تعيين / سحب الموظفين';
       case GlobalAdminPermission.manageSystemEventToggles:
         return 'مفاتيح أحداث النظام';
       case GlobalAdminPermission.manageUsers:
@@ -273,6 +323,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return 'إدارة الفوترة على مستوى المنصة';
       case GlobalAdminPermission.manageEmergencyPolicy:
         return 'سياسات الطوارئ العامة';
+      case GlobalAdminPermission.manageRemoteCameraMonitoring:
+        return 'مراقبة الكاميرا عن بُعد';
     }
   }
 

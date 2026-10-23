@@ -5,6 +5,7 @@
 /// الوصف: إدارة مخزون الأدوية داخل صيدلية واحدة، مرتبطاً بمعرّفات
 /// medications_database.json دون تكرار بيانات الدواء نفسها.
 /// =============================================================
+library;
 
 class PharmacyStockItem {
   final String pharmacyId;
@@ -27,6 +28,7 @@ class PharmacyInventoryManager {
   PharmacyInventoryManager();
 
   final Map<String, Map<String, PharmacyStockItem>> _stockByPharmacy = {};
+  final Map<String, Map<String, String>> _barcodeToMedication = {};
 
   void setStock({
     required String pharmacyId,
@@ -58,6 +60,18 @@ class PharmacyInventoryManager {
   bool isAvailable(String pharmacyId, String medicationId) {
     final item = _stockByPharmacy[pharmacyId]?[medicationId];
     return item != null && item.unitsInStock > 0;
+  }
+
+  /// باركود يُربط بمعرّف دواء موجود. المسح الثاني لا ينشئ صنفاً ثانياً.
+  String? rememberBarcode({
+    required String pharmacyId,
+    required String barcode,
+    required String medicationId,
+  }) {
+    final trimmed = barcode.trim();
+    if (trimmed.isEmpty || medicationId.trim().isEmpty) return null;
+    final book = _barcodeToMedication.putIfAbsent(pharmacyId, () => {});
+    return book.putIfAbsent(trimmed, () => medicationId);
   }
 
   List<String> lowStockMedicationIds(String pharmacyId) {

@@ -37,6 +37,24 @@ class _PartnerSignInScreenState extends State<PartnerSignInScreen> {
     });
   }
 
+  String _accountCard(String? fullName, String? lifexId) {
+    final profile = context.read<ActiveProfileController>().activeProfile;
+    final identity = profile == null
+        ? null
+        : HealthIdentityManager.instance.getByProfileId(profile.profileId);
+    String line(String label, String? value) {
+      final text = value?.trim() ?? '';
+      return '$label: ${text.isEmpty ? 'فارغ، يكتبه صاحب الحساب' : text}';
+    }
+
+    return [
+      line('الاسم', fullName),
+      line('البريد', identity?.email),
+      line('الهاتف', identity?.phoneNumber),
+      line('معرّف لايفكس', lifexId),
+    ].join('\n');
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<ActiveProfileController>().activeProfile;
@@ -51,8 +69,8 @@ class _PartnerSignInScreenState extends State<PartnerSignInScreen> {
         children: [
           const HonestyBanner(
             messageAr:
-                'يحق لصاحب الحساب طلب الدخول بأي موقع يريده — ذكاء اصطناعي أو غيره — ما عدا المواقع الإباحية. '
-                'التنفيذ يتم داخل نظامنا. المواقع غير الشريكة لا تُفتح لها جلسة ولا تُحفظ كلمات سرها هنا.',
+                'حساب لايفكس الذي يملأه صاحب الحساب هو حساب التسجيل في أي موقع غير إباحي. '
+                'الجلسة على الموقع تُفتح فقط إذا كان شريكاً. لا كلمة سر لموقع آخر، ولا ملف صحي.',
           ),
           const SizedBox(height: 12),
           TextField(
@@ -78,18 +96,25 @@ class _PartnerSignInScreenState extends State<PartnerSignInScreen> {
               ),
             ),
           ],
-          if (_decision?.mayProceed == true && lifexId != null) ...[
+          if (_decision?.offersLocalAccount == true) ...[
             const SizedBox(height: 8),
             ListTile(
-              title: const Text('معرّف لايفكس المحلي للشريك'),
-              subtitle: Text(lifexId),
+              title: const Text('حساب التسجيل'),
+              subtitle: Text(_accountCard(profile?.fullName, lifexId)),
               trailing: IconButton(
+                tooltip: 'نسخ حساب التسجيل',
                 icon: const Icon(Icons.copy),
                 onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: lifexId));
+                  await Clipboard.setData(
+                    ClipboardData(
+                      text: _accountCard(profile?.fullName, lifexId),
+                    ),
+                  );
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('نُسخ المعرّف. بلا بيانات مرض.')),
+                    const SnackBar(
+                      content: Text('نُسخ حساب التسجيل. بلا ملف صحي وبلا كلمة سر.'),
+                    ),
                   );
                 },
               ),

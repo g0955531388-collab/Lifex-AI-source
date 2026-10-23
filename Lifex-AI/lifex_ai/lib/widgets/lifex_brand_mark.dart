@@ -28,6 +28,7 @@ class LifexBrandMark extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.cover,
+          excludeFromSemantics: true,
         ),
       ),
     );
