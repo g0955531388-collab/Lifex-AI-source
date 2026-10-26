@@ -12,6 +12,7 @@
 /// =============================================================
 library lifex_ai.features.voice.voice_engine;
 
+import '../../core/app_config.dart';
 import '../../core/error_handler.dart';
 
 /// حالة تشغيل محرك الصوت العامة.
@@ -131,6 +132,12 @@ class VoiceEngine {
   /// بدء الاستماع لصوت المستخدم وتحويله لنص.
   /// جلسة واحدة في كل وقت: الطلب الثاني يُرفض حتى تنتهي الأولى.
   Future<VoiceOperationResult> startListening() async {
+    if (!AppConfig.instance.voiceCommandsEnabled) {
+      signalAr('أوامر النطق متوقفة.');
+      return const VoiceOperationResult.failure(
+        'أوامر النطق متوقفة، ولن أفتح الميكروفون.',
+      );
+    }
     if (_listenFlight != null) {
       signalAr('جلسة الاستماع السابقة لم تنته.');
       return const VoiceOperationResult.failure(
