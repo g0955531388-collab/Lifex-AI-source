@@ -16,8 +16,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../core/app_config.dart';
 import '../core/app_constants.dart';
+import '../core/i18n/lifex_i18n.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../widgets/accessible_widgets.dart';
 import '../widgets/lifex_app_title.dart';
@@ -107,11 +107,8 @@ class _SplashScreenState extends State<SplashScreen> {
                     const SizedBox(height: 24),
                     Semantics(
                       button: true,
-                      label: lifexUi('دخول', 'Enter'),
-                      hint: lifexUi(
-                        'ينتقل لإنشاء الملف أو للرئيسية',
-                        'Opens a profile or the home screen',
-                      ),
+                      label: context.nav('nav.enter'),
+                      hint: context.nav('nav.enterHint'),
                       onTap: _enter,
                       child: ExcludeSemantics(
                         child: FilledButton(
@@ -121,7 +118,7 @@ class _SplashScreenState extends State<SplashScreen> {
                               vertical: 14,
                               horizontal: 28,
                             ),
-                            child: Text(lifexUi('دخول', 'Enter')),
+                            child: Text(context.nav('nav.enter')),
                           ),
                         ),
                       ),

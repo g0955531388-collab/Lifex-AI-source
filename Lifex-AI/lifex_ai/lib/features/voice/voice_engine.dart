@@ -14,6 +14,7 @@ library lifex_ai.features.voice.voice_engine;
 
 import '../../core/app_config.dart';
 import '../../core/error_handler.dart';
+import 'speech_queue.dart';
 
 /// حالة تشغيل محرك الصوت العامة.
 enum VoiceEngineState { idle, listening, processing, speaking, error }
@@ -48,6 +49,7 @@ class VoiceEngine {
   String? activeLocaleId;
   String lastSignalAr = 'الصوت في وضع الانتظار';
   int speechEpoch = 0;
+  final SpeechQueue _speech = SpeechQueue();
   int _listenEpoch = 0;
 
   /// دوال منفَّذة من المحركات الفرعية (تُسجَّل عند التهيئة عبر
@@ -226,14 +228,63 @@ class VoiceEngine {
 
   /// يقطع النطق الجاري. يزيد [speechEpoch] حتى يتجاهل المتصل نتيجة النطق القديمة.
   Future<void> stopSpeaking() async {
+    _speech.abandon();
     speechEpoch++;
     await _stopSpeakingImpl?.call();
     signalAr('أوقفت القراءة.');
     _setState(VoiceEngineState.idle);
   }
 
+  /// الجملة العادية تُرفض إذا كان النطق جارياً.
+  Future<VoiceOperationResult> speak(String text) {
+    return _throughQueue(text, urgent: false);
+  }
+
+  /// للتنبيه العاجل فقط. يقطع الجملة الحالية، ويهتز بعد نهايتها إن طُلب.
+  Future<VoiceOperationResult> speakInterruptible(
+    String text, {
+    Future<void> Function()? hapticAfter,
+  }) {
+    return _throughQueue(text, urgent: true, hapticAfter: hapticAfter);
+  }
+
+  Future<VoiceOperationResult> _throughQueue(
+    String text, {
+    required bool urgent,
+    Future<void> Function()? hapticAfter,
+  }) async {
+    if (text.trim().isEmpty) {
+      return const VoiceOperationResult.failure('لا يوجد نص للقراءة.');
+    }
+    VoiceOperationResult? emitted;
+    final accepted = urgent
+        ? await _speech.speakInterruptible(
+            text: text,
+            stop: stopSpeaking,
+            hapticAfter: hapticAfter,
+            speak: (value) async {
+              emitted = await _emit(value);
+              return emitted!.success;
+            },
+          )
+        : await _speech.speakQueued(
+            text: text,
+            speak: (value) async {
+              emitted = await _emit(value);
+              return emitted!.success;
+            },
+          );
+    if (emitted != null) return emitted!;
+    if (!accepted) {
+      return const VoiceOperationResult.failure(
+        'النطق جارٍ. أُبقي الجملة الحالية.',
+      );
+    }
+    return const VoiceOperationResult.failure('تعذّر النطق.');
+  }
+
   /// نطق نص معيّن بصوت مسموع (Text-to-Speech).
-  Future<VoiceOperationResult> speak(String text) async {
+  Future<VoiceOperationResult> _emit(String text) async {
     if (_speakImpl == null) {
       ErrorHandler.instance.report(
         'VOICE_SPEAK_NOT_BOUND',
@@ -259,5 +310,30 @@ class VoiceEngine {
         : (result.errorMessageAr ?? 'تعذّر النطق.'));
     _setState(VoiceEngineState.idle);
     return result;
+  }
+}
+
+/// المدخل الذي تستخدمه الكاميرا. الطابور الفعلي واحد داخل [VoiceEngine].
+class SpeechDesk {
+  SpeechDesk._();
+
+  static final SpeechDesk instance = SpeechDesk._();
+
+  SpeechQueue get queue => VoiceEngine.instance._speech;
+
+  Future<bool> speakQueued(String text) async {
+    final result = await VoiceEngine.instance.speak(text);
+    return result.success;
+  }
+
+  Future<bool> speakInterruptible(
+    String text, {
+    Future<void> Function()? hapticAfter,
+  }) async {
+    final result = await VoiceEngine.instance.speakInterruptible(
+      text,
+      hapticAfter: hapticAfter,
+    );
+    return result.success;
   }
 }

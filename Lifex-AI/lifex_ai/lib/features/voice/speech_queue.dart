@@ -2,14 +2,19 @@
 /// الطلب العاجل يقطع الجملة الحالية، والاهتزاز ينتظر نهايتها.
 library lifex_ai.features.voice.speech_queue;
 
-import 'voice_engine.dart';
-
 class SpeechQueue {
   int _epoch = 0;
   bool _busy = false;
   Future<void> Function()? _haptic;
 
   bool get isSpeaking => _busy;
+
+  /// يلغي اهتزاز الجملة الجارية حتى لا يتبع الإيقاف صوتاً جديداً.
+  void abandon() {
+    _haptic = null;
+    _epoch++;
+    _busy = false;
+  }
 
   Future<bool> speakQueued({
     required String text,
@@ -53,33 +58,5 @@ class SpeechQueue {
       }
     }
     return ok;
-  }
-}
-
-/// المدخل الوحيد الذي تمر منه جمل الواجهة نحو محرك النطق.
-class SpeechDesk {
-  SpeechDesk({SpeechQueue? queue}) : queue = queue ?? SpeechQueue();
-
-  static final SpeechDesk instance = SpeechDesk();
-
-  final SpeechQueue queue;
-
-  Future<bool> speakQueued(String text) {
-    return queue.speakQueued(
-      text: text,
-      speak: (value) async => (await VoiceEngine.instance.speak(value)).success,
-    );
-  }
-
-  Future<bool> speakInterruptible(
-    String text, {
-    Future<void> Function()? hapticAfter,
-  }) {
-    return queue.speakInterruptible(
-      text: text,
-      hapticAfter: hapticAfter,
-      stop: VoiceEngine.instance.stopSpeaking,
-      speak: (value) async => (await VoiceEngine.instance.speak(value)).success,
-    );
   }
 }
