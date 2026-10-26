@@ -3,7 +3,7 @@ library lifex_ai.features.accessibility.blind_assist_gate;
 
 enum BlindAssistStep { ask, open, ignore }
 
-enum BlindRailZone { assistant, front }
+enum BlindRailZone { assistant, front, spot }
 
 class BlindAssistGate {
   BlindRailZone? armedZone;

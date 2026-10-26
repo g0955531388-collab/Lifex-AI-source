@@ -266,3 +266,130 @@ class BlindCameraSpeech {
   }) =>
       hasScene(labels) || text.trim().isNotEmpty;
 }
+
+/// تحية المساعد البصري. لا تُقال قبل ثبوت البث والتحليل والاستماع والنطق معاً.
+class VisualAssistOpening {
+  const VisualAssistOpening._();
+
+  static const welcomeAr =
+      'أهلا بك انا مساعدك البصري في لايفيكس انا اسمع وأرى';
+
+  static const welcomeEn =
+      'Welcome. I am your visual assistant in Lifex. I hear and see.';
+
+  static const unsureAr = 'لم أتمكن من تحديد المشهد بثقة.';
+
+  static const unsureEn = 'I cannot identify this scene with confidence.';
+
+  static const hearingOffAr =
+      'الكاميرا تعمل. الاستماع غير متاح، لذلك لن أقول إنني أسمع.';
+
+  static const hearingOffEn =
+      'The camera is on. Listening is not available, so I will not say that I can hear you.';
+
+  static const speechOffAr = 'النطق غير مربوط. لن أقول إن الجلسة تتكلم.';
+
+  static const speechOffEn =
+      'Speech is not connected. I will not say that the session is speaking.';
+
+  static const cameraAskAr =
+      'أحتاج إذن الكاميرا لأبدأ. ستظهر نافذة النظام. يمكنك إيقاف الجلسة في أي وقت.';
+
+  static const cameraAskEn =
+      'I need the camera permission to start. The system window will appear. You can stop the session at any time.';
+
+  static const micAskAr = 'أحتاج إذن الميكروفون لأسمعك. ستظهر نافذة النظام.';
+
+  static const micAskEn =
+      'I need the microphone permission to hear you. The system window will appear.';
+
+  static const micDeniedAr =
+      'لم يُمنح الميكروفون. أصف ما تظهره الكاميرا، ولا أقول إنني أسمعك.';
+
+  static const micDeniedEn =
+      'The microphone was not granted. I describe what the camera shows, and I do not say that I can hear you.';
+
+  static const cloudSendingAr =
+      'أُرسل الإطار إلى جيميني بعد جاهزية الجلسة. هذا وصف سحابي، وليس قياساً للمسافة.';
+
+  static const cloudSendingEn =
+      'The frame is going to Gemini after the session became ready. This is a cloud description, not a distance measurement.';
+
+  static const cloudDownAr =
+      'تعذّر اتصال جيميني. الوصف المحلي مستمر إن عاد المصنّف بنتيجة.';
+
+  static const cloudDownEn =
+      'The Gemini connection did not start. Local description continues if the labeler returns a result.';
+
+  static const cloudStoppedAr = 'أوقفت الإرسال السحابي. الوصف المحلي مستمر.';
+
+  static const cloudStoppedEn =
+      'Cloud sending is stopped. Local description continues.';
+
+  static const offlineClosedAr =
+      'لا إنترنت. أُغلق اتصال جيميني. الوصف المحلي مستمر. لا تُرسل صور قديمة.';
+
+  static const offlineClosedEn =
+      'No internet. The Gemini connection is closed. Local description continues. Old pictures are not sent.';
+
+  static const offlineStayAr =
+      'لا إنترنت. اتصال جيميني مغلق حتى ترجع الشبكة. الوصف المحلي مستمر.';
+
+  static const offlineStayEn =
+      'No internet. Gemini stays closed until the network returns. Local description continues.';
+
+  static String _pick(String languageCode, String arabic, String english) =>
+      BlindCameraSpeech.explainsInArabic(languageCode) ? arabic : english;
+
+  static String cameraAsk(String languageCode) =>
+      _pick(languageCode, cameraAskAr, cameraAskEn);
+
+  static String micAsk(String languageCode) =>
+      _pick(languageCode, micAskAr, micAskEn);
+
+  static String micDenied(String languageCode) =>
+      _pick(languageCode, micDeniedAr, micDeniedEn);
+
+  static String unsure(String languageCode) =>
+      _pick(languageCode, unsureAr, unsureEn);
+
+  static String hearingOff(String languageCode) =>
+      _pick(languageCode, hearingOffAr, hearingOffEn);
+
+  static String speechOff(String languageCode) =>
+      _pick(languageCode, speechOffAr, speechOffEn);
+
+  static String cloudSending(String languageCode) =>
+      _pick(languageCode, cloudSendingAr, cloudSendingEn);
+
+  static String cloudDown(String languageCode) =>
+      _pick(languageCode, cloudDownAr, cloudDownEn);
+
+  static String cloudStopped(String languageCode) =>
+      _pick(languageCode, cloudStoppedAr, cloudStoppedEn);
+
+  static String offline({
+    required String languageCode,
+    required bool wasOpen,
+  }) =>
+      wasOpen
+          ? _pick(languageCode, offlineClosedAr, offlineClosedEn)
+          : _pick(languageCode, offlineStayAr, offlineStayEn);
+
+  /// فارغ يعني: لا تُنطق التحية. النقص ليس نجاحاً.
+  static String? welcome({
+    required String languageCode,
+    required bool cameraStreaming,
+    required bool analysisReady,
+    required bool hearingReady,
+    required bool speakingReady,
+  }) {
+    if (!cameraStreaming ||
+        !analysisReady ||
+        !hearingReady ||
+        !speakingReady) {
+      return null;
+    }
+    return _pick(languageCode, welcomeAr, welcomeEn);
+  }
+}

@@ -121,6 +121,21 @@ void main() {
       isTrue,
     );
   });
+
+  test('اتصال جيميني المباشر إلزامي عند الإنترنت ويسقط للمحلي عند الانقطاع', () {
+    expect(
+      directGeminiRoute(online: false, packageInstalled: true),
+      DirectGeminiRoute.local,
+    );
+    expect(
+      directGeminiRoute(online: true, packageInstalled: true),
+      DirectGeminiRoute.external,
+    );
+    expect(
+      directGeminiRoute(online: true, packageInstalled: false),
+      DirectGeminiRoute.internal,
+    );
+  });
 }
 
 class _Cloud implements CloudVisionAnalyzer {

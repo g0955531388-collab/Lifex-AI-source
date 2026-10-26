@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifex_ai/core/app_config.dart';
 import 'package:lifex_ai/features/accessibility/blind_volume_shortcut.dart';
 import 'package:lifex_ai/features/accessibility/gemini_bidi_session.dart';
 import 'package:lifex_ai/features/ai/ai_service_router.dart';
@@ -69,7 +70,7 @@ void main() {
     final setupMessage = geminiLiveSetupMessage(model: 'models/gemini-3.8-live');
     final generation = (setupMessage['setup'] as Map)['generationConfig'] as Map;
     expect(generation['responseModalities'], ['TEXT']);
-    final kickoff = jsonEncode(geminiLiveKickoffMessage());
+    final kickoff = geminiLiveKickoffFor(AppLanguage.arabic);
     expect(kickoff.contains('متر'), isFalse);
     expect(kickoff.contains('آمن'), isTrue);
     expect(kickoff.contains('تم فتح الاتصال الحي'), isTrue);
@@ -80,6 +81,19 @@ void main() {
     expect(geminiLiveInstructionAr.contains('بشكل مستمر'), isTrue);
     expect(geminiLiveInstructionAr.contains('لحظياً'), isTrue);
     expect(geminiLiveInstructionAr.contains('توجيه مستخدم كفيف'), isTrue);
+    expect(
+      geminiLiveInstructionAr.contains(
+        'أهلا بك انا مساعدك البصري في لايفيكس انا اسمع وأرى',
+      ),
+      isTrue,
+    );
+    expect(geminiLiveInstructionAr.contains('إشارات المرور'), isTrue);
+    expect(
+      guardGeminiSceneSpeech(
+        'أهلا بك انا مساعدك البصري في لايفيكس انا اسمع وأرى',
+      ),
+      'أهلا بك انا مساعدك البصري في لايفيكس انا اسمع وأرى',
+    );
   });
 
   test('الإطار لا يغادر قبل اكتمال التهيئة', () async {
