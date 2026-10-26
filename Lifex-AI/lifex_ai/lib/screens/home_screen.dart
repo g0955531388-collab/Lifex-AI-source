@@ -13,6 +13,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../core/admin/admin_manager.dart';
+import '../core/app_config.dart';
+import '../core/i18n/lifex_i18n.dart';
+import '../core/studio_theme.dart';
 import '../core/orchestrator/lio_gateway_contracts.dart';
 import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/trial_manager.dart';
@@ -28,8 +31,10 @@ import '../widgets/studio_web_frame.dart';
 import '../widgets/honesty_banner.dart';
 import '../widgets/accessible_widgets.dart';
 import '../features/voice/first_run_voice.dart';
+import '../features/spot/spot_camera_page.dart';
 import '../widgets/blind_assist_entry.dart';
 import '../widgets/device_wall_clock.dart';
+import '../widgets/lifex_language_button.dart';
 import '../widgets/encyclopedia_share_bar.dart';
 import 'accessibility_assistant_screen.dart';
 import 'ai_agent_screen.dart';
@@ -39,6 +44,7 @@ import 'blood_request_screen.dart';
 import 'camera_notes_screen.dart';
 import 'care_cycle_screen.dart';
 import 'doctor_directory_screen.dart';
+import 'professional_directory_screen.dart';
 import 'nearby_care_screen.dart';
 import 'emergency_contacts_screen.dart';
 import 'global_health_dashboard_screen.dart';
@@ -118,9 +124,9 @@ class HomeScreen extends StatelessWidget {
         portal.id == StudioPortalId.emergency ||
         portal.id == StudioPortalId.privacy;
     if (!openWithoutProfile && profileId == null) {
-      announceForScreenReader(context, BlindNavigationCopy.needsProfile);
+      announceForScreenReader(context, BlindNavigationCopy.needsProfileText);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(BlindNavigationCopy.needsProfile)),
+        SnackBar(content: Text(BlindNavigationCopy.needsProfileText)),
       );
       return;
     }
@@ -173,7 +179,7 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 BlindAssistEntry(
-                  onOpenBack: () => _open(
+                  onOpenAssistant: () => _open(
                     context,
                     'camera',
                     LiveSightScreen(
@@ -182,46 +188,61 @@ class HomeScreen extends StatelessWidget {
                       initialOrder: BlindCameraOrder.back,
                     ),
                   ),
-                  onOpenFront: () => _open(
+                  onOpenSpot: () => _open(
                     context,
                     'camera',
-                    LiveSightScreen(
-                      profileId: activeProfileId ?? '',
-                      ask: BlindCameraAsk.scene,
-                      initialOrder: BlindCameraOrder.front,
-                    ),
+                    const SpotCameraPage(),
                   ),
                 ),
                 Expanded(
                   child: Column(
               children: [
                 const FirstRunVoiceHook(),
-                StudioMenuBar(
-                  onPortal: (portal) => _openPortal(
-                    context,
-                    portal,
-                    activeProfileId,
-                    profileController.activeProfile,
-                  ),
-                  onSearch: () => _open(
-                    context,
-                    'search',
-                    const SystemSearchScreen(),
-                  ),
-                  onAccount: () =>
-                      _open(context, 'settings', const SettingsScreen()),
-                  onEmergency: () => _showEmergencyConfirmationDialog(
-                    context,
-                    activeProfileId,
-                  ),
+                const AttributionMarqueeBar(),
+                _HomeDirectActions(
+                  onMessenger: () {
+                    if (activeProfileId == null) {
+                      announceForScreenReader(
+                        context,
+                        BlindNavigationCopy.needsProfileText,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(BlindNavigationCopy.needsProfileText),
+                        ),
+                      );
+                      return;
+                    }
+                    _open(context, 'chat', const MessengerScreen());
+                  },
                 ),
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     children: [
+                      StudioMenuBar(
+                        includeBanner: false,
+                        onPortal: (portal) => _openPortal(
+                          context,
+                          portal,
+                          activeProfileId,
+                          profileController.activeProfile,
+                        ),
+                        onSearch: () => _open(
+                          context,
+                          'search',
+                          const SystemSearchScreen(),
+                        ),
+                        onAccount: () =>
+                            _open(context, 'settings', const SettingsScreen()),
+                        onEmergency: () => _showEmergencyConfirmationDialog(
+                          context,
+                          activeProfileId,
+                        ),
+                      ),
                       AccessibleActionButton(
                         icon: Icons.visibility_outlined,
-                        label: 'كاميرا المكفوفين',
+                        label: context.nav('nav.blindCamera'),
                         semanticHint:
                             'يفتح البث الحي. الوصف الأساسي أولاً، والتفاصيل عند الطلب',
                         onTap: () {
@@ -238,7 +259,7 @@ class HomeScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       AccessibleActionButton(
                         icon: Icons.settings_outlined,
-                        label: 'إعدادات النظام',
+                        label: context.nav('nav.settings'),
                         semanticHint:
                             'تفتح المظهر واللغة والصلاحيات وربط محركات الذكاء والبحث داخل المنظومة وخارجها',
                         onTap: () {
@@ -252,7 +273,7 @@ class HomeScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       AccessibleActionButton(
                         icon: Icons.public,
-                        label: 'تشغيل الموقع',
+                        label: context.nav('nav.portal'),
                         semanticHint:
                             'تشغّل بوابة الموقع داخل التطبيق: بحث وصوت وكاميرا وطوارئ. ليست موقعاً على الإنترنت ولا علاجاً معتمداً',
                         onTap: () {
@@ -310,8 +331,6 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const DeviceWallClockView(),
-                      const SizedBox(height: 12),
                       HonestyBanner.medical(),
                       const SizedBox(height: 12),
                       FutureBuilder<PermissionStatus>(
@@ -325,7 +344,7 @@ class HomeScreen extends StatelessWidget {
                                 Theme.of(context).colorScheme.primaryContainer,
                             child: ListTile(
                               leading: const Icon(Icons.gps_fixed),
-                              title: const Text('حالة GPS — أولوية عالية'),
+                              title: Text(lifexUi('حالة GPS — أولوية عالية', 'GPS status — high priority')),
                               subtitle: Text(
                                 '${gps.messageAr} اضغط لاقتراح الأقرب حسب الاختصاص.',
                               ),
@@ -354,7 +373,7 @@ class HomeScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       AccessibleActionButton(
                         icon: Icons.public_outlined,
-                        label: 'رصد الأوبئة',
+                        label: context.nav('nav.outbreak'),
                         semanticHint:
                             'يفتح تقييم إشارة وبائية من أرقام تُدخلها. ليس إعلاناً رسمياً',
                         onTap: () {
@@ -369,7 +388,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.health_and_safety_outlined,
-                        label: 'الإرشاد والوقاية',
+                        label: context.nav('nav.guidance'),
                         semanticHint:
                             'يفتح استشارة تثقيفية مجانية من المرجع المحلي. ليست تشخيصاً',
                         onTap: () {
@@ -382,7 +401,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.badge_outlined,
-                        label: 'ملفي الصحي',
+                        label: context.nav('nav.healthProfile'),
                         semanticHint: 'يفتح صفحة الملف الصحي الشخصي',
                         onTap: () {
                           _open(
@@ -396,10 +415,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.assignment_outlined,
-                        label: 'الاستبيان الصحي',
+                        label: context.nav('nav.questionnaire'),
                         semanticHint:
                             'يفتح الاستبيان الصحي الموسع لتسجيل بياناتك وحفظها في ملفك',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -412,10 +431,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.account_tree_outlined,
-                        label: 'دورة الرعاية',
+                        label: context.nav('nav.careCycle'),
                         semanticHint:
                             'تقرير أولي ثم طبيب معتمد وحجز وطلب صيدلية وعرض مالي',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -428,9 +447,9 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.medication_outlined,
-                        label: 'أدويتي',
+                        label: context.nav('nav.medications'),
                         semanticHint: 'يفتح سجل الأدوية الشخصي والمرجع العام',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -445,7 +464,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.calendar_month_outlined,
-                        label: 'مواعيدي',
+                        label: context.nav('nav.appointments'),
                         semanticHint:
                             'يفتح التقويم ومواعيدك المحلية شهراً ويوماً',
                         onTap: () {
@@ -458,10 +477,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.mic_none_outlined,
-                        label: 'التحكم الصوتي',
+                        label: context.nav('nav.voice'),
                         semanticHint:
                             'يستمع إلى أوامرك العربية ويفتح الوظيفة المطلوبة',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -474,7 +493,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.search,
-                        label: 'البحث',
+                        label: context.nav('nav.search'),
                         semanticHint:
                             'يبحث داخل المنظومة فوراً، والإنترنت زر منفصل. يمكن الكتابة أو الصوت',
                         onTap: () {
@@ -487,10 +506,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.devices_other_outlined,
-                        label: 'مركز الأجهزة',
+                        label: context.nav('nav.devices'),
                         semanticHint:
                             'اكتشاف وربط الأجهزة عبر السائق والبروتوكول ومركز التحكم',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -503,9 +522,9 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.visibility_outlined,
-                        label: 'المساعد البصري',
+                        label: context.nav('nav.visualAssistant'),
                         semanticHint: 'يفتح أدوات مساعدة المكفوفين وضعاف البصر',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -520,10 +539,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.inventory_2_outlined,
-                        label: 'صندوق المشروع',
+                        label: context.nav('nav.projectBox'),
                         semanticHint:
                             'يفتح الصندوق الكامل من التكوين حتى آخر يوم بما فيه المقاعد الفارغة',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -536,9 +555,9 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.public_outlined,
-                        label: 'منظومة Lifex-AI',
+                        label: context.nav('nav.network'),
                         semanticHint: 'يفتح المركز الموحد لجميع الوحدات الصحية',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -553,10 +572,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.dashboard_outlined,
-                        label: 'استوديو الشبكة',
+                        label: context.nav('nav.studio'),
                         semanticHint:
                             'يفتح بوابات مستودع الاستوديو على المقاعد المحلية',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -571,10 +590,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.chat_bubble_outline,
-                        label: 'القناة الصحية',
+                        label: context.nav('nav.healthChannel'),
                         semanticHint:
                             'محادثة صحية بأسلوب المراسلة: فلتر عام ومرفقات للمشتركين',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -587,10 +606,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.forum_outlined,
-                        label: 'المسنجر',
+                        label: context.nav('nav.messenger'),
                         semanticHint:
-                            'محادثات برقم الهاتف على هذا الجهاز، ومسودة رسالة قصيرة تؤكدها أنت. الواي فاي والبلوتوث غير مربوطين. الغرفة محلية بلا فيديو بعيد',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                            'محادثات بالرقم أو البريد على هذا الجهاز، والاسم الظاهر مستعار. بلا إنترنت تُفتح مسودة رسالة قصيرة وورقة مشاركة للبلوتوث أو الواي فاي القريب. الكابل غير مربوط. الغرفة محلية بلا فيديو بعيد',
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -603,7 +622,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.health_and_safety_outlined,
-                        label: 'حماية في الخلفية',
+                        label: context.nav('nav.background'),
                         semanticHint:
                             'إشعار ظاهر يبقي الاستماع للأوامر لحماية من يستخدم الهاتف. ليس تصويراً خفياً ولا اتصالاً صامتاً',
                         onTap: () {
@@ -616,10 +635,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.meeting_room_outlined,
-                        label: 'قاعة الاجتماع',
+                        label: context.nav('nav.meeting'),
                         semanticHint:
-                            'قاعة محلية على هذا الجهاز. ليست مكالمة زوم ولا يبدأ فيديو بعيد',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                            'غرفة فيديو على هذا الجهاز. الصورة لا تغادر الهاتف',
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -632,10 +651,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.hub_outlined,
-                        label: 'الوحدات الصحية',
+                        label: context.nav('nav.units'),
                         semanticHint:
                             'يفتح مركز المخابر والدم والتبرعات والمرأة والأسنان والتدريب',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -648,7 +667,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.volunteer_activism_outlined,
-                        label: 'التبرعات',
+                        label: context.nav('nav.donations'),
                         semanticHint:
                             'يفتح مركز التبرعات: بحث عام موافق، رسوم، محفظة، عيني',
                         onTap: () {
@@ -661,10 +680,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.bloodtype_outlined,
-                        label: 'شبكة الدم',
+                        label: context.nav('nav.blood'),
                         semanticHint:
                             'يفتح طلبات الدم للموافقين على هذا الجهاز',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -677,10 +696,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.local_pharmacy_outlined,
-                        label: 'الصيدلية',
+                        label: context.nav('nav.pharmacy'),
                         semanticHint:
                             'يفتح المخزون المحلي وأقرب صنف في المدينة المدخلة',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -692,8 +711,21 @@ class HomeScreen extends StatelessWidget {
                               },
                       ),
                       AccessibleActionButton(
+                        icon: Icons.badge_outlined,
+                        label: context.nav('nav.directory'),
+                        semanticHint:
+                            'يفتح دليلاً محلياً للمهن. التجربة 48 ساعة. الدفع لا يُرسل بلا تأكيد مرخّص',
+                        onTap: () {
+                          _open(
+                            context,
+                            'directory',
+                            const ProfessionalDirectoryScreen(),
+                          );
+                        },
+                      ),
+                      AccessibleActionButton(
                         icon: Icons.medical_services_outlined,
-                        label: 'الأطباء',
+                        label: context.nav('nav.doctors'),
                         semanticHint:
                             'يفتح دليل الأطباء. فارغ إن لم تُضف بيانات بعد — ليس رفض صلاحية',
                         onTap: () {
@@ -706,10 +738,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.camera_alt_outlined,
-                        label: 'الكاميرا الذكية',
+                        label: context.nav('nav.smartCamera'),
                         semanticHint:
                             'يلتقط أوراقاً بموافقة ظاهرة دون قراءة آلية مزيفة',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -722,9 +754,9 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.account_balance_wallet_outlined,
-                        label: 'محفظتي',
+                        label: context.nav('nav.wallet'),
                         semanticHint: 'يفتح المحفظة الرقمية وسجل المعاملات',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -737,11 +769,11 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.smart_toy_outlined,
-                        label: 'مركز الذكاء الاصطناعي',
+                        label: context.nav('nav.aiCenter'),
                         semanticHint:
                             'بحث بلا مفتاح في المرجع المحلي ومحرك عام، '
                             'وربط اختياري بمفتاح Gemini أو ChatGPT أو Claude',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -754,10 +786,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.psychology_outlined,
-                        label: 'الوكيل الذكي',
+                        label: context.nav('nav.agent'),
                         semanticHint: 'يفتح وضع الوكيل متعدد الخطوات '
                             'والمحادثة المباشرة مع Lifex-AI',
-                        disabledHint: BlindNavigationCopy.needsProfile,
+                        disabledHint: BlindNavigationCopy.needsProfileText,
                         onTap: activeProfileId == null
                             ? null
                             : () {
@@ -770,7 +802,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       AccessibleActionButton(
                         icon: Icons.emergency_outlined,
-                        label: 'طوارئ',
+                        label: context.nav('nav.emergency'),
                         semanticHint:
                             'يسجّل حالة طوارئ على هذا الجهاز. الإرسال الخارجي غير مربوط بعد. '
                             'اضغط ضغطاً مزدوجاً للتأكيد',
@@ -811,14 +843,14 @@ class HomeScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('تأكيد حالة طوارئ'),
+        title: Text(lifexUi('تأكيد حالة طوارئ', 'Confirm emergency')),
         content: const Text(
           'ستُسجَّل حالة طوارئ على هذا الجهاز. الإرسال لجهات الثقة يحتاج قناة SMS أو دفع حقيقية. هل تريد المتابعة؟',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('إلغاء'),
+            child: Text(lifexUi('إلغاء', 'Cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -828,7 +860,7 @@ class HomeScreen extends StatelessWidget {
                     builder: (_) => const EmergencyContactsScreen()),
               );
             },
-            child: const Text('جهات الثقة'),
+            child: Text(lifexUi('جهات الثقة', 'Trusted contacts')),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -893,9 +925,83 @@ class HomeScreen extends StatelessWidget {
                 ),
               );
             },
-            child: const Text('تأكيد الطوارئ'),
+            child: Text(lifexUi('تأكيد الطوارئ', 'Confirm emergency')),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HomeDirectActions extends StatelessWidget {
+  const _HomeDirectActions({
+    required this.onMessenger,
+  });
+
+  final VoidCallback onMessenger;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: LifexLanguageButton(),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _DirectButton(
+                  icon: Icons.chat_rounded,
+                  label: context.nav('nav.messenger'),
+                  hint: 'يفتح المسنجر على هذا الجهاز',
+                  onPressed: onMessenger,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(child: DeviceWallClockView()),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DirectButton extends StatelessWidget {
+  const _DirectButton({
+    required this.icon,
+    required this.label,
+    required this.hint,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final String hint;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      hint: hint,
+      child: ExcludeSemantics(
+        child: FilledButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon),
+          label: Text(label),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+            backgroundColor: StudioTheme.teal,
+            foregroundColor: Colors.white,
+          ),
+        ),
       ),
     );
   }

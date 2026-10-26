@@ -460,9 +460,7 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 900;
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: _theme.backgroundPrimary,
         drawer: wide ? null : Drawer(child: _sidebar()),
         body: SafeArea(
@@ -494,7 +492,6 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
             ],
           ),
         ),
-      ),
     );
   }
 

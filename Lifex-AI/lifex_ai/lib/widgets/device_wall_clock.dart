@@ -5,6 +5,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../core/app_config.dart';
+import '../features/voice/voice_engine.dart';
+import '../screens/speaking_alarm_screen.dart';
+
 class DeviceWallClock {
   const DeviceWallClock();
 
@@ -42,7 +46,11 @@ class DeviceWallClock {
   String spokenLabel(DateTime now) {
     final local = now.toLocal();
     String two(int value) => value.toString().padLeft(2, '0');
-    return 'الساعة ${two(local.hour)}:${two(local.minute)}. ${dateLabel(now)}';
+    final time = '${two(local.hour)}:${two(local.minute)}';
+    if (AppConfig.instance.defaultLanguage == AppLanguage.english) {
+      return 'The time is $time.';
+    }
+    return 'الساعة $time. ${dateLabel(now)}';
   }
 
   String dateLabel(DateTime now) {
@@ -55,7 +63,9 @@ class DeviceWallClock {
 }
 
 class DeviceWallClockView extends StatefulWidget {
-  const DeviceWallClockView({super.key});
+  const DeviceWallClockView({super.key, this.showAlarms = true});
+
+  final bool showAlarms;
 
   @override
   State<DeviceWallClockView> createState() => _DeviceWallClockViewState();
@@ -85,29 +95,80 @@ class _DeviceWallClockViewState extends State<DeviceWallClockView> {
     super.dispose();
   }
 
+  void _speak() {
+    unawaited(VoiceEngine.instance.speak(_clock.spokenLabel(_now)));
+  }
+
+  void _openAlarms() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const SpeakingAlarmScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final visible = ModalRoute.of(context)?.isCurrent ?? true;
     _sync(visible);
-    return Semantics(
-      label: _clock.spokenLabel(_now),
-      child: ExcludeSemantics(
-        child: Card(
+    final face = DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF8A8A8A),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF5A5A5A), width: 3),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: ColoredBox(
+          color: const Color(0xFFD5D5D5),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            child: Column(
-              children: [
-                Text(
-                  _clock.timeLabel(_now),
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 4),
-                Text(_clock.dateLabel(_now)),
-              ],
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Text(
+              _clock.timeLabel(_now),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.black,
+                fontFamily: 'monospace',
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.5,
+                height: 1.1,
+              ),
             ),
           ),
         ),
       ),
+    );
+    return Row(
+      children: [
+        Expanded(
+          child: Semantics(
+            button: true,
+            label: _clock.spokenLabel(_now),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _speak,
+                child: face,
+              ),
+            ),
+          ),
+        ),
+        if (widget.showAlarms) ...[
+          const SizedBox(width: 6),
+          Semantics(
+            button: true,
+            label: lifexUi('منبهات الساعة', 'Clock alarms'),
+            child: IconButton(
+              tooltip: lifexUi('منبهات الساعة', 'Clock alarms'),
+              onPressed: _openAlarms,
+              icon: const Icon(Icons.alarm, color: Colors.black),
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFBDBDBD),
+                minimumSize: const Size(48, 48),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

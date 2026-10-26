@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 
 import 'medical_record_canon.dart';
+import 'reference_ledger.dart';
 
 class KnowledgeHit {
   const KnowledgeHit({
@@ -32,6 +33,7 @@ class LocalKnowledge {
     required this.namedConditions,
     required this.cameraSigns,
     required this.disclaimerAr,
+    this.references = ReferenceLedger.empty,
   });
 
   final List<Map<String, dynamic>> diseases;
@@ -41,6 +43,7 @@ class LocalKnowledge {
   final List<Map<String, dynamic>> namedConditions;
   final List<Map<String, dynamic>> cameraSigns;
   final String disclaimerAr;
+  final ReferenceLedger references;
 
   bool get sourcesReady =>
       diseases.isNotEmpty ||
@@ -50,17 +53,43 @@ class LocalKnowledge {
       namedConditions.isNotEmpty ||
       cameraSigns.isNotEmpty;
 
-  static Future<List<Map<String, dynamic>>> _readList(String asset) async {
-    try {
-      final decoded = jsonDecode(await rootBundle.loadString(asset));
-      if (decoded is! List) return const [];
-      return [
-        for (final entry in decoded)
-          if (entry is Map) Map<String, dynamic>.from(entry),
-      ];
-    } catch (_) {
-      return const [];
+  static const referenceAssets = [
+    'lib/data/reference/SmartCameraSigns.json',
+    'lib/data/reference/face_sign_extras.json',
+    'lib/data/reference/conditions_db_1000.json',
+    'lib/data/reference/genital_conditions.json',
+    'lib/data/reference/hands_conditions.json',
+    'lib/data/reference/skin_hair_conditions.json',
+    'lib/data/reference/Height_Weight.json',
+    'lib/data/reference/incoming_reference.json',
+    'lib/data/reference/drugs/Analgesics.json',
+    'lib/data/reference/drugs/Antibiotics.json',
+    'lib/data/reference/drugs/Antidiabetic.json',
+    'lib/data/reference/drugs/Antifungal.json',
+    'lib/data/reference/drugs/Antihypertensive.json',
+    'lib/data/reference/drugs/AntiInflammatory.json',
+    'lib/data/reference/drugs/Antipyretics.json',
+    'lib/data/reference/drugs/Antiviral.json',
+    'lib/data/reference/drugs/Cardiac.json',
+    'lib/data/reference/drugs/Gastrointestinal.json',
+    'lib/data/reference/drugs/MiscellaneousDrugs.json',
+    'lib/data/reference/drugs/NeuroPsych.json',
+    'lib/data/reference/drugs/Oncology.json',
+    'lib/data/reference/drugs/PregnancySupplements.json',
+    'lib/data/reference/drugs/Respiratory.json',
+    'lib/data/reference/drugs/SexualHealth.json',
+    'lib/data/reference/drugs/Vitamins.json',
+  ];
+
+  static Future<ReferenceLedger> _loadReferences() async {
+    final documents = <String, Object?>{};
+    for (final asset in referenceAssets) {
+      try {
+        final decoded = jsonDecode(await rootBundle.loadString(asset));
+        documents[asset] = decoded;
+      } catch (_) {}
     }
+    return ReferenceLedger.fromDocuments(documents);
   }
 
   static Future<LocalKnowledge> load() async {
@@ -77,12 +106,7 @@ class LocalKnowledge {
     final medsJson = await read('medications_database.json');
     final symptomsJson = await read('symptoms_database.json');
     final testsJson = await read('tests_database.json');
-    final extraConditions = MedicalRecordCanon.uniqueNamedRows([
-      ...await _readList('lib/data/reference/conditions_db_1000.json'),
-      ...await _readList('lib/data/reference/genital_conditions.json'),
-      ...await _readList('lib/data/reference/hands_conditions.json'),
-      ...await _readList('lib/data/reference/skin_hair_conditions.json'),
-    ]);
+    final references = await _loadReferences();
     return LocalKnowledge(
       diseases: MedicalRecordCanon.uniqueDiseases(
         List<Map<String, dynamic>>.from(
@@ -94,14 +118,9 @@ class LocalKnowledge {
           symptomsJson['symptoms'] as List? ?? const []),
       tests: List<Map<String, dynamic>>.from(
           testsJson['tests'] as List? ?? const []),
-      namedConditions: extraConditions,
-      cameraSigns: MedicalRecordCanon.uniqueNamedRows(
-        [
-          ...await _readList('lib/data/reference/SmartCameraSigns.json'),
-          ...await _readList('lib/data/reference/face_sign_extras.json'),
-        ],
-        nameKeys: const ['sign', 'name'],
-      ),
+      namedConditions: references.merged(kind: 'حالة مرجعية'),
+      cameraSigns: references.merged(kind: 'علامة بصرية'),
+      references: references,
       disclaimerAr: (diseasesJson['_meta'] as Map?)?['disclaimer_ar']
               as String? ??
           MedicalRecordCanon.disclaimerAr,
@@ -149,9 +168,41 @@ class LocalKnowledge {
     scan(medications, 'دواء', ['nameAr', 'nameEn']);
     scan(symptoms, 'عرض', ['nameAr', 'nameEn']);
     scan(tests, 'تحليل', ['nameAr', 'nameEn']);
-    scan(namedConditions, 'حالة مرجعية', ['name', 'nameAr', 'description']);
+    scan(namedConditions, 'حالة مرجعية', ['name', 'nameAr', 'description', 'symptoms']);
     scan(cameraSigns, 'علامة بصرية', ['sign', 'name', 'meaning']);
-    return hits;
+    scan(
+      references.merged(kind: 'دواء مرجعي'),
+      'دواء مرجعي',
+      ['name', 'form', 'strength', 'description'],
+    );
+    scan(
+      references.merged(kind: 'معيار نمو'),
+      'معيار نمو',
+      ['age_group', 'name'],
+    );
+    hits.addAll(_referenceHits(q));
+    final seen = <String>{};
+    return [
+      for (final hit in hits)
+        if (seen.add('${hit.kindAr}|${hit.titleAr}|${hit.detailAr}')) hit,
+    ];
+  }
+
+  List<Map<String, dynamic>> compareReferences(String query) =>
+      references.compare(query);
+
+  List<ReferenceConflict> referenceConflicts(String query) =>
+      references.conflictsFor(query);
+
+  List<KnowledgeHit> _referenceHits(String q) {
+    return [
+      for (final item in references.conflictsFor(q).take(4))
+        KnowledgeHit(
+          kindAr: 'تعارض مراجع',
+          titleAr: item.title,
+          detailAr: '${item.noteAr} ${item.bodies.join(' | ')}',
+        ),
+    ];
   }
 
   /// تطابق أعراض أو علامة كاميرا أدخلها المستخدم مع المرجع. ليس تشخيصاً.
@@ -185,15 +236,18 @@ class LocalKnowledge {
         score += 5;
       }
       if (score <= 0) return;
+      final title =
+          (row['nameAr'] ?? row['name'] ?? row['sign'] ?? row['id']).toString();
+      final conflict = references.conflictsFor(title);
+      final note = conflict.isEmpty ? '' : ' ${conflict.first.noteAr}';
       scored.add((
         score: score,
         hit: KnowledgeHit(
           kindAr: kind,
-          titleAr: (row['nameAr'] ?? row['name'] ?? row['sign'] ?? row['id'])
-              .toString(),
+          titleAr: title,
           detailAr:
               '${row['description'] ?? row['meaning'] ?? row['generalInfoAr'] ?? ''} '
-              'مرجع توعية فقط. ليس تشخيصاً.',
+              'مرجع توعية فقط. ليس تشخيصاً.$note',
         ),
       ));
     }

@@ -8,6 +8,7 @@ library lifex_ai.features.voice.device_text_to_speech_provider;
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import '../../core/app_config.dart';
 import 'assistant_session.dart';
 import 'text_to_speech_manager.dart';
 import 'voice_engine.dart';
@@ -55,11 +56,15 @@ class DeviceTextToSpeechProvider implements TextToSpeechProvider {
       await _tts.awaitSpeakCompletion(true);
       await _tts.setVolume(AssistantSession.instance.outputVolume.clamp(0.2, 1.0));
       final languages = await _languages();
+      final appLanguage =
+          AppConfig.instance.defaultLanguage == AppLanguage.english
+              ? 'en'
+              : 'ar';
       final locale = languages.isEmpty
-          ? _localePolicy.preferredListenCode()
+          ? appLanguage
           : _localePolicy.speakCodeForText(
               text: spoken,
-              recognizedLocaleId: VoiceEngine.instance.activeLocaleId,
+              appLanguage: appLanguage,
               availableTts: languages,
             );
       final wantsArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(spoken);
@@ -67,8 +72,10 @@ class DeviceTextToSpeechProvider implements TextToSpeechProvider {
         (item) => item.toLowerCase().replaceAll('_', '-').startsWith('ar'),
       );
       if (wantsArabic && languages.isNotEmpty && !hasArabicVoice) {
-        _lastBlockAr =
-            'بيانات النطق العربي غير مثبتة على هذا الجهاز. النص ظاهر على الشاشة، ولم أختلق سماعاً.';
+        _lastBlockAr = lifexUi(
+          'بيانات النطق العربي غير مثبتة على هذا الجهاز. النص ظاهر على الشاشة، ولم أختلق سماعاً.',
+          'Arabic speech data is not installed on this phone. The text stays on screen, and no sound was invented.',
+        );
         return false;
       }
       VoiceEngine.instance.activeLocaleId = locale;

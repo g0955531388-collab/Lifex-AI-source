@@ -351,7 +351,6 @@ class _CareOrderScreenState extends State<CareOrderScreen> {
           Expanded(
             child: TextField(
               controller: _query,
-              textDirection: TextDirection.rtl,
               decoration: const InputDecoration(
                 labelText: 'اسم الوحدة أو معرّفها',
               ),

@@ -107,7 +107,7 @@ class UnitBranchCatalog {
     ),
     UnitBranch(
       id: 'cvThumbnail',
-      titleAr: 'Manage the thumbnail',
+      titleAr: 'إدارة الصورة المصغّرة',
       subtitleAr: 'إدارة الصورة المصغّرة: ختم رسمي أو صورة الملف',
       icon: Icons.account_circle_outlined,
       shortcut: UnitShortcut.thumbnail,
@@ -515,7 +515,7 @@ class UnitBranchCatalog {
     ),
     UnitBranch(
       id: 'thumbnail',
-      titleAr: 'Manage the thumbnail',
+      titleAr: 'إدارة الصورة المصغّرة',
       subtitleAr: 'إدارة الصورة المصغّرة للملف والأوراق',
       icon: Icons.image_outlined,
       shortcut: UnitShortcut.thumbnail,

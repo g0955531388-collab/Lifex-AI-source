@@ -23,6 +23,7 @@ class AppSecrets {
       String.fromEnvironment('LIFEX_GOOGLE_TRANSLATION_KEY');
   static const _translation =
       String.fromEnvironment('LIFEX_TRANSLATION_API_KEY');
+  static const _vision = String.fromEnvironment('LIFEX_GOOGLE_VISION_KEY');
   static const _icd11Id = String.fromEnvironment('LIFEX_ICD11_CLIENT_ID');
   static const _icd11Secret =
       String.fromEnvironment('LIFEX_ICD11_CLIENT_SECRET');
@@ -58,6 +59,10 @@ class AppSecrets {
 
   static String get googleTranslationApiKey =>
       _resolve('translation.googleApiKey', _translationZip, _translation);
+
+  /// مفتاح Cloud Vision. الفارغ يبقي القراءة على الجهاز.
+  static String get googleVisionApiKey =>
+      _resolve('vision.googleApiKey', _vision, '');
 
   static String get icd11ClientId =>
       _resolve('terminology.icd11.clientId', _icd11Id, '');

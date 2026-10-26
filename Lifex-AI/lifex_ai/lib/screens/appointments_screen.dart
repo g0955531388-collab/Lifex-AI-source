@@ -6,7 +6,6 @@
 library lifex_ai.screens.appointments_screen;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'package:provider/provider.dart';
 
 import '../core/orchestrator/lio_gateway_contracts.dart';
@@ -15,6 +14,7 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/scheduling/user_appointment_store.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/accessible_widgets.dart';
+import '../widgets/lifex_record_edit.dart';
 
 enum _CalendarView { month, week, day }
 
@@ -61,7 +61,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   Future<void> _announce(String message) async {
     setState(() => _lastSpoken = message);
     if (!mounted) return;
-    SemanticsService.announce(message, Directionality.of(context));
     announceForScreenReader(context, message);
     await VoiceEngine.instance.speak(message);
   }
@@ -253,12 +252,25 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                                     : () => _announce(
                                           'هذا الموعد غير قابل للتعديل المباشر. يمكن طلب تغيير حسب السياسة.',
                                         ),
-                                trailing: IconButton(
-                                  tooltip: appointment.canDirectDelete
-                                      ? 'حذف الموعد المحلي'
-                                      : 'طلب إلغاء',
-                                  icon: const Icon(Icons.delete_outline),
-                                  onPressed: () => _remove(appointment),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    LifexRecordEditButton(
+                                      onPressed: appointment.canDirectEdit
+                                          ? () => _addOrEdit(
+                                              existing: appointment)
+                                          : () => _announce(
+                                                'هذا الموعد غير قابل للتعديل المباشر. يمكن طلب تغيير حسب السياسة.',
+                                              ),
+                                    ),
+                                    IconButton(
+                                      tooltip: appointment.canDirectDelete
+                                          ? 'حذف الموعد المحلي'
+                                          : 'طلب إلغاء',
+                                      icon: const Icon(Icons.delete_outline),
+                                      onPressed: () => _remove(appointment),
+                                    ),
+                                  ],
                                 ),
                               ),
                             );

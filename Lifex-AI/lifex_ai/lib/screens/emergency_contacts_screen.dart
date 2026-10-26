@@ -13,6 +13,7 @@ import '../core/orchestrator/lio_gateway_contracts.dart';
 import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../widgets/lifex_record_edit.dart';
 
 enum _ContactLevel { notifyOnly, monitoring, delegate }
 
@@ -98,6 +99,48 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     _persist();
   }
 
+  Future<void> _edit(int index) async {
+    final current = _contacts[index];
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => _ContactDialog(
+        initial: current,
+        title: 'تعديل جهة الثقة',
+      ),
+    );
+    if (result == null || !mounted) return;
+    final profileId =
+        context.read<ActiveProfileController>().activeProfileId ?? 'local';
+    final entry = context.read<LioSensitiveActionEntry>();
+    final outcome = await entry.authorizeThenRun<void>(
+      request: LioGatewayRequest(
+        requestId:
+            'emg_contact_edit_${index}_${DateTime.now().millisecondsSinceEpoch}',
+        correlationId: 'emg_$profileId',
+        identityAccountId: profileId,
+        purpose: 'emergency_signal',
+        requestedAction: 'update_emergency_contact',
+        dataScope: 'emergency_contacts_min',
+        sensitivity: LioDataSensitivity.personal,
+        consent: const LioConsentContext(
+          consentGranted: true,
+          purposeAligned: true,
+        ),
+        riskLevel: LioActionRisk.medium,
+        timestamp: DateTime.now().toUtc(),
+        authenticated: true,
+        authorized: true,
+        minimumNecessarySatisfied: true,
+      ),
+      run: () async {
+        _contacts[index] = result;
+      },
+    );
+    if (!outcome.executed || !mounted) return;
+    setState(() {});
+    _persist();
+  }
+
   String _levelLabel(String? value) {
     switch (value) {
       case 'monitoring':
@@ -132,7 +175,11 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                     title: Text(contact['name']?.toString() ?? ''),
                     subtitle: Text(
                         '${contact['phone'] ?? contact['lifexId']} — ${_levelLabel(contact['level']?.toString())}'),
-                    trailing: IconButton(
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        LifexRecordEditButton(onPressed: () => _edit(index)),
+                        IconButton(
                       tooltip: 'حذف جهة الثقة',
                       icon: const Icon(Icons.delete_outline),
                       onPressed: () async {
@@ -170,6 +217,8 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                         setState(() {});
                         _persist();
                       },
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -180,7 +229,10 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
 }
 
 class _ContactDialog extends StatefulWidget {
-  const _ContactDialog();
+  const _ContactDialog({this.initial, this.title});
+
+  final Map<String, dynamic>? initial;
+  final String? title;
 
   @override
   State<_ContactDialog> createState() => _ContactDialogState();
@@ -193,6 +245,24 @@ class _ContactDialogState extends State<_ContactDialog> {
   _ContactLevel _level = _ContactLevel.notifyOnly;
 
   @override
+  void initState() {
+    super.initState();
+    final initial = widget.initial;
+    if (initial == null) return;
+    _name.text = initial['name']?.toString() ?? '';
+    _lifexId.text = initial['lifexId']?.toString() ?? '';
+    _phone.text = initial['phone']?.toString() ?? '';
+    _level = _levelFrom(initial['level']?.toString());
+  }
+
+  _ContactLevel _levelFrom(String? raw) {
+    for (final level in _ContactLevel.values) {
+      if (level.name == raw) return level;
+    }
+    return _ContactLevel.notifyOnly;
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _lifexId.dispose();
@@ -203,7 +273,7 @@ class _ContactDialogState extends State<_ContactDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('إضافة جهة ثقة'),
+      title: Text(widget.title ?? 'إضافة جهة ثقة'),
       content: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(

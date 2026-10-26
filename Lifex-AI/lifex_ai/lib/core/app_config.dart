@@ -7,8 +7,12 @@
 /// =============================================================
 library;
 
-import 'package:flutter/foundation.dart';
+import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'lifex_locale.dart';
 import 'studio_theme.dart';
 
 /// بيئات التشغيل الممكنة للتطبيق.
@@ -19,16 +23,65 @@ enum AppLanguage { arabic, english }
 
 /// إعدادات عامة قابلة للتعديل من قبل المستخدم أو المدير.
 ///
-/// هذا الكلاس Singleton بسيط يحمل الإعدادات في الذاكرة أثناء تشغيل التطبيق.
-/// التخزين الدائم (SharedPreferences/Hive/إلخ) يُضاف لاحقاً كطبقة تخزين
-/// منفصلة تستدعي هذا الكلاس عند بدء التشغيل وعند كل تعديل.
+/// هذا الكلاس Singleton يحمل الإعدادات في الذاكرة أثناء التشغيل.
+/// لغة الجهاز هي الأصل. زر الترجمة يحفظ اختيار العربية أو الإنجليزية.
 class AppConfig {
   AppConfig._internal();
   static final AppConfig instance = AppConfig._internal();
 
   AppEnvironment environment = AppEnvironment.development;
 
-  AppLanguage defaultLanguage = AppLanguage.arabic;
+  /// اختيار زر الترجمة. يبقى فارغاً حتى يضغط المستخدم الزر.
+  AppLanguage? explicitLanguage;
+
+  static const explicitLanguageKey = 'lifex_explicit_language_v1';
+
+  /// اللغة الحاكمة: الاختيار المحفوظ، وإلا لغة الجهاز، وإلا الإنجليزية.
+  AppLanguage get defaultLanguage {
+    final explicit = explicitLanguage == null
+        ? null
+        : explicitLanguage == AppLanguage.arabic
+            ? 'ar'
+            : 'en';
+    final resolved = resolveLifexLanguageCode(
+      explicitCode: explicit,
+      deviceCode: _deviceLanguageCode(),
+    );
+    return resolved == 'ar' ? AppLanguage.arabic : AppLanguage.english;
+  }
+
+  String _deviceLanguageCode() {
+    try {
+      return PlatformDispatcher.instance.locale.languageCode;
+    } catch (_) {
+      return 'en';
+    }
+  }
+
+  Future<void> loadExplicitLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(explicitLanguageKey);
+    if (raw == 'ar') {
+      explicitLanguage = AppLanguage.arabic;
+    } else if (raw == 'en') {
+      explicitLanguage = AppLanguage.english;
+    } else {
+      explicitLanguage = null;
+    }
+  }
+
+  Future<void> saveExplicitLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final chosen = explicitLanguage;
+    if (chosen == null) {
+      await prefs.remove(explicitLanguageKey);
+    } else {
+      await prefs.setString(
+        explicitLanguageKey,
+        chosen == AppLanguage.arabic ? 'ar' : 'en',
+      );
+    }
+  }
 
   /// هل الوضع الليلي مفعّل؟ يبقى متوافقاً مع المظهر الداكن.
   bool darkModeEnabled = true;
@@ -41,6 +94,9 @@ class AppConfig {
 
   /// هل الوضع الصوتي (قراءة تلقائية للتنبيهات) مفعّل افتراضياً؟
   bool voiceGuidanceEnabledByDefault = true;
+
+  /// الأوامر التي تسمع الميكروفون. إيقافها لا يوقف النطق.
+  bool voiceCommandsEnabled = true;
 
   /// هل يُسمح بالعمل بدون اتصال إنترنت (Offline-first)؟
   bool offlineModeSupported = true;
@@ -56,16 +112,22 @@ class AppConfig {
   void updateFrom({
     AppEnvironment? environment,
     AppLanguage? defaultLanguage,
+    bool followDeviceLanguage = false,
     bool? darkModeEnabled,
     StudioAppearance? appearance,
     bool? anonymousAnalyticsEnabled,
     bool? voiceGuidanceEnabledByDefault,
+    bool? voiceCommandsEnabled,
     bool? offlineModeSupported,
     int? maxFamilyProfilesPerAccount,
     int? sessionTimeoutMinutes,
   }) {
     if (environment != null) this.environment = environment;
-    if (defaultLanguage != null) this.defaultLanguage = defaultLanguage;
+    if (followDeviceLanguage) {
+      explicitLanguage = null;
+    } else if (defaultLanguage != null) {
+      explicitLanguage = defaultLanguage;
+    }
     if (darkModeEnabled != null) {
       this.darkModeEnabled = darkModeEnabled;
       if (appearance == null) {
@@ -83,6 +145,9 @@ class AppConfig {
     if (voiceGuidanceEnabledByDefault != null) {
       this.voiceGuidanceEnabledByDefault = voiceGuidanceEnabledByDefault;
     }
+    if (voiceCommandsEnabled != null) {
+      this.voiceCommandsEnabled = voiceCommandsEnabled;
+    }
     if (offlineModeSupported != null) {
       this.offlineModeSupported = offlineModeSupported;
     }
@@ -97,10 +162,12 @@ class AppConfig {
   Map<String, dynamic> toJson() => {
         'environment': environment.name,
         'defaultLanguage': defaultLanguage.name,
+        'explicitLanguage': explicitLanguage?.name,
         'darkModeEnabled': darkModeEnabled,
         'appearance': appearance.name,
         'anonymousAnalyticsEnabled': anonymousAnalyticsEnabled,
         'voiceGuidanceEnabledByDefault': voiceGuidanceEnabledByDefault,
+        'voiceCommandsEnabled': voiceCommandsEnabled,
         'offlineModeSupported': offlineModeSupported,
         'maxFamilyProfilesPerAccount': maxFamilyProfilesPerAccount,
         'sessionTimeoutMinutes': sessionTimeoutMinutes,
@@ -127,10 +194,17 @@ class StudioThemeController extends ChangeNotifier {
   }
 
   void toggleLanguage() {
-    AppConfig.instance.defaultLanguage =
-        AppConfig.instance.defaultLanguage == AppLanguage.arabic
-            ? AppLanguage.english
-            : AppLanguage.arabic;
+    final current = AppConfig.instance.defaultLanguage;
+    AppConfig.instance.explicitLanguage = current == AppLanguage.arabic
+        ? AppLanguage.english
+        : AppLanguage.arabic;
+    unawaited(AppConfig.instance.saveExplicitLanguage());
     notifyListeners();
   }
+
+  void refresh() => notifyListeners();
 }
+
+/// عبارة واجهة بالعربية أو الإنجليزية حسب اللغة الحاكمة.
+String lifexUi(String arabic, String english) =>
+    AppConfig.instance.defaultLanguage == AppLanguage.english ? english : arabic;

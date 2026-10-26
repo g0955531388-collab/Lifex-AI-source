@@ -27,13 +27,21 @@ class LastingSearchIndex {
           .trim();
       if (title.isEmpty) continue;
       final key = MedicalRecordCanon.normalize(title);
-      final exists = _rows.any(
-        (item) =>
-            MedicalRecordCanon.normalize(
+      final body = MedicalRecordCanon.normalize(
+        '${row['description'] ?? row['meaning'] ?? row['generalInfoAr'] ?? ''}',
+      );
+      final exists = _rows.any((item) {
+        final sameTitle = MedicalRecordCanon.normalize(
               '${item['nameAr'] ?? item['name'] ?? item['sign'] ?? ''}',
             ) ==
-            key,
-      );
+            key;
+        if (!sameTitle) return false;
+        final other = MedicalRecordCanon.normalize(
+          '${item['description'] ?? item['meaning'] ?? item['generalInfoAr'] ?? ''}',
+        );
+        if (body.isEmpty || other.isEmpty) return true;
+        return body == other;
+      });
       if (exists) continue;
       _rows.add({
         ...row,

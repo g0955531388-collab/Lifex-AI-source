@@ -19,6 +19,7 @@ import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../core/app_config.dart';
+import '../core/i18n/lifex_i18n.dart';
 import '../core/permission_transparency.dart';
 import '../features/accessibility/assistive_vision_engine.dart';
 import '../core/orchestrator/lio_gateway_contracts.dart';
@@ -1726,7 +1727,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                     _scanSpoken = const [];
                   }
                 }),
-                child: Text(_scanMode ? 'وضع المسح يعمل' : 'وضع المسح'),
+                child: Text(context.nav(_scanMode ? 'nav.scanOn' : 'nav.scanOff')),
               ),
               OutlinedButton(
                 onPressed: () => setState(() {

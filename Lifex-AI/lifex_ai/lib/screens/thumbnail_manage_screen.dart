@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../core/app_config.dart';
 import '../core/orchestrator/lio_gateway_contracts.dart';
 import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/permission_transparency.dart';
@@ -90,7 +91,7 @@ class _ThumbnailManageScreenState extends State<ThumbnailManageScreen> {
         final profile = controller.activeProfile;
         if (profile == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Manage the thumbnail')),
+            appBar: AppBar(title: Text(lifexUi('إدارة الصورة المصغّرة', 'Profile thumbnail'))),
             body: const Center(child: Text('لا يوجد ملف صحي نشط.')),
           );
         }
@@ -99,7 +100,7 @@ class _ThumbnailManageScreenState extends State<ThumbnailManageScreen> {
         final notes = store.list(BoxKeys.cameraNotes);
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Manage the thumbnail'),
+            title: Text(lifexUi('إدارة الصورة المصغّرة', 'Profile thumbnail')),
           ),
           body: ListView(
             padding: const EdgeInsets.all(16),

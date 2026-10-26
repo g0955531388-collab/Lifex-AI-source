@@ -121,11 +121,20 @@ void main() {
     );
   });
 
-  test('نطق النص العربي يفضّل ar إن وُجد', () {
+  test('نطق النظام يتبع لغة الواجهة لا نصاً قديماً', () {
     const policy = VoiceLocalePolicy();
     expect(
       policy.speakCodeForText(
         text: 'افتح ملفي الصحي',
+        appLanguage: 'en',
+        availableTts: ['en-US', 'ar-SA'],
+      ),
+      'en-US',
+    );
+    expect(
+      policy.speakCodeForText(
+        text: 'Open my health profile',
+        appLanguage: 'ar',
         availableTts: ['en-US', 'ar-SA'],
       ),
       'ar-SA',

@@ -1,4 +1,5 @@
-/// شريط وصول عمودي مقسوم: أعلاه المساعد البصري بالكاميرا الخلفية، وأسفله الكاميرا الأمامية.
+/// شريط وصول عمودي: أعلاه المساعد البصري، وأسفله نظام SPOT.
+/// فتح أحدهما يغلق الآخر. SPOT ليس الكاميرا الأمامية.
 library lifex_ai.widgets.blind_camera_rail;
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../core/studio_theme.dart';
 import '../features/accessibility/blind_assist_gate.dart';
+import '../features/spot/spot_speech.dart';
 
 class BlindCameraRail extends StatelessWidget {
   const BlindCameraRail({
@@ -39,9 +41,9 @@ class BlindCameraRail extends StatelessWidget {
             ),
             Expanded(
               child: _Half(
-                zone: BlindRailZone.front,
-                title: 'الكاميرا الأمامية',
-                armed: armedZone == BlindRailZone.front,
+                zone: BlindRailZone.spot,
+                title: 'SPOT',
+                armed: armedZone == BlindRailZone.spot,
                 onZone: onZone,
               ),
             ),
@@ -67,7 +69,7 @@ class _Half extends StatelessWidget {
 
   String get _spoken => zone == BlindRailZone.assistant
       ? BlindAssistGate.assistantAskAr
-      : BlindAssistGate.frontAskAr;
+      : SpotSpeech.armAsk(SpotSpeech.deviceLanguage());
 
   @override
   Widget build(BuildContext context) {

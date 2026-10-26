@@ -9,6 +9,7 @@ library lifex_ai.screens.health_modules_screen;
 
 import 'package:flutter/material.dart';
 
+import '../core/app_config.dart';
 import '../features/network_box/box_unit_catalog.dart';
 import 'blood_request_screen.dart';
 import 'box_unit_screen.dart';
@@ -131,7 +132,7 @@ class HealthModulesScreen extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const CircleAvatar(child: Icon(Icons.image_outlined)),
-              title: const Text('Manage the thumbnail'),
+              title: Text(lifexUi('إدارة الصورة المصغّرة', 'Profile thumbnail')),
               subtitle: const Text('إدارة الصورة المصغّرة'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(

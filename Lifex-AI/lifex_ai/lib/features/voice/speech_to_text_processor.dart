@@ -63,7 +63,10 @@ class SpeechToTextProcessor {
     if (!hasPermission) {
       return VoiceOperationResult.failure(
         AssistantPermissionDesk.lastExplanationAr ??
-            'لم يتم منح إذن الميكروفون. لا يمكن استخدام الأوامر الصوتية بدونه.',
+            lifexUi(
+              'لم يتم منح إذن الميكروفون. لا يمكن استخدام الأوامر الصوتية بدونه.',
+              'Microphone permission was not granted. Voice commands stay off.',
+            ),
       );
     }
 
@@ -80,16 +83,25 @@ class SpeechToTextProcessor {
       case SpeechRecognitionStatus.noSpeechDetected:
         return VoiceOperationResult.failure(
           result.messageAr ??
-              'لم يصلني نص هذه المرة. يمكنك المحاولة مجدداً أو الكتابة.',
+              lifexUi(
+                'لم يصلني نص هذه المرة. يمكنك المحاولة مجدداً أو الكتابة.',
+                'No speech text arrived. Try again or type.',
+              ),
         );
       case SpeechRecognitionStatus.permissionDenied:
-        return const VoiceOperationResult.failure(
-          'إذن الميكروفون مرفوض. يمكنك تفعيله من إعدادات الجهاز.',
+        return VoiceOperationResult.failure(
+          lifexUi(
+            'إذن الميكروفون مرفوض. يمكنك تفعيله من إعدادات الجهاز.',
+            'Microphone permission is denied. You can turn it on in the phone settings.',
+          ),
         );
       case SpeechRecognitionStatus.error:
         return VoiceOperationResult.failure(
           result.messageAr ??
-              'خدمة التعرف على الكلام غير متاحة الآن. يمكنك الكتابة أو المحاولة لاحقاً.',
+              lifexUi(
+                'خدمة التعرف على الكلام غير متاحة الآن. يمكنك الكتابة أو المحاولة لاحقاً.',
+                'Speech recognition is not available right now. You can type or try again later.',
+              ),
         );
     }
   }
