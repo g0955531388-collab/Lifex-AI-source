@@ -45,7 +45,6 @@ import '../features/accessibility/vision_engine_app.dart';
 import '../features/spot/spot_speech.dart';
 import '../features/voice/assistant_permission_desk.dart';
 import '../features/voice/assistant_session.dart';
-import '../features/voice/speech_queue.dart';
 import '../features/voice/voice_engine.dart';
 import '../features/voice/voice_turn_desk.dart';
 import '../widgets/blind_camera_rail.dart';
@@ -454,8 +453,9 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
       setState(() {
         _spoken = '${BlindCameraSpeech.lensFailed(_languageCode)}\n$error';
       });
-      await VoiceEngine.instance
-          .speak(BlindCameraSpeech.lensFailed(_languageCode));
+      await VoiceEngine.instance.speakInterruptible(
+        BlindCameraSpeech.lensFailed(_languageCode),
+      );
     }
   }
 
@@ -651,8 +651,9 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
       setState(() {
         _spoken = '${BlindCameraSpeech.lensFailed(_languageCode)}\n$error';
       });
-      await VoiceEngine.instance
-          .speak(BlindCameraSpeech.lensFailed(_languageCode));
+      await VoiceEngine.instance.speakInterruptible(
+        BlindCameraSpeech.lensFailed(_languageCode),
+      );
     } finally {
       _busy = false;
     }
@@ -660,7 +661,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
 
   void _pauseNarration() {
     _scheduler.narrationEnabled = false;
-    unawaited(VoiceEngine.instance.speak('أوقفت الوصف.'));
+    unawaited(VoiceEngine.instance.speakInterruptible('أوقفت الوصف.'));
   }
 
   void _resumeNarration() {
@@ -1090,16 +1091,14 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     _nextOpenAt = null;
     final restoreLocal = _geminiHasFloor;
     _geminiHasFloor = false;
-    if (wasOpen) {
-      await _closeGeminiSession();
-      await VoiceEngine.instance.stopSpeaking();
-    }
+    if (wasOpen) await _closeGeminiSession();
     if (_closed) return;
     await _announce(
       VisualAssistOpening.offline(
         languageCode: _languageCode,
         wasOpen: wasOpen,
       ),
+      urgent: true,
     );
     if (restoreLocal) _scheduler.narrationEnabled = true;
   }
@@ -1590,8 +1589,8 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                   const SizedBox(height: 12),
                   Text('ماذا تفتح؟', style: theme.textTheme.titleSmall),
                   RadioListTile<BlindCameraDelivery>(
-                    title: const Text('بث حي'),
-                    subtitle: const Text('الإطار الجاري، ويُشرح حين يتغير'),
+                    title: Text(context.nav('nav.live')),
+                    subtitle: Text(context.nav('nav.liveHint')),
                     value: BlindCameraDelivery.liveStream,
                     groupValue: _delivery,
                     onChanged: (value) {
@@ -1599,8 +1598,8 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                     },
                   ),
                   RadioListTile<BlindCameraDelivery>(
-                    title: const Text('لقطة واحدة'),
-                    subtitle: const Text('تُلتقط حين تضغط، ولا تتكرر وحدها'),
+                    title: Text(context.nav('nav.single')),
+                    subtitle: Text(context.nav('nav.singleHint')),
                     value: BlindCameraDelivery.singleFrame,
                     groupValue: _delivery,
                     onChanged: (value) {
@@ -1609,7 +1608,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                   ),
                   Text('ماذا يُشرح؟', style: theme.textTheme.titleSmall),
                   RadioListTile<BlindCameraAsk>(
-                    title: const Text('المشهد'),
+                    title: Text(context.nav('nav.scene')),
                     value: BlindCameraAsk.scene,
                     groupValue: _ask,
                     onChanged: (value) {
@@ -1617,7 +1616,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                     },
                   ),
                   RadioListTile<BlindCameraAsk>(
-                    title: const Text('النص'),
+                    title: Text(context.nav('nav.text')),
                     value: BlindCameraAsk.text,
                     groupValue: _ask,
                     onChanged: (value) {
@@ -1625,7 +1624,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                     },
                   ),
                   RadioListTile<BlindCameraAsk>(
-                    title: const Text('المشهد والنص'),
+                    title: Text(context.nav('nav.both')),
                     value: BlindCameraAsk.both,
                     groupValue: _ask,
                     onChanged: (value) {
@@ -1663,61 +1662,61 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
             children: [
               OutlinedButton(
                 onPressed: _repeatLast,
-                child: Text(lifexUi('أعد الوصف', 'Repeat the description')),
+                child: Text(context.nav('nav.repeat')),
               ),
               OutlinedButton(
                 onPressed: _speakDetails,
-                child: Text(lifexUi('التفاصيل', 'Details')),
+                child: Text(context.nav('nav.details')),
               ),
               OutlinedButton(
                 onPressed: _hearCommand,
-                child: const Text('استمع للأمر'),
+                child: Text(context.nav('nav.listen')),
               ),
               OutlinedButton(
                 onPressed: () => _switchDirection(CameraLensDirection.front),
-                child: const Text('أمامية'),
+                child: Text(context.nav('nav.front')),
               ),
               OutlinedButton(
                 onPressed: () => _switchDirection(CameraLensDirection.back),
-                child: const Text('خلفية'),
+                child: Text(context.nav('nav.back')),
               ),
               OutlinedButton(
                 onPressed: _askCloud,
-                child: const Text('اسأل السحابة'),
+                child: Text(context.nav('nav.askCloud')),
               ),
               OutlinedButton(
                 onPressed: () => _openEngineApp('lens'),
-                child: const Text('عدسة Google'),
+                child: Text(context.nav('nav.lens')),
               ),
               OutlinedButton(
                 onPressed: () => _openEngineApp('gemini'),
-                child: const Text('تطبيق جيميني'),
+                child: Text(context.nav('nav.gemini')),
               ),
               OutlinedButton(
                 onPressed: () => _openEngineApp('copilot'),
-                child: const Text('تطبيق كوبايلوت'),
+                child: Text(context.nav('nav.copilot')),
               ),
               OutlinedButton(
                 onPressed: () => _openEngineApp('chatgpt'),
-                child: const Text('تطبيق شات جي بي تي'),
+                child: Text(context.nav('nav.chatgpt')),
               ),
               OutlinedButton(
                 onPressed: () => _openEngineApp('claude'),
-                child: const Text('تطبيق كلود'),
+                child: Text(context.nav('nav.claude')),
               ),
               OutlinedButton(
                 onPressed: _pauseNarration,
-                child: const Text('أوقف الوصف'),
+                child: Text(context.nav('nav.pause')),
               ),
               OutlinedButton(
                 onPressed: _resumeNarration,
-                child: const Text('استأنف الوصف'),
+                child: Text(context.nav('nav.resume')),
               ),
               OutlinedButton(
                 onPressed: () => setState(() {
                   _scheduler.interval = const Duration(seconds: 2);
                 }),
-                child: const Text('كل ثانيتين'),
+                child: Text(context.nav('nav.every2')),
               ),
               OutlinedButton(
                 onPressed: () => setState(() {
@@ -1733,48 +1732,50 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                 onPressed: () => setState(() {
                   _scheduler.interval = const Duration(seconds: 4);
                 }),
-                child: const Text('كل 4 ثوانٍ'),
+                child: Text(context.nav('nav.every4')),
               ),
               if (_zoomReady) ...[
                 Semantics(
                   button: true,
-                  label: 'قرّب العدسة',
+                  label: context.nav('nav.zoomInHint'),
                   child: OutlinedButton(
                     onPressed: () => _nudgeZoom(0.5),
-                    child: const Text('قرّب'),
+                    child: Text(context.nav('nav.zoomIn')),
                   ),
                 ),
                 Semantics(
                   button: true,
-                  label: 'بعّد العدسة',
+                  label: context.nav('nav.zoomOutHint'),
                   child: OutlinedButton(
                     onPressed: () => _nudgeZoom(-0.5),
-                    child: const Text('بعّد'),
+                    child: Text(context.nav('nav.zoomOut')),
                   ),
                 ),
               ],
               Semantics(
                 button: true,
-                label: _torchOn ? 'أوقف الفلاش' : 'جرّب الفلاش',
+                label: context.nav(_torchOn ? 'nav.torchStop' : 'nav.torchOff'),
                 child: OutlinedButton(
                   onPressed: _toggleTorch,
-                  child: Text(_torchOn ? 'الفلاش يعمل' : 'جرّب الفلاش'),
+                  child: Text(context.nav(_torchOn ? 'nav.torchOn' : 'nav.torchOff')),
                 ),
               ),
               Semantics(
                 button: true,
-                label: 'تركيز تلقائي',
+                label: context.nav('nav.focusHint'),
                 child: OutlinedButton(
                   onPressed: _autoFocus,
-                  child: const Text('ركّز'),
+                  child: Text(context.nav('nav.focus')),
                 ),
               ),
               Semantics(
                 button: true,
-                label: _barcodeOn ? 'إيقاف قراءة الرمز' : 'قراءة الباركود',
+                label: context.nav(_barcodeOn ? 'nav.barcodeStop' : 'nav.barcodeRead'),
                 child: OutlinedButton(
                   onPressed: () => setState(() => _barcodeOn = !_barcodeOn),
-                  child: Text(_barcodeOn ? 'الرمز مفعّل' : 'اقرأ الرمز'),
+                  child: Text(
+                    context.nav(_barcodeOn ? 'nav.barcodeOn' : 'nav.barcodeOff'),
+                  ),
                 ),
               ),
             ],
@@ -1784,7 +1785,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
             FilledButton.icon(
               onPressed: _busy ? null : _captureOnce,
               icon: const Icon(Icons.photo_camera_outlined),
-              label: const Text('التقط واشرح'),
+              label: Text(context.nav('nav.capture')),
             ),
           ],
           const SizedBox(height: 12),

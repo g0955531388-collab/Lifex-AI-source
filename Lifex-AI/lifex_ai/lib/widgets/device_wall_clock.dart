@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../core/app_config.dart';
+import '../core/i18n/lifex_i18n.dart';
 import '../features/voice/voice_engine.dart';
 import '../screens/speaking_alarm_screen.dart';
 
@@ -156,9 +157,9 @@ class _DeviceWallClockViewState extends State<DeviceWallClockView> {
           const SizedBox(width: 6),
           Semantics(
             button: true,
-            label: lifexUi('منبهات الساعة', 'Clock alarms'),
+            label: context.nav('nav.clockAlarms'),
             child: IconButton(
-              tooltip: lifexUi('منبهات الساعة', 'Clock alarms'),
+              tooltip: context.nav('nav.clockAlarms'),
               onPressed: _openAlarms,
               icon: const Icon(Icons.alarm, color: Colors.black),
               style: IconButton.styleFrom(

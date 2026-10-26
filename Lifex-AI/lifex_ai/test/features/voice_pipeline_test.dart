@@ -200,6 +200,19 @@ void main() {
     expect(ready.localeId, 'ar_SA');
   });
 
+  test('جملة عادية ثانية تُرفض والجملة الأولى تبقى', () async {
+    final engine = VoiceEngine.instance;
+    final tts = _HoldTts();
+    TextToSpeechManager(provider: tts).registerWithVoiceEngine(engine);
+    final first = engine.speak('الجملة الأولى');
+    await Future<void>.delayed(Duration.zero);
+    final second = await engine.speak('الجملة الثانية');
+    expect(second.success, isFalse);
+    expect(second.errorMessageAr, contains('النطق جارٍ'));
+    tts.hold?.complete();
+    expect((await first).success, isTrue);
+  });
+
   test('كلمة التنبيه ليست استماعاً دائماً', () {
     const limit = WakeListenLimit();
     expect(limit.continuousWhileScreenOff, isFalse);

@@ -4,6 +4,7 @@ library lifex_ai.widgets.lifex_language_button;
 import 'package:flutter/material.dart';
 
 import '../core/app_config.dart';
+import '../core/i18n/lifex_i18n.dart';
 
 class LifexLanguageButton extends StatelessWidget {
   const LifexLanguageButton({super.key});
@@ -17,18 +18,16 @@ class LifexLanguageButton extends StatelessWidget {
             AppConfig.instance.defaultLanguage != AppLanguage.english;
         return Semantics(
           button: true,
-          label: lifexUi(
-            'ترجمة الواجهة بين العربي والإنجليزي',
-            'Translate the interface between Arabic and English',
-          ),
+          label: context.nav('nav.languageHint'),
           child: FilledButton.tonal(
             style: FilledButton.styleFrom(
-              minimumSize: const Size(48, 40),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              visualDensity: VisualDensity.compact,
+              minimumSize: const Size(48, 48),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             onPressed: StudioThemeController.instance.toggleLanguage,
-            child: Text(arabic ? 'عربي | English' : 'Arabic | عربي'),
+            child: Text(
+              context.nav(arabic ? 'nav.languageAr' : 'nav.languageEn'),
+            ),
           ),
         );
       },
