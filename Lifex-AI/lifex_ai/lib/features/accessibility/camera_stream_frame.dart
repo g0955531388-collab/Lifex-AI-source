@@ -144,6 +144,27 @@ class CameraStreamFrame {
     }
     return out;
   }
+
+  /// NV21 متراص جاهز. الاتجاه غير المعروف يبقي الإطار بلا صورة.
+  static InputImage? fromPackedNv21({
+    required Uint8List bytes,
+    required int width,
+    required int height,
+    required int rotationDegrees,
+  }) {
+    final rotation = InputImageRotationValue.fromRawValue(rotationDegrees);
+    if (rotation == null || width < 2 || height < 2) return null;
+    if (bytes.length < width * height) return null;
+    return InputImage.fromBytes(
+      bytes: bytes,
+      metadata: InputImageMetadata(
+        size: Size(width.toDouble(), height.toDouble()),
+        rotation: rotation,
+        format: InputImageFormat.nv21,
+        bytesPerRow: width,
+      ),
+    );
+  }
 }
 
 class CameraStreamReader {

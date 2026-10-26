@@ -71,6 +71,19 @@ class VisionEngines {
   }
 }
 
+enum DirectGeminiRoute { local, external, internal }
+
+/// إنترنت مع حزمة جيميني مثبتة: التطبيق الخارجي بعد تحرير الكاميرا.
+/// إنترنت بلا حزمة: البث الداخلي والكاميرا تبقى. بلا إنترنت: الوصف المحلي.
+DirectGeminiRoute directGeminiRoute({
+  required bool online,
+  required bool packageInstalled,
+}) {
+  if (!online) return DirectGeminiRoute.local;
+  if (packageInstalled) return DirectGeminiRoute.external;
+  return DirectGeminiRoute.internal;
+}
+
 class VisionAppOpen {
   const VisionAppOpen({required this.code, required this.spokenAr});
 
@@ -142,6 +155,20 @@ class VisionAppChannel {
   const VisionAppChannel._();
 
   static const channel = MethodChannel('lifex_ai/vision_app');
+
+  static Future<bool> installed(List<String> packages) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      return false;
+    }
+    try {
+      final value = await channel.invokeMethod<bool>('installed', {
+        'packages': packages,
+      });
+      return value == true;
+    } catch (_) {
+      return false;
+    }
+  }
 
   static Future<String> open(List<String> packages, String viewUrl) async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {

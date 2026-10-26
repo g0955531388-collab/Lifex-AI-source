@@ -145,6 +145,13 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, visionAppChannel)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
+                    "installed" -> {
+                        val args = call.arguments as? Map<*, *>
+                        val packages = (args?.get("packages") as? List<*>)
+                            ?.map { it.toString() }
+                            ?: emptyList()
+                        result.success(visionPackageInstalled(packages))
+                    }
                     "open" -> {
                         val args = call.arguments as? Map<*, *>
                         val packages = (args?.get("packages") as? List<*>)
@@ -329,6 +336,17 @@ class MainActivity : FlutterActivity() {
             }
         }
         return "missing"
+    }
+
+    private fun visionPackageInstalled(packages: List<String>): Boolean {
+        for (pkg in packages) {
+            try {
+                packageManager.getPackageInfo(pkg, 0)
+                return true
+            } catch (_: Exception) {
+            }
+        }
+        return false
     }
 
     private fun playStartTone() {

@@ -4,6 +4,7 @@ library lifex_ai.features.accessibility.lifex_blind_vision_engine;
 import 'dart:typed_data';
 
 import '../../core/error_handler.dart';
+import 'blind_camera_speech.dart';
 import 'blind_scene_brief.dart';
 
 /// نتيجة كشف حقيقية من نموذج الرؤية المحلي.
@@ -75,6 +76,9 @@ class LifexBlindVisionEngine {
   static const localUnavailableAr =
       'مصنّف الصورة المحلي لم يعد نتيجة على هذا الإطار. لن أخترع مشهداً.';
 
+  static const localUnavailableEn =
+      'The on-device image labeler returned no result for this frame. No scene is invented.';
+
   /// الأولوية للمحلل المحلي. تُستخدم السحابة فقط عند السماح بذلك.
   Future<String> analyzeScene({
     required Uint8List imageBytes,
@@ -130,6 +134,7 @@ class LifexBlindVisionEngine {
     required bool modelRan,
     required Iterable<SceneHit> hits,
     bool reportUnavailable = true,
+    String languageCode = 'ar',
   }) async {
     if (!modelRan) {
       if (reportUnavailable) {
@@ -140,8 +145,13 @@ class LifexBlindVisionEngine {
           severity: ErrorSeverity.warning,
         );
       }
-      return localUnavailableAr;
+      return BlindCameraSpeech.explainsInArabic(languageCode)
+          ? localUnavailableAr
+          : localUnavailableEn;
     }
-    return BlindSceneBrief.classificationSpeech(hits);
+    return BlindSceneBrief.classificationSpeech(
+      hits,
+      languageCode: languageCode,
+    );
   }
 }

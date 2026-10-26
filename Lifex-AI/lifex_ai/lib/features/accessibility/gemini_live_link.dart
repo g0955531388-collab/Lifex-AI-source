@@ -12,6 +12,19 @@ class GeminiLiveLinkOrder {
   final bool announce;
 }
 
+/// إيقاف مؤقت من SPOT. لا يفتح جلسة ولا يرسل إطارات.
+class GeminiBlindLink {
+  static var held = false;
+
+  static Future<void> hold() async {
+    held = true;
+  }
+
+  static void release() {
+    held = false;
+  }
+}
+
 /// بلا موافقة لا تُرسل الإطارات. بلا إنترنت تُغلق الجلسة الجاهزة.
 GeminiLiveLinkOrder geminiLiveLinkOrder({
   required bool consent,

@@ -104,4 +104,63 @@ void main() {
     expect(money.success, isFalse);
     expect(money.spokenMessageAr, BlindCameraSpeech.noCurrencyAr);
   });
+
+  test('تحية المساعد لا تُقال قبل البث والتحليل والاستماع والنطق', () {
+    expect(
+      VisualAssistOpening.welcome(
+        languageCode: 'ar',
+        cameraStreaming: true,
+        analysisReady: true,
+        hearingReady: true,
+        speakingReady: true,
+      ),
+      VisualAssistOpening.welcomeAr,
+    );
+    expect(
+      VisualAssistOpening.welcome(
+        languageCode: 'en',
+        cameraStreaming: true,
+        analysisReady: true,
+        hearingReady: true,
+        speakingReady: true,
+      ),
+      VisualAssistOpening.welcomeEn,
+    );
+    expect(
+      VisualAssistOpening.welcome(
+        languageCode: 'ar',
+        cameraStreaming: true,
+        analysisReady: false,
+        hearingReady: true,
+        speakingReady: true,
+      ),
+      isNull,
+    );
+    expect(
+      VisualAssistOpening.welcome(
+        languageCode: 'en',
+        cameraStreaming: true,
+        analysisReady: true,
+        hearingReady: false,
+        speakingReady: true,
+      ),
+      isNull,
+    );
+    expect(
+      VisualAssistOpening.welcome(
+        languageCode: 'fr',
+        cameraStreaming: false,
+        analysisReady: true,
+        hearingReady: true,
+        speakingReady: true,
+      ),
+      isNull,
+    );
+    expect(VisualAssistOpening.cloudDown('en'), contains('Gemini'));
+    expect(VisualAssistOpening.cloudDown('ar'), contains('جيميني'));
+    expect(
+      BlindCameraSpeech.lensOpen('ar', live: true),
+      'تم فتح كاميرا المساعد البصري',
+    );
+  });
 }

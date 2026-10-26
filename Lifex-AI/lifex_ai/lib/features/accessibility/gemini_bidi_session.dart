@@ -6,16 +6,50 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import '../../core/app_config.dart';
+
 const geminiLiveModelFallback = 'models/gemini-3.8-live';
 
 const geminiLiveInstructionAr =
     'تم فتح الاتصال الحي مع كاميرا Lifex-AI. '
-    'مهمتك الآن توجيه مستخدم كفيف. أخبره لحظياً وبشكل مستمر بما تشاهد الكاميرا، '
-    'بجمل عربية قصيرة، كلما وصل إطار. '
+    'هذا توجيه داخلي ولا يُعرض على الشاشة. '
+    'أنت المساعد البصري لمستخدم كفيف، ومهمتك توجيه مستخدم كفيف. '
+    'أخبره لحظياً وبشكل مستمر بما تشاهد الكاميرا، بجمل عربية قصيرة، كلما وصل إطار الفيديو. '
     'لا تتوقف عن الشرح ما دامت الإطارات تصل. '
+    'قدّم الطريق والرصيف والسيارات وإشارات المرور وكل ما يمكن أن يؤذيه قبل أي تفصيل آخر. '
+    'جملتك الأولى يجب أن تكون حرفياً: أهلا بك انا مساعدك البصري في لايفيكس انا اسمع وأرى. '
     'لا تذكر مسافة بالأمتار ولا تقل إن الطريق آمن. '
     'لا تشخّص ولا تخترع اسماً أو جرعة. '
     'إذا لم تتضح الصورة فقل: لم أتمكن من تمييز المشهد بثقة.';
+
+const geminiLiveInstructionEn =
+    'A live camera connection inside Lifex-AI is open. '
+    'This instruction stays off the screen. '
+    'You are the visual assistant for a blind user. '
+    'Guide the user with short sentences in the interface language, '
+    'as each video frame arrives. Keep describing while frames arrive. '
+    'Put the road, the sidewalk, cars, traffic lights, and anything that could cause harm before any other detail. '
+    'Your first sentence must be exactly: Welcome. I am your visual assistant in Lifex. I hear and see. '
+    'Do not state a distance in meters and do not say the way is safe. '
+    'Do not diagnose and do not invent a name or a dose. '
+    'If the picture is unclear, say you cannot identify the scene with confidence.';
+
+String geminiLiveInstructionFor(AppLanguage language) =>
+    language == AppLanguage.english
+        ? geminiLiveInstructionEn
+        : geminiLiveInstructionAr;
+
+String geminiLiveKickoffFor(AppLanguage language) => language == AppLanguage.english
+    ? 'The live connection is open. Say exactly: '
+        'Welcome. I am your visual assistant in Lifex. I hear and see. '
+        'Then guide the user from the camera. Keep describing what you see. '
+        'Start with the road, the sidewalk, cars, traffic lights, and anything that could cause harm. '
+        'Do not say the way is safe and do not give a distance.'
+    : 'تم فتح الاتصال الحي. مهمتك توجيه المستخدم الكفيف. '
+        'قل أولاً حرفياً: أهلا بك انا مساعدك البصري في لايفيكس انا اسمع وأرى. '
+        'ثم أخبره لحظياً بما تشاهد الكاميرا بشكل مستمر ولا تتوقف. '
+        'ابدأ بالطريق والرصيف والسيارات وإشارات المرور وما يمكن أن يؤذيه. '
+        'لا تقل إن الطريق آمن ولا تعطِ قياساً للمسافة.';
 
 bool geminiCredentialUsable(String value) {
   final trimmed = value.trim();
@@ -29,6 +63,10 @@ bool geminiCredentialUsable(String value) {
 String guardGeminiSceneSpeech(String raw) {
   final text = raw.trim();
   if (text.isEmpty || text.startsWith('__')) return '';
+  if (text.contains('انا اسمع وأرى') ||
+      text.toLowerCase().contains('i hear and see')) {
+    return text;
+  }
   var spoken = 'وصف Gemini الحي: $text';
   final lower = text.toLowerCase();
   if (text.contains('متر') ||
@@ -131,8 +169,10 @@ LiveServerEvent parseLiveServerMessage(String raw) {
 
 Map<String, Object?> geminiLiveSetupMessage({
   required String model,
-  String instruction = geminiLiveInstructionAr,
+  String? instruction,
 }) {
+  final spoken = instruction ??
+      geminiLiveInstructionFor(AppConfig.instance.defaultLanguage);
   final name = model.startsWith('models/') ? model : 'models/$model';
   return {
     'setup': {
@@ -142,7 +182,7 @@ Map<String, Object?> geminiLiveSetupMessage({
       },
       'systemInstruction': {
         'parts': [
-          {'text': instruction},
+          {'text': spoken},
         ],
       },
       'outputAudioTranscription': <String, Object?>{},
@@ -158,10 +198,7 @@ Map<String, Object?> geminiLiveKickoffMessage() {
           'role': 'user',
           'parts': [
             {
-              'text':
-                  'تم فتح الاتصال الحي. مهمتك توجيه المستخدم الكفيف. '
-                  'أخبره لحظياً بما تشاهد الكاميرا بشكل مستمر ولا تتوقف. '
-                  'لا تقل إن الطريق آمن ولا تعطِ قياساً للمسافة.',
+              'text': geminiLiveKickoffFor(AppConfig.instance.defaultLanguage),
             },
           ],
         },
@@ -317,6 +354,31 @@ class GeminiBidiVisionSession {
       const Duration(seconds: 8),
       onTimeout: () => false,
     );
+  }
+
+  /// نص المستخدم على الجلسة النصية نفسها. بلا موجة صوت خام.
+  Future<bool> sendUserText(String text) async {
+    final trimmed = text.trim();
+    if (!isReady || trimmed.isEmpty) return false;
+    try {
+      _socket.add(jsonEncode({
+        'clientContent': {
+          'turns': [
+            {
+              'role': 'user',
+              'parts': [
+                {'text': trimmed},
+              ],
+            },
+          ],
+          'turnComplete': true,
+        },
+      }));
+      return true;
+    } catch (_) {
+      _ready = false;
+      return false;
+    }
   }
 
   /// إطار واحد كحد أقصى كل ثانية. الإطار الفارغ لا يُرسل.

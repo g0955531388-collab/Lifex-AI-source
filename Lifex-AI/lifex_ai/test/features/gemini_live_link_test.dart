@@ -43,6 +43,13 @@ void main() {
     expect(order.announce, isFalse);
   });
 
+  test('SPOT يمسك الإرسال ثم يفلته', () async {
+    await GeminiBlindLink.hold();
+    expect(GeminiBlindLink.held, isTrue);
+    GeminiBlindLink.release();
+    expect(GeminiBlindLink.held, isFalse);
+  });
+
   test('بلا موافقة لا يُفتح الاتصال', () {
     final order = geminiLiveLinkOrder(
       consent: false,
