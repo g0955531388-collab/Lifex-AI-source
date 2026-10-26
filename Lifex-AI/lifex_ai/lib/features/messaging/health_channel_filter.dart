@@ -120,7 +120,7 @@ class HealthChannelFilter {
     return const HealthChannelVerdict(
       allowed: true,
       code: 'sentHere',
-      messageAr: 'أُرسلت على هذا الجهاز. ليست شبكة واتساب الخارجية.',
+      messageAr: 'أُرسلت على هذا الجهاز. لم تُرفع إلى شبكة خارجية.',
     );
   }
 

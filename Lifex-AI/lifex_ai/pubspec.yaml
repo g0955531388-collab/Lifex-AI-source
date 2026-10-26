@@ -46,6 +46,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/config/app_config.json
+    - assets/i18n/ar.json
+    - assets/i18n/en.json
     - assets/images/app_icon.png
     - assets/branding/lifex_seal.jpg
     - lib/data/medical/

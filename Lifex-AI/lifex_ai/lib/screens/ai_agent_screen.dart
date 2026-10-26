@@ -9,6 +9,7 @@ library lifex_ai.screens.ai_agent_screen;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/app_config.dart';
 import '../core/agent/agent_context.dart';
 import '../core/agent/agent_permissions.dart';
 import '../core/agent/agent_result.dart';
@@ -202,7 +203,7 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lifex-AI Agent'),
+        title: Text(lifexUi('وكيل Lifex-AI', 'Lifex-AI Agent')),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Padding(

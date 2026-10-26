@@ -280,7 +280,6 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
             child: TextField(
               controller: _field,
               autofocus: widget.initialQuery.isEmpty,
-              textDirection: TextDirection.rtl,
               decoration: const InputDecoration(
                 labelText: 'وحدة أو مرض أو دواء أو عرض',
                 prefixIcon: Icon(Icons.search),

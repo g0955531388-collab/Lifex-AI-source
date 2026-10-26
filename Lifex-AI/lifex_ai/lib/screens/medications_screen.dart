@@ -21,6 +21,7 @@ import '../features/medications/pharmacopoeia_reference.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
 import '../widgets/accessible_widgets.dart';
+import '../widgets/lifex_record_edit.dart';
 import 'medication_alarm_screen.dart';
 
 class MedicationsScreen extends StatefulWidget {
@@ -153,6 +154,49 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     return lines;
   }
 
+  Future<void> _renameMedication(HealthProfile profile, String name) async {
+    final next = await lifexEditText(
+      context,
+      titleAr: 'تعديل اسم الدواء',
+      titleEn: 'Edit the medicine name',
+      labelAr: 'الاسم كما كتبته',
+      labelEn: 'The name as you wrote it',
+      initial: name,
+    );
+    final trimmed = next?.trim() ?? '';
+    if (trimmed.isEmpty || trimmed == name || !mounted) return;
+    final entry = Provider.of<LioSensitiveActionEntry>(context, listen: false);
+    final outcome = await entry.authorizeThenRun<void>(
+      request: LioGatewayRequest(
+        requestId:
+            'med_edit_${widget.profileId}_${DateTime.now().millisecondsSinceEpoch}',
+        correlationId: 'med_${widget.profileId}',
+        identityAccountId: widget.profileId,
+        purpose: 'care_support',
+        requestedAction: 'rename_local_medication_name',
+        dataScope: 'profile_basic',
+        sensitivity: LioDataSensitivity.personal,
+        consent: const LioConsentContext(
+          consentGranted: true,
+          purposeAligned: true,
+        ),
+        riskLevel: LioActionRisk.medium,
+        timestamp: DateTime.now().toUtc(),
+        authenticated: true,
+        authorized: true,
+        minimumNecessarySatisfied: true,
+      ),
+      run: () async {
+        final index = profile.currentMedicationNames.indexOf(name);
+        if (index >= 0) profile.currentMedicationNames[index] = trimmed;
+      },
+    );
+    if (!outcome.executed || !mounted) return;
+    Provider.of<ActiveProfileController>(context, listen: false)
+        .notifyProfileChanged();
+    setState(() {});
+  }
+
   Future<void> _addMedication(HealthProfile profile) async {
     final controller = TextEditingController();
     final added = await showDialog<bool>(
@@ -276,7 +320,14 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                                           as String? ??
                                       'غير موجود في المرجع العام؛ يبقى في سجلك كما كتبته.',
                                 ),
-                                trailing: IconButton(
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    LifexRecordEditButton(
+                                      onPressed: () =>
+                                          _renameMedication(profile, name),
+                                    ),
+                                    IconButton(
                                   icon: const Icon(Icons.delete_outline),
                                   onPressed: () async {
                                     final entry =
@@ -318,6 +369,8 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                                     ).notifyProfileChanged();
                                     setState(() {});
                                   },
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -332,6 +385,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                             subtitle: Text(
                               '${item['category'] ?? ''} — '
                               '${item['requiresPrescription'] == true ? "يحتاج وصفة" : "مرجع عام"}',
+                            ),
+                            trailing: const LifexRecordEditButton(
+                              onPressed: null,
+                              referenceOnly: true,
                             ),
                           ),
                       ],

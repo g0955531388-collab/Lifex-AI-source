@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/admin/admin_manager.dart';
+import '../core/app_config.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/network_box/unit_branch_catalog.dart';
 import '../features/profile/active_profile_controller.dart';
@@ -163,7 +164,7 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
                           builder: (_) => const ThumbnailManageScreen(),
                         ),
                       ),
-                      child: const Text('Manage the thumbnail'),
+                      child: Text(lifexUi('إدارة الصورة المصغّرة', 'Profile thumbnail')),
                     ),
                     ListTile(
                       title: const Text('الاسم الحقيقي'),

@@ -8,11 +8,13 @@ library lifex_ai.screens.doctor_directory_screen;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/app_config.dart';
 import '../features/doctors/doctor_directory.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_identity_manager.dart';
 import '../widgets/barcode_scan_button.dart';
+import '../widgets/lifex_record_edit.dart';
 import '../widgets/honesty_banner.dart';
 import 'doctor_diary_screen.dart';
 import 'nearby_care_screen.dart';
@@ -49,6 +51,39 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
         HealthIdentityManager.instance.getByProfileId(profileId)?.lifexId;
     final shown = (lifexId == null || lifexId.isEmpty) ? profileId : lifexId;
     return '  ID $shown';
+  }
+
+  Future<void> _editDoctor(
+    ProfileBoxStore store,
+    ActiveProfileController controller,
+    Map<String, dynamic> doctor,
+  ) async {
+    final id = doctor['id']?.toString() ?? '';
+    if (id.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(lifexUi(
+            'هذا السطر بلا معرّف محلي، فلا يُستبدل.',
+            'This row has no local id, so it is not replaced.',
+          )),
+        ),
+      );
+      return;
+    }
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (_) => _DoctorEditDialog(doctor: doctor),
+    );
+    if (result == null || !mounted) return;
+    final next = Map<String, dynamic>.from(doctor);
+    next['title'] = result['title'];
+    next['phone'] = result['phone'];
+    next['detail'] = '${result['specialty']} — ${result['phone']}';
+    final saved = store.replaceById(BoxKeys.doctors, id, next);
+    if (!saved) return;
+    controller.saveActiveProfileChanges();
+    setState(() {});
   }
 
   @override
@@ -104,11 +139,11 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                     'الصفحة العامة: اسم واختصاص وتواصل. بلا أسماء مرضى. الأقرب من موقع الجهاز في شاشة الاقتراح، وبلا إحداثيات مختلقة.',
               ),
               if (doctors.isEmpty)
-                const Card(
+                Card(
                   child: ListTile(
-                    leading: Icon(Icons.info_outline),
-                    title: Text('No Doctors Found'),
-                    subtitle: Text(
+                    leading: const Icon(Icons.info_outline),
+                    title: Text(lifexUi('لا أطباء محفوظون', 'No doctors saved')),
+                    subtitle: const Text(
                       'EMPTY — لا أطباء محفوظين على هذا الجهاز بعد. '
                       'أضف طبيباً أدناه. الدليل العام يبقى مفتوحاً.',
                     ),
@@ -163,6 +198,9 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                     MaterialPageRoute(
                       builder: (_) => PublicDoctorFaceScreen(doctor: doctor),
                     ),
+                  ),
+                  trailing: LifexRecordEditButton(
+                    onPressed: () => _editDoctor(store, controller, doctor),
                   ),
                 ),
               const Divider(),
@@ -302,6 +340,99 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _DoctorEditDialog extends StatefulWidget {
+  const _DoctorEditDialog({required this.doctor});
+
+  final Map<String, dynamic> doctor;
+
+  @override
+  State<_DoctorEditDialog> createState() => _DoctorEditDialogState();
+}
+
+class _DoctorEditDialogState extends State<_DoctorEditDialog> {
+  late final TextEditingController _name;
+  late final TextEditingController _phone;
+  late String _specialty;
+
+  @override
+  void initState() {
+    super.initState();
+    _name = TextEditingController(text: widget.doctor['title']?.toString() ?? '');
+    _phone = TextEditingController(text: widget.doctor['phone']?.toString() ?? '');
+    final detail = widget.doctor['detail']?.toString() ?? '';
+    var specialty = DoctorDirectory.specialtiesAr.first;
+    for (final item in DoctorDirectory.specialtiesAr) {
+      if (detail.contains(item)) {
+        specialty = item;
+        break;
+      }
+    }
+    _specialty = specialty;
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _phone.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(lifexUi('تعديل الطبيب المحلي', 'Edit the local doctor')),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _name,
+              decoration: InputDecoration(
+                labelText: lifexUi('الاسم', 'Name'),
+              ),
+            ),
+            DropdownButtonFormField<String>(
+              value: _specialty,
+              items: DoctorDirectory.specialtiesAr
+                  .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) setState(() => _specialty = value);
+              },
+              decoration: InputDecoration(
+                labelText: lifexUi('الاختصاص', 'Specialty'),
+              ),
+            ),
+            TextField(
+              controller: _phone,
+              decoration: InputDecoration(
+                labelText: lifexUi('الهاتف أو العنوان', 'Phone or address'),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(lifexUi('إلغاء', 'Cancel')),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (_name.text.trim().isEmpty) return;
+            Navigator.pop(context, {
+              'title': _name.text.trim(),
+              'phone': _phone.text.trim(),
+              'specialty': _specialty,
+            });
+          },
+          child: Text(lifexUi('حفظ', 'Save')),
+        ),
+      ],
     );
   }
 }

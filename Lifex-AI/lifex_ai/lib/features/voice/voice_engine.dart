@@ -56,6 +56,11 @@ class VoiceEngine {
   Future<void> Function()? _stopSpeakingImpl;
   Future<VoiceOperationResult> Function(String text)? _speakImpl;
 
+  /// الاستماع أو النطق مربوطان فعلياً. الغياب لا يُعد سماعاً ولا قراءة.
+  bool get listeningBound => _startListeningImpl != null;
+
+  bool get speakingBound => _speakImpl != null;
+
   VoiceEngineState get state => _state;
 
   void addStateListener(VoiceStateListener listener) =>

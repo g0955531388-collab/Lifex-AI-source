@@ -1,6 +1,8 @@
 /// مسنجر Lifex على هذا الجهاز. لغة الواجهة من لغة الهاتف.
 library lifex_ai.screens.messenger_screen;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -10,8 +12,12 @@ import '../core/admin/admin_permissions.dart';
 import '../core/trial_manager.dart';
 import '../features/finance/billing_exemption_policy.dart';
 import '../features/emergency/device_emergency_sms_handoff.dart';
+import '../features/messaging/device_offline_share_handoff.dart';
+import '../features/messaging/local_video_room.dart';
 import '../features/messaging/messenger_desk.dart';
+import '../features/messaging/messenger_directory.dart';
 import '../features/messaging/messenger_phrases.dart';
+import '../features/messaging/offline_messenger_link.dart';
 import '../features/messaging/phone_messenger_desk.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
@@ -30,13 +36,20 @@ class MessengerScreen extends StatefulWidget {
 class _MessengerScreenState extends State<MessengerScreen> {
   static const _desk = MessengerDesk();
   static const _phones = PhoneMessengerDesk();
+  static const _directory = MessengerDirectory();
+  static const _offline = OfflineMessengerLink();
   static final _sms = DeviceEmergencySmsHandoff();
+  static final _share = DeviceOfflineShareHandoff();
   int _tab = 0;
   String _notice = '';
   final _announce = TextEditingController();
   final _blood = TextEditingController();
   final _peerId = TextEditingController();
   final _phone = TextEditingController();
+  final _email = TextEditingController();
+  final _alias = TextEditingController();
+  final _place = TextEditingController();
+  final _query = TextEditingController();
   final _smsBody = TextEditingController();
 
   @override
@@ -52,6 +65,10 @@ class _MessengerScreenState extends State<MessengerScreen> {
     _blood.dispose();
     _peerId.dispose();
     _phone.dispose();
+    _email.dispose();
+    _alias.dispose();
+    _place.dispose();
+    _query.dispose();
     _smsBody.dispose();
     super.dispose();
   }
@@ -83,6 +100,80 @@ class _MessengerScreenState extends State<MessengerScreen> {
 
   void _showPlan(BuildContext context, MessengerPhonePlan plan) {
     setState(() => _notice = _t(context, plan.phraseKey));
+  }
+
+  String _shownName(HealthProfile profile) {
+    final alias = MessengerDirectory.labelOf(profile);
+    if (alias.isEmpty) return _t(context, 'aliasHidden');
+    return alias;
+  }
+
+  Future<void> _sendOffline(BuildContext context) async {
+    final result = await _offline.send(
+      phone: _phone.text,
+      message: _smsBody.text,
+      openSmsDraft: ({required phone, required body}) =>
+          _sms.openDraft(phoneNumber: phone, messageAr: body),
+      openShareSheet: _share.openText,
+    );
+    if (!mounted) return;
+    setState(() {
+      _notice = result.attempts.map((item) => _t(context, item.phraseKey)).join('\n');
+    });
+  }
+
+  void _register(ActiveProfileController controller, HealthProfile me) {
+    final key = _directory.register(
+      me: me,
+      alias: _alias.text,
+      rawPhone: _phone.text,
+      rawEmail: _email.text,
+      rawPlace: _place.text,
+    );
+    if (key != null) {
+      setState(() => _notice = _t(context, key));
+      return;
+    }
+    controller.saveActiveProfileChanges();
+    setState(() => _notice = _t(context, 'registeredHere'));
+  }
+
+  Future<void> _openByContact(
+    HealthProfile me,
+    List<HealthProfile> others,
+  ) async {
+    if (PhoneMessengerDesk.digitsOf(_phone.text).isNotEmpty &&
+        PhoneMessengerDesk.digitsOf(_phone.text) == PhoneMessengerDesk.phoneOf(me)) {
+      setState(() => _notice = _t(context, 'phoneSelf'));
+      return;
+    }
+    if (MessengerDirectory.normalizeEmail(_email.text).isNotEmpty &&
+        MessengerDirectory.normalizeEmail(_email.text) ==
+            MessengerDirectory.emailOf(me)) {
+      setState(() => _notice = _t(context, 'emailSelf'));
+      return;
+    }
+    final peer = _directory.find(
+      me: me,
+      peers: others,
+      rawPhone: _phone.text,
+      rawEmail: _email.text,
+    );
+    if (peer == null) {
+      setState(() {
+        _notice = MessengerDirectory.normalizeEmail(_email.text).isNotEmpty &&
+                PhoneMessengerDesk.digitsOf(_phone.text).isEmpty
+            ? _t(context, 'emailMissing')
+            : _t(context, 'phoneMissing');
+      });
+      return;
+    }
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HealthThreadPage(me: me, other: peer),
+      ),
+    );
   }
 
   Future<void> _routePhone(
@@ -154,7 +245,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
                 for (final other in others)
                   CheckboxListTile(
                     value: selected.contains(other.profileId),
-                    title: Text(other.fullName),
+                    title: Text(_shownName(other)),
                     onChanged: (value) {
                       setLocal(() {
                         if (value == true) {
@@ -247,6 +338,17 @@ class _MessengerScreenState extends State<MessengerScreen> {
                   ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => _sendOffline(context),
+                      icon: const Icon(Icons.wifi_off),
+                      label: Text(_t(context, 'offlineSend')),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: Text(_t(context, 'localOnly')),
                 ),
                 if (_notice.isNotEmpty)
@@ -314,9 +416,16 @@ class _MessengerScreenState extends State<MessengerScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        Text(
+          '${_t(context, 'myAlias')}: ${_shownName(me)}',
+        ),
         Text('${_t(context, 'myId')}: ${MessengerDesk.lifexIdOf(me)}'),
         Text(
           '${_t(context, 'myPhone')}: ${PhoneMessengerDesk.phoneOf(me).isEmpty ? _t(context, 'noPhone') : PhoneMessengerDesk.phoneOf(me)}',
+        ),
+        TextField(
+          controller: _alias,
+          decoration: InputDecoration(labelText: _t(context, 'aliasHint')),
         ),
         TextField(
           controller: _phone,
@@ -324,8 +433,34 @@ class _MessengerScreenState extends State<MessengerScreen> {
           decoration: InputDecoration(labelText: _t(context, 'phoneHint')),
         ),
         TextField(
+          controller: _email,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(labelText: _t(context, 'emailHint')),
+        ),
+        TextField(
+          controller: _place,
+          decoration: InputDecoration(labelText: _t(context, 'placeHint')),
+        ),
+        TextField(
+          controller: _query,
+          decoration: InputDecoration(
+            labelText: _t(context, 'searchHint'),
+            prefixIcon: const Icon(Icons.search),
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        FilledButton.tonal(
+          onPressed: () => _register(controller, me),
+          child: Text(_t(context, 'registerMessenger')),
+        ),
+        TextField(
           controller: _smsBody,
           decoration: InputDecoration(labelText: _t(context, 'phoneMessage')),
+        ),
+        FilledButton.icon(
+          onPressed: () => _openByContact(me, others),
+          icon: const Icon(Icons.person_search),
+          label: Text(_t(context, 'openByContact')),
         ),
         Wrap(
           spacing: 8,
@@ -456,19 +591,79 @@ class _MessengerScreenState extends State<MessengerScreen> {
           ListTile(title: Text(item['text']?.toString() ?? '')),
         const Divider(),
         if (others.isEmpty) Text(_t(context, 'noPeers')),
-        for (final other in others)
+        if (_query.text.trim().isNotEmpty && _searchHits(me, others).isEmpty)
+          Text(_t(context, 'searchEmpty')),
+        for (final hit in _listed(me, others))
           ListTile(
             leading: const Icon(Icons.chat),
-            title: Text(other.fullName),
-            subtitle: Text(_t(context, 'deliveredHere')),
+            title: Text(_shownName(hit.profile)),
+            subtitle: Text(
+              hit.via.isEmpty
+                  ? _t(context, 'deliveredHere')
+                  : _t(context, 'via${_viaSuffix(hit.via)}'),
+            ),
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => HealthThreadPage(me: me, other: other),
+                builder: (_) => HealthThreadPage(me: me, other: hit.profile),
               ),
             ),
           ),
       ],
+    );
+  }
+
+  String _viaSuffix(String via) {
+    switch (via) {
+      case 'id':
+        return 'Id';
+      case 'place':
+        return 'Place';
+      default:
+        return 'Name';
+    }
+  }
+
+  List<MessengerSearchHit> _searchHits(
+    HealthProfile me,
+    List<HealthProfile> others,
+  ) {
+    return _directory.search(me: me, peers: others, query: _query.text);
+  }
+
+  List<MessengerSearchHit> _listed(
+    HealthProfile me,
+    List<HealthProfile> others,
+  ) {
+    final query = _query.text.trim();
+    if (query.isEmpty) {
+      return [
+        for (final other in others)
+          MessengerSearchHit(profile: other, via: ''),
+      ];
+    }
+    return _searchHits(me, others);
+  }
+
+  Future<void> _openVideoRoom(
+    BuildContext context,
+    ActiveProfileController controller,
+    HealthProfile me,
+    List<HealthProfile> members,
+  ) async {
+    final action = _desk.openMeeting(host: me, members: members);
+    if (action.ok) controller.saveActiveProfileChanges();
+    _show(context, action);
+    if (!action.ok || !context.mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LocalVideoRoomPage(
+          title: _t(context, 'meetings'),
+          names: [for (final member in [me, ...members]) _shownName(member)],
+          note: _t(context, 'videoStaysHere'),
+        ),
+      ),
     );
   }
 
@@ -518,7 +713,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
         if (others.isEmpty) Text(_t(context, 'noPeers')),
         for (final other in others)
           ListTile(
-            title: Text(other.fullName),
+            title: Text(_shownName(other)),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -591,33 +786,31 @@ class _MessengerScreenState extends State<MessengerScreen> {
             final invited = others
                 .where((item) => item.profileId == plan.profileId)
                 .toList();
-            final action = _desk.openMeeting(host: me, members: invited);
-            if (action.ok) controller.saveActiveProfileChanges();
-            _show(context, action);
+            unawaited(_openVideoRoom(context, controller, me, invited));
           },
           child: Text(_t(context, 'inviteByPhone')),
         ),
-        FilledButton(
+        FilledButton.icon(
           onPressed: others.isEmpty
               ? null
-              : () {
-                  final action = _desk.openMeeting(host: me, members: others);
-                  if (action.ok) controller.saveActiveProfileChanges();
-                  _show(context, action);
-                },
-          child: Text(_t(context, 'meetings')),
+              : () => _openVideoRoom(context, controller, me, others),
+          icon: const Icon(Icons.videocam_outlined),
+          label: Text(_t(context, 'videoRoom')),
         ),
         for (final room in rooms.reversed)
           ListTile(
             leading: const Icon(Icons.meeting_room_outlined),
             title: Text(room['conversationId']?.toString() ?? ''),
-            subtitle: Text(_t(context, 'meetingNotZoom')),
-            onTap: () => _openRoom(
-              controller,
-              me,
-              others,
-              room['conversationId']?.toString() ?? '',
-              _t(context, 'meetings'),
+            subtitle: Text(_t(context, 'videoStaysHere')),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LocalVideoRoomPage(
+                  title: _t(context, 'meetings'),
+                  names: [for (final person in [me, ...others]) _shownName(person)],
+                  note: _t(context, 'videoStaysHere'),
+                ),
+              ),
             ),
           ),
       ],

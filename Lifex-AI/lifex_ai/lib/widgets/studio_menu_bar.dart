@@ -8,9 +8,13 @@ library lifex_ai.widgets.studio_menu_bar;
 import 'package:flutter/material.dart';
 
 import '../core/app_config.dart';
+import '../core/i18n/lifex_i18n.dart';
 import '../core/app_constants.dart';
+import '../core/attribution/project_attribution.dart';
 import '../core/studio_theme.dart';
 import '../features/network_box/studio_portal_catalog.dart';
+import '../screens/data_records_screen.dart';
+import 'lifex_app_title.dart';
 
 class StudioMenuBar extends StatelessWidget {
   const StudioMenuBar({
@@ -20,6 +24,7 @@ class StudioMenuBar extends StatelessWidget {
     required this.onAccount,
     required this.onEmergency,
     this.activePortalId,
+    this.includeBanner = true,
   });
 
   final void Function(StudioPortal portal) onPortal;
@@ -27,6 +32,7 @@ class StudioMenuBar extends StatelessWidget {
   final VoidCallback onAccount;
   final VoidCallback onEmergency;
   final StudioPortalId? activePortalId;
+  final bool includeBanner;
 
   bool get _arabic => AppConfig.instance.defaultLanguage != AppLanguage.english;
 
@@ -70,9 +76,6 @@ class StudioMenuBar extends StatelessWidget {
         final line = contrast
             ? StudioTheme.amber
             : (dark ? StudioTheme.slate800 : StudioTheme.slate200);
-        final ownership = arabic
-            ? AppConstants.ownershipStatementShort
-            : AppConstants.ownershipStatementShortEn;
         return Material(
           color: bar,
           child: DecoratedBox(
@@ -82,16 +85,13 @@ class StudioMenuBar extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _IdentityBar(
-                  contrast: contrast,
-                  ownership: ownership,
-                ),
+                if (includeBanner) const AttributionMarqueeBar(),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _BrandRow(arabic: arabic, ink: ink, muted: muted),
+                      _BrandRow(ink: ink, muted: muted),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 6,
@@ -143,12 +143,37 @@ class StudioMenuBar extends StatelessWidget {
                                 const Icon(Icons.search,
                                     color: StudioTheme.tealBright, size: 18),
                                 const SizedBox(width: 6),
-                                Text(arabic ? 'بحث...' : 'Search...'),
+                                Text(context.nav('nav.searchHint')),
                               ],
                             ),
                           ),
                           _ToolButton(
-                            tooltip: arabic ? 'تبديل اللغة' : 'Switch language',
+                            tooltip: _arabic
+                                ? 'تعديل السجلات الشخصية'
+                                : 'Edit personal records',
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const DataRecordsScreen(),
+                                ),
+                              );
+                            },
+                            line: line,
+                            ink: ink,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.edit_outlined,
+                                    color: StudioTheme.teal, size: 18),
+                                const SizedBox(width: 6),
+                                Text(context.nav('nav.edit')),
+                              ],
+                            ),
+                          ),
+                          _ToolButton(
+                            tooltip: _arabic
+                                ? 'ترجمة عربي أو English'
+                                : 'Translate Arabic or English',
                             onPressed:
                                 StudioThemeController.instance.toggleLanguage,
                             line: line,
@@ -159,7 +184,7 @@ class StudioMenuBar extends StatelessWidget {
                                 const Icon(Icons.language,
                                     color: StudioTheme.indigo, size: 18),
                                 const SizedBox(width: 6),
-                                Text(arabic ? 'EN' : 'عربي'),
+                                Text(_arabic ? 'العربية' : 'English'),
                               ],
                             ),
                           ),
@@ -195,9 +220,7 @@ class StudioMenuBar extends StatelessWidget {
                             icon: const Icon(
                                 Icons.local_fire_department_outlined,
                                 size: 18),
-                            label: Text(arabic
-                                ? 'طلب طوارئ فوري'
-                                : 'Instant Emergency'),
+                            label: Text(context.nav('nav.sos')),
                           ),
                           OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
@@ -207,7 +230,7 @@ class StudioMenuBar extends StatelessWidget {
                             ),
                             onPressed: onAccount,
                             icon: const Icon(Icons.person_outline, size: 18),
-                            label: Text(arabic ? 'تسجيل الدخول' : 'Sign In'),
+                            label: Text(context.nav('nav.signIn')),
                           ),
                         ],
                       ),
@@ -223,64 +246,157 @@ class StudioMenuBar extends StatelessWidget {
   }
 }
 
-class _IdentityBar extends StatelessWidget {
-  const _IdentityBar({
-    required this.contrast,
-    required this.ownership,
-  });
+class AttributionMarqueeBar extends StatelessWidget {
+  const AttributionMarqueeBar({super.key});
 
-  final bool contrast;
-  final String ownership;
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: StudioThemeController.instance,
+      builder: (context, _) {
+        final arabic =
+            AppConfig.instance.defaultLanguage != AppLanguage.english;
+        final ownership = arabic
+            ? AppConstants.ownershipStatementShort
+            : AppConstants.ownershipStatementShortEn;
+        final line =
+            '${ProjectAttribution.systemName} | AlrohAcademy999 | $ownership | v${AppConstants.appVersion} Official';
+        return _NeonAttributionStrip._(line);
+      },
+    );
+  }
+}
+
+class _NeonAttributionStrip extends StatelessWidget {
+  const _NeonAttributionStrip._(this.line);
+
+  final String line;
+
+  static const neon = Color(0xFF7CFFB2);
+  static const glow = Color(0xFF39FF14);
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: contrast
-              ? const [Colors.black, Colors.black]
-              : const [
-                  Color(0xFF042F2E),
-                  StudioTheme.slate900,
-                  Color(0xFF1E1B4B),
-                ],
-        ),
+      decoration: const BoxDecoration(
+        color: Color(0xFF02140C),
         border: Border(
-          bottom: BorderSide(
-            color: contrast
-                ? StudioTheme.amber
-                : StudioTheme.teal.withOpacity(0.45),
+          bottom: BorderSide(color: Color(0xFF1F8F4E)),
+        ),
+      ),
+      child: SizedBox(
+        height: 36,
+        child: _NeonMarquee(
+          text: line,
+          style: const TextStyle(
+            color: neon,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+            shadows: [
+              Shadow(color: glow, blurRadius: 6),
+              Shadow(color: glow, blurRadius: 14),
+              Shadow(color: Color(0xFF00E5A0), blurRadius: 22),
+            ],
           ),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: StudioTheme.teal.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(6),
-                border:
-                    Border.all(color: StudioTheme.tealBright.withOpacity(0.4)),
-              ),
-              child: const Text(
-                'v${AppConstants.appVersion} Official',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
+    );
+  }
+}
+
+class _NeonMarquee extends StatefulWidget {
+  const _NeonMarquee({required this.text, required this.style});
+
+  final String text;
+  final TextStyle style;
+
+  @override
+  State<_NeonMarquee> createState() => _NeonMarqueeState();
+}
+
+class _NeonMarqueeState extends State<_NeonMarquee>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  int? _durationMs;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    final painter = TextPainter(
+      text: TextSpan(text: widget.text, style: widget.style),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    final loop = painter.width + 64;
+    final ms = ((loop / 42) * 1000).round().clamp(9000, 70000);
+    if (!reduce && _durationMs != ms) {
+      _durationMs = ms;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _controller.duration = Duration(milliseconds: ms);
+        _controller.repeat();
+      });
+    } else if (reduce && _controller.isAnimating) {
+      _controller.stop();
+    }
+    final text = Text(
+      widget.text,
+      style: widget.style,
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    );
+    return Semantics(
+      label: widget.text,
+      child: ExcludeSemantics(
+        child: ClipRect(
+          child: reduce
+              ? SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Center(child: text),
+                  ),
+                )
+              : AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, _) {
+                    final shift = _controller.value * loop;
+                    return Transform.translate(
+                      offset: Offset(-shift, 0),
+                      child: OverflowBox(
+                        alignment: Alignment.centerLeft,
+                        minWidth: loop * 2,
+                        maxWidth: loop * 2,
+                        child: Row(
+                          children: [
+                            text,
+                            const SizedBox(width: 64),
+                            Text(
+                              widget.text,
+                              style: widget.style,
+                              textDirection: TextDirection.ltr,
+                              maxLines: 1,
+                            ),
+                            const SizedBox(width: 64),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              ownership,
-              style: const TextStyle(color: StudioTheme.slate100, fontSize: 12),
-            ),
-          ],
         ),
       ),
     );
@@ -289,12 +405,10 @@ class _IdentityBar extends StatelessWidget {
 
 class _BrandRow extends StatelessWidget {
   const _BrandRow({
-    required this.arabic,
     required this.ink,
     required this.muted,
   });
 
-  final bool arabic;
   final Color ink;
   final Color muted;
 
@@ -319,48 +433,11 @@ class _BrandRow extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    AppConstants.appName,
-                    style: TextStyle(
-                      color: ink,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                          color: StudioTheme.indigo.withOpacity(0.6)),
-                    ),
-                    child: const Text(
-                      'Global Network',
-                      style: TextStyle(
-                        color: StudioTheme.purpleSoft,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                arabic
-                    ? 'نظام صحي عالمي على هذا الجهاز'
-                    : 'Global health system on this device',
-                style: TextStyle(color: muted, fontSize: 11),
-              ),
-            ],
+          child: LifexAppTitle(
+            markSize: 20,
+            lineSize: 12,
+            markColor: ink,
+            lineColor: muted,
           ),
         ),
       ],

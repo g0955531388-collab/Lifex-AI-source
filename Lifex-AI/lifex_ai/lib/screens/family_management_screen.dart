@@ -13,10 +13,12 @@ import 'package:provider/provider.dart';
 
 import '../features/family/genetics_signal_engine.dart';
 import '../features/network_box/unit_branch_catalog.dart';
+import '../core/app_config.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
 import '../features/profile/multi_profile_engine.dart';
 import '../services/cloud/cloud_sync_manager.dart';
+import '../widgets/lifex_record_edit.dart';
 import 'unit_branch_navigator.dart';
 import 'marriage_request_screen.dart';
 
@@ -218,6 +220,33 @@ class _FamilyMemberTile extends StatelessWidget {
   final String roleLabelAr;
   final VoidCallback onSelect;
 
+  Future<void> _rename(BuildContext context) async {
+    final current = profile;
+    if (current == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(lifexUi(
+            'السجل غير موجود على هذا الجهاز.',
+            'This record is not on this device.',
+          )),
+        ),
+      );
+      return;
+    }
+    final next = await lifexEditText(
+      context,
+      titleAr: 'تعديل الاسم',
+      titleEn: 'Edit the name',
+      labelAr: 'الاسم الظاهر',
+      labelEn: 'Shown name',
+      initial: current.fullName,
+    );
+    final name = next?.trim() ?? '';
+    if (name.isEmpty || !context.mounted) return;
+    current.fullName = name;
+    context.read<ActiveProfileController>().notifyProfileChanged();
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = profile?.fullName ?? link.profileId;
@@ -231,12 +260,19 @@ class _FamilyMemberTile extends StatelessWidget {
         ),
         title: Text(name),
         subtitle: Text('$roleLabelAr$ageLabel'),
-        trailing: isActive
-            ? const Chip(label: Text('نشط'))
-            : TextButton(
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            LifexRecordEditButton(onPressed: () => _rename(context)),
+            if (isActive)
+              const Chip(label: Text('نشط'))
+            else
+              TextButton(
                 onPressed: onSelect,
                 child: const Text('تبديل'),
               ),
+          ],
+        ),
         selected: isActive,
         onTap: isActive ? null : onSelect,
       ),

@@ -1100,7 +1100,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         await reply(
           const VoiceReply(
             ar: 'سأفتح إدارة الصورة المصغّرة.',
-            en: 'Opening Manage the thumbnail.',
+            en: 'Opening the profile thumbnail.',
           ),
           thenOpen: () {
             Navigator.push(

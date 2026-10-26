@@ -33,6 +33,41 @@ class DeviceLocationRead {
 class DeviceLocationReader {
   const DeviceLocationReader();
 
+  /// قراءة بلا طلب إذن. يستخدمها المنبه حتى لا يفتح نافذة الصلاحية وحده.
+  Future<DeviceLocationRead> peek() async {
+    try {
+      final enabled = await Geolocator.isLocationServiceEnabled();
+      if (!enabled) {
+        return const DeviceLocationRead(
+          messageAr: 'خدمة الموقع مطفأة في الجهاز. لم تُخترع نقطة.',
+        );
+      }
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return const DeviceLocationRead(
+          messageAr: 'إذن الموقع غير ممنوح. لم يُطلب من المنبه.',
+        );
+      }
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 8),
+      );
+      return DeviceLocationRead(
+        fix: DeviceFix(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          accuracyMeters: position.accuracy,
+        ),
+        messageAr: 'قُرئ موقع الجهاز.',
+      );
+    } catch (_) {
+      return const DeviceLocationRead(
+        messageAr: 'تعذّرت قراءة الموقع.',
+      );
+    }
+  }
+
   Future<DeviceLocationRead> read() async {
     try {
       final enabled = await Geolocator.isLocationServiceEnabled();

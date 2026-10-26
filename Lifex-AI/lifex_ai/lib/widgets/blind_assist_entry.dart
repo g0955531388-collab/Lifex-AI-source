@@ -1,4 +1,5 @@
-/// دخول المساعد البصري من الشريط المقسوم: اللمسة الأولى تنطق، والثانية على نفس القسم تفتح.
+/// دخول النظامين من الشريط: اللمسة الأولى تنطق، والثانية على نفس القسم تفتح.
+/// SPOT ليس الكاميرا الأمامية. فتح أحد النظامين مسؤولية الصفحة المستقبِلة لإغلاق الآخر.
 library lifex_ai.widgets.blind_assist_entry;
 
 import 'dart:async';
@@ -6,18 +7,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../features/accessibility/blind_assist_gate.dart';
+import '../features/spot/spot_speech.dart';
 import '../features/voice/voice_engine.dart';
 import 'blind_camera_rail.dart';
 
 class BlindAssistEntry extends StatefulWidget {
   const BlindAssistEntry({
     super.key,
-    required this.onOpenBack,
-    required this.onOpenFront,
+    required this.onOpenAssistant,
+    required this.onOpenSpot,
   });
 
-  final Future<void> Function() onOpenBack;
-  final Future<void> Function() onOpenFront;
+  final Future<void> Function() onOpenAssistant;
+  final Future<void> Function() onOpenSpot;
 
   @override
   State<BlindAssistEntry> createState() => _BlindAssistEntryState();
@@ -37,11 +39,15 @@ class _BlindAssistEntryState extends State<BlindAssistEntry> {
     if (mounted) setState(() {});
     final line = zone == BlindRailZone.assistant
         ? BlindAssistGate.assistantAskAr
-        : BlindAssistGate.frontAskAr;
+        : SpotSpeech.armAsk(SpotSpeech.deviceLanguage());
     await VoiceEngine.instance.speak(line);
     if (!mounted || !_gate.armed || _busy) return;
     final heard = await VoiceEngine.instance.listenFresh();
     if (!mounted || !_gate.armed || _busy) return;
+    if (SpotSpeech.askedFor(heard.textResult)) {
+      await _go(BlindRailZone.spot);
+      return;
+    }
     final armed = _gate.armedZone;
     if (armed != null &&
         _gate.hear(heard.textResult) == BlindAssistStep.open) {
@@ -55,10 +61,10 @@ class _BlindAssistEntryState extends State<BlindAssistEntry> {
     await VoiceEngine.instance.stopListening();
     if (!mounted) return;
     try {
-      if (zone == BlindRailZone.front) {
-        await widget.onOpenFront();
+      if (zone == BlindRailZone.spot) {
+        await widget.onOpenSpot();
       } else {
-        await widget.onOpenBack();
+        await widget.onOpenAssistant();
       }
     } finally {
       _gate.reset();

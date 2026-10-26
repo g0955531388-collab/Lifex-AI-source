@@ -61,7 +61,6 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
             label: 'عبارة البحث عن كتاب',
             child: TextField(
               controller: _phrase,
-              textDirection: TextDirection.rtl,
               decoration: const InputDecoration(
                 labelText: 'عنوان أو مؤلف أو موضوع',
                 border: OutlineInputBorder(),

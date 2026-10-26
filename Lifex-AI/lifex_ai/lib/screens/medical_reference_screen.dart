@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/medical_record_canon.dart';
+import '../core/reference_ledger.dart';
 import '../widgets/encyclopedia_share_bar.dart';
 
 enum MedicalReferenceKind { cameraSigns, conditions, growth, drugs }
@@ -52,15 +53,16 @@ class _MedicalReferenceScreenState extends State<MedicalReferenceScreen> {
         final decoded = jsonDecode(raw);
         if (decoded is List) {
           for (final entry in decoded) {
-            if (entry is Map) {
-              items.add(_RefItem.fromMap(Map<String, dynamic>.from(entry)));
-            }
+            if (entry is! Map) continue;
+            final row = Map<String, dynamic>.from(entry);
+            if (!_belongs(asset, row)) continue;
+            items.add(_RefItem.fromMap(row));
           }
         }
       }
       if (!mounted) return;
       setState(() {
-        _all = _uniqueByTitle(items);
+        _all = _keepConflicts(items);
         _loading = false;
       });
     } catch (_) {
@@ -78,6 +80,7 @@ class _MedicalReferenceScreenState extends State<MedicalReferenceScreen> {
         return [
           'lib/data/reference/SmartCameraSigns.json',
           'lib/data/reference/face_sign_extras.json',
+          'lib/data/reference/incoming_reference.json',
         ];
       case MedicalReferenceKind.conditions:
         return [
@@ -85,9 +88,13 @@ class _MedicalReferenceScreenState extends State<MedicalReferenceScreen> {
           'lib/data/reference/genital_conditions.json',
           'lib/data/reference/hands_conditions.json',
           'lib/data/reference/skin_hair_conditions.json',
+          'lib/data/reference/incoming_reference.json',
         ];
       case MedicalReferenceKind.growth:
-        return ['lib/data/reference/Height_Weight.json'];
+        return [
+          'lib/data/reference/Height_Weight.json',
+          'lib/data/reference/incoming_reference.json',
+        ];
       case MedicalReferenceKind.drugs:
         return const [
           'lib/data/reference/drugs/Analgesics.json',
@@ -107,8 +114,20 @@ class _MedicalReferenceScreenState extends State<MedicalReferenceScreen> {
           'lib/data/reference/drugs/Respiratory.json',
           'lib/data/reference/drugs/SexualHealth.json',
           'lib/data/reference/drugs/Vitamins.json',
+          'lib/data/reference/incoming_reference.json',
         ];
     }
+  }
+
+  bool _belongs(String asset, Map<String, dynamic> row) {
+    if (!asset.endsWith('incoming_reference.json')) return true;
+    final kind = '${row['ledgerKind'] ?? ''}';
+    return switch (widget.kind) {
+      MedicalReferenceKind.cameraSigns => kind == 'علامة بصرية',
+      MedicalReferenceKind.conditions => kind == 'حالة مرجعية',
+      MedicalReferenceKind.growth => kind == 'معيار نمو',
+      MedicalReferenceKind.drugs => kind == 'دواء مرجعي',
+    };
   }
 
   String get _title {
@@ -124,17 +143,40 @@ class _MedicalReferenceScreenState extends State<MedicalReferenceScreen> {
     }
   }
 
-  List<_RefItem> _uniqueByTitle(List<_RefItem> items) {
-    final buckets = <String, _RefItem>{};
+  List<_RefItem> _keepConflicts(List<_RefItem> items) {
+    final groups = <String, List<_RefItem>>{};
     for (final item in items) {
       final key = MedicalRecordCanon.normalize(item.title);
       if (key.isEmpty) continue;
-      final prev = buckets[key];
-      if (prev == null || item.subtitle.length > prev.subtitle.length) {
-        buckets[key] = item;
+      groups.putIfAbsent(key, () => []).add(item);
+    }
+    final note = widget.kind == MedicalReferenceKind.drugs
+        ? ReferenceLedger.doseNoteAr
+        : ReferenceLedger.conflictNoteAr;
+    final out = <_RefItem>[];
+    for (final group in groups.values) {
+      final bodies = group
+          .map((item) => MedicalRecordCanon.normalize(item.subtitle))
+          .where((text) => text.isNotEmpty)
+          .toSet();
+      if (bodies.length < 2) {
+        group.sort((a, b) => b.subtitle.length.compareTo(a.subtitle.length));
+        out.add(group.first);
+        continue;
+      }
+      final seen = <String>{};
+      for (final item in group) {
+        final body = MedicalRecordCanon.normalize(item.subtitle);
+        if (body.isEmpty || !seen.add(body)) continue;
+        out.add(
+          _RefItem(
+            title: item.title,
+            subtitle: '${item.subtitle} — $note',
+          ),
+        );
       }
     }
-    return buckets.values.toList();
+    return out;
   }
 
   List<_RefItem> get _filtered {

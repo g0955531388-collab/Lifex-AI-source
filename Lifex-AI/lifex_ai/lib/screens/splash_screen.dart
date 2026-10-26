@@ -16,9 +16,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/app_config.dart';
 import '../core/app_constants.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../widgets/accessible_widgets.dart';
+import '../widgets/lifex_app_title.dart';
 import '../widgets/lifex_brand_mark.dart';
 import '../features/voice/hardware_cue_host.dart';
 import 'home_screen.dart';
@@ -44,7 +46,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _left) return;
-      if (MediaQuery.accessibleNavigationOf(context)) return;
+      if (lifexScreenReaderOn(context)) return;
       _auto = Timer(widget.displayDuration, _enter);
     });
   }
@@ -79,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
     return ScreenArrival(
-      message: BlindNavigationCopy.splashArrival,
+      message: BlindNavigationCopy.splashArrivalText,
       child: Scaffold(
         body: SingleChildScrollView(
           child: Column(
@@ -90,10 +92,11 @@ class _SplashScreenState extends State<SplashScreen> {
                 padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + media.padding.bottom),
                 child: Column(
                   children: [
-                    Text(
-                      AppConstants.appName,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineMedium,
+                    LifexAppTitle(
+                      centered: true,
+                      markSize: 28,
+                      lineSize: 15,
+                      markColor: Theme.of(context).textTheme.headlineMedium?.color,
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -104,18 +107,21 @@ class _SplashScreenState extends State<SplashScreen> {
                     const SizedBox(height: 24),
                     Semantics(
                       button: true,
-                      label: 'دخول',
-                      hint: 'ينتقل لإنشاء الملف أو للرئيسية',
+                      label: lifexUi('دخول', 'Enter'),
+                      hint: lifexUi(
+                        'ينتقل لإنشاء الملف أو للرئيسية',
+                        'Opens a profile or the home screen',
+                      ),
                       onTap: _enter,
                       child: ExcludeSemantics(
                         child: FilledButton(
                           onPressed: _enter,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
                               vertical: 14,
                               horizontal: 28,
                             ),
-                            child: Text('دخول'),
+                            child: Text(lifexUi('دخول', 'Enter')),
                           ),
                         ),
                       ),

@@ -25,14 +25,26 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/app_config.dart';
+import 'core/i18n/lifex_i18n.dart';
 import 'core/config/app_secrets.dart';
 import 'core/studio_theme.dart';
+import 'widgets/lifex_chrome.dart';
 import 'widgets/studio_web_frame.dart';
 import 'core/app_constants.dart';
 import 'core/error_handler.dart';
 import 'core/agent/adapters/mlkit_ocr_extractor.dart';
 import 'core/security/secure_credential_store.dart';
 import 'features/accessibility/real_sensory_executors.dart';
+import 'features/camera_ai/camera_intelligence_engine.dart';
+import 'features/camera_ai/cloud/live_camera_provider.dart';
+import 'features/camera_ai/live/live_camera_feed.dart';
+import 'features/camera_ai/medical/barcode_medicine_reader.dart';
+import 'features/camera_ai/medical/medical_image_analyzer.dart';
+import 'features/camera_ai/medical/medical_monitor_reader.dart';
+import 'features/camera_ai/reading/universal_text_reader.dart';
+import 'features/camera_ai/scene/scene_understanding_engine.dart';
+import 'features/camera_ai/scene/tts_announcer.dart';
+import 'features/accessibility/local_object_detector.dart';
 import 'core/lio/lifex_app_context.dart';
 import 'core/lio/lifex_intelligence_fabric.dart';
 import 'core/lio/lifex_production_composition.dart';
@@ -98,16 +110,29 @@ import 'services/cloud/cloud_sync_manager.dart';
 import 'services/medical_terminology/terminology_connector.dart';
 import 'services/translation/translation_service.dart';
 
+import 'features/accessibility/visual_assist_floor.dart';
+import 'features/spot/spot_camera_page.dart';
+import 'screens/live_sight_screen.dart';
 import 'screens/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppSecrets.ensureLoaded();
+  await AppConfig.instance.loadExplicitLanguage();
   BlindCameraBinding.register(AssistiveVisionEngine.instance);
+  VisualAssistFloorSwitch.bind(
+    legacyPage: (profileId) => LiveSightScreen(
+      profileId: profileId,
+      ask: BlindCameraAsk.scene,
+      initialOrder: BlindCameraOrder.back,
+    ),
+    spotPage: () => const SpotCameraPage(),
+  );
 
   final appContext = await _bootstrapLifexAi();
+  final catalog = await LifexI18nCatalog.load();
 
-  runApp(LifexAiApp(appContext: appContext));
+  runApp(LifexAiApp(appContext: appContext, catalog: catalog));
 }
 
 /// تهيئة كل الأنظمة الأساسية بالترتيب الصحيح قبل تشغيل أي واجهة.
@@ -407,9 +432,14 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
 /// جذر شجرة الواجهات — يوفّر كل المديرين المركزيين عبر Provider لكل
 /// الشاشات دون الحاجة لتمريرهم يدوياً عبر كل مُنشئ (constructor).
 class LifexAiApp extends StatelessWidget {
-  const LifexAiApp({super.key, required this.appContext});
+  const LifexAiApp({
+    super.key,
+    required this.appContext,
+    required this.catalog,
+  });
 
   final LifexAppContext appContext;
+  final LifexI18nCatalog catalog;
 
   @override
   Widget build(BuildContext context) {
@@ -470,12 +500,45 @@ class LifexAiApp extends StatelessWidget {
         Provider<LastingSearchIndex>.value(
             value: appContext.lastingSearchIndex),
         Provider<LifexDeviceRuntime>.value(value: appContext.deviceRuntime),
+        Provider<CameraIntelligenceEngine>(
+          create: (_) => CameraIntelligenceEngine(
+            announcer: TtsAnnouncer(voiceEngine: VoiceEngine.instance),
+            sceneEngine: const SceneUnderstandingEngine(),
+            monitorReader: MedicalMonitorReader(),
+            multiSensoryAlerts: appContext.multiSensoryAlertManager,
+            emergencyManager: appContext.emergencyManager,
+            textReader: UniversalTextReader(),
+            barcodeReader: BarcodeMedicineReader(
+              gtinToMedicationIdMap: const {},
+            ),
+            imageAnalyzer: const MedicalImageAnalyzer(),
+            objectDetector: const LocalObjectDetector(),
+            liveFeed: CameraPackageFeed(),
+            openCloud: (profileId) => GeminiLiveProvider(
+              profileId: profileId,
+              readApiKey: () => appContext.unifiedAiHubGateway.credentialFor(
+                profileId: profileId,
+                provider: ExternalAiProvider.gemini,
+              ),
+              announcer: (phrase) => TtsAnnouncer(
+                voiceEngine: VoiceEngine.instance,
+              ).announce(phrase, priority: AnnouncePriority.important),
+            ),
+          ),
+        ),
       ],
-      child: ListenableBuilder(
+      child: _DeviceLocaleListener(
+        child: ListenableBuilder(
         listenable: StudioThemeController.instance,
         builder: (context, _) {
           final appearance = AppConfig.instance.appearance;
-          return MaterialApp(
+          return LifexI18n(
+            catalog: catalog,
+            languageCode:
+                AppConfig.instance.defaultLanguage == AppLanguage.arabic
+                    ? 'ar'
+                    : 'en',
+            child: MaterialApp(
             navigatorKey: LifexNavigator.key,
             navigatorObservers: [VoiceRouteObserver.instance],
             title: AppConstants.systemName,
@@ -500,12 +563,55 @@ class LifexAiApp extends StatelessWidget {
                 ? ThemeMode.light
                 : ThemeMode.dark,
             home: const SplashScreen(),
-            builder: (context, child) => StudioWebCanvas(
-              child: child ?? const SizedBox.shrink(),
+            builder: (context, child) => LifexChrome(
+              child: StudioWebCanvas(
+                child: child ?? const SizedBox.shrink(),
+              ),
+            ),
             ),
           );
         },
+        ),
       ),
     );
   }
+}
+
+class _DeviceLocaleListener extends StatefulWidget {
+  const _DeviceLocaleListener({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_DeviceLocaleListener> createState() => _DeviceLocaleListenerState();
+}
+
+class _DeviceLocaleListenerState extends State<_DeviceLocaleListener>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeLocales(List<Locale>? locales) {
+    StudioThemeController.instance.refresh();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      StudioThemeController.instance.refresh();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

@@ -11,6 +11,7 @@ import '../core/app_constants.dart';
 import '../core/studio_theme.dart';
 import '../core/tv_layout.dart';
 import '../features/network_box/studio_portal_catalog.dart';
+import 'lifex_app_title.dart';
 import 'studio_menu_bar.dart';
 
 class StudioWebCanvas extends StatelessWidget {
@@ -21,38 +22,34 @@ class StudioWebCanvas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final layout = TvLayout.forSize(MediaQuery.sizeOf(context));
-    final current = MediaQuery.textScalerOf(context).scale(1);
-    final scaled = layout.television
-        ? TextScaler.linear((current * layout.textScale).clamp(1.0, 1.6))
-        : null;
     final theme = Theme.of(context);
     final framed = FocusTraversalGroup(
       policy: ReadingOrderTraversalPolicy(),
       child: child,
     );
+    // لا MediaQuery حول المتصفح. نسخة منه داخل builder تُزال وعليها تابع،
+    // فتظهر الشاشة الحمراء `_dependents.isEmpty` على كل انتقال.
     final body = layout.television
         ? Theme(
             data: theme.copyWith(
               visualDensity: VisualDensity.comfortable,
               focusColor: theme.colorScheme.primary.withOpacity(0.28),
+              textTheme: theme.textTheme.apply(
+                fontSizeFactor: layout.textScale.clamp(1.0, 1.6),
+              ),
             ),
             child: framed,
           )
         : framed;
     return ColoredBox(
       color: theme.scaffoldBackgroundColor,
-      child: MediaQuery(
-        data: scaled == null
-            ? MediaQuery.of(context)
-            : MediaQuery.of(context).copyWith(textScaler: scaled),
-        child: Padding(
-          padding: EdgeInsets.all(layout.overscan),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
-              child: body,
-            ),
+      child: Padding(
+        padding: EdgeInsets.all(layout.overscan),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
+            child: body,
           ),
         ),
       ),
@@ -104,7 +101,7 @@ class StudioWebHero extends StatelessWidget {
           children: [
             const _Pill(
               icon: Icons.monitor_heart_outlined,
-              label: '${AppConstants.appName} v${AppConstants.appVersion}',
+              label: 'Lifex-AI v${AppConstants.appVersion}',
               color: StudioTheme.tealBright,
             ),
             const SizedBox(height: 8),
@@ -114,13 +111,12 @@ class StudioWebHero extends StatelessWidget {
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            Text(
-              AppConstants.appName,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.displaySmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: StudioTheme.tealBright,
-              ),
+            LifexAppTitle(
+              centered: true,
+              markSize: 32,
+              lineSize: 16,
+              markColor: StudioTheme.tealBright,
+              lineColor: theme.textTheme.headlineSmall?.color,
             ),
             const SizedBox(height: 6),
             Text(

@@ -8,6 +8,8 @@
 /// =============================================================
 library lifex_ai.screens.settings_screen;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,6 +17,7 @@ import '../core/admin/admin_manager.dart';
 import '../core/admin/admin_permissions.dart';
 import '../core/admin/owner_identity_policy.dart';
 import '../core/app_config.dart';
+import '../core/lifex_locale.dart';
 import '../core/studio_theme.dart';
 import '../core/app_constants.dart';
 import '../core/orchestrator/lio_gateway_contracts.dart';
@@ -48,7 +51,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late StudioAppearance _appearance;
   late bool _voiceGuidanceEnabled;
-  late AppLanguage _selectedLanguage;
 
   bool _isCheckingForUpdate = false;
   bool _isDownloadingUpdate = false;
@@ -61,7 +63,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final config = AppConfig.instance;
     _appearance = config.appearance;
     _voiceGuidanceEnabled = config.voiceGuidanceEnabledByDefault;
-    _selectedLanguage = config.defaultLanguage;
   }
 
   @override
@@ -72,11 +73,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _persist() {
     StudioThemeController.instance.setAppearance(_appearance);
+    AppConfig.instance.explicitLanguage = null;
+    unawaited(AppConfig.instance.saveExplicitLanguage());
     AppConfig.instance.updateFrom(
       appearance: _appearance,
       voiceGuidanceEnabledByDefault: _voiceGuidanceEnabled,
-      defaultLanguage: _selectedLanguage,
+      followDeviceLanguage: true,
     );
+    StudioThemeController.instance.refresh();
   }
 
   LioGatewayRequest _medicalReq(String action, {LioActionRisk risk = LioActionRisk.low}) {
@@ -194,12 +198,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final adminAccess = activeLifexId != null &&
         GlobalAdminManager.instance.hasFullSystemAccess(activeLifexId);
 
+    final phoneCode =
+        WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+    final fallbackNotice = lifexUntranslatedLanguageNotice(
+      deviceCode: phoneCode,
+    );
+    final arabicNow =
+        AppConfig.instance.defaultLanguage == AppLanguage.arabic;
     return ScreenArrival(
-      message: 'الإعدادات',
+      message: lifexUi('الإعدادات', 'Settings'),
       controls: const ['المظهر', 'محركات الذكاء', 'بحث داخل وخارج', 'الصلاحيات'],
       body: 'البحث بلا مفتاح يعمل. المفتاح اختياري ويبقى على هذا الجهاز.',
       child: Scaffold(
-      appBar: AppBar(title: const Text('الإعدادات')),
+      appBar: AppBar(title: Text(lifexUi('الإعدادات', 'Settings'))),
       body: ListView(
         children: [
           ListTile(
@@ -304,30 +315,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           Semantics(
-            label: 'اللغة، القيمة الحالية: '
-                '${_selectedLanguage == AppLanguage.arabic ? "العربية" : "الإنجليزية"}',
-            hint: 'اضغط لاختيار لغة مختلفة',
+            label: lifexUi(
+              'اللغة. زر الترجمة يبدّل بين العربية والإنجليزية. الحالية ${arabicNow ? "العربية" : "الإنجليزية"}',
+              'Language. The translation button switches Arabic and English. Current language is ${arabicNow ? "Arabic" : "English"}.',
+            ),
             child: ListTile(
-              title: const Text('اللغة'),
-              trailing: ExcludeSemantics(
-                child: DropdownButton<AppLanguage>(
-                  value: _selectedLanguage,
-                  items: const [
-                    DropdownMenuItem(
-                      value: AppLanguage.arabic,
-                      child: Text('العربية'),
-                    ),
-                    DropdownMenuItem(
-                      value: AppLanguage.english,
-                      child: Text('English'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _selectedLanguage = value);
-                    _persist();
-                  },
-                ),
+              title: Text(lifexUi('اللغة', 'Language')),
+              subtitle: Text(
+                [
+                  lifexUi(
+                    'زر الترجمة في كل صفحة يبدّل العربية والإنجليزية. الحالية ${arabicNow ? "العربية" : "الإنجليزية"}. بلا ضغط تبقى لغة الهاتف.',
+                    'The translation button on every page switches Arabic and English. Current: ${arabicNow ? "Arabic" : "English"}. Until you press it, the phone language is used.',
+                  ),
+                  if (AppConfig.instance.explicitLanguage == null &&
+                      fallbackNotice != null)
+                    fallbackNotice,
+                ].join(' '),
               ),
             ),
           ),
@@ -349,7 +352,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.image_outlined),
-            title: const Text('Manage the thumbnail'),
+            title: Text(lifexUi('إدارة الصورة المصغّرة', 'Profile thumbnail')),
             subtitle: const Text('إدارة الصورة المصغّرة للملف والختم الرسمي'),
             trailing: const Icon(Icons.chevron_left),
             onTap: () {

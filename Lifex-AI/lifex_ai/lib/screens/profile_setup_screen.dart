@@ -207,7 +207,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return ScreenArrival(
-      message: BlindNavigationCopy.profileArrival,
+      message: BlindNavigationCopy.profileArrivalText,
       child: Scaffold(
         appBar: AppBar(title: const Text('إنشاء ملفك الصحي')),
         body: SafeArea(

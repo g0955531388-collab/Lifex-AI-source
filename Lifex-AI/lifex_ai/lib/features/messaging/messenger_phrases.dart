@@ -21,7 +21,7 @@ class MessengerPhrases {
     'chats': 'Chats',
     'groups': 'Groups',
     'calls': 'Calls',
-    'meetings': 'Meetings',
+    'meetings': 'Video rooms',
     'announcements': 'Announcements',
     'blood': 'Urgent blood',
     'newGroup': 'New group',
@@ -33,7 +33,7 @@ class MessengerPhrases {
     'callNotBridged':
         'Saved on this device. No live voice or video reaches another phone.',
     'meetingNotZoom':
-        'Local meeting room. It is not a Zoom call and no remote video starts.',
+        'Video room on this device. The picture stays here and does not reach another phone.',
     'announceDenied': 'Only administration can post an announcement.',
     'announceSent': 'Announcement saved on this device for the local profiles.',
     'bloodLocalSaved':
@@ -78,6 +78,37 @@ class MessengerPhrases {
     'phoneMessage': 'SMS text',
     'inviteByPhone': 'Invite this number to the local room',
     'noPhone': 'No phone number is saved on your profile.',
+    'offlineSend': 'Send without internet',
+    'shareSheetOpened':
+        'The device share sheet opened. Choose Bluetooth, nearby Wi-Fi, or another app. Arrival is not confirmed.',
+    'shareSheetFailed': 'The share sheet could not be opened.',
+    'cableUnbound':
+        'No cable peer is attached. The message did not leave over USB or serial.',
+    'bluetoothSeenNoReceipt':
+        'A Bluetooth device was seen. No receipt came back from the other phone.',
+    'linkAcceptedNoReceipt':
+        'The local link accepted bytes. The other phone has not confirmed receipt.',
+    'aliasShort': 'The alias needs at least two characters.',
+    'needPhoneOrEmail': 'Save a phone number or an email. The alias alone finds nobody.',
+    'aliasHidden': 'Alias not published',
+    'myAlias': 'Your alias',
+    'emailHint': 'Email',
+    'aliasHint': 'Alias',
+    'registerMessenger': 'Register alias',
+    'registeredHere': 'Alias saved on this profile. It is not a new person.',
+    'emailMissing':
+        'This email is not stored on this device. No network message was delivered.',
+    'emailSelf': 'That is your own email.',
+    'openByContact': 'Open chat by phone or email',
+    'searchHint': 'Name, ID, or place',
+    'searchEmpty': 'No local profile matches that name, ID, or place.',
+    'viaName': 'Name',
+    'viaId': 'ID',
+    'viaPlace': 'Place',
+    'videoRoom': 'Open video room',
+    'videoStaysHere':
+        'The camera picture is on this device. It is not sent to another phone.',
+    'placeHint': 'Place',
   };
 
   static const _ar = {
@@ -85,7 +116,7 @@ class MessengerPhrases {
     'chats': 'المحادثات',
     'groups': 'المجموعات',
     'calls': 'الاتصالات',
-    'meetings': 'قاعات الاجتماع',
+    'meetings': 'غرف الفيديو',
     'announcements': 'إعلانات الإدارة',
     'blood': 'تبرع دم عاجل',
     'newGroup': 'مجموعة جديدة',
@@ -97,7 +128,7 @@ class MessengerPhrases {
     'callNotBridged':
         'حُفظ الطلب على هذا الجهاز. لا يوجد مسار صوت أو فيديو حي يصل هاتفاً آخر.',
     'meetingNotZoom':
-        'قاعة محلية على هذا الجهاز. ليست مكالمة زوم ولا يبدأ فيديو بعيد.',
+        'غرفة فيديو على هذا الجهاز. الصورة تبقى هنا ولا تصل إلى هاتف آخر.',
     'announceDenied': 'الإعلان من الإدارة فقط.',
     'announceSent': 'حُفظ الإعلان على هذا الجهاز للملفات المحلية.',
     'bloodLocalSaved':
@@ -139,6 +170,34 @@ class MessengerPhrases {
     'phoneMessage': 'نص الرسالة القصيرة',
     'inviteByPhone': 'ادعُ هذا الرقم إلى الغرفة المحلية',
     'noPhone': 'لا رقم محفوظ في ملفك.',
+    'offlineSend': 'أرسل بلا إنترنت',
+    'shareSheetOpened':
+        'فُتحت مشاركة الجهاز. اختر البلوتوث أو الواي فاي القريب أو أي تطبيق. الوصول غير مؤكد.',
+    'shareSheetFailed': 'تعذّر فتح مشاركة الجهاز.',
+    'cableUnbound': 'لا طرف على الكابل. الرسالة لم تغادر عبر USB أو المنفذ التسلسلي.',
+    'bluetoothSeenNoReceipt':
+        'ظهر جهاز بلوتوث. لم يعد إيصال من الهاتف الآخر.',
+    'linkAcceptedNoReceipt':
+        'الرابط المحلي قبل البايتات. الهاتف الآخر لم يؤكد الاستلام.',
+    'aliasShort': 'الاسم المستعار يحتاج حرفين على الأقل.',
+    'needPhoneOrEmail': 'احفظ رقماً أو بريداً. الاسم المستعار وحده لا يجد أحداً.',
+    'aliasHidden': 'اسم مستعار غير معلن',
+    'myAlias': 'اسمك المستعار',
+    'emailHint': 'البريد',
+    'aliasHint': 'الاسم المستعار',
+    'registerMessenger': 'سجّل الاسم المستعار',
+    'registeredHere': 'حُفظ الاسم المستعار على هذا الملف. ليس شخصاً جديداً.',
+    'emailMissing': 'هذا البريد غير محفوظ على هذا الجهاز. لم تُسلَّم رسالة عبر الشبكة.',
+    'emailSelf': 'هذا بريدك أنت.',
+    'openByContact': 'افتح المحادثة بالرقم أو البريد',
+    'searchHint': 'اسم أو معرّف أو مكان',
+    'searchEmpty': 'لا ملف محلي يطابق هذا الاسم أو المعرّف أو المكان.',
+    'viaName': 'الاسم',
+    'viaId': 'المعرّف',
+    'viaPlace': 'المكان',
+    'videoRoom': 'افتح غرفة الفيديو',
+    'videoStaysHere': 'صورة الكاميرا على هذا الجهاز. لا تُرسل إلى هاتف آخر.',
+    'placeHint': 'المكان',
   };
 
   static const _fr = {
@@ -146,7 +205,7 @@ class MessengerPhrases {
     'chats': 'Discussions',
     'groups': 'Groupes',
     'calls': 'Appels',
-    'meetings': 'Réunions',
+    'meetings': 'Salles vidéo',
     'announcements': 'Annonces',
     'blood': 'Sang urgent',
     'newGroup': 'Nouveau groupe',
@@ -158,7 +217,7 @@ class MessengerPhrases {
     'callNotBridged':
         'Enregistré sur cet appareil. Aucun appel vocal ou vidéo n’atteint un autre téléphone.',
     'meetingNotZoom':
-        'Salle locale. Ce n’est pas un appel Zoom et aucune vidéo distante ne démarre.',
+        'Salle vidéo sur cet appareil. L’image reste ici et n’atteint pas un autre téléphone.',
     'announceDenied': 'Seule l’administration peut publier une annonce.',
     'announceSent': 'Annonce enregistrée sur cet appareil.',
     'bloodLocalSaved':
@@ -203,6 +262,37 @@ class MessengerPhrases {
     'phoneMessage': 'Texte du SMS',
     'inviteByPhone': 'Inviter ce numéro dans la salle locale',
     'noPhone': 'Aucun numéro n’est enregistré sur votre profil.',
+    'offlineSend': 'Envoyer sans internet',
+    'shareSheetOpened':
+        'La feuille de partage est ouverte. Choisissez Bluetooth, Wi-Fi proche ou une autre application. L’arrivée n’est pas confirmée.',
+    'shareSheetFailed': 'La feuille de partage n’a pas pu s’ouvrir.',
+    'cableUnbound':
+        'Aucun pair n’est branché au câble. Le message n’est pas parti par USB ni par série.',
+    'bluetoothSeenNoReceipt':
+        'Un appareil Bluetooth a été vu. Aucun accusé n’est revenu de l’autre téléphone.',
+    'linkAcceptedNoReceipt':
+        'Le lien local a accepté les octets. L’autre téléphone n’a pas confirmé.',
+    'aliasShort': 'L’alias doit contenir au moins deux caractères.',
+    'needPhoneOrEmail': 'Enregistrez un numéro ou un e-mail. L’alias seul ne trouve personne.',
+    'aliasHidden': 'Alias non publié',
+    'myAlias': 'Votre alias',
+    'emailHint': 'E-mail',
+    'aliasHint': 'Alias',
+    'registerMessenger': 'Enregistrer l’alias',
+    'registeredHere': 'Alias enregistré sur ce profil. Ce n’est pas une nouvelle personne.',
+    'emailMissing':
+        'Cet e-mail n’est pas sur cet appareil. Aucun message réseau n’a été remis.',
+    'emailSelf': 'C’est votre propre e-mail.',
+    'openByContact': 'Ouvrir la discussion par numéro ou e-mail',
+    'searchHint': 'Nom, identifiant ou lieu',
+    'searchEmpty': 'Aucun profil local ne correspond à ce nom, identifiant ou lieu.',
+    'viaName': 'Nom',
+    'viaId': 'Identifiant',
+    'viaPlace': 'Lieu',
+    'videoRoom': 'Ouvrir la salle vidéo',
+    'videoStaysHere':
+        'L’image de la caméra est sur cet appareil. Elle n’est pas envoyée à un autre téléphone.',
+    'placeHint': 'Lieu',
   };
 
   static const tables = {'en': _en, 'ar': _ar, 'fr': _fr};

@@ -80,17 +80,17 @@ class _AccessibilityAssistantScreenState
             _FeatureButton(
               icon: Icons.warning_amber_outlined,
               label: 'هل يوجد عائق أمامي؟',
-              hint: BlindNavigationCopy.obstacleUnavailable,
+              hint: BlindNavigationCopy.obstacleUnavailableText,
               onTap: () {
                       setState(() {
-                        _lastResultAr = BlindNavigationCopy.obstacleUnavailable;
+                        _lastResultAr = BlindNavigationCopy.obstacleUnavailableText;
                       });
                       announceForScreenReader(
                         context,
-                        BlindNavigationCopy.obstacleUnavailable,
+                        BlindNavigationCopy.obstacleUnavailableText,
                       );
                       VoiceEngine.instance.speak(
-                        BlindNavigationCopy.obstacleUnavailable,
+                        BlindNavigationCopy.obstacleUnavailableText,
                       );
                     },
             ),

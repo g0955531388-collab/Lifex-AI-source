@@ -117,6 +117,19 @@ class ProfileBoxStore {
     return stored;
   }
 
+  bool replaceById(String key, String id, Map<String, dynamic> record) {
+    if (id.isEmpty) return false;
+    final items = list(key);
+    final index = items.indexWhere((item) => item['id']?.toString() == id);
+    if (index < 0) return false;
+    final stored = Map<String, dynamic>.from(record);
+    stored['id'] = id;
+    stored['createdAt'] ??= items[index]['createdAt'];
+    items[index] = stored;
+    setList(key, items);
+    return true;
+  }
+
   void removeAt(String key, int index) {
     final items = list(key);
     if (index < 0 || index >= items.length) return;

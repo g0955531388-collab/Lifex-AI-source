@@ -164,14 +164,43 @@ class LiveAnnouncingText extends StatelessWidget {
   }
 }
 
+/// قراءة بلا تسجيل تابع. `of()` أثناء الإغلاق يعيد ربط العنصر
+/// بالموروث الذي يُزال، فيفشل فحص `_dependents.isEmpty`.
+TextDirection lifexTextDirection(BuildContext context) {
+  if (!context.mounted) return _lifexFallbackDirection();
+  try {
+    return context.getInheritedWidgetOfExactType<Directionality>()?.textDirection ??
+        _lifexFallbackDirection();
+  } on FlutterError {
+    return _lifexFallbackDirection();
+  }
+}
+
+TextDirection _lifexFallbackDirection() =>
+    AppConfig.instance.defaultLanguage == AppLanguage.arabic
+        ? TextDirection.rtl
+        : TextDirection.ltr;
+
+/// هل قارئ الشاشة في النظام شغّال، دون الاشتراك في إعادة البناء.
+bool lifexScreenReaderOn(BuildContext context) {
+  if (!context.mounted) return false;
+  try {
+    return context
+            .getInheritedWidgetOfExactType<MediaQuery>()
+            ?.data
+            .accessibleNavigation ??
+        false;
+  } on FlutterError {
+    return false;
+  }
+}
+
 /// دالة مساعدة لإجبار قارئ الشاشة على الإعلان الفوري عن رسالة معيّنة
 /// (مثلاً نتيجة تحليل الكاميرا فور جاهزيتها)، حتى لو لم يكن تركيز
 /// قارئ الشاشة على هذا العنصر أصلاً.
 void announceForScreenReader(BuildContext context, String message) {
-  SemanticsService.announce(
-    message,
-    Directionality.of(context),
-  );
+  if (!context.mounted || message.isEmpty) return;
+  SemanticsService.announce(message, lifexTextDirection(context));
 }
 
 /// عبارات الوصول التي يسمعها المكفوف. بلا مشهد أو مسافة مخترعة.
@@ -179,21 +208,45 @@ class BlindNavigationCopy {
   const BlindNavigationCopy._();
 
   static const needsProfile = 'أنشئ ملفك الصحي أولاً من زر ملفي الصحي.';
+  static const needsProfileEn =
+      'Create your health profile first with My health profile.';
 
   static const splashArrival =
       'Lifex-AI. زر الدخول ينقلك للخطوة التالية. نص الملكية أسفل الشاشة.';
+  static const splashArrivalEn =
+      'Lifex-AI. The Enter button continues. The ownership text is at the bottom of the screen.';
 
   static const obstacleUnavailable =
       'كشف المسافة غير متاح على هذا الهاتف. العصا البيضاء تبقى وسيلة السلامة. الكاميرا لا تعطي متراً.';
+  static const obstacleUnavailableEn =
+      'Distance detection is not available on this phone. The white cane remains the safety aid. The camera does not give a distance.';
 
   static const profileArrival =
       'إنشاء الملف. ابدأ بالاسم الكامل، ثم العمر بعدد السنوات. تاريخ الميلاد اختياري.';
+  static const profileArrivalEn =
+      'Creating the profile. Start with the full name, then age in years. Date of birth is optional.';
+
+  static String get needsProfileText => lifexUi(needsProfile, needsProfileEn);
+
+  static String get splashArrivalText => lifexUi(splashArrival, splashArrivalEn);
+
+  static String get obstacleUnavailableText =>
+      lifexUi(obstacleUnavailable, obstacleUnavailableEn);
+
+  static String get profileArrivalText =>
+      lifexUi(profileArrival, profileArrivalEn);
 
   static String homeArrival({required bool hasProfile}) {
     if (hasProfile) {
-      return 'الرئيسية. مرّر بين الأزرار. كل زر يعلن اسمه وما يفتحه.';
+      return lifexUi(
+        'الرئيسية. مرّر بين الأزرار. كل زر يعلن اسمه وما يفتحه.',
+        'Home. Move between the buttons. Each button says its name and what it opens.',
+      );
     }
-    return 'الرئيسية. ابدأ بزر ملفي الصحي. بقية الأزرار تنتظر هذا الملف.';
+    return lifexUi(
+      'الرئيسية. ابدأ بزر ملفي الصحي. بقية الأزرار تنتظر هذا الملف.',
+      'Home. Start with My health profile. The other buttons wait for that profile.',
+    );
   }
 }
 
@@ -225,8 +278,8 @@ class _ScreenArrivalState extends State<ScreenArrival> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || widget.message.isEmpty) return;
       announceForScreenReader(context, widget.message);
-      final talkBack = MediaQuery.accessibleNavigationOf(context);
-      if (!talkBack && AppConfig.instance.voiceGuidanceEnabledByDefault) {
+      if (!lifexScreenReaderOn(context) &&
+          AppConfig.instance.voiceGuidanceEnabledByDefault) {
         unawaited(VoiceEngine.instance.speak(widget.message));
       }
     });
