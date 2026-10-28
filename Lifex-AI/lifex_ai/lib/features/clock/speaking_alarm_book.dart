@@ -5,11 +5,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/app_config.dart';
 import '../location/device_location_reader.dart';
 import '../voice/voice_engine.dart';
+import 'clock_chime.dart';
 
 enum AlarmPlace { inside, outside, unconfirmed }
 
@@ -23,6 +25,10 @@ class SpeakingAlarm {
     required this.latitude,
     required this.longitude,
     required this.radiusMeters,
+    this.speechCue = true,
+    this.toneUri = '',
+    this.toneTitle = '',
+    this.cueOrder,
   });
 
   final String id;
@@ -34,7 +40,30 @@ class SpeakingAlarm {
   final double longitude;
   final double radiusMeters;
 
-  SpeakingAlarm copyWith({bool? enabled, String? name}) {
+  /// النطق هو الخيار القائم. النغمة اختيار إضافي من نغمات الجهاز.
+  final bool speechCue;
+  final String toneUri;
+  final String toneTitle;
+  final ChimeOrder? cueOrder;
+
+  /// المنبه لا يصمت: «إيقاف الاثنين» يعود إلى النطق، وبلا نغمة يبقى النطق.
+  ChimeOrder get order {
+    final hasTone = toneUri.trim().isNotEmpty;
+    final chosen = cueOrder ??
+        (!speechCue && hasTone ? ChimeOrder.toneOnly : ChimeOrder.speechOnly);
+    if (chosen == ChimeOrder.off) return ChimeOrder.speechOnly;
+    if (chosen.usesTone && !hasTone) return ChimeOrder.speechOnly;
+    return chosen;
+  }
+
+  SpeakingAlarm copyWith({
+    bool? enabled,
+    String? name,
+    bool? speechCue,
+    String? toneUri,
+    String? toneTitle,
+    ChimeOrder? cueOrder,
+  }) {
     return SpeakingAlarm(
       id: id,
       name: name ?? this.name,
@@ -44,6 +73,10 @@ class SpeakingAlarm {
       latitude: latitude,
       longitude: longitude,
       radiusMeters: radiusMeters,
+      speechCue: speechCue ?? this.speechCue,
+      toneUri: toneUri ?? this.toneUri,
+      toneTitle: toneTitle ?? this.toneTitle,
+      cueOrder: cueOrder ?? this.cueOrder,
     );
   }
 
@@ -56,6 +89,10 @@ class SpeakingAlarm {
         'latitude': latitude,
         'longitude': longitude,
         'radiusMeters': radiusMeters,
+        'speechCue': speechCue,
+        'toneUri': toneUri,
+        'toneTitle': toneTitle,
+        if (cueOrder != null) 'cueOrder': cueOrder!.name,
       };
 
   static SpeakingAlarm? fromJson(Map<String, dynamic> json) {
@@ -90,6 +127,12 @@ class SpeakingAlarm {
       latitude: latitude,
       longitude: longitude,
       radiusMeters: radius,
+      speechCue: json['speechCue'] != false,
+      toneUri: json['toneUri']?.toString() ?? '',
+      toneTitle: json['toneTitle']?.toString() ?? '',
+      cueOrder: json['cueOrder'] == null
+          ? null
+          : ChimeOrderParts.parse(json['cueOrder']),
     );
   }
 }
@@ -212,6 +255,18 @@ class SpeakingAlarmWatch {
   final SpeakingAlarmBook book = const SpeakingAlarmBook();
   final Set<String> _spoken = <String>{};
   Timer? _timer;
+  int _ringEpoch = 0;
+
+  /// اسم المنبه الذي يرن الآن، ليظهر زر الإيقاف.
+  final ValueNotifier<String?> ringing = ValueNotifier<String?>(null);
+
+  /// يوقف النغمة والنطق الجاريين، ويمنع بقية الترتيب من البدء.
+  Future<void> stopRinging() async {
+    _ringEpoch++;
+    ringing.value = null;
+    await ClockTonePlayer.instance.stop();
+    await VoiceEngine.instance.interruptIfSpeaking();
+  }
 
   void start() {
     if (_timer != null) return;
@@ -229,6 +284,7 @@ class SpeakingAlarmWatch {
     DateTime now, {
     DeviceLocationRead? fix,
     Future<void> Function(String text)? speak,
+    Future<bool> Function(String toneRef, double volume)? tone,
   }) async {
     final local = now.toLocal();
     final alarms = await book.load();
@@ -239,6 +295,10 @@ class SpeakingAlarmWatch {
     if (due.isEmpty) return;
     final read = fix ?? await const DeviceLocationReader().peek();
     final say = speak ?? VoiceEngine.instance.speak;
+    final ring = tone ??
+        (String ref, double volume) =>
+            ClockTonePlayer.instance.play(ref, volume: volume);
+    final volume = (await ClockChimeSettings.load()).volume;
     for (final alarm in due) {
       final stamp =
           '${alarm.id}|${local.year}-${local.month}-${local.day}|${local.hour}:${local.minute}';
@@ -256,12 +316,25 @@ class SpeakingAlarmWatch {
       );
       final time = '${local.hour.toString().padLeft(2, '0')}:'
           '${local.minute.toString().padLeft(2, '0')}';
-      await say(speakingAlarmPhrase(
+      final phrase = speakingAlarmPhrase(
         name: alarm.name,
         timeLabel: time,
         place: place,
         arabic: AppConfig.instance.defaultLanguage != AppLanguage.english,
-      ));
+      );
+      final epoch = ++_ringEpoch;
+      ringing.value = alarm.name;
+      await runChime(
+        order: alarm.order,
+        audibleFallback: true,
+        cancelled: () => epoch != _ringEpoch,
+        tone: () => ring(alarm.toneUri, volume),
+        speak: () async {
+          await say(phrase);
+          return true;
+        },
+      );
+      if (epoch == _ringEpoch) ringing.value = null;
     }
   }
 }

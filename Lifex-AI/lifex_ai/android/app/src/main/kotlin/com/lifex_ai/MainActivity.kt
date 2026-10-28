@@ -2,7 +2,10 @@ package com.lifex_ai
 
 import android.app.Activity
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.Ringtone
+import android.media.RingtoneManager
 import android.media.ToneGenerator
 import android.net.Uri
 import android.os.Handler
@@ -20,8 +23,10 @@ class MainActivity : FlutterActivity() {
     private val contactPickerChannel = "lifex_ai/contact_picker"
     private val shortcutChannel = "lifex_ai/assistant_shortcut"
     private val visionAppChannel = "lifex_ai/vision_app"
+    private val ringtoneChannel = "lifex_ai/user_ringtone"
     private val mainHandler = Handler(Looper.getMainLooper())
     private val pickContactRequest = 9911
+    private val pickRingtoneRequest = 9912
 
     private var cueKind: String = "volumeUpDouble"
     private var tapCount: Int = 2
@@ -30,6 +35,8 @@ class MainActivity : FlutterActivity() {
     private var lastHitAt: Long = 0
     private var lastCode: Int = 0
     private var pendingContactResult: MethodChannel.Result? = null
+    private var pendingRingtoneResult: MethodChannel.Result? = null
+    private var playingRingtone: Ringtone? = null
     private var pendingAssistantShortcut: String? = null
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
@@ -142,6 +149,38 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ringtoneChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "pick" -> {
+                        if (pendingRingtoneResult != null) {
+                            result.error("BUSY", "منتقي النغمة قيد الاستخدام.", null)
+                            return@setMethodCallHandler
+                        }
+                        pendingRingtoneResult = result
+                        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                        }
+                        try {
+                            startActivityForResult(intent, pickRingtoneRequest)
+                        } catch (e: Exception) {
+                            pendingRingtoneResult = null
+                            result.success(null)
+                        }
+                    }
+                    "play" -> {
+                        val uri = call.argument<String>("uri") ?: ""
+                        result.success(playUserRingtone(uri))
+                    }
+                    "stop" -> {
+                        stopUserRingtone()
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, visionAppChannel)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -193,6 +232,10 @@ class MainActivity : FlutterActivity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == pickRingtoneRequest) {
+            deliverPickedRingtone(resultCode, data)
+            return
+        }
         if (requestCode != pickContactRequest) return
         val reply = pendingContactResult
         pendingContactResult = null
@@ -205,6 +248,52 @@ class MainActivity : FlutterActivity() {
             reply.success(readPickedContactMinimum(data.data!!))
         } catch (e: Exception) {
             reply.error("READ_FAILED", e.message, null)
+        }
+    }
+
+    private fun deliverPickedRingtone(resultCode: Int, data: Intent?) {
+        val reply = pendingRingtoneResult
+        pendingRingtoneResult = null
+        if (reply == null) return
+        if (resultCode != Activity.RESULT_OK || data == null) {
+            reply.success(null)
+            return
+        }
+        val uri = data.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+        if (uri == null) {
+            reply.success(null)
+            return
+        }
+        val title = try {
+            RingtoneManager.getRingtone(this, uri)?.getTitle(this) ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+        reply.success(mapOf("uri" to uri.toString(), "title" to title))
+    }
+
+    private fun stopUserRingtone() {
+        try {
+            playingRingtone?.stop()
+        } catch (_: Exception) {
+        }
+        playingRingtone = null
+    }
+
+    private fun playUserRingtone(raw: String): Boolean {
+        if (raw.isBlank()) return false
+        return try {
+            stopUserRingtone()
+            val ringtone = RingtoneManager.getRingtone(this, Uri.parse(raw)) ?: return false
+            ringtone.audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            playingRingtone = ringtone
+            ringtone.play()
+            true
+        } catch (_: Exception) {
+            false
         }
     }
 

@@ -88,5 +88,7 @@ void main() {
     });
     expect(alarm?.name, 'العمل');
     expect(alarm?.hour, 7);
+    expect(alarm?.speechCue, isTrue);
+    expect(alarm?.toneUri, isEmpty);
   });
 }

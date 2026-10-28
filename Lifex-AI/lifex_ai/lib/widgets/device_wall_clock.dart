@@ -7,8 +7,12 @@ import 'package:flutter/material.dart';
 
 import '../core/app_config.dart';
 import '../core/i18n/lifex_i18n.dart';
+import '../features/clock/clock_chime.dart';
+import '../features/clock/speaking_alarm_book.dart';
 import '../features/voice/voice_engine.dart';
 import '../screens/speaking_alarm_screen.dart';
+import 'lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class DeviceWallClock {
   const DeviceWallClock();
@@ -72,10 +76,40 @@ class DeviceWallClockView extends StatefulWidget {
   State<DeviceWallClockView> createState() => _DeviceWallClockViewState();
 }
 
-class _DeviceWallClockViewState extends State<DeviceWallClockView> {
+class _DeviceWallClockViewState extends State<DeviceWallClockView>
+    with SingleTickerProviderStateMixin {
   static const _clock = DeviceWallClock();
+  static const _night = Color(0xFF07111F);
+  static const _digit = Color(0xFF7AD7FF);
   Timer? _tick;
   DateTime _now = DateTime.now();
+  var _alarmOn = false;
+  var _chiming = false;
+  var _chimeEpoch = 0;
+  late final AnimationController _bell;
+
+  @override
+  void initState() {
+    super.initState();
+    _bell = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    unawaited(_loadAlarms());
+  }
+
+  Future<void> _loadAlarms() async {
+    final alarms = await const SpeakingAlarmBook().load();
+    if (!mounted) return;
+    final on = alarms.any((alarm) => alarm.enabled);
+    setState(() => _alarmOn = on);
+    if (on) {
+      _bell.repeat(reverse: true);
+    } else {
+      _bell.stop();
+      _bell.value = 0;
+    }
+  }
 
   void _sync(bool visible) {
     if (!visible) {
@@ -93,45 +127,81 @@ class _DeviceWallClockViewState extends State<DeviceWallClockView> {
   @override
   void dispose() {
     _tick?.cancel();
+    _bell.dispose();
     super.dispose();
   }
 
-  void _speak() {
-    unawaited(VoiceEngine.instance.speak(_clock.spokenLabel(_now)));
+  Future<void> _announce() async {
+    if (_chiming) {
+      _chimeEpoch++;
+      await ClockTonePlayer.instance.stop();
+      await VoiceEngine.instance.interruptIfSpeaking();
+      if (mounted) setState(() => _chiming = false);
+      return;
+    }
+    final settings = await ClockChimeSettings.load();
+    if (settings.order == ChimeOrder.off || !mounted) return;
+    final epoch = ++_chimeEpoch;
+    setState(() => _chiming = true);
+    await runChime(
+      order: settings.order,
+      cancelled: () => epoch != _chimeEpoch,
+      tone: () => ClockTonePlayer.instance
+          .play(settings.toneRef, volume: settings.volume),
+      speak: () async {
+        final result =
+            await VoiceEngine.instance.speak(_clock.spokenLabel(DateTime.now()));
+        return result.success;
+      },
+    );
+    if (mounted && epoch == _chimeEpoch) setState(() => _chiming = false);
   }
 
-  void _openAlarms() {
-    Navigator.of(context).push(
+  Future<void> _openAlarms() async {
+    await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const SpeakingAlarmScreen()),
     );
+    await _loadAlarms();
   }
 
   @override
   Widget build(BuildContext context) {
     final visible = ModalRoute.of(context)?.isCurrent ?? true;
     _sync(visible);
+    final label = _clock.timeLabel(_now);
     final face = DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF8A8A8A),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF5A5A5A), width: 3),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF0C1C31), _night],
+        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: _chiming ? _digit : const Color(0xFF1F4A73),
+          width: 1.5,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: ColoredBox(
-          color: const Color(0xFFD5D5D5),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Text(
-              _clock.timeLabel(_now),
-              textAlign: TextAlign.center,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: SizedBox(
+          height: 32,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: LifexText(
+              label,
+              textDirection: TextDirection.ltr,
+              maxLines: 1,
+              softWrap: false,
               style: const TextStyle(
-                color: Colors.black,
+                color: _digit,
                 fontFamily: 'monospace',
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.5,
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
                 height: 1.1,
+                letterSpacing: 2,
+                fontFeatures: [FontFeature.tabularFigures()],
+                shadows: [Shadow(color: Color(0x803DB7FF), blurRadius: 4)],
               ),
             ),
           ),
@@ -143,11 +213,12 @@ class _DeviceWallClockViewState extends State<DeviceWallClockView> {
         Expanded(
           child: Semantics(
             button: true,
-            label: _clock.spokenLabel(_now),
+            label: tr(_clock.spokenLabel(_now)),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: _speak,
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => unawaited(_announce()),
                 child: face,
               ),
             ),
@@ -160,10 +231,25 @@ class _DeviceWallClockViewState extends State<DeviceWallClockView> {
             label: context.nav('nav.clockAlarms'),
             child: IconButton(
               tooltip: context.nav('nav.clockAlarms'),
-              onPressed: _openAlarms,
-              icon: const Icon(Icons.alarm, color: Colors.black),
+              onPressed: () => unawaited(_openAlarms()),
+              icon: AnimatedBuilder(
+                animation: _bell,
+                builder: (context, _) {
+                  final color = _alarmOn
+                      ? Color.lerp(
+                          const Color(0xFFFF5A5A),
+                          const Color(0xFFB00020),
+                          _bell.value,
+                        )!
+                      : const Color(0xFF4FC3FF);
+                  return Transform.scale(
+                    scale: _alarmOn ? 1 + (_bell.value * 0.2) : 1,
+                    child: Icon(Icons.notifications, color: color),
+                  );
+                },
+              ),
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFBDBDBD),
+                backgroundColor: _night,
                 minimumSize: const Size(48, 48),
               ),
             ),
