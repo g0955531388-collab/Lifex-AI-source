@@ -257,6 +257,34 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
     }
   }
 
+  Future<void> _dictateToField() async {
+    if (_sessionBusy || _engine.state != VoiceEngineState.idle) return;
+    if (!await _ensureMicConsent()) {
+      if (mounted) setState(() => _replyAr = 'لم يُمنح إذن الميكروفون للإملاء الصوتي.');
+      return;
+    }
+    _sessionBusy = true;
+    try {
+      HapticFeedback.selectionClick();
+      final result = await _engine.startListening();
+      if (!mounted) return;
+      final spoken = result.textResult?.trim() ?? '';
+      if (spoken.isEmpty) {
+        setState(() => _replyAr = result.errorMessageAr ?? 'لم أتعرف على كلام لإملائه.');
+        return;
+      }
+      final current = _typed.value;
+      final selection = current.selection;
+      final start = selection.isValid ? selection.start : current.text.length;
+      final end = selection.isValid ? selection.end : current.text.length;
+      final nextText = current.text.replaceRange(start, end, spoken + ' ');
+      _typed.value = TextEditingValue(text: nextText, selection: TextSelection.collapsed(offset: start + spoken.length + 1));
+      setState(() => _replyAr = 'أُضيف النص المُملى إلى حقل الأمر. راجعه ثم اضغط تنفيذ المكتوب.');
+    } finally {
+      _sessionBusy = false;
+      if (mounted) setState(() {});
+    }
+  }
   Future<void> _submitTyped() async {
     final text = _typed.text.trim();
     if (text.isEmpty || _sessionBusy) return;
@@ -932,17 +960,30 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                 ),
               ],
               const SizedBox(height: 20),
-              TextField(
-                controller: _typed,
-                focusNode: _typedFocus,
-                textInputAction: TextInputAction.send,
-                enabled: !_sessionBusy,
-                decoration: const InputDecoration(
-                  labelText: 'اكتب الأمر نفسه',
-                  hintText: 'مثل: ملفي الصحي، بنك الدم، ما الموجود أمامي',
-                  border: OutlineInputBorder(),
-                ),
-                onSubmitted: (_) => unawaited(_submitTyped()),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _typed,
+                      focusNode: _typedFocus,
+                      textInputAction: TextInputAction.send,
+                      enabled: !_sessionBusy,
+                      decoration: const InputDecoration(
+                        labelText: 'اكتب الأمر أو أمْلِه بالصوت',
+                        hintText: 'مثل: ملفي الصحي، بنك الدم، ما الموجود أمامي',
+                        border: OutlineInputBorder(),
+                      ),
+                      onSubmitted: (_) => unawaited(_submitTyped()),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    tooltip: 'إملاء صوتي داخل حقل الأمر',
+                    onPressed: _sessionBusy ? null : _dictateToField,
+                    icon: const Icon(Icons.mic),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Align(
