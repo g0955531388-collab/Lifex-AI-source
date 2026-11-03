@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../features/profile/active_profile_controller.dart';
+import '../widgets/record_management_actions.dart';
 
 class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});
@@ -55,6 +56,16 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     _persist();
   }
 
+  Future<void> _editAppointment(int index) async {
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (_) => _AppointmentDialog(initial: _appointments[index]),
+    );
+    if (result == null) return;
+    setState(() => _appointments[index] = result);
+    _persist();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,10 +88,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                     title: Text(appointment['title']?.toString() ?? ''),
                     subtitle: Text(
                         '${appointment['date']} — ${appointment['place']}'),
-                    trailing: IconButton(
-                      tooltip: 'حذف الموعد',
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () {
+                    trailing: RecordManagementActions(
+                      onEdit: () => _editAppointment(index),
+                      onDelete: () async {
                         setState(() => _appointments.removeAt(index));
                         _persist();
                       },
@@ -94,7 +104,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 }
 
 class _AppointmentDialog extends StatefulWidget {
-  const _AppointmentDialog();
+  const _AppointmentDialog({this.initial});
+
+  final Map<String, dynamic>? initial;
 
   @override
   State<_AppointmentDialog> createState() => _AppointmentDialogState();
@@ -104,6 +116,21 @@ class _AppointmentDialogState extends State<_AppointmentDialog> {
   final _title = TextEditingController();
   final _place = TextEditingController();
   DateTime _date = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    final record = widget.initial;
+    if (record != null) {
+      _title.text = record['title']?.toString() ?? '';
+      _place.text = record['place']?.toString() ?? '';
+      final rawDate = record['date']?.toString();
+      if (rawDate != null) {
+        final parsed = DateTime.tryParse(rawDate.replaceAll('/', '-'));
+        if (parsed != null) _date = parsed;
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -125,7 +152,7 @@ class _AppointmentDialogState extends State<_AppointmentDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('إضافة موعد'),
+      title: Text(widget.initial == null ? 'إضافة موعد' : 'تعديل الموعد'),
       content: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(
