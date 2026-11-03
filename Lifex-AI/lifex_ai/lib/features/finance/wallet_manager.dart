@@ -115,7 +115,10 @@ class WalletManager {
 
     return WalletOperationResult.success(
       messageAr: 'تمت عملية الدفع بنجاح.',
-      newBalance: ledger.currentBalanceFor(profileId),
+      newBalance: ledger.currentBalanceFor(
+        profileId,
+        currencyCode: currencyCode,
+      ),
     );
   }
 
