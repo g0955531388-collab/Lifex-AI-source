@@ -158,8 +158,9 @@ class BookingWorkspaceScreen extends StatelessWidget {
     title.dispose();
     place.dispose();
     if (saved != true || heading.isEmpty) return;
+    late UnifiedBooking booking;
     if (existing == null) {
-      bookings.add(
+      booking = bookings.add(
         unitId: unitId,
         title: heading,
         place: location.isEmpty ? 'غير محدد' : location,
@@ -174,12 +175,10 @@ class BookingWorkspaceScreen extends StatelessWidget {
         scheduledAt: date,
       );
       if (!updated) return;
+      booking = bookings.all().firstWhere((item) => item.id == existing.id);
     }
     controller.saveActiveProfileChanges();
     if (!context.mounted) return;
-    final booking = bookings.all().firstWhere(
-      (item) => existing == null ? item.title == heading && item.place == (location.isEmpty ? 'غير محدد' : location) : item.id == existing.id,
-    );
     context.read<CloudSyncManager>().enqueue(
           entityType: SyncEntityType.appointment,
           entityId: booking.id,
