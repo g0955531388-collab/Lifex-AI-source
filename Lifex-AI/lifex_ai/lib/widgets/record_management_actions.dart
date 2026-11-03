@@ -23,7 +23,9 @@ class RecordManagementActions extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('تأكيد الحذف'),
-        content: const Text('هل أنت متأكد من حذف هذا العنصر؟ لا يتم الحذف قبل التأكيد.'),
+        content: const Text(
+          'هل أنت متأكد من حذف هذا العنصر؟ لن يتم الحذف قبل التأكيد.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -40,30 +42,19 @@ class RecordManagementActions extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => PopupMenuButton<String>(
-        enabled: enabled,
-        tooltip: 'إجراءات العنصر',
-        onSelected: (action) {
-          if (action == 'edit') onEdit();
-          if (action == 'delete' && onDelete != null) _confirmDelete(context);
-        },
-        itemBuilder: (context) => [
-          PopupMenuItem(
-            value: 'edit',
-            child: ListTile(
-              dense: true,
-              leading: const Icon(Icons.edit_outlined),
-              title: Text(editLabel),
-            ),
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: editLabel,
+            onPressed: enabled ? onEdit : null,
+            icon: const Icon(Icons.edit_outlined),
           ),
           if (onDelete != null)
-            PopupMenuItem(
-              value: 'delete',
-              child: ListTile(
-                dense: true,
-                leading: const Icon(Icons.delete_outline),
-                title: Text(deleteLabel),
-              ),
+            IconButton(
+              tooltip: deleteLabel,
+              onPressed: enabled ? () => _confirmDelete(context) : null,
+              icon: const Icon(Icons.delete_outline),
             ),
         ],
       );
