@@ -93,7 +93,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     if (!mounted) return;
     if (!status.isGranted) {
       setState(() => _spokenAr = 'رفض النظام إذن الكاميرا. البث والتحليل متوقفان.');
-      await VoiceEngine.instance.speak(_spokenAr);
+      await _speakSafely(_spokenAr);
       return;
     }
     setState(() => _consented = true);
@@ -104,6 +104,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
+        if (mounted) setState(() => _consented = false);
         await _announce('لا توجد كاميرا متاحة على هذا الجهاز.');
         return;
       }
@@ -139,7 +140,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
         _spokenAr = 'الكاميرا جاهزة. أبدأ تحليل الإطارات محلياً الآن.';
       });
       await controller.startImageStream(_onCameraFrame);
-      await VoiceEngine.instance.speak(_spokenAr);
+      await _speakSafely(_spokenAr);
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -195,7 +196,15 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
   Future<void> _announce(String message) async {
     if (!mounted) return;
     setState(() => _spokenAr = message);
-    await VoiceEngine.instance.speak(message);
+    await _speakSafely(message);
+  }
+
+  Future<void> _speakSafely(String message) async {
+    try {
+      await VoiceEngine.instance.speak(message);
+    } catch (_) {
+      // إبقاء الكاميرا والواجهة عاملتين حتى عند تعذّر محرّك النطق.
+    }
   }
 
   @override
