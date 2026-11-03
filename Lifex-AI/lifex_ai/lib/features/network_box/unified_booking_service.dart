@@ -52,8 +52,10 @@ class UnifiedBookingService {
 
   final ProfileBoxStore store;
 
-  List<UnifiedBooking> all() =>
-      store.list(BoxKeys.bookings).map(UnifiedBooking.fromJson).toList();
+  List<UnifiedBooking> all() => store
+      .activeRecords(BoxKeys.bookings)
+      .map(UnifiedBooking.fromJson)
+      .toList();
 
   UnifiedBooking add({
     required String unitId,
@@ -75,7 +77,28 @@ class UnifiedBookingService {
     return booking;
   }
 
-  void removeAt(int index) => store.removeAt(BoxKeys.bookings, index);
+  bool updateById(
+    String id, {
+    required String unitId,
+    required String title,
+    required String place,
+    required DateTime scheduledAt,
+  }) =>
+      store.updateById(BoxKeys.bookings, id, {
+        'unitId': unitId,
+        'title': title,
+        'place': place,
+        'scheduledAt': scheduledAt.toIso8601String(),
+      });
+
+  bool archiveById(String id) => store.archiveById(BoxKeys.bookings, id);
+
+  @Deprecated('Use archiveById with the booking ID.')
+  void removeAt(int index) {
+    final items = all();
+    if (index < 0 || index >= items.length) return;
+    archiveById(items[index].id);
+  }
 
   static String generateAccessCode(String seed) {
     final n = seed.hashCode.abs() % 1000000;
