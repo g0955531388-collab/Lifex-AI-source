@@ -33,6 +33,7 @@ class UnitBranchRecordsScreen extends StatelessWidget {
         }
         final store = ProfileBoxStore(profile);
         final records = store.activeRecords(storageKey);
+        final archived = store.archivedRecords(storageKey);
         return Scaffold(
           appBar: AppBar(title: Text(branch.titleAr)),
           floatingActionButton: FloatingActionButton.extended(
@@ -82,6 +83,29 @@ class UnitBranchRecordsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+              if (archived.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Text('الأرشيف — سجلات محفوظة لإعادة الفتح',
+                    style: Theme.of(context).textTheme.titleMedium),
+                for (final archivedRecord in archived)
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.archive_outlined),
+                      title: Text(archivedRecord['title']?.toString() ?? ''),
+                      subtitle: Text(_subtitle(archivedRecord)),
+                      trailing: TextButton.icon(
+                        icon: const Icon(Icons.unarchive_outlined),
+                        label: const Text('إعادة فتح'),
+                        onPressed: () {
+                          final id = archivedRecord['id']?.toString();
+                          if (id == null) return;
+                          store.restoreArchivedById(storageKey, id);
+                          controller.saveActiveProfileChanges();
+                        },
+                      ),
+                    ),
+                  ),
+              ],
             ],
           ),
         );
