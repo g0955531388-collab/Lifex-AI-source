@@ -6,7 +6,7 @@
 
 import 'dart:async';
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 import 'package:lifex_ai/features/energy/battery_monitor.dart';
 import 'package:lifex_ai/features/energy/platform_battery_reader.dart';
 
