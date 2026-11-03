@@ -175,6 +175,14 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
+                  _VisualAssistantCameraPanel(
+                    onOpen: (direction, labelAr) {
+                      unawaited(
+                        _openVisualCamera(context, direction, labelAr),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
                   FutureBuilder<PermissionStatus>(
                     future: Permission.location.status,
                     builder: (context, snapshot) {
@@ -200,14 +208,6 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                   if (showGate) const SizedBox(height: 12),
-                  _VisualAssistantCameraPanel(
-                    onOpen: (direction, labelAr) {
-                      unawaited(
-                        _openVisualCamera(context, direction, labelAr),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 14),
                   Expanded(
                     child: GridView.count(
                       crossAxisCount: 2,
@@ -633,7 +633,7 @@ class _VisualAssistantCameraPanel extends StatelessWidget {
                 color: colors.primaryContainer,
                 foreground: colors.onPrimaryContainer,
                 semanticHint: 'يفتح المساعد البصري بالكاميرا الأمامية',
-                onTap: () => onOpen(CameraLensDirection.front, 'المكفوفين الأمامية'),
+                onTap: () => onOpen(CameraLensDirection.front, 'الكاميرا الأمامية للمساعد البصري'),
               ),
             ),
             const SizedBox(width: 12),
@@ -645,7 +645,7 @@ class _VisualAssistantCameraPanel extends StatelessWidget {
                 color: colors.secondaryContainer,
                 foreground: colors.onSecondaryContainer,
                 semanticHint: 'يفتح المساعد البصري بالكاميرا الخلفية',
-                onTap: () => onOpen(CameraLensDirection.back, 'المكفوفين الخلفية'),
+                onTap: () => onOpen(CameraLensDirection.back, 'الكاميرا الخلفية للمساعد البصري'),
               ),
             ),
           ],
@@ -688,7 +688,7 @@ class _VisualCameraLaunchButton extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: SizedBox(
-              height: 148,
+              height: 176,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 8,
