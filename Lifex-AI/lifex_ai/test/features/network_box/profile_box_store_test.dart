@@ -27,12 +27,11 @@ void main() {
     expect(updated['updatedAt'], isNotNull);
   });
 
-  test('legacy removeAt archives and restore brings the record back', () {
+  test('archive and restore keep the record available', () {
     final record = store.add('notes', {'title': 'Keep me'});
     final id = record['id'] as String;
 
-    // ignore: deprecated_member_use_from_same_package
-    store.removeAt('notes', 0);
+    expect(store.archiveById('notes', id), isTrue);
 
     expect(store.activeRecords('notes'), isEmpty);
     expect(store.archivedRecords('notes'), hasLength(1));
