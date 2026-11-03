@@ -147,7 +147,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
         _consented = false;
         _spokenAr = 'تعذّر بدء تحليل الكاميرا الحي. تحقق من دعم صيغة الإطارات وإذن الكاميرا. $error';
       });
-      await VoiceEngine.instance.speak(_spokenAr);
+      await _speakSafely(_spokenAr);
     }
   }
 
@@ -183,7 +183,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
       if (changed && intervalElapsed) {
         _lastSpoken = description;
         _lastSpokenAt = now;
-        await VoiceEngine.instance.speak(description);
+        await _speakSafely(description);
       }
     } catch (error) {
       if (!mounted) return;
