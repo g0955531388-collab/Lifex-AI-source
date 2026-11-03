@@ -16,5 +16,9 @@ void main() {
 
     expect(controller.languageCode, selected);
     expect(preferences.getString('lifex_app_language_v1'), selected);
-\n    await controller.setLanguage('system');\n    expect(controller.selection, 'system');\n    expect(preferences.getString('lifex_app_language_v1'), 'system');\n  });
+
+    await controller.setLanguage('system');
+    expect(controller.selection, 'system');
+    expect(preferences.getString('lifex_app_language_v1'), 'system');
+  });
 }
