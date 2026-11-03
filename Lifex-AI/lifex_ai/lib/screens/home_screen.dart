@@ -60,7 +60,7 @@ class HomeScreen extends StatelessWidget {
   ) async {
     await HapticFeedback.mediumImpact();
     try {
-      await VoiceEngine.instance.speak('أفتح كاميرا $labelAr');
+      await VoiceEngine.instance.speak('أفتح $labelAr');
     } catch (_) {
       // لا نمنع فتح الكاميرا إذا تعذّر النطق على الجهاز.
     }
