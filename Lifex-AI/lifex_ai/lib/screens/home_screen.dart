@@ -53,6 +53,25 @@ import 'wallet_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  Future<void> _openVisualCamera(
+    BuildContext context,
+    CameraLensDirection direction,
+    String labelAr,
+  ) async {
+    await HapticFeedback.mediumImpact();
+    try {
+      await VoiceEngine.instance.speak('أفتح كاميرا $labelAr');
+    } catch (_) {
+      // لا نمنع فتح الكاميرا إذا تعذّر النطق على الجهاز.
+    }
+    if (!context.mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LiveSightScreen(lensDirection: direction),
+      ),
+    );
+  }
+
   bool _allowed(BuildContext context, String unitId) {
     final trial = context.read<TrialManager>();
     final profile = context.read<ActiveProfileController>().activeProfile;
@@ -183,16 +202,8 @@ class HomeScreen extends StatelessWidget {
                   if (showGate) const SizedBox(height: 12),
                   _VisualAssistantCameraPanel(
                     onOpen: (direction, labelAr) {
-                      HapticFeedback.mediumImpact();
                       unawaited(
-                        VoiceEngine.instance.speak('أفتح كاميرا $labelAr'),
-                      );
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => LiveSightScreen(
-                            lensDirection: direction,
-                          ),
-                        ),
+                        _openVisualCamera(context, direction, labelAr),
                       );
                     },
                   ),
