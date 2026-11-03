@@ -56,13 +56,7 @@ class HealthProfileScreen extends StatelessWidget {
                     controller: name,
                     decoration: const InputDecoration(labelText: 'الاسم'),
                   ),
-                  TextFormField(
-                    initialValue: birthDate.toIso8601String().split('T').first,
-                    readOnly: true,
-                    decoration: const InputDecoration(
-                      labelText: 'تاريخ الميلاد',
-                      suffixIcon: Icon(Icons.calendar_today),
-                    ),
+                  InkWell(
                     onTap: () async {
                       final selected = await showDatePicker(
                         context: context,
@@ -74,6 +68,13 @@ class HealthProfileScreen extends StatelessWidget {
                         setDialogState(() => birthDate = selected);
                       }
                     },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'تاريخ الميلاد',
+                        suffixIcon: Icon(Icons.calendar_today),
+                      ),
+                      child: Text(birthDate.toIso8601String().split('T').first),
+                    ),
                   ),
                   DropdownButtonFormField<BloodType>(
                     value: bloodType,
