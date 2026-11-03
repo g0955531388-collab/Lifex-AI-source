@@ -92,6 +92,46 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     return warnings.toSet().toList();
   }
 
+  Future<void> _addMedication(HealthProfile profile) async {
+    final controller = TextEditingController();
+    try {
+      final added = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('إضافة دواء إلى السجل الشخصي'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'اسم الدواء كما وصفه الطبيب',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('إضافة'),
+            ),
+          ],
+        ),
+      );
+      final name = controller.text.trim();
+      if (added != true || name.isEmpty ||
+          profile.currentMedicationNames.contains(name)) return;
+      profile.currentMedicationNames.add(name);
+      profile.lastUpdatedAt = DateTime.now();
+      if (!mounted) return;
+      Provider.of<ActiveProfileController>(context, listen: false)
+          .notifyProfileChanged();
+      setState(() {});
+    } finally {
+      controller.dispose();
+    }
+  }
+
   Future<void> _editMedication(
     HealthProfile profile,
     String currentName,
