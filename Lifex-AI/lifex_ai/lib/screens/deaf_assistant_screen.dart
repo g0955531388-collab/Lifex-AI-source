@@ -91,7 +91,8 @@ class _DeafAssistantScreenState extends State<DeafAssistantScreen> {
     for (final locale in locales) {
       if (locale.localeId.toLowerCase().startsWith('ar-')) return locale.localeId;
     }
-    return _speech.systemLocale()?.localeId ??
+    final systemLocale = await _speech.systemLocale();
+    return systemLocale?.localeId ??
         (locales.isEmpty ? null : locales.first.localeId);
   }
 
