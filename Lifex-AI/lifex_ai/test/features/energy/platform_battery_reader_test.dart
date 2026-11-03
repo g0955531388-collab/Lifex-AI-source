@@ -1,7 +1,7 @@
 // =============================================================
 // Lifex-AI — اختبارات قارئ البطارية
 // يستخدم FakeSource عند حد المنصة فقط؛ منطق PlatformBatteryReader
-// و BatteryMonitor حقيقي.
+// و BatteryMonitor حقيقي. لا يحتاج هذا الملف إلى تهيئة Flutter binding.
 // =============================================================
 
 import 'dart:async';
@@ -18,24 +18,20 @@ class FakeSource implements BatterySource {
   final StreamController<bool> controller = StreamController<bool>();
 
   @override
-  Future<int> level() async {
-    if (levelError != null) throw levelError!;
-    return levelValue;
-  }
+  Future<int> level() => levelError == null
+      ? Future<int>.value(levelValue)
+      : Future<int>.error(levelError!);
 
   @override
-  Future<bool> isCharging() async {
-    if (chargingError != null) throw chargingError!;
-    return charging;
-  }
+  Future<bool> isCharging() => chargingError == null
+      ? Future<bool>.value(charging)
+      : Future<bool>.error(chargingError!);
 
   @override
   Stream<bool> chargingChanges() => controller.stream;
 }
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
   late FakeSource source;
   late PlatformBatteryReader reader;
 
@@ -49,33 +45,39 @@ void main() {
   group('currentLevel', () {
     test('returns the real level', () async {
       source.levelValue = 75;
-      expect(await reader.currentLevel(), 75);
+      expect(await reader.currentLevel().timeout(const Duration(seconds: 2)), 75);
     });
 
     test('clamps below 0 and above 100', () async {
       source.levelValue = -10;
-      expect(await reader.currentLevel(), 0);
+      expect(await reader.currentLevel().timeout(const Duration(seconds: 2)), 0);
       source.levelValue = 150;
-      expect(await reader.currentLevel(), 100);
+      expect(await reader.currentLevel().timeout(const Duration(seconds: 2)), 100);
     });
 
     test('failure is reported, never replaced by a made-up value', () async {
       source.levelError = Exception('no battery');
-      await expectLater(reader.currentLevel(), throwsA(isA<BatteryReadException>()));
+      await expectLater(
+        reader.currentLevel().timeout(const Duration(seconds: 2)),
+        throwsA(isA<BatteryReadException>()),
+      );
     });
   });
 
   group('isCharging', () {
     test('reflects the source', () async {
       source.charging = true;
-      expect(await reader.isCharging(), isTrue);
+      expect(await reader.isCharging().timeout(const Duration(seconds: 2)), isTrue);
       source.charging = false;
-      expect(await reader.isCharging(), isFalse);
+      expect(await reader.isCharging().timeout(const Duration(seconds: 2)), isFalse);
     });
 
     test('failure is reported, not defaulted', () async {
       source.chargingError = Exception('no state');
-      await expectLater(reader.isCharging(), throwsA(isA<BatteryReadException>()));
+      await expectLater(
+        reader.isCharging().timeout(const Duration(seconds: 2)),
+        throwsA(isA<BatteryReadException>()),
+      );
     });
   });
 
