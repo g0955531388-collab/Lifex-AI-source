@@ -15,9 +15,14 @@ import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
 
 class LiveSightScreen extends StatefulWidget {
-  const LiveSightScreen({super.key, required this.profileId});
+  const LiveSightScreen({
+    super.key,
+    this.profileId = '',
+    this.lensDirection = CameraLensDirection.back,
+  });
 
   final String profileId;
+  final CameraLensDirection lensDirection;
 
   @override
   State<LiveSightScreen> createState() => _LiveSightScreenState();
@@ -34,6 +39,14 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
   String? _lastSpoken;
   String _spokenAr =
       'الكاميرا مغلقة. بعد موافقتك سأحلل إطارات الكاميرا محلياً على الجهاز.';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _askConsentThenOpen();
+    });
+  }
 
   @override
   void dispose() {
@@ -94,10 +107,19 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
         await _announce('لا توجد كاميرا متاحة على هذا الجهاز.');
         return;
       }
-      final rear = cameras.where(
-        (item) => item.lensDirection == CameraLensDirection.back,
+      final matchingCameras = cameras.where(
+        (item) => item.lensDirection == widget.lensDirection,
       );
-      final chosen = rear.isNotEmpty ? rear.first : cameras.first;
+      if (matchingCameras.isEmpty) {
+        if (mounted) setState(() => _consented = false);
+        await _announce(
+          widget.lensDirection == CameraLensDirection.front
+              ? 'لا توجد كاميرا أمامية متاحة على هذا الجهاز.'
+              : 'لا توجد كاميرا خلفية متاحة على هذا الجهاز.',
+        );
+        return;
+      }
+      final chosen = matchingCameras.first;
       final controller = CameraController(
         chosen,
         ResolutionPreset.medium,
@@ -121,6 +143,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
+        _consented = false;
         _spokenAr = 'تعذّر بدء تحليل الكاميرا الحي. تحقق من دعم صيغة الإطارات وإذن الكاميرا. $error';
       });
       await VoiceEngine.instance.speak(_spokenAr);
@@ -179,7 +202,11 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
   Widget build(BuildContext context) {
     final lens = _lens;
     return Scaffold(
-      appBar: AppBar(title: const Text('البث الحي للعدسة')),
+      appBar: AppBar(
+        title: Text(widget.lensDirection == CameraLensDirection.front
+            ? 'المساعد البصري — الكاميرا الأمامية'
+            : 'المساعد البصري — الكاميرا الخلفية'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -199,7 +226,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
               alignment: Alignment.center,
               color: Colors.black12,
               child: Text(
-                _consented ? 'تهيئة الكاميرا...' : 'البث مغلق حتى الموافقة',
+                _spokenAr,
                 textAlign: TextAlign.center,
               ),
             ),
