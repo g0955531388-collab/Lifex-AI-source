@@ -13,6 +13,8 @@ import '../core/tv_layout.dart';
 import '../features/network_box/studio_portal_catalog.dart';
 import 'lifex_app_title.dart';
 import 'studio_menu_bar.dart';
+import 'lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class StudioWebCanvas extends StatelessWidget {
   const StudioWebCanvas({super.key, required this.child});
@@ -105,7 +107,7 @@ class StudioWebHero extends StatelessWidget {
               color: StudioTheme.tealBright,
             ),
             const SizedBox(height: 8),
-            Text(
+            LifexText(
               ownership,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall,
@@ -119,7 +121,7 @@ class StudioWebHero extends StatelessWidget {
               lineColor: theme.textTheme.headlineSmall?.color,
             ),
             const SizedBox(height: 6),
-            Text(
+            LifexText(
               arabic
                   ? 'على هذا الجهاز'
                   : 'On this device',
@@ -129,7 +131,7 @@ class StudioWebHero extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Text(
+            LifexText(
               arabic
                   ? 'تربط الملف والرعاية والأجهزة والمرجع المحلي في مكان واحد. السجلات تبقى على الجهاز حتى موافقة صريحة.'
                   : 'It links the record, care, devices, and the local reference in one place. Records stay on the device until you give explicit consent.',
@@ -137,7 +139,7 @@ class StudioWebHero extends StatelessWidget {
               style: theme.textTheme.bodyLarge,
             ),
             const SizedBox(height: 12),
-            Text(
+            LifexText(
               StudioPortalCatalog.disclaimer(arabic),
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall,
@@ -153,24 +155,24 @@ class StudioWebHero extends StatelessWidget {
                   icon: Icon(Directionality.of(context) == TextDirection.rtl
                       ? Icons.arrow_back
                       : Icons.arrow_forward),
-                  label: Text(arabic ? 'ابدأ الآن' : 'Get Started'),
+                  label: LifexText(arabic ? 'ابدأ الآن' : 'Get Started'),
                 ),
                 OutlinedButton.icon(
                   onPressed: onExplore,
                   icon: const Icon(Icons.public, color: StudioTheme.tealBright),
-                  label: Text(arabic ? 'استكشف Lifex-AI' : 'Explore Lifex-AI'),
+                  label: LifexText(arabic ? 'استكشف Lifex-AI' : 'Explore Lifex-AI'),
                 ),
                 OutlinedButton.icon(
                   onPressed: onLogin,
                   icon: const Icon(Icons.group_outlined,
                       color: StudioTheme.indigo),
-                  label: Text(arabic ? 'تسجيل الدخول' : 'Sign In'),
+                  label: LifexText(arabic ? 'تسجيل الدخول' : 'Sign In'),
                 ),
                 OutlinedButton.icon(
                   onPressed: onServices,
                   icon: const Icon(Icons.medical_services_outlined,
                       color: StudioTheme.purpleSoft),
-                  label: Text(arabic ? 'الخدمات الصحية' : 'Health Services'),
+                  label: LifexText(arabic ? 'الخدمات الصحية' : 'Health Services'),
                 ),
                 FilledButton.icon(
                   style: FilledButton.styleFrom(
@@ -179,7 +181,7 @@ class StudioWebHero extends StatelessWidget {
                   ),
                   onPressed: onEmergency,
                   icon: const Icon(Icons.local_fire_department_outlined),
-                  label: Text(arabic ? 'طلب طوارئ فوري' : 'Instant Emergency'),
+                  label: LifexText(arabic ? 'طلب طوارئ فوري' : 'Instant Emergency'),
                 ),
               ],
             ),
@@ -216,7 +218,7 @@ class _Pill extends StatelessWidget {
               Icon(icon, size: 14, color: color),
               const SizedBox(width: 6),
             ],
-            Text(
+            LifexText(
               label,
               style: TextStyle(
                   color: color, fontSize: 12, fontWeight: FontWeight.w700),
@@ -275,7 +277,7 @@ class _HonestMetrics extends StatelessWidget {
                     padding: const EdgeInsets.all(12),
                     child: Column(
                       children: [
-                        Text(
+                        LifexText(
                           items[i].$1,
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -285,7 +287,7 @@ class _HonestMetrics extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
+                        LifexText(
                           items[i].$2,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall,
@@ -314,14 +316,14 @@ class StudioPortalGrid extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
+        LifexText(
           StudioPortalCatalog.servicesTitle(arabic),
           textAlign: TextAlign.center,
           style:
               theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
-        Text(
+        LifexText(
           StudioPortalCatalog.honesty(arabic),
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall,
@@ -381,8 +383,8 @@ class _PortalCard extends StatelessWidget {
             : StudioTheme.tealBright;
     return Semantics(
       button: true,
-      label: title,
-      hint: subtitle,
+      label: tr(title),
+      hint: tr(subtitle),
       child: Card(
         child: InkWell(
           onTap: onTap,
@@ -412,7 +414,7 @@ class _PortalCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
+                        child: LifexText(
                           title,
                           style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
@@ -420,7 +422,7 @@ class _PortalCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                  LifexText(subtitle, style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
             ),

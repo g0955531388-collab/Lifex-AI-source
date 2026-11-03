@@ -4,6 +4,8 @@ library lifex_ai.widgets.lifex_record_edit;
 import 'package:flutter/material.dart';
 
 import '../core/app_config.dart';
+import 'lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class LifexRecordEditButton extends StatelessWidget {
   const LifexRecordEditButton({
@@ -22,19 +24,19 @@ class LifexRecordEditButton extends StatelessWidget {
     final label = lifexUi('تعديل', 'Edit');
     return Semantics(
       button: true,
-      label: referenceOnly
+      label: tr(referenceOnly
           ? lifexUi(
               'تعديل. هذا مرجع عام وليس سجلاً شخصياً',
               'Edit. This is general reference, not a personal record',
             )
-          : label,
+          : label),
       child: IconButton(
-        tooltip: label,
+        tooltip: tr(label),
         onPressed: referenceOnly
             ? () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(lifexUi(
+                    content: LifexText(lifexUi(
                       'هذا مرجع عام. التعديل للسجل الشخصي فقط، وبلا تغيير لجرعة.',
                       'This is general reference. Edit applies to your own record only, and does not change a dose.',
                     )),
@@ -105,7 +107,7 @@ class _TextEditDialogState extends State<_TextEditDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(lifexUi(widget.titleAr, widget.titleEn)),
+      title: LifexText(lifexUi(widget.titleAr, widget.titleEn)),
       content: TextField(
         controller: _controller,
         autofocus: true,
@@ -116,11 +118,11 @@ class _TextEditDialogState extends State<_TextEditDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(lifexUi('إلغاء', 'Cancel')),
+          child: LifexText(lifexUi('إلغاء', 'Cancel')),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, _controller.text),
-          child: Text(lifexUi('حفظ', 'Save')),
+          child: LifexText(lifexUi('حفظ', 'Save')),
         ),
       ],
     );

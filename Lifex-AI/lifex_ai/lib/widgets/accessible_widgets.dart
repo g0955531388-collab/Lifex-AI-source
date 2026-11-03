@@ -22,8 +22,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../core/app_config.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 import '../features/accessibility/screen_voice_board.dart';
 import '../features/voice/voice_engine.dart';
+import 'lifex_text.dart';
 
 /// زر إجراء كبير بتسمية دلالية واضحة وحجم لمسة كافٍ (لا يقل عن 48×48
 /// نقطة منطقية، وهو الحد الأدنى الموصى به عالمياً لإمكانية الوصول).
@@ -73,8 +75,8 @@ class AccessibleActionButton extends StatelessWidget {
         : Icons.chevron_right;
     return Semantics(
       button: true,
-      label: label,
-      hint: effectiveHint,
+      label: tr(label),
+      hint: tr(effectiveHint),
       enabled: !isDisabled,
       container: true,
       child: Opacity(
@@ -109,7 +111,7 @@ class AccessibleActionButton extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ExcludeSemantics(
-                          child: Text(
+                          child: LifexText(
                             label,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -158,8 +160,8 @@ class LiveAnnouncingText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       liveRegion: true, // يخبر قارئ الشاشة بقراءة هذا فور تحديثه
-      label: message,
-      child: Text(message, style: style),
+      label: tr(message),
+      child: LifexText(message, style: style),
     );
   }
 }
@@ -200,7 +202,7 @@ bool lifexScreenReaderOn(BuildContext context) {
 /// قارئ الشاشة على هذا العنصر أصلاً.
 void announceForScreenReader(BuildContext context, String message) {
   if (!context.mounted || message.isEmpty) return;
-  SemanticsService.announce(message, lifexTextDirection(context));
+  SemanticsService.announce(tr(message), lifexTextDirection(context));
 }
 
 /// عبارات الوصول التي يسمعها المكفوف. بلا مشهد أو مسافة مخترعة.
@@ -289,6 +291,11 @@ class _ScreenArrivalState extends State<ScreenArrival> {
   void didUpdateWidget(ScreenArrival oldWidget) {
     super.didUpdateWidget(oldWidget);
     _publish();
+    if (oldWidget.message == widget.message) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.message.isEmpty) return;
+      announceForScreenReader(context, widget.message);
+    });
   }
 
   @override
@@ -312,7 +319,7 @@ class _ScreenArrivalState extends State<ScreenArrival> {
   Widget build(BuildContext context) {
     return Semantics(
       explicitChildNodes: true,
-      label: widget.message,
+      label: tr(widget.message),
       child: widget.child,
     );
   }

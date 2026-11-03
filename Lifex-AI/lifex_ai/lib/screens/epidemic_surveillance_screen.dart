@@ -12,6 +12,7 @@ import '../features/voice/voice_engine.dart';
 import '../widgets/accessible_widgets.dart';
 import '../widgets/voice_or_type_field.dart';
 import 'health_guidance_screen.dart';
+import '../widgets/lifex_text.dart';
 
 class EpidemicSurveillanceScreen extends StatefulWidget {
   const EpidemicSurveillanceScreen({super.key, this.profileId});
@@ -124,11 +125,11 @@ class _EpidemicSurveillanceScreenState
     return ScreenArrival(
       message: 'رصد الأوبئة. أدخل الأرقام. العدد وحده ليس إعلاناً.',
       child: Scaffold(
-        appBar: AppBar(title: const Text('رصد الأوبئة')),
+        appBar: AppBar(title: const LifexText('رصد الأوبئة')),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text(
+            const LifexText(
               'المستوى إشارة للتحقيق. التأكيد الرسمي علم تضعه أنت من جهة مختصة، '
               'ولا يستنتجه النظام من العدد.',
             ),
@@ -152,34 +153,34 @@ class _EpidemicSurveillanceScreenState
             ),
             VoiceOrTypeField(controller: _source, label: 'مصدر الرقم'),
             SwitchListTile(
-              title: const Text('تعريف الحالة مسجّل'),
+              title: const LifexText('تعريف الحالة مسجّل'),
               value: _definition,
               onChanged: (value) => setState(() => _definition = value),
             ),
             SwitchListTile(
-              title: const Text('تأخر إبلاغ مذكور'),
+              title: const LifexText('تأخر إبلاغ مذكور'),
               value: _delay,
               onChanged: (value) => setState(() => _delay = value),
             ),
             SwitchListTile(
-              title: const Text('جهة مختصة أكّدت في هذه البطاقة'),
-              subtitle: const Text('لا يُفعَّل من العدد'),
+              title: const LifexText('جهة مختصة أكّدت في هذه البطاقة'),
+              subtitle: const LifexText('لا يُفعَّل من العدد'),
               value: _official,
               onChanged: (value) => setState(() => _official = value),
             ),
             const SizedBox(height: 8),
             FilledButton(
               onPressed: _assess,
-              child: const Text('قيّم الإشارة'),
+              child: const LifexText('قيّم الإشارة'),
             ),
             const SizedBox(height: 12),
             Semantics(
               liveRegion: true,
-              child: Text(_status),
+              child: LifexText(_status),
             ),
             if (result != null) ...[
               const SizedBox(height: 8),
-              for (final line in result.limitsAr) Text('• $line'),
+              for (final line in result.limitsAr) LifexText('• $line'),
               const SizedBox(height: 8),
               OutlinedButton(
                 onPressed: () {
@@ -195,7 +196,7 @@ class _EpidemicSurveillanceScreenState
                     ),
                   );
                 },
-                child: const Text('افتح الإرشاد المرتبط بهذه الإشارة'),
+                child: const LifexText('افتح الإرشاد المرتبط بهذه الإشارة'),
               ),
             ],
           ],

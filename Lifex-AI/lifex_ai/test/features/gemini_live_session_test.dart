@@ -24,6 +24,19 @@ void main() {
     expect(chosen, 'models/gemini-3.8-live');
     expect(
       chooseGeminiLiveModelName(const [
+        {
+          'name': 'models/gemini-2.5-flash-native-audio-preview-12-2025',
+          'supportedGenerationMethods': ['bidiGenerateContent'],
+        },
+        {
+          'name': 'models/gemini-3.8-live',
+          'supportedGenerationMethods': ['bidiGenerateContent'],
+        },
+      ]),
+      'models/gemini-3.8-live',
+    );
+    expect(
+      chooseGeminiLiveModelName(const [
         {'name': 'models/gemini-2.0-flash'},
       ]),
       isNull,
@@ -70,6 +83,24 @@ void main() {
     final setupMessage = geminiLiveSetupMessage(model: 'models/gemini-3.8-live');
     final generation = (setupMessage['setup'] as Map)['generationConfig'] as Map;
     expect(generation['responseModalities'], ['TEXT']);
+    expect(generation['mediaResolution'], 'MEDIA_RESOLUTION_LOW');
+    expect(geminiLiveInstructionAr, contains('يسار أو وسط أو يمين'));
+    expect(geminiLiveInstructionEn, contains('left, center, or right'));
+    expect(geminiLiveModelAfterRejection('models/gemini-3.8-live'),
+        'models/gemini-2.5-flash-native-audio-preview-12-2025');
+    expect(geminiReconnectAllowed(1), isTrue);
+    expect(geminiReconnectAllowed(5), isFalse);
+    expect(geminiReconnectDelay(1), const Duration(seconds: 1));
+    expect(geminiReconnectDelay(5), const Duration(seconds: 16));
+    expect(geminiReconnectDelay(6).inSeconds <= 30, isTrue);
+    final rejected = parseLiveServerMessage(
+      '{"error":{"code":1008,"message":"model rejected"}}',
+    );
+    expect(rejected.modelRejected, isTrue);
+    expect(rejected.failed, isTrue);
+    final away = parseLiveServerMessage('{"goAway":{"timeLeft":"10s"}}');
+    expect(away.goAway, isTrue);
+    expect(away.failed, isFalse);
     final kickoff = geminiLiveKickoffFor(AppLanguage.arabic);
     expect(kickoff.contains('متر'), isFalse);
     expect(kickoff.contains('آمن'), isTrue);
@@ -148,6 +179,42 @@ void main() {
     );
   });
 
+  test('رفض 1008 ينتقل إلى النموذج البديل بلا إطار مبكر', () async {
+    final first = _FakeSocket();
+    final second = _FakeSocket();
+    var index = 0;
+    final sockets = [first, second];
+    final pending = GeminiBidiVisionSession.start(
+      apiKey: 'a-real-looking-token-value-32',
+      model: 'models/gemini-3.8-live',
+      connector: _SequenceConnector(() => sockets[index++]),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(first.sent, isNotEmpty);
+    first.addIncoming('{"error":{"code":1008,"message":"rejected"}}');
+    await Future<void>.delayed(Duration.zero);
+    expect(second.sent, isNotEmpty);
+    final setup = jsonDecode(second.sent.first) as Map;
+    expect(
+      (setup['setup'] as Map)['model'],
+      contains('gemini-2.5-flash-native-audio-preview-12-2025'),
+    );
+    expect(
+      first.sent.where((line) => line.contains('realtimeInput')),
+      isEmpty,
+    );
+    expect(
+      second.sent.where((line) => line.contains('realtimeInput')),
+      isEmpty,
+    );
+    second.addIncoming('{"setupComplete":{}}');
+    final session = await pending;
+    expect(session, isNotNull);
+    expect(session!.phase, GeminiFramePhase.streaming);
+    await session.close();
+    expect(session.phase, GeminiFramePhase.idle);
+  });
+
   test('أربع ضغطات تشتعل والثالثة لا، والنافذة الأوسع لا تغيّر الافتراضي', () {
     final window = HardwareTapWindow(
       needed: BlindVolumeShortcut.taps,
@@ -214,5 +281,16 @@ class _Connector implements LiveSocketConnector {
     expect(uri.queryParameters.containsKey('key'), isTrue);
     expect(uri.toString().contains('BidiGenerateContent'), isTrue);
     return socket;
+  }
+}
+
+class _SequenceConnector implements LiveSocketConnector {
+  _SequenceConnector(this._next);
+  final LiveSocket Function() _next;
+
+  @override
+  Future<LiveSocket> connect(Uri uri) async {
+    expect(uri.toString().contains('BidiGenerateContent'), isTrue);
+    return _next();
   }
 }

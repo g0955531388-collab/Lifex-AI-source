@@ -17,6 +17,7 @@ import '../core/permission_transparency.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/voice/voice_engine.dart';
+import '../widgets/lifex_text.dart';
 
 class LayeredLensStudioScreen extends StatefulWidget {
   const LayeredLensStudioScreen({super.key});
@@ -69,19 +70,19 @@ class _LayeredLensStudioScreenState extends State<LayeredLensStudioScreen> {
     final agreed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('تقريب العدسة'),
-        content: const Text(
+        title: const LifexText('تقريب العدسة'),
+        content: const LifexText(
           'تفتح العدسة الخلفية أمامك للتقريب والتقاط لقطة في الملف. '
           'ليست تشخيص جلد، ولا تُركّب صورة من شريحتين.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('رفض'),
+            child: const LifexText('رفض'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('أوافق'),
+            child: const LifexText('أوافق'),
           ),
         ],
       ),
@@ -280,12 +281,12 @@ class _LayeredLensStudioScreenState extends State<LayeredLensStudioScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_status, textAlign: TextAlign.center),
+            LifexText(_status, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: _busy ? null : () => unawaited(_open()),
               icon: const Icon(Icons.photo_camera_outlined),
-              label: const Text('افتح العدسة'),
+              label: const LifexText('افتح العدسة'),
             ),
           ],
         ),
@@ -297,7 +298,7 @@ class _LayeredLensStudioScreenState extends State<LayeredLensStudioScreen> {
   Widget build(BuildContext context) {
     final shot = _shotPath;
     return Scaffold(
-      appBar: AppBar(title: const Text('تقريب العدسة')),
+      appBar: AppBar(title: const LifexText('تقريب العدسة')),
       body: Column(
         children: [
           Expanded(child: _preview()),
@@ -309,11 +310,11 @@ class _LayeredLensStudioScreenState extends State<LayeredLensStudioScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  const LifexText(
                     'لقطة تقريب للملف. ليست تشخيص جلد، ولا تركيب شريحتين.',
                   ),
                   if (_ready && _canZoom) ...[
-                    Text('التقريب ${_zoom.toStringAsFixed(1)}×'),
+                    LifexText('التقريب ${_zoom.toStringAsFixed(1)}×'),
                     Slider(
                       min: _minZoom,
                       max: _maxZoom,
@@ -326,14 +327,14 @@ class _LayeredLensStudioScreenState extends State<LayeredLensStudioScreen> {
                   if (_ready && _torchAvailable)
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('ضوء مستمر'),
+                      title: const LifexText('ضوء مستمر'),
                       value: _torchOn,
                       onChanged: _busy
                           ? null
                           : (value) => unawaited(_applyTorch(value)),
                     ),
                   if (_ready && _canExpose) ...[
-                    Text(
+                    LifexText(
                       'إزاحة التعريض ${_exposure.toStringAsFixed(1)}',
                     ),
                     Slider(
@@ -347,7 +348,7 @@ class _LayeredLensStudioScreenState extends State<LayeredLensStudioScreen> {
                   ],
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('النطق'),
+                    title: const LifexText('النطق'),
                     value: _voiceOn,
                     onChanged: (value) => setState(() => _voiceOn = value),
                   ),
@@ -355,13 +356,13 @@ class _LayeredLensStudioScreenState extends State<LayeredLensStudioScreen> {
                     FilledButton.icon(
                       onPressed: _busy ? null : () => unawaited(_shoot()),
                       icon: const Icon(Icons.camera),
-                      label: Text(_busy ? 'يلتقط...' : 'التقط واحفظ'),
+                      label: LifexText(_busy ? 'يلتقط...' : 'التقط واحفظ'),
                     )
                   else
                     OutlinedButton.icon(
                       onPressed: _busy ? null : () => unawaited(_open()),
                       icon: const Icon(Icons.photo_camera_outlined),
-                      label: const Text('افتح العدسة'),
+                      label: const LifexText('افتح العدسة'),
                     ),
                   if (shot != null) ...[
                     const SizedBox(height: 8),
@@ -371,7 +372,7 @@ class _LayeredLensStudioScreenState extends State<LayeredLensStudioScreen> {
                     ),
                   ],
                   const SizedBox(height: 8),
-                  Text(_status),
+                  LifexText(_status),
                 ],
               ),
             ),

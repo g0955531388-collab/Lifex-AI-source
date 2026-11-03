@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../features/devices/lifex_device_runtime.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/accessible_widgets.dart';
+import '../widgets/lifex_text.dart';
 
 class DeviceCenterScreen extends StatefulWidget {
   const DeviceCenterScreen({super.key});
@@ -50,14 +51,14 @@ class _DeviceCenterScreenState extends State<DeviceCenterScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('مركز الأجهزة'),
+        title: const LifexText('مركز الأجهزة'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Semantics(
             header: true,
-            child: const Text(
+            child: const LifexText(
               'سلسلة Lifex: اكتشاف → تعريف → قدرات → سائق → بروتوكول → جلسة → أمر → تحقق',
               style: TextStyle(fontSize: 14),
             ),
@@ -153,31 +154,31 @@ class _DeviceCenterScreenState extends State<DeviceCenterScreen> {
                     _run(() => runtime.runWheelchairAction('EMERGENCY_STOP')),
           ),
           const SizedBox(height: 24),
-          const Text(
+          const LifexText(
             'الأجهزة المُدارة',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           if (tiles.isEmpty)
-            const ListTile(title: Text('لا أجهزة مرفقة بعد'))
+            const ListTile(title: LifexText('لا أجهزة مرفقة بعد'))
           else
             ...tiles.map(
               (t) => ListTile(
-                title: Text(t.title),
-                subtitle: Text(t.statusLabel),
+                title: LifexText(t.title),
+                subtitle: LifexText(t.statusLabel),
                 leading: Icon(
                   t.streaming ? Icons.stream : Icons.devices,
                 ),
               ),
             ),
           const SizedBox(height: 24),
-          const Text(
+          const LifexText(
             'قدرات النقل (صدق Android)',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           ...transports.map(
             (t) => ListTile(
-              title: Text(t.transport),
-              subtitle: Text('${t.support.name}: ${t.noteAr}'),
+              title: LifexText(t.transport),
+              subtitle: LifexText('${t.support.name}: ${t.noteAr}'),
             ),
           ),
         ],

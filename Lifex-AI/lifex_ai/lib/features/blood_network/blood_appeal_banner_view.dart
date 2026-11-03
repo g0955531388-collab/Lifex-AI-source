@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import '../profile/health_profile.dart';
 import '../network_box/profile_box_store.dart';
 import 'blood_appeal_desk.dart';
+import '../../widgets/lifex_text.dart';
+import '../../core/i18n/lifex_runtime_translator.dart';
 
 class BloodAppealBannerView extends StatelessWidget {
   const BloodAppealBannerView({
@@ -49,18 +51,18 @@ class BloodAppealBannerView extends StatelessWidget {
       container: true,
       liveRegion: true,
       label:
-          'نداء تبرع بالدم من ${shown.unitName}. الزمرة ${shown.bloodLabel}. ${shown.whereAr}.',
+          tr('نداء تبرع بالدم من ${shown.unitName}. الزمرة ${shown.bloodLabel}. ${shown.whereAr}.'),
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(shown.unitName,
+              LifexText(shown.unitName,
                   style: Theme.of(context).textTheme.titleMedium),
-              Text('الزمرة ${shown.bloodLabel}'),
-              Text(shown.whereAr),
-              Text('ينتهي: ${shown.expiresAt}'),
+              LifexText('الزمرة ${shown.bloodLabel}'),
+              LifexText(shown.whereAr),
+              LifexText('ينتهي: ${shown.expiresAt}'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -78,7 +80,7 @@ class BloodAppealBannerView extends StatelessWidget {
                       onOpen();
                       onChanged?.call();
                     },
-                    child: const Text('أرغب في التبرع'),
+                    child: const LifexText('أرغب في التبرع'),
                   ),
                   TextButton(
                     onPressed: () {
@@ -91,14 +93,14 @@ class BloodAppealBannerView extends StatelessWidget {
                       );
                       onChanged?.call();
                     },
-                    child: const Text('لست متاحًا'),
+                    child: const LifexText('لست متاحًا'),
                   ),
                   TextButton(
                     onPressed: () {
                       const BloodAppealDesk().dismiss(donor, shown.requestId);
                       onChanged?.call();
                     },
-                    child: const Text('إغلاق التنبيه'),
+                    child: const LifexText('إغلاق التنبيه'),
                   ),
                 ],
               ),

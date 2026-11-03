@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -135,6 +136,28 @@ void main() {
       directGeminiRoute(online: true, packageInstalled: false),
       DirectGeminiRoute.internal,
     );
+  });
+
+  test('المسار الداخلي يعرض الموافقة السحابية ولا يدّعي أنها مفعّلة', () {
+    final ar = cloudConsentOffer('ar');
+    expect(ar, contains('أوافق على الإرسال السحابي'));
+    expect(ar, contains('الوصف المحلي يعمل'));
+    expect(ar, isNot(contains('تم تفعيل')));
+    final en = cloudConsentOffer('en-US');
+    expect(en, contains('turn on the Gemini live connection'));
+  });
+
+  test('الموافقة السحابية لا تُمنح إلا من أمر المستخدم الصريح', () {
+    final lines = File('lib/screens/live_sight_screen.dart').readAsLinesSync();
+    final grants = <int>[
+      for (var i = 0; i < lines.length; i++)
+        if (lines[i].contains('_setCloudAllowed(true)')) i,
+    ];
+    expect(grants, isNotEmpty);
+    for (final i in grants) {
+      expect(lines[i - 1], contains('grantCloud:'),
+          reason: 'سطر ${i + 1} يمنح الموافقة بلا أمر صريح');
+    }
   });
 }
 

@@ -5,6 +5,26 @@ import 'package:lifex_ai/features/accessibility/blind_camera_speech.dart';
 import 'package:lifex_ai/features/accessibility/text_and_currency_reader.dart';
 
 void main() {
+  test('أسماء الأشياء تتبع لغة الهاتف لا زر الواجهة', () {
+    expect(BlindCameraSpeech.deviceNameCode(languageCode: 'ar-SA'), 'ar');
+    expect(BlindCameraSpeech.deviceNameCode(languageCode: 'en-US'), 'en');
+    expect(BlindCameraSpeech.deviceNameCode(languageCode: 'fr'), 'en');
+    expect(
+      BlindCameraSpeech.spokenNameList(
+        const ['Person', 'Car'],
+        languageCode: 'ar',
+      ),
+      'شخص، سيارة',
+    );
+    expect(
+      BlindCameraSpeech.spokenNameList(
+        const ['Person', 'Car'],
+        languageCode: 'en',
+      ),
+      'Person, Car',
+    );
+  });
+
   test('التصنيف الفارغ والنص الفارغ يبقيان فارغين', () {
     expect(BlindCameraSpeech.sceneFromLabels(['  ']), BlindCameraSpeech.noSceneAr);
     expect(BlindCameraSpeech.textFromRaw('   '), BlindCameraSpeech.noTextAr);

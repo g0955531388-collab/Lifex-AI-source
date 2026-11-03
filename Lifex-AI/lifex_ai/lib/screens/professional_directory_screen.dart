@@ -11,6 +11,7 @@ import '../features/directory/professional_directory.dart';
 import '../features/location/device_location_reader.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../widgets/lifex_record_edit.dart';
+import '../widgets/lifex_text.dart';
 
 class ProfessionalDirectoryScreen extends StatefulWidget {
   const ProfessionalDirectoryScreen({
@@ -114,7 +115,7 @@ class _ProfessionalDirectoryScreenState extends State<ProfessionalDirectoryScree
     final arabic = AppConfig.instance.defaultLanguage != AppLanguage.english;
     return Scaffold(
       appBar: AppBar(
-        title: Text(lifexUi('الدليل المهني', 'Professional directory')),
+        title: LifexText(lifexUi('الدليل المهني', 'Professional directory')),
       ),
       body: ListenableBuilder(
         listenable: StudioThemeController.instance,
@@ -123,7 +124,7 @@ class _ProfessionalDirectoryScreenState extends State<ProfessionalDirectoryScree
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
-              Text(lifexUi(
+              LifexText(lifexUi(
                 'دليل محلي على هذا الجهاز. ليس حجزاً مؤكداً ولا تشخيصاً. التجربة المجانية 48 ساعة، والدفع لا يُرسل من غير تأكيد مرخّص.',
                 'A local directory on this device. It is not a confirmed booking or a diagnosis. The free trial is 48 hours, and payment is not sent without licensed confirmation.',
               )),
@@ -131,7 +132,7 @@ class _ProfessionalDirectoryScreenState extends State<ProfessionalDirectoryScree
               FilledButton.tonalIcon(
                 onPressed: StudioThemeController.instance.cycleAppearance,
                 icon: const Icon(Icons.contrast),
-                label: Text(_appearanceLabel(appearance, arabic)),
+                label: LifexText(_appearanceLabel(appearance, arabic)),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -143,7 +144,7 @@ class _ProfessionalDirectoryScreenState extends State<ProfessionalDirectoryScree
               ),
               if (widget.highlightReason.trim().isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(lifexUi(
+                LifexText(lifexUi(
                   'سبب التنبيه: ${widget.highlightReason}',
                   'Alarm reason: ${widget.highlightReason}',
                 )),
@@ -156,32 +157,32 @@ class _ProfessionalDirectoryScreenState extends State<ProfessionalDirectoryScree
                   FilledButton.icon(
                     onPressed: () => _editProfile(),
                     icon: const Icon(Icons.person_add_alt_1),
-                    label: Text(lifexUi('إضافة مهني', 'Add a professional')),
+                    label: LifexText(lifexUi('إضافة مهني', 'Add a professional')),
                   ),
                   FilledButton.tonalIcon(
                     onPressed: _addAlarm,
                     icon: const Icon(Icons.alarm),
-                    label: Text(lifexUi('منبه الدليل', 'Directory alarm')),
+                    label: LifexText(lifexUi('منبه الدليل', 'Directory alarm')),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               if (shown.isEmpty)
-                Text(lifexUi('لا نتائج محفوظة.', 'No saved results.'))
+                LifexText(lifexUi('لا نتائج محفوظة.', 'No saved results.'))
               else
                 for (final profile in shown) _profileCard(profile),
               const SizedBox(height: 16),
-              Text(
+              LifexText(
                 lifexUi('منبهات الدليل', 'Directory alarms'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 4),
-              Text(lifexUi(
+              LifexText(lifexUi(
                 'التذكير قبل ساعتين وقبل ساعة، ثم البحث عند الوقت، ما دام التطبيق مفتوحاً. إغلاق التطبيق لا يفتحه وحده.',
                 'A reminder two hours before, one hour before, then search at the time, while the app is open. Closing the app does not open it by itself.',
               )),
               if (_savedAlarms.isEmpty)
-                Text(lifexUi('لا منبهات للدليل.', 'No directory alarms.'))
+                LifexText(lifexUi('لا منبهات للدليل.', 'No directory alarms.'))
               else
                 for (final alarm in _savedAlarms) _alarmTile(alarm),
             ],
@@ -204,8 +205,8 @@ class _ProfessionalDirectoryScreenState extends State<ProfessionalDirectoryScree
           backgroundColor: tint,
           child: Icon(_themeIcon(profile.themeId), color: Colors.black),
         ),
-        title: Text(profile.fullName),
-        subtitle: Text(
+        title: LifexText(profile.fullName),
+        subtitle: LifexText(
           '${arabic ? theme.nameAr : theme.nameEn} · ${profile.specialty}\n'
           '${profile.city.isEmpty ? profile.country : profile.city}'
           '${profile.point == null ? '' : ' · ${lifexUi('إحداثيات محفوظة', 'coordinates saved')}'}\n'
@@ -233,8 +234,8 @@ class _ProfessionalDirectoryScreenState extends State<ProfessionalDirectoryScree
     final when = alarm.scheduled.toLocal();
     return Card(
       child: ListTile(
-        title: Text(alarm.reason),
-        subtitle: Text(
+        title: LifexText(alarm.reason),
+        subtitle: LifexText(
           '${alarm.targetNameOrKeyword}\n'
           '${when.year}-${two(when.month)}-${two(when.day)} '
           '${two(when.hour)}:${two(when.minute)} · ${alarm.status.name}',
@@ -436,7 +437,7 @@ class _ProfileDialogState extends State<_ProfileDialog> {
   Widget build(BuildContext context) {
     final arabic = AppConfig.instance.defaultLanguage != AppLanguage.english;
     return AlertDialog(
-      title: Text(lifexUi(
+      title: LifexText(lifexUi(
         widget.current == null ? 'إضافة مهني' : 'تعديل المهني',
         widget.current == null ? 'Add a professional' : 'Edit the professional',
       )),
@@ -455,7 +456,7 @@ class _ProfileDialogState extends State<_ProfileDialog> {
                 for (final id in ProfessionCategory.all)
                   DropdownMenuItem(
                     value: id,
-                    child: Text(arabic ? directoryThemeById(id).nameAr : directoryThemeById(id).nameEn),
+                    child: LifexText(arabic ? directoryThemeById(id).nameAr : directoryThemeById(id).nameEn),
                   ),
               ],
               onChanged: (value) {
@@ -495,14 +496,14 @@ class _ProfileDialogState extends State<_ProfileDialog> {
             const SizedBox(height: 8),
             Align(
               alignment: AlignmentDirectional.centerStart,
-              child: Text(lifexUi('هوية بصرية من عشرة', 'One of ten visual identities')),
+              child: LifexText(lifexUi('هوية بصرية من عشرة', 'One of ten visual identities')),
             ),
             Wrap(
               spacing: 6,
               children: [
                 for (final theme in directoryThemes)
                   ChoiceChip(
-                    label: Text(arabic ? theme.nameAr : theme.nameEn),
+                    label: LifexText(arabic ? theme.nameAr : theme.nameEn),
                     selected: _themeId == theme.id,
                     onSelected: (_) => setState(() => _themeId = theme.id),
                   ),
@@ -512,12 +513,12 @@ class _ProfileDialogState extends State<_ProfileDialog> {
             FilledButton.tonalIcon(
               onPressed: _busy ? null : _capture,
               icon: const Icon(Icons.my_location),
-              label: Text(lifexUi('احفظ إحداثيات الجهاز', 'Save device coordinates')),
+              label: LifexText(lifexUi('احفظ إحداثيات الجهاز', 'Save device coordinates')),
             ),
-            if (_placeNote.isNotEmpty) Text(_placeNote),
+            if (_placeNote.isNotEmpty) LifexText(_placeNote),
             if (widget.current != null) ...[
               const SizedBox(height: 8),
-              Text(lifexUi(
+              LifexText(lifexUi(
                 widget.current!.isPaid
                     ? 'الحالة مدفوعة محفوظة كما هي.'
                     : 'التجربة بدأت مع الإنشاء ولا تُعاد عند التعديل.',
@@ -529,19 +530,19 @@ class _ProfileDialogState extends State<_ProfileDialog> {
                 onPressed: () {
                   final attempt = refuseDirectoryPayment('shamcash');
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(lifexUi(attempt.messageAr, attempt.messageEn))),
+                    SnackBar(content: LifexText(lifexUi(attempt.messageAr, attempt.messageEn))),
                   );
                 },
-                child: Text(lifexUi('شام كاش', 'Sham Cash')),
+                child: LifexText(lifexUi('شام كاش', 'Sham Cash')),
               ),
               FilledButton.tonal(
                 onPressed: () {
                   final attempt = refuseDirectoryPayment('global_wallet');
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(lifexUi(attempt.messageAr, attempt.messageEn))),
+                    SnackBar(content: LifexText(lifexUi(attempt.messageAr, attempt.messageEn))),
                   );
                 },
-                child: Text(lifexUi('محفظة عالمية', 'Global wallet')),
+                child: LifexText(lifexUi('محفظة عالمية', 'Global wallet')),
               ),
             ],
           ],
@@ -550,11 +551,11 @@ class _ProfileDialogState extends State<_ProfileDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(lifexUi('إلغاء', 'Cancel')),
+          child: LifexText(lifexUi('إلغاء', 'Cancel')),
         ),
         FilledButton(
           onPressed: _save,
-          child: Text(lifexUi('حفظ', 'Save')),
+          child: LifexText(lifexUi('حفظ', 'Save')),
         ),
       ],
     );
@@ -634,7 +635,7 @@ class _AlarmDialogState extends State<_AlarmDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(lifexUi('منبه الدليل', 'Directory alarm')),
+      title: LifexText(lifexUi('منبه الدليل', 'Directory alarm')),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -660,12 +661,12 @@ class _AlarmDialogState extends State<_AlarmDialog> {
                 items: [
                   DropdownMenuItem(
                     value: '',
-                    child: Text(lifexUi('بلا ربط', 'No link')),
+                    child: LifexText(lifexUi('بلا ربط', 'No link')),
                   ),
                   for (final profile in widget.profiles)
                     DropdownMenuItem(
                       value: profile.id,
-                      child: Text(profile.fullName),
+                      child: LifexText(profile.fullName),
                     ),
                 ],
                 onChanged: (value) {
@@ -682,11 +683,11 @@ class _AlarmDialogState extends State<_AlarmDialog> {
             const SizedBox(height: 8),
             FilledButton.tonal(
               onPressed: _pickDay,
-              child: Text(lifexUi('اختر التاريخ', 'Choose the date')),
+              child: LifexText(lifexUi('اختر التاريخ', 'Choose the date')),
             ),
             FilledButton.tonal(
               onPressed: _pickTime,
-              child: Text(lifexUi('اختر الوقت', 'Choose the time')),
+              child: LifexText(lifexUi('اختر الوقت', 'Choose the time')),
             ),
           ],
         ),
@@ -694,11 +695,11 @@ class _AlarmDialogState extends State<_AlarmDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(lifexUi('إلغاء', 'Cancel')),
+          child: LifexText(lifexUi('إلغاء', 'Cancel')),
         ),
         FilledButton(
           onPressed: _save,
-          child: Text(lifexUi('حفظ', 'Save')),
+          child: LifexText(lifexUi('حفظ', 'Save')),
         ),
       ],
     );

@@ -23,6 +23,8 @@ import '../features/profile/health_profile.dart';
 import '../widgets/accessible_widgets.dart';
 import '../widgets/lifex_record_edit.dart';
 import 'medication_alarm_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class MedicationsScreen extends StatefulWidget {
   const MedicationsScreen({super.key, required this.profileId});
@@ -202,22 +204,22 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     final added = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('إضافة دواء إلى السجل الشخصي'),
+        title: const LifexText('إضافة دواء إلى السجل الشخصي'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'اسم الدواء كما وصفه الطبيب',
+          decoration: InputDecoration(
+            labelText: tr('اسم الدواء كما وصفه الطبيب'),
             border: OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('إلغاء'),
+            child: const LifexText('إلغاء'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('إضافة'),
+            child: const LifexText('إضافة'),
           ),
         ],
       ),
@@ -246,10 +248,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
           body: 'سجل شخصي. لا يصف دواء ولا يغيّر جرعة.',
           child: Scaffold(
           appBar: AppBar(
-            title: const Text('أدويتي'),
+            title: const LifexText('أدويتي'),
             actions: [
               IconButton(
-                tooltip: 'منبّه الأدوية الذكي',
+                tooltip: tr('منبّه الأدوية الذكي'),
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -265,16 +267,16 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
               : FloatingActionButton.extended(
                   onPressed: () => _addMedication(profile),
                   icon: const Icon(Icons.add),
-                  label: const Text('إضافة دواء'),
+                  label: const LifexText('إضافة دواء'),
                 ),
           body: _loading
               ? const Center(child: CircularProgressIndicator())
               : profile == null
-                  ? const Center(child: Text('لا يوجد ملف صحي نشط.'))
+                  ? const Center(child: LifexText('لا يوجد ملف صحي نشط.'))
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
                       children: [
-                        const Text(
+                        const LifexText(
                           'هذه شاشة سجل شخصي وتوعية فقط. Lifex-AI لا يصف '
                           'دواء ولا يحدّد جرعة. اتبع وصفة الطبيب ونشرة الدواء.',
                           style: TextStyle(fontSize: 13, color: Colors.orange),
@@ -287,7 +289,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                               builder: (_) => const MedicationAlarmScreen(),
                             ),
                           ),
-                          child: const Text('منبّه الأدوية الذكي لكل أفراد الحساب'),
+                          child: const LifexText('منبّه الأدوية الذكي لكل أفراد الحساب'),
                         ),
                         for (final warning in [
                           ..._interactionWarnings(profile),
@@ -297,25 +299,25 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                             color: Colors.red.withOpacity(0.08),
                             child: ListTile(
                               leading: const Icon(Icons.warning_amber_outlined),
-                              title: Text(warning),
+                              title: LifexText(warning),
                             ),
                           ),
                         const SizedBox(height: 8),
-                        Text(
+                        LifexText(
                           'سجل أدويتي',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         if (profile.currentMedicationNames.isEmpty)
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Text('لم تُضف أي أدوية بعد.'),
+                            child: LifexText('لم تُضف أي أدوية بعد.'),
                           )
                         else
                           for (final name in profile.currentMedicationNames)
                             Card(
                               child: ListTile(
-                                title: Text(name),
-                                subtitle: Text(
+                                title: LifexText(name),
+                                subtitle: LifexText(
                                   _matchCatalog(name)?['generalNoteAr']
                                           as String? ??
                                       'غير موجود في المرجع العام؛ يبقى في سجلك كما كتبته.',
@@ -332,6 +334,11 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                                   onPressed: () async {
                                     final entry =
                                         Provider.of<LioSensitiveActionEntry>(
+                                      context,
+                                      listen: false,
+                                    );
+                                    final profiles =
+                                        Provider.of<ActiveProfileController>(
                                       context,
                                       listen: false,
                                     );
@@ -363,10 +370,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                                       },
                                     );
                                     if (!outcome.executed || !mounted) return;
-                                    Provider.of<ActiveProfileController>(
-                                      context,
-                                      listen: false,
-                                    ).notifyProfileChanged();
+                                    profiles.notifyProfileChanged();
                                     setState(() {});
                                   },
                                     ),
@@ -375,14 +379,14 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                               ),
                             ),
                         const SizedBox(height: 16),
-                        Text(
+                        LifexText(
                           'مرجع عام من قاعدة الأدوية',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         for (final item in _catalog)
                           ListTile(
-                            title: Text(item['nameAr'] as String? ?? ''),
-                            subtitle: Text(
+                            title: LifexText(item['nameAr'] as String? ?? ''),
+                            subtitle: LifexText(
                               '${item['category'] ?? ''} — '
                               '${item['requiresPrescription'] == true ? "يحتاج وصفة" : "مرجع عام"}',
                             ),

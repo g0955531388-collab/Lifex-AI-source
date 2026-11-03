@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/app_config.dart';
+import 'package:lifex_ai/core/i18n/lifex_i18n.dart';
 import 'package:lifex_ai/screens/splash_screen.dart';
 import 'package:lifex_ai/widgets/accessible_widgets.dart';
 import 'package:lifex_ai/widgets/studio_web_frame.dart';
@@ -13,15 +14,25 @@ void main() {
   });
 
   testWidgets('talkback splash stays until the enter button', (tester) async {
+    final code = AppConfig.instance.defaultLanguage == AppLanguage.english
+        ? 'en'
+        : 'ar';
     await tester.pumpWidget(
-      MaterialApp(
-        builder: (context, child) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(accessibleNavigation: true),
-            child: child ?? const SizedBox.shrink(),
-          );
-        },
-        home: const SplashScreen(displayDuration: Duration(milliseconds: 50)),
+      LifexI18n(
+        catalog: const LifexI18nCatalog(
+          ar: {'nav.enter': 'دخول', 'nav.enterHint': 'يفتح الصفحة التالية'},
+          en: {'nav.enter': 'Enter', 'nav.enterHint': 'Opens the next page'},
+        ),
+        languageCode: code,
+        child: MaterialApp(
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(accessibleNavigation: true),
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+          home: const SplashScreen(displayDuration: Duration(milliseconds: 50)),
+        ),
       ),
     );
     await tester.pump();

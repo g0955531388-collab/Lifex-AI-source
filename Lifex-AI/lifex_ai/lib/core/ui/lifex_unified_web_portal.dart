@@ -5,6 +5,8 @@ library lifex_ai.core.ui.lifex_unified_web_portal;
 import 'package:flutter/material.dart';
 
 import '../attribution/project_attribution.dart';
+import '../../widgets/lifex_text.dart';
+import '../i18n/lifex_runtime_translator.dart';
 
 enum LifexThemeMode {
   studioCeramicDark,
@@ -516,14 +518,14 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
               if (!wide)
                 Builder(
                   builder: (context) => IconButton(
-                    tooltip: 'أقسام البوابة',
+                    tooltip: tr('أقسام البوابة'),
                     icon: Icon(Icons.menu, color: _theme.accentPrimary),
                     onPressed: () => Scaffold.of(context).openDrawer(),
                   ),
                 ),
               Icon(Icons.public, color: _theme.accentPrimary, size: 28),
               const SizedBox(width: 12),
-              Text(
+              LifexText(
                 ProjectAttribution.systemName,
                 style: TextStyle(
                   color: _theme.textPrimary,
@@ -539,11 +541,11 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
               controller: _commandInput,
               style: TextStyle(color: _theme.textPrimary),
               decoration: InputDecoration(
-                hintText: 'عبارة للانتقال: كاميرا، أجهزة، طوارئ، بحث',
+                hintText: tr('عبارة للانتقال: كاميرا، أجهزة، طوارئ، بحث'),
                 hintStyle: TextStyle(color: _theme.textSecondary, fontSize: 13),
                 prefixIcon: Icon(Icons.search, color: _theme.accentPrimary),
                 suffixIcon: IconButton(
-                  tooltip: 'استماع مرة واحدة',
+                  tooltip: tr('استماع مرة واحدة'),
                   icon: Icon(
                     _controller.listening ? Icons.mic : Icons.mic_none,
                     color: _theme.accentPrimary,
@@ -560,7 +562,7 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
             ),
           ),
           PopupMenuButton<LifexThemeMode>(
-            tooltip: 'اختيار لون الواجهة',
+            tooltip: tr('اختيار لون الواجهة'),
             icon: Icon(_theme.themeIcon, color: _theme.accentPrimary),
             onSelected: _controller.switchTheme,
             itemBuilder: (context) {
@@ -568,7 +570,7 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
                   .map(
                     (entry) => PopupMenuItem(
                       value: entry.key,
-                      child: Text(entry.value.titleAr),
+                      child: LifexText(entry.value.titleAr),
                     ),
                   )
                   .toList();
@@ -586,7 +588,7 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         color: _theme.accentPrimary.withOpacity(0.15),
-        child: Text(
+        child: LifexText(
           _controller.lastSystemAnnouncement,
           style: TextStyle(color: _theme.textPrimary, fontWeight: FontWeight.w600),
         ),
@@ -616,7 +618,7 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
                     ? _theme.accentPrimary
                     : _theme.textSecondary,
               ),
-              title: Text(
+              title: LifexText(
                 item.$2,
                 style: TextStyle(color: _theme.textPrimary),
               ),
@@ -651,7 +653,7 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
+        LifexText(
           ProjectAttribution.systemName,
           style: TextStyle(
             color: _theme.textPrimary,
@@ -660,7 +662,7 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
+        LifexText(
           'واجهة محلية. لا تشخيص، ولا بروتوكول معتمد، ولا جهاز موصول من هذه الشاشة.',
           style: TextStyle(color: _theme.textSecondary),
         ),
@@ -691,7 +693,7 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
   }
 
   Widget _localPhrase() {
-    return Text(
+    return LifexText(
       'العبارة التي تكتبها تبقى على الجهاز. هذه الشاشة لا تستدعي Gemini ولا Google AI Studio.',
       style: TextStyle(color: _theme.textPrimary, fontSize: 16),
     );
@@ -701,7 +703,7 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
+        LifexText(
           'ملاحظات هذه الجلسة',
           style: TextStyle(
             color: _theme.textPrimary,
@@ -710,19 +712,19 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(UserCareNote.statusAr, style: TextStyle(color: _theme.textSecondary)),
+        LifexText(UserCareNote.statusAr, style: TextStyle(color: _theme.textSecondary)),
         const SizedBox(height: 12),
         TextField(
           controller: _noteTitle,
-          decoration: const InputDecoration(labelText: 'عنوان الملاحظة'),
+          decoration: InputDecoration(labelText: tr('عنوان الملاحظة')),
         ),
         TextField(
           controller: _noteCategory,
-          decoration: const InputDecoration(labelText: 'تصنيف يكتبه المستخدم'),
+          decoration: InputDecoration(labelText: tr('تصنيف يكتبه المستخدم')),
         ),
         TextField(
           controller: _noteText,
-          decoration: const InputDecoration(labelText: 'نص الملاحظة'),
+          decoration: InputDecoration(labelText: tr('نص الملاحظة')),
         ),
         const SizedBox(height: 8),
         FilledButton(
@@ -736,12 +738,12 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
             _noteCategory.clear();
             _noteText.clear();
           },
-          child: const Text('حفظ الملاحظة في هذه الجلسة'),
+          child: const LifexText('حفظ الملاحظة في هذه الجلسة'),
         ),
         for (final note in _controller.notes)
           ListTile(
-            title: Text(note.title, style: TextStyle(color: _theme.textPrimary)),
-            subtitle: Text(
+            title: LifexText(note.title, style: TextStyle(color: _theme.textPrimary)),
+            subtitle: LifexText(
               '${note.category}\n${note.text}\n${UserCareNote.statusAr}',
               style: TextStyle(color: _theme.textSecondary),
             ),
@@ -754,14 +756,14 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        LifexText(
           'لا جهاز مكتشف أو موصول أو مخوّل من هذه البوابة.',
           style: TextStyle(color: _theme.textPrimary, fontSize: 16),
         ),
         const SizedBox(height: 12),
         FilledButton(
           onPressed: widget.onOpenDevices,
-          child: const Text('افتح مركز الأجهزة'),
+          child: const LifexText('افتح مركز الأجهزة'),
         ),
       ],
     );
@@ -771,21 +773,21 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        LifexText(
           'البث الحي يُفتح في شاشة الكاميرا بعد موافقتك. لا قياس مسافة ولا فلاش رادار من هذه البوابة.',
           style: TextStyle(color: _theme.textPrimary, fontSize: 16),
         ),
         const SizedBox(height: 12),
         FilledButton(
           onPressed: widget.onOpenCamera,
-          child: const Text('افتح كاميرا المكفوفين'),
+          child: const LifexText('افتح كاميرا المكفوفين'),
         ),
       ],
     );
   }
 
   Widget _nutrition() {
-    return Text(
+    return LifexText(
       'لا حاسبة تغذية في هذه البوابة، ولا ربط بقراءات السكر أو الضغط، ولا احتياج علاجي محسوب.',
       style: TextStyle(color: _theme.textPrimary, fontSize: 16),
     );
@@ -795,14 +797,14 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        LifexText(
           'هذه الشاشة لا تبث مؤشرات ولا موقعاً. تفتح جهات الطوارئ المحفوظة.',
           style: TextStyle(color: _theme.textPrimary, fontSize: 16),
         ),
         const SizedBox(height: 12),
         FilledButton(
           onPressed: widget.onOpenEmergency,
-          child: const Text('افتح جهات الطوارئ'),
+          child: const LifexText('افتح جهات الطوارئ'),
         ),
       ],
     );
@@ -814,8 +816,8 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
       child: Card(
         color: _theme.cardSurface,
         child: ListTile(
-          title: Text(title, style: TextStyle(color: _theme.textPrimary)),
-          subtitle: Text(subtitle, style: TextStyle(color: _theme.textSecondary)),
+          title: LifexText(title, style: TextStyle(color: _theme.textPrimary)),
+          subtitle: LifexText(subtitle, style: TextStyle(color: _theme.textSecondary)),
           onTap: onTap,
         ),
       ),
@@ -823,7 +825,7 @@ class _LifexUnifiedWebPortalState extends State<LifexUnifiedWebPortal> {
   }
 
   Widget _footer() {
-    return Text(
+    return LifexText(
       ProjectAttribution.officialStatementShortAr,
       textAlign: TextAlign.center,
       style: TextStyle(color: _theme.accentPrimary, fontWeight: FontWeight.bold),

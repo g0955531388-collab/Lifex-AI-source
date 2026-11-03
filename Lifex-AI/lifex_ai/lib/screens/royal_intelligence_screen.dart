@@ -18,6 +18,8 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/reports/stamped_report.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class RoyalIntelligenceScreen extends StatefulWidget {
   const RoyalIntelligenceScreen({super.key});
@@ -121,7 +123,7 @@ class _RoyalIntelligenceScreenState extends State<RoyalIntelligenceScreen> {
     Clipboard.setData(ClipboardData(text: stamped));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('نُسخ التقرير المختوم. ليست شهادة ذكاء رسمية.'),
+        content: LifexText('نُسخ التقرير المختوم. ليست شهادة ذكاء رسمية.'),
       ),
     );
   }
@@ -131,10 +133,10 @@ class _RoyalIntelligenceScreenState extends State<RoyalIntelligenceScreen> {
     final session = _session;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('المنصة الملكية'),
+        title: const LifexText('المنصة الملكية'),
         actions: [
           IconButton(
-            tooltip: 'إيقاف النطق',
+            tooltip: tr('إيقاف النطق'),
             onPressed: () => VoiceEngine.instance.stopListening(),
             icon: const Icon(Icons.stop),
           ),
@@ -145,7 +147,7 @@ class _RoyalIntelligenceScreenState extends State<RoyalIntelligenceScreen> {
         children: [
           GestureDetector(
             onTap: () => _say(AppConstants.studioBannerCredit),
-            child: Text(
+            child: LifexText(
               'اختبار ملكي — ${AppConstants.studioBannerCredit}',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
@@ -154,56 +156,56 @@ class _RoyalIntelligenceScreenState extends State<RoyalIntelligenceScreen> {
           const SizedBox(height: 8),
           const HonestyBanner(messageAr: RoyalIntelligenceBank.disclaimerAr),
           SwitchListTile(
-            title: const Text('وضع الأطفال'),
+            title: const LifexText('وضع الأطفال'),
             value: _childMode,
             onChanged: _session == null
                 ? (value) => setState(() => _childMode = value)
                 : null,
           ),
           SwitchListTile(
-            title: const Text('خلط الأسئلة'),
+            title: const LifexText('خلط الأسئلة'),
             value: _shuffle,
             onChanged: _session == null
                 ? (value) => setState(() => _shuffle = value)
                 : null,
           ),
           SwitchListTile(
-            title: const Text('مؤقّت ١٥ دقيقة'),
+            title: const LifexText('مؤقّت ١٥ دقيقة'),
             value: _useTimer,
             onChanged: _session == null
                 ? (value) => setState(() => _useTimer = value)
                 : null,
           ),
-          Text('الوقت: $_clock'),
+          LifexText('الوقت: $_clock'),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
-              FilledButton(onPressed: _start, child: const Text('بدء التمرين')),
+              FilledButton(onPressed: _start, child: const LifexText('بدء التمرين')),
               OutlinedButton(
                 onPressed: session == null
                     ? null
                     : () => _say(session.speakItem(_current)),
-                child: const Text('نطق السؤال'),
+                child: const LifexText('نطق السؤال'),
               ),
               OutlinedButton(
                 onPressed: session == null ? null : () => _grade(),
-                child: const Text('تصحيح'),
+                child: const LifexText('تصحيح'),
               ),
-              OutlinedButton(onPressed: _reset, child: const Text('إعادة')),
+              OutlinedButton(onPressed: _reset, child: const LifexText('إعادة')),
               OutlinedButton(
                 onPressed: session == null ? null : _save,
-                child: const Text('نسخ النتيجة'),
+                child: const LifexText('نسخ النتيجة'),
               ),
             ],
           ),
           if (_score != null) ...[
             const SizedBox(height: 12),
-            Text(
+            LifexText(
               'النتيجة: ${_score!.correct} من ${_score!.total} (${_score!.percent}%)',
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            Text(_score!.labelAr),
+            LifexText(_score!.labelAr),
             LinearProgressIndicator(value: _score!.percent / 100),
           ],
           if (session != null) ...[
@@ -212,7 +214,7 @@ class _RoyalIntelligenceScreenState extends State<RoyalIntelligenceScreen> {
               if (i % RoyalIntelligenceBank.stageSize == 0)
                 Padding(
                   padding: const EdgeInsets.only(top: 12, bottom: 4),
-                  child: Text(
+                  child: LifexText(
                     'المرحلة ${(i ~/ RoyalIntelligenceBank.stageSize) + 1}',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
@@ -226,14 +228,14 @@ class _RoyalIntelligenceScreenState extends State<RoyalIntelligenceScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('سؤال ${i + 1}: ${session.items[i].promptAr}'),
+                      LifexText('سؤال ${i + 1}: ${session.items[i].promptAr}'),
                       const SizedBox(height: 8),
                       for (var o = 0;
                           o < session.items[i].options.length;
                           o++)
                         RadioListTile<int>(
                           dense: true,
-                          title: Text(session.items[i].options[o]),
+                          title: LifexText(session.items[i].options[o]),
                           value: o,
                           groupValue: session.picks[i],
                           onChanged: _score != null

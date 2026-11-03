@@ -98,6 +98,7 @@ class BloodAppealDesk {
     ChatEngine? chat,
     GeoExpansionDispatcher? expansion,
     DateTime? now,
+    bool adminAuthorized = false,
   }) {
     final clock = now ?? DateTime.now();
     final key = clientKey.trim();
@@ -109,9 +110,10 @@ class BloodAppealDesk {
     if (previous != null && previous.isNotEmpty) {
       return BloodAppealOutcome(requestId: previous, invited: 0);
     }
-    if (!mayPublish(unitStore, publisher.profileId)) {
+    if (!adminAuthorized && !mayPublish(unitStore, publisher.profileId)) {
       return const BloodAppealOutcome(
-        errorAr: 'النشر الرسمي يحتاج تفويض الوحدة. الحساب الحالي غير مفوّض.',
+        errorAr:
+            'النشر الرسمي يحتاج تفويض الوحدة أو دوراً إدارياً (مالك أو أدمن). الحساب الحالي غير مفوّض.',
       );
     }
     if (unitName.trim().isEmpty || address.trim().isEmpty) {

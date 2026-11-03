@@ -15,6 +15,8 @@ import '../features/network_box/unit_branch_catalog.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../widgets/barcode_scan_button.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class UnitBranchRecordsScreen extends StatelessWidget {
   const UnitBranchRecordsScreen({super.key, required this.branch});
@@ -29,23 +31,23 @@ class UnitBranchRecordsScreen extends StatelessWidget {
         final profile = controller.activeProfile;
         if (profile == null || storageKey == null) {
           return Scaffold(
-            appBar: AppBar(title: Text(branch.titleAr)),
-            body: const Center(child: Text('لا يوجد ملف صحي نشط.')),
+            appBar: AppBar(title: LifexText(branch.titleAr)),
+            body: const Center(child: LifexText('لا يوجد ملف صحي نشط.')),
           );
         }
         final store = ProfileBoxStore(profile);
         final records = store.list(storageKey);
         return Scaffold(
-          appBar: AppBar(title: Text(branch.titleAr)),
+          appBar: AppBar(title: LifexText(branch.titleAr)),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _add(context, controller, store, storageKey),
             icon: const Icon(Icons.add),
-            label: const Text('إضافة'),
+            label: const LifexText('إضافة'),
           ),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
             children: [
-              Text(branch.subtitleAr,
+              LifexText(branch.subtitleAr,
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               HonestyBanner.localAndServer(),
@@ -58,17 +60,17 @@ class UnitBranchRecordsScreen extends StatelessWidget {
                 ),
               const SizedBox(height: 12),
               if (records.isEmpty)
-                const Text('لا توجد سجلات في هذا الفرع بعد.')
+                const LifexText('لا توجد سجلات في هذا الفرع بعد.')
               else
                 for (var i = 0; i < records.length; i++)
                   Card(
                     child: ListTile(
                       leading: CircleAvatar(child: Icon(branch.icon)),
-                      title: Text(records[i]['title']?.toString() ?? ''),
-                      subtitle: Text(_subtitle(records[i])),
+                      title: LifexText(records[i]['title']?.toString() ?? ''),
+                      subtitle: LifexText(_subtitle(records[i])),
                       isThreeLine: _subtitle(records[i]).contains('\n'),
                       trailing: IconButton(
-                        tooltip: 'حذف',
+                        tooltip: tr('حذف'),
                         icon: const Icon(Icons.delete_outline),
                         onPressed: () async {
                           final profileId =
@@ -142,7 +144,7 @@ class UnitBranchRecordsScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setLocal) => AlertDialog(
-        title: Text(branch.titleAr),
+        title: LifexText(branch.titleAr),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -150,18 +152,18 @@ class UnitBranchRecordsScreen extends StatelessWidget {
               TextField(
                 controller: title,
                 autofocus: true,
-                decoration: InputDecoration(labelText: branch.primaryLabelAr),
+                decoration: InputDecoration(labelText: tr(branch.primaryLabelAr)),
               ),
               TextField(
                 controller: detail,
                 maxLines: 3,
-                decoration: InputDecoration(labelText: branch.detailLabelAr),
+                decoration: InputDecoration(labelText: tr(branch.detailLabelAr)),
               ),
               for (final field in branch.extraFields)
                 TextField(
                   controller: extras[field.key],
                   maxLines: field.maxLines,
-                  decoration: InputDecoration(labelText: field.labelAr),
+                  decoration: InputDecoration(labelText: tr(field.labelAr)),
                 ),
               const SizedBox(height: 8),
               BarcodeScanButton(
@@ -177,11 +179,11 @@ class UnitBranchRecordsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
+            child: const LifexText('إلغاء'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('حفظ'),
+            child: const LifexText('حفظ'),
           ),
         ],
         ),

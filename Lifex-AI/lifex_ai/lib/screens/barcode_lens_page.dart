@@ -15,6 +15,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../core/permission_transparency.dart';
 import '../features/accessibility/camera_stream_frame.dart';
 import '../features/voice/voice_engine.dart';
+import '../widgets/lifex_text.dart';
 
 /// قراءة رمز كما أعادتها المكتبة. النص الخام لا يُعدَّل ولا يُفتح.
 class BarcodeRead {
@@ -203,19 +204,19 @@ class _BarcodeLensPageState extends State<BarcodeLensPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('قراءة الباركود')),
+      appBar: AppBar(title: const LifexText('قراءة الباركود')),
       body: Column(
         children: [
           const Padding(
             padding: EdgeInsets.all(16),
-            child: Text(
+            child: LifexText(
               'يُحفظ نص الرمز كما قرأته الكاميرا. لا يُستنتج منه دواء أو تشخيص.',
             ),
           ),
           if (_error != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(_error!),
+              child: LifexText(_error!),
             ),
           Expanded(child: _preview()),
         ],

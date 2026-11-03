@@ -64,4 +64,9 @@ class OwnerIdentityPolicy {
       'دور المالك يُفتح للهوية المربوطة إذا طابق بريدها أو هاتفها '
       'وسيلة الاتصال المعتمدة تطابقاً كاملاً. '
       'الاسم، وعضوية العائلة، وذيل الرقم، وكتابة الوسيلة في خانة منفصلة لا تمنح الدور.';
+
+  String activationHintEn() =>
+      'Owner access opens for the bound identity when its stored email or phone '
+      'matches the approved contact exactly. '
+      'A name, family membership, a number suffix, or typing the contact in a separate field does not grant the role.';
 }

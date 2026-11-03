@@ -28,6 +28,7 @@ import 'privacy_settings_screen.dart';
 import 'voice_control_screen.dart';
 import 'women_cycle_screen.dart';
 import 'world_workspace_screen.dart';
+import '../widgets/lifex_text.dart';
 
 class StudioNetworkScreen extends StatelessWidget {
   const StudioNetworkScreen({super.key, required this.profileId});
@@ -38,7 +39,7 @@ class StudioNetworkScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final profile = context.watch<ActiveProfileController>().activeProfile;
     return Scaffold(
-      appBar: AppBar(title: const Text(AppConstants.systemName)),
+      appBar: AppBar(title: const LifexText(AppConstants.systemName)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

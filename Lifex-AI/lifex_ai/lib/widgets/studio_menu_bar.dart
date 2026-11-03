@@ -15,6 +15,8 @@ import '../core/studio_theme.dart';
 import '../features/network_box/studio_portal_catalog.dart';
 import '../screens/data_records_screen.dart';
 import 'lifex_app_title.dart';
+import 'lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class StudioMenuBar extends StatelessWidget {
   const StudioMenuBar({
@@ -143,7 +145,7 @@ class StudioMenuBar extends StatelessWidget {
                                 const Icon(Icons.search,
                                     color: StudioTheme.tealBright, size: 18),
                                 const SizedBox(width: 6),
-                                Text(context.nav('nav.searchHint')),
+                                LifexText(context.nav('nav.searchHint')),
                               ],
                             ),
                           ),
@@ -166,7 +168,7 @@ class StudioMenuBar extends StatelessWidget {
                                 const Icon(Icons.edit_outlined,
                                     color: StudioTheme.teal, size: 18),
                                 const SizedBox(width: 6),
-                                Text(context.nav('nav.edit')),
+                                LifexText(context.nav('nav.edit')),
                               ],
                             ),
                           ),
@@ -184,7 +186,7 @@ class StudioMenuBar extends StatelessWidget {
                                 const Icon(Icons.language,
                                     color: StudioTheme.indigo, size: 18),
                                 const SizedBox(width: 6),
-                                Text(_arabic ? 'العربية' : 'English'),
+                                LifexText(_arabic ? 'العربية' : 'English'),
                               ],
                             ),
                           ),
@@ -220,7 +222,7 @@ class StudioMenuBar extends StatelessWidget {
                             icon: const Icon(
                                 Icons.local_fire_department_outlined,
                                 size: 18),
-                            label: Text(context.nav('nav.sos')),
+                            label: LifexText(context.nav('nav.sos')),
                           ),
                           OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
@@ -230,7 +232,7 @@ class StudioMenuBar extends StatelessWidget {
                             ),
                             onPressed: onAccount,
                             icon: const Icon(Icons.person_outline, size: 18),
-                            label: Text(context.nav('nav.signIn')),
+                            label: LifexText(context.nav('nav.signIn')),
                           ),
                         ],
                       ),
@@ -336,7 +338,7 @@ class _NeonMarqueeState extends State<_NeonMarquee>
   Widget build(BuildContext context) {
     final reduce = MediaQuery.disableAnimationsOf(context);
     final painter = TextPainter(
-      text: TextSpan(text: widget.text, style: widget.style),
+      text: TextSpan(text: tr(widget.text), style: widget.style),
       textDirection: TextDirection.ltr,
       maxLines: 1,
     )..layout();
@@ -352,14 +354,14 @@ class _NeonMarqueeState extends State<_NeonMarquee>
     } else if (reduce && _controller.isAnimating) {
       _controller.stop();
     }
-    final text = Text(
+    final text = LifexText(
       widget.text,
       style: widget.style,
       textDirection: TextDirection.ltr,
       maxLines: 1,
     );
     return Semantics(
-      label: widget.text,
+      label: tr(widget.text),
       child: ExcludeSemantics(
         child: ClipRect(
           child: reduce
@@ -384,7 +386,7 @@ class _NeonMarqueeState extends State<_NeonMarquee>
                           children: [
                             text,
                             const SizedBox(width: 64),
-                            Text(
+                            LifexText(
                               widget.text,
                               style: widget.style,
                               textDirection: TextDirection.ltr,
@@ -463,7 +465,7 @@ class _NavButton extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: label,
+      label: tr(label),
       child: TextButton(
         style: TextButton.styleFrom(
           foregroundColor: color,
@@ -475,7 +477,7 @@ class _NavButton extends StatelessWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         onPressed: onPressed,
-        child: Text(label,
+        child: LifexText(label,
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
       ),
     );
@@ -500,7 +502,7 @@ class _ToolButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: tooltip,
+      message: tr(tooltip),
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
           foregroundColor: ink,
@@ -535,13 +537,13 @@ class _PortalsMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<StudioPortal>(
-      tooltip: StudioPortalCatalog.portalsMenu(arabic),
+      tooltip: tr(StudioPortalCatalog.portalsMenu(arabic)),
       color: bar,
       onSelected: onPortal,
       itemBuilder: (context) => [
         PopupMenuItem<StudioPortal>(
           enabled: false,
-          child: Text(
+          child: LifexText(
             StudioPortalCatalog.portalsHint(arabic),
             style: TextStyle(
                 color: ink.withOpacity(0.7),
@@ -558,7 +560,7 @@ class _PortalsMenu extends StatelessWidget {
                     color: StudioTheme.tealBright, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
-                    child: Text(portal.title(arabic),
+                    child: LifexText(portal.title(arabic),
                         style: TextStyle(color: ink))),
               ],
             ),
@@ -566,7 +568,7 @@ class _PortalsMenu extends StatelessWidget {
       ],
       child: Chip(
         avatar: Icon(Icons.expand_more, color: ink, size: 18),
-        label: Text(StudioPortalCatalog.portalsMenu(arabic)),
+        label: LifexText(StudioPortalCatalog.portalsMenu(arabic)),
         labelStyle: TextStyle(color: ink, fontWeight: FontWeight.w700),
         side: BorderSide(color: line),
         backgroundColor: Colors.transparent,

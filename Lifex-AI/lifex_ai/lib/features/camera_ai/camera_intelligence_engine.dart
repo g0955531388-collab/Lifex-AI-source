@@ -196,3 +196,20 @@ class CameraIntelligenceEngine {
         CameraAiMode.medicalImaging: 'نص الوثائق الطبية',
       }[mode]!;
 }
+
+
+
+Uint8List _processFrameToBytes(CameraImage image) {
+    return image.planes[0].bytes;
+  }
+
+  void stopStreaming() {
+    isStreaming = false;
+    cameraController?.stopImageStream();
+  }
+
+  void dispose() {
+    stopStreaming();
+    cameraController?.dispose();
+    aiEngine.dispose();
+  }

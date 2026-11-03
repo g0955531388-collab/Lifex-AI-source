@@ -26,6 +26,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/app_config.dart';
 import 'core/i18n/lifex_i18n.dart';
+import 'core/i18n/lifex_runtime_translator.dart';
 import 'core/config/app_secrets.dart';
 import 'core/studio_theme.dart';
 import 'widgets/lifex_chrome.dart';
@@ -131,6 +132,8 @@ Future<void> main() async {
 
   final appContext = await _bootstrapLifexAi();
   final catalog = await LifexI18nCatalog.load();
+  await LifexRuntimeTranslator.loadAsset();
+  unawaited(LocalObjectDetector.checkModel());
 
   runApp(LifexAiApp(appContext: appContext, catalog: catalog));
 }
@@ -512,7 +515,7 @@ class LifexAiApp extends StatelessWidget {
               gtinToMedicationIdMap: const {},
             ),
             imageAnalyzer: const MedicalImageAnalyzer(),
-            objectDetector: const LocalObjectDetector(),
+            objectDetector: LocalObjectDetector(),
             liveFeed: CameraPackageFeed(),
             openCloud: (profileId) => GeminiLiveProvider(
               profileId: profileId,
@@ -602,7 +605,7 @@ class _DeviceLocaleListenerState extends State<_DeviceLocaleListener>
 
   @override
   void didChangeLocales(List<Locale>? locales) {
-    StudioThemeController.instance.refresh();
+    StudioThemeController.instance.followDeviceLanguage();
   }
 
   @override

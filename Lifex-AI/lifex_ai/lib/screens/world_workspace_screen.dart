@@ -14,6 +14,8 @@ import '../features/network_box/unified_booking_service.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../services/cloud/cloud_sync_manager.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class WorldWorkspaceScreen extends StatelessWidget {
   const WorldWorkspaceScreen({super.key});
@@ -24,15 +26,15 @@ class WorldWorkspaceScreen extends StatelessWidget {
       length: 5,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('العالم والفراغ'),
-          bottom: const TabBar(
+          title: const LifexText('العالم والفراغ'),
+          bottom: TabBar(
             isScrollable: true,
             tabs: [
-              Tab(text: 'سحابة'),
-              Tab(text: 'إحصاء'),
-              Tab(text: 'شاشة عامة'),
-              Tab(text: 'لوحة داخلية'),
-              Tab(text: 'تراسل'),
+              Tab(text: tr('سحابة')),
+              Tab(text: tr('إحصاء')),
+              Tab(text: tr('شاشة عامة')),
+              Tab(text: tr('لوحة داخلية')),
+              Tab(text: tr('تراسل')),
             ],
           ),
         ),
@@ -65,13 +67,13 @@ class _CloudTab extends StatelessWidget {
               : 'لا يوجد عنوان خادم عامل. الطابور محلي ولن يُرفع كنتيجة ناجحة.',
         ),
         const SizedBox(height: 12),
-        Text('عمليات معلّقة: ${sync.pendingOperationsCount}'),
+        LifexText('عمليات معلّقة: ${sync.pendingOperationsCount}'),
         const SizedBox(height: 8),
         for (final op in sync.pendingOperations)
           Card(
             child: ListTile(
-              title: Text(op.entityType.name),
-              subtitle: Text('${op.entityId} — محاولات ${op.retryCount}'),
+              title: LifexText(op.entityType.name),
+              subtitle: LifexText('${op.entityId} — محاولات ${op.retryCount}'),
             ),
           ),
         const SizedBox(height: 12),
@@ -79,7 +81,7 @@ class _CloudTab extends StatelessWidget {
           onPressed: !sync.isEndpointConfigured
               ? null
               : () => sync.syncPendingOperations(),
-          child: const Text('مزامنة الآن'),
+          child: const LifexText('مزامنة الآن'),
         ),
       ],
     );
@@ -94,7 +96,7 @@ class _AnalyticsTab extends StatelessWidget {
     final controller = context.watch<ActiveProfileController>();
     final profile = controller.activeProfile;
     if (profile == null) {
-      return const Center(child: Text('لا يوجد ملف صحي نشط.'));
+      return const Center(child: LifexText('لا يوجد ملف صحي نشط.'));
     }
     final counts = SectorAnalytics.unitCounts(profile);
     final blood = SectorAnalytics.anonymizedBloodTypes(controller.allProfiles);
@@ -108,15 +110,15 @@ class _AnalyticsTab extends StatelessWidget {
         const SizedBox(height: 12),
         for (final entry in counts.entries)
           ListTile(
-            title: Text(entry.key),
-            trailing: Text('${entry.value}'),
+            title: LifexText(entry.key),
+            trailing: LifexText('${entry.value}'),
           ),
         const Divider(),
-        const Text('زمر الدم على الجهاز'),
+        const LifexText('زمر الدم على الجهاز'),
         for (final entry in blood.entries)
           ListTile(
-            title: Text(entry.key),
-            trailing: Text('${entry.value}'),
+            title: LifexText(entry.key),
+            trailing: LifexText('${entry.value}'),
           ),
       ],
     );
@@ -130,7 +132,7 @@ class _PublicDisplayTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final profile = context.watch<ActiveProfileController>().activeProfile;
     if (profile == null) {
-      return const Center(child: Text('لا يوجد ملف صحي نشط.'));
+      return const Center(child: LifexText('لا يوجد ملف صحي نشط.'));
     }
     final queue = UnifiedBookingService(ProfileBoxStore(profile)).publicQueue();
     return ListView(
@@ -142,13 +144,13 @@ class _PublicDisplayTab extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         if (queue.isEmpty)
-          const Text('لا أرقام دور محلية.')
+          const LifexText('لا أرقام دور محلية.')
         else
           for (final item in queue)
             Card(
               child: ListTile(
-                title: Text(item['code'] ?? ''),
-                subtitle: Text('${item['unit']} — ${item['time']}'),
+                title: LifexText(item['code'] ?? ''),
+                subtitle: LifexText('${item['unit']} — ${item['time']}'),
               ),
             ),
       ],
@@ -163,7 +165,7 @@ class _InternalDashboardTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final profile = context.watch<ActiveProfileController>().activeProfile;
     if (profile == null) {
-      return const Center(child: Text('لا يوجد ملف صحي نشط.'));
+      return const Center(child: LifexText('لا يوجد ملف صحي نشط.'));
     }
     final counts = SectorAnalytics.unitCounts(profile);
     return ListView(
@@ -177,8 +179,8 @@ class _InternalDashboardTab extends StatelessWidget {
         for (final entry in counts.entries)
           Card(
             child: ListTile(
-              title: Text(entry.key),
-              trailing: Text('${entry.value}'),
+              title: LifexText(entry.key),
+              trailing: LifexText('${entry.value}'),
             ),
           ),
       ],
@@ -208,7 +210,7 @@ class _FamilyMessagingTabState extends State<_FamilyMessagingTab> {
       builder: (context, controller, _) {
         final profile = controller.activeProfile;
         if (profile == null) {
-          return const Center(child: Text('لا يوجد ملف صحي نشط.'));
+          return const Center(child: LifexText('لا يوجد ملف صحي نشط.'));
         }
         final store = ProfileBoxStore(profile);
         final messages = store.list(BoxKeys.familyMessages);
@@ -223,7 +225,7 @@ class _FamilyMessagingTabState extends State<_FamilyMessagingTab> {
             ),
             Expanded(
               child: messages.isEmpty
-                  ? const Center(child: Text('لا رسائل عائلية بعد.'))
+                  ? const Center(child: LifexText('لا رسائل عائلية بعد.'))
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: messages.length,
@@ -236,7 +238,7 @@ class _FamilyMessagingTabState extends State<_FamilyMessagingTab> {
                           child: Card(
                             child: Padding(
                               padding: const EdgeInsets.all(12),
-                              child: Text(
+                              child: LifexText(
                                 '${message['fromName']}: ${message['text']}',
                               ),
                             ),
@@ -252,13 +254,13 @@ class _FamilyMessagingTabState extends State<_FamilyMessagingTab> {
                   Expanded(
                     child: TextField(
                       controller: _input,
-                      decoration: const InputDecoration(
-                        labelText: 'رسالة للعائلة على هذا الجهاز',
+                      decoration: InputDecoration(
+                        labelText: tr('رسالة للعائلة على هذا الجهاز'),
                       ),
                     ),
                   ),
                   IconButton(
-                    tooltip: 'إرسال',
+                    tooltip: tr('إرسال'),
                     icon: const Icon(Icons.send),
                     onPressed: () {
                       final text = _input.text.trim();

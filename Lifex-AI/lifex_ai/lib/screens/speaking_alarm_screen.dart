@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../core/app_config.dart';
 import '../features/clock/clock_chime.dart';
+import '../features/clock/clock_display.dart';
 import '../features/clock/speaking_alarm_book.dart';
 import '../features/location/device_location_reader.dart';
 import '../features/voice/user_ringtone_desk.dart';
@@ -36,6 +37,7 @@ class _SpeakingAlarmScreenState extends State<SpeakingAlarmScreen> {
   String _toneUri = BuiltInTone.classicBell.ref;
   String _toneTitle = '';
   ClockChimeSettings _chime = const ClockChimeSettings();
+  ClockDisplaySettings _display = const ClockDisplaySettings();
 
   @override
   void initState() {
@@ -53,16 +55,112 @@ class _SpeakingAlarmScreenState extends State<SpeakingAlarmScreen> {
   Future<void> _reload() async {
     final alarms = await _book.load();
     final chime = await ClockChimeSettings.load();
+    final display = await ClockDisplaySettings.load();
     if (!mounted) return;
     setState(() {
       _alarms = alarms;
       _chime = chime;
+      _display = display;
     });
   }
 
   Future<void> _saveChime(ClockChimeSettings next) async {
     setState(() => _chime = next);
     await next.save();
+  }
+
+  Future<void> _saveDisplay(ClockDisplaySettings next) async {
+    setState(() => _display = next);
+    await next.save();
+  }
+
+  Widget _displayCard(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            LifexText(
+              lifexUi('شكل الساعة', 'Clock look'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            for (final mode in ClockFaceMode.values)
+              RadioListTile<ClockFaceMode>(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                value: mode,
+                groupValue: _display.mode,
+                title: LifexText(mode.label),
+                onChanged: (next) {
+                  if (next != null) _saveDisplay(_display.copyWith(mode: next));
+                },
+              ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: LifexText(lifexUi('نظام 24 ساعة', '24-hour clock')),
+              value: _display.use24h,
+              onChanged: (value) =>
+                  _saveDisplay(_display.copyWith(use24h: value)),
+            ),
+            if (_display.mode == ClockFaceMode.lowVision)
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: LifexText(lifexUi('إظهار الثواني', 'Show seconds')),
+                value: _display.lowVisionSeconds,
+                onChanged: (value) =>
+                    _saveDisplay(_display.copyWith(lowVisionSeconds: value)),
+              ),
+            DropdownButtonFormField<ClockDigitStyle>(
+              value: _display.digits,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: lifexUi('نمط الأرقام', 'Digit style'),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: ClockDigitStyle.followLanguage,
+                  child: LifexText(lifexUi('حسب لغة الواجهة', 'Follow the app language')),
+                ),
+                DropdownMenuItem(
+                  value: ClockDigitStyle.western,
+                  child: LifexText(lifexUi('أرقام غربية 0-9', 'Western digits 0-9')),
+                ),
+                DropdownMenuItem(
+                  value: ClockDigitStyle.eastern,
+                  child: LifexText(lifexUi('أرقام عربية مشرقية ٠-٩', 'Eastern Arabic digits ٠-٩')),
+                ),
+              ],
+              onChanged: (value) {
+                if (value != null) _saveDisplay(_display.copyWith(digits: value));
+              },
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<ClockAutoAnnounce>(
+              value: _display.autoAnnounce,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: lifexUi('إعلان الوقت تلقائياً', 'Announce the time automatically'),
+              ),
+              items: [
+                for (final auto in ClockAutoAnnounce.values)
+                  DropdownMenuItem(value: auto, child: LifexText(auto.label)),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  _saveDisplay(_display.copyWith(autoAnnounce: value));
+                }
+              },
+            ),
+            const SizedBox(height: 4),
+            LifexText(lifexUi(
+              'المس الساعة مطولاً لفتحها بملء الشاشة.',
+              'Long-press the clock to open it full screen.',
+            )),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _capturePlace() async {
@@ -223,6 +321,8 @@ class _SpeakingAlarmScreenState extends State<SpeakingAlarmScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          _displayCard(context),
           const SizedBox(height: 12),
           TextField(
             controller: _name,

@@ -21,6 +21,8 @@ import '../services/cloud/cloud_sync_manager.dart';
 import '../widgets/lifex_record_edit.dart';
 import 'unit_branch_navigator.dart';
 import 'marriage_request_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class FamilyManagementScreen extends StatelessWidget {
   const FamilyManagementScreen({super.key});
@@ -41,22 +43,22 @@ class FamilyManagementScreen extends StatelessWidget {
         final links = controller.familyLinks;
 
         return Scaffold(
-          appBar: AppBar(title: const Text('إدارة أفراد العائلة')),
+          appBar: AppBar(title: const LifexText('إدارة أفراد العائلة')),
           floatingActionButton: controller.remainingFamilySlots <= 0
               ? null
               : FloatingActionButton.extended(
                   onPressed: () => _openAddMemberSheet(context),
                   icon: const Icon(Icons.person_add_outlined),
-                  label: const Text('إضافة فرد'),
+                  label: const LifexText('إضافة فرد'),
                 ),
           body: links.isEmpty
               ? const Center(
-                  child: Text('لا يوجد أي ملف صحي في هذا الحساب بعد.'),
+                  child: LifexText('لا يوجد أي ملف صحي في هذا الحساب بعد.'),
                 )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
                   children: [
-                    Text(
+                    LifexText(
                       'المقاعد المتبقية: ${controller.remainingFamilySlots}',
                       style: const TextStyle(fontSize: 13, color: Colors.grey),
                     ),
@@ -64,8 +66,8 @@ class FamilyManagementScreen extends StatelessWidget {
                     Card(
                       child: ListTile(
                         leading: const Icon(Icons.account_tree_outlined),
-                        title: const Text('التاريخ العائلي'),
-                        subtitle: const Text(
+                        title: const LifexText('التاريخ العائلي'),
+                        subtitle: const LifexText(
                             'ملاحظات وراثية على هذا الملف فقط. لا تُفتح ملفات الآخرين'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () => UnitBranchNavigator.open(
@@ -81,8 +83,8 @@ class FamilyManagementScreen extends StatelessWidget {
                     Card(
                       child: ListTile(
                         leading: const Icon(Icons.account_balance_outlined),
-                        title: const Text('رواق المعرفة'),
-                        subtitle: const Text(
+                        title: const LifexText('رواق المعرفة'),
+                        subtitle: const LifexText(
                             'مكتبة الأسرة واليافعين، ورفّ تنزيل إلى الجهاز'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () => UnitBranchNavigator.open(
@@ -98,8 +100,8 @@ class FamilyManagementScreen extends StatelessWidget {
                     Card(
                       child: ListTile(
                         leading: const Icon(Icons.menu_book_outlined),
-                        title: const Text('كتاب حقوق الطفل'),
-                        subtitle: const Text('قراءة محلية. ليس قانون دولة'),
+                        title: const LifexText('كتاب حقوق الطفل'),
+                        subtitle: const LifexText('قراءة محلية. ليس قانون دولة'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () => UnitBranchNavigator.open(
                           context,
@@ -114,8 +116,8 @@ class FamilyManagementScreen extends StatelessWidget {
                     Card(
                       child: ListTile(
                         leading: const Icon(Icons.favorite_outline),
-                        title: const Text('مَرآةُ الاختيار'),
-                        subtitle: const Text(
+                        title: const LifexText('مَرآةُ الاختيار'),
+                        subtitle: const LifexText(
                           'نضج الشراكة. لغة الجهاز أو التطبيق تلقائياً',
                         ),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -132,8 +134,8 @@ class FamilyManagementScreen extends StatelessWidget {
                     Card(
                       child: ListTile(
                         leading: const Icon(Icons.auto_stories_outlined),
-                        title: const Text('دليل اليافعين'),
-                        subtitle: const Text('توعوي. ليس علاجاً نفسياً'),
+                        title: const LifexText('دليل اليافعين'),
+                        subtitle: const LifexText('توعوي. ليس علاجاً نفسياً'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () => UnitBranchNavigator.open(
                           context,
@@ -148,8 +150,8 @@ class FamilyManagementScreen extends StatelessWidget {
                     Card(
                       child: ListTile(
                         leading: const Icon(Icons.favorite_outline),
-                        title: const Text('طلب زواج وتوافق صحي'),
-                        subtitle: const Text(
+                        title: const LifexText('طلب زواج وتوافق صحي'),
+                        subtitle: const LifexText(
                             'طلب لفلانة على الجهاز. الحساب الصحي بعد موافقتها فقط'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () => Navigator.of(context).push(
@@ -165,7 +167,7 @@ class FamilyManagementScreen extends StatelessWidget {
                         .map((signal) => Card(
                               child: ListTile(
                                 leading: const Icon(Icons.family_restroom_outlined),
-                                title: Text(signal.messageAr),
+                                title: LifexText(signal.messageAr),
                               ),
                             )),
                     const SizedBox(height: 8),
@@ -181,7 +183,7 @@ class FamilyManagementScreen extends StatelessWidget {
                           if (!switched) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
+                              content: LifexText(
                                 'أصبح الملف النشط: '
                                 '${controller.activeProfile?.fullName ?? link.profileId}',
                               ),
@@ -225,7 +227,7 @@ class _FamilyMemberTile extends StatelessWidget {
     if (current == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(lifexUi(
+          content: LifexText(lifexUi(
             'السجل غير موجود على هذا الجهاز.',
             'This record is not on this device.',
           )),
@@ -258,18 +260,18 @@ class _FamilyMemberTile extends StatelessWidget {
           isActive ? Icons.person : Icons.person_outline,
           color: isActive ? Theme.of(context).colorScheme.primary : null,
         ),
-        title: Text(name),
-        subtitle: Text('$roleLabelAr$ageLabel'),
+        title: LifexText(name),
+        subtitle: LifexText('$roleLabelAr$ageLabel'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             LifexRecordEditButton(onPressed: () => _rename(context)),
             if (isActive)
-              const Chip(label: Text('نشط'))
+              const Chip(label: LifexText('نشط'))
             else
               TextButton(
                 onPressed: onSelect,
-                child: const Text('تبديل'),
+                child: const LifexText('تبديل'),
               ),
           ],
         ),
@@ -362,7 +364,7 @@ class _AddFamilyMemberSheetState extends State<_AddFamilyMemberSheet> {
 
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('تمت إضافة ${profile.fullName}.')),
+      SnackBar(content: LifexText('تمت إضافة ${profile.fullName}.')),
     );
   }
 
@@ -379,15 +381,15 @@ class _AddFamilyMemberSheetState extends State<_AddFamilyMemberSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              LifexText(
                 'إضافة فرد من العائلة',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'الاسم الكامل',
+                decoration: InputDecoration(
+                  labelText: tr('الاسم الكامل'),
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
@@ -401,11 +403,11 @@ class _AddFamilyMemberSheetState extends State<_AddFamilyMemberSheet> {
               InkWell(
                 onTap: _pickDateOfBirth,
                 child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'تاريخ الميلاد',
+                  decoration: InputDecoration(
+                    labelText: tr('تاريخ الميلاد'),
                     border: OutlineInputBorder(),
                   ),
-                  child: Text(
+                  child: LifexText(
                     _dateOfBirth == null
                         ? 'اضغط لاختيار التاريخ'
                         : '${_dateOfBirth!.year}/${_dateOfBirth!.month}/${_dateOfBirth!.day}',
@@ -415,30 +417,30 @@ class _AddFamilyMemberSheetState extends State<_AddFamilyMemberSheet> {
               const SizedBox(height: 16),
               DropdownButtonFormField<ProfileRole>(
                 value: _role,
-                decoration: const InputDecoration(
-                  labelText: 'صلة القرابة',
+                decoration: InputDecoration(
+                  labelText: tr('صلة القرابة'),
                   border: OutlineInputBorder(),
                 ),
                 items: const [
                   DropdownMenuItem(
                     value: ProfileRole.spouse,
-                    child: Text('زوج / زوجة'),
+                    child: LifexText('زوج / زوجة'),
                   ),
                   DropdownMenuItem(
                     value: ProfileRole.child,
-                    child: Text('ابن / ابنة'),
+                    child: LifexText('ابن / ابنة'),
                   ),
                   DropdownMenuItem(
                     value: ProfileRole.parent,
-                    child: Text('والد / والدة'),
+                    child: LifexText('والد / والدة'),
                   ),
                   DropdownMenuItem(
                     value: ProfileRole.otherRelative,
-                    child: Text('قريب آخر'),
+                    child: LifexText('قريب آخر'),
                   ),
                   DropdownMenuItem(
                     value: ProfileRole.dependent,
-                    child: Text('تحت الرعاية'),
+                    child: LifexText('تحت الرعاية'),
                   ),
                 ],
                 onChanged: (value) {
@@ -448,22 +450,22 @@ class _AddFamilyMemberSheetState extends State<_AddFamilyMemberSheet> {
               const SizedBox(height: 16),
               DropdownButtonFormField<BiologicalSex>(
                 value: _sex,
-                decoration: const InputDecoration(
-                  labelText: 'الجنس البيولوجي (لأغراض طبية بحتة)',
+                decoration: InputDecoration(
+                  labelText: tr('الجنس البيولوجي (لأغراض طبية بحتة)'),
                   border: OutlineInputBorder(),
                 ),
                 items: const [
                   DropdownMenuItem(
                     value: BiologicalSex.unspecified,
-                    child: Text('تفضّل عدم التحديد'),
+                    child: LifexText('تفضّل عدم التحديد'),
                   ),
                   DropdownMenuItem(
                     value: BiologicalSex.male,
-                    child: Text('ذكر'),
+                    child: LifexText('ذكر'),
                   ),
                   DropdownMenuItem(
                     value: BiologicalSex.female,
-                    child: Text('أنثى'),
+                    child: LifexText('أنثى'),
                   ),
                 ],
                 onChanged: (value) {
@@ -472,7 +474,7 @@ class _AddFamilyMemberSheetState extends State<_AddFamilyMemberSheet> {
               ),
               if (_errorMessageAr != null) ...[
                 const SizedBox(height: 12),
-                Text(
+                LifexText(
                   _errorMessageAr!,
                   style: const TextStyle(color: Colors.red),
                 ),
@@ -484,7 +486,7 @@ class _AddFamilyMemberSheetState extends State<_AddFamilyMemberSheet> {
                   onPressed: _submit,
                   child: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 14),
-                    child: Text('حفظ الفرد'),
+                    child: LifexText('حفظ الفرد'),
                   ),
                 ),
               ),

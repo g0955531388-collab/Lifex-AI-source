@@ -31,8 +31,21 @@ void main() {
           'name': 'models/gemini-2.5-flash',
           'supportedGenerationMethods': ['generateContent'],
         },
+        {
+          'name': 'models/gemini-3.8-flash',
+          'supportedGenerationMethods': ['generateContent'],
+        },
       ]),
-      'models/gemini-2.5-flash',
+      'models/gemini-3.8-flash',
+    );
+    expect(
+      chooseGeminiModelName(const [
+        {
+          'name': 'models/gemini-2.5-flash',
+          'supportedGenerationMethods': ['generateContent'],
+        },
+      ]),
+      geminiFlashModel,
     );
     expect(
       chooseOpenAiModelId(const [

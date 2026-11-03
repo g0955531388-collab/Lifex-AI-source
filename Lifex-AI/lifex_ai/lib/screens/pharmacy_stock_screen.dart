@@ -15,6 +15,8 @@ import '../features/providers/pharmacy_stock_ledger.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/barcode_scan_button.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class PharmacyStockScreen extends StatefulWidget {
   const PharmacyStockScreen({super.key});
@@ -90,8 +92,8 @@ class _PharmacyStockScreenState extends State<PharmacyStockScreen> {
         final profile = controller.activeProfile;
         if (profile == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('الصيدلية')),
-            body: const Center(child: Text('لا يوجد ملف صحي نشط.')),
+            appBar: AppBar(title: const LifexText('الصيدلية')),
+            body: const Center(child: LifexText('لا يوجد ملف صحي نشط.')),
           );
         }
         final store = ProfileBoxStore(profile);
@@ -102,7 +104,7 @@ class _PharmacyStockScreenState extends State<PharmacyStockScreen> {
           city: _city.text,
         );
         return Scaffold(
-          appBar: AppBar(title: const Text('الصيدلية')),
+          appBar: AppBar(title: const LifexText('الصيدلية')),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -113,30 +115,30 @@ class _PharmacyStockScreenState extends State<PharmacyStockScreen> {
               TextField(
                 controller: _query,
                 decoration:
-                    const InputDecoration(labelText: 'اسم الدواء أو الباركود'),
+                    InputDecoration(labelText: tr('اسم الدواء أو الباركود')),
                 onChanged: (_) => setState(() {}),
               ),
               if (hits.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('لا مخزون مطابق بعد.'),
+                  child: LifexText('لا مخزون مطابق بعد.'),
                 )
               else
                 for (final item in hits)
                   ListTile(
-                    title: Text(item['title']?.toString() ?? ''),
-                    subtitle: Text(
+                    title: LifexText(item['title']?.toString() ?? ''),
+                    subtitle: LifexText(
                       '${item['city']} · ${item['km']} كم · كمية ${item['quantity']} · ${item['barcode']}',
                     ),
                   ),
               const Divider(),
               TextField(
                 controller: _name,
-                decoration: const InputDecoration(labelText: 'اسم الصنف'),
+                decoration: InputDecoration(labelText: tr('اسم الصنف')),
               ),
               TextField(
                 controller: _barcode,
-                decoration: const InputDecoration(labelText: 'الباركود'),
+                decoration: InputDecoration(labelText: tr('الباركود')),
               ),
               const SizedBox(height: 8),
               BarcodeScanButton(
@@ -145,54 +147,54 @@ class _PharmacyStockScreenState extends State<PharmacyStockScreen> {
               ),
               TextField(
                 controller: _city,
-                decoration: const InputDecoration(labelText: 'المدينة'),
+                decoration: InputDecoration(labelText: tr('المدينة')),
                 onChanged: (_) => setState(() {}),
               ),
               TextField(
                 controller: _km,
                 keyboardType: TextInputType.number,
                 decoration:
-                    const InputDecoration(labelText: 'المسافة كم (يدوياً)'),
+                    InputDecoration(labelText: tr('المسافة كم (يدوياً)')),
               ),
               TextField(
                 controller: _qty,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'الكمية'),
+                decoration: InputDecoration(labelText: tr('الكمية')),
               ),
               DropdownButtonFormField<String>(
                 value: _materialKind,
                 items: const [
-                  DropdownMenuItem(value: 'دواء', child: Text('دواء')),
-                  DropdownMenuItem(value: 'مادة طبية', child: Text('مادة طبية')),
+                  DropdownMenuItem(value: 'دواء', child: LifexText('دواء')),
+                  DropdownMenuItem(value: 'مادة طبية', child: LifexText('مادة طبية')),
                 ],
                 onChanged: (value) {
                   if (value != null) setState(() => _materialKind = value);
                 },
-                decoration: const InputDecoration(labelText: 'نوع الصنف'),
+                decoration: InputDecoration(labelText: tr('نوع الصنف')),
               ),
               const SizedBox(height: 8),
               FilledButton(
                 onPressed: () => _move(store, controller, PharmacyFlow.purchase),
-                child: const Text('شراء داخل — تكويد وزيادة'),
+                child: const LifexText('شراء داخل — تكويد وزيادة'),
               ),
               const SizedBox(height: 8),
               OutlinedButton(
                 onPressed: () => _move(store, controller, PharmacyFlow.sale),
-                child: const Text('بيع خارج — تكويد ونقص'),
+                child: const LifexText('بيع خارج — تكويد ونقص'),
               ),
               if (_notice.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text(_notice),
+                LifexText(_notice),
               ],
               if (movements.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text('سجل الصيدلي', style: Theme.of(context).textTheme.titleMedium),
+                LifexText('سجل الصيدلي', style: Theme.of(context).textTheme.titleMedium),
                 for (final move in movements.take(12))
                   ListTile(
-                    title: Text(
+                    title: LifexText(
                       '${move['flow'] == 'sale' ? 'بيع' : 'شراء'} · ${move['title'] ?? ''}',
                     ),
-                    subtitle: Text(move['detail']?.toString() ?? ''),
+                    subtitle: LifexText(move['detail']?.toString() ?? ''),
                   ),
               ],
             ],

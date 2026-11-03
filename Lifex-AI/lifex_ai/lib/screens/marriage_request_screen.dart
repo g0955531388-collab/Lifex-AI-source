@@ -13,6 +13,7 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
 import '../features/qiran/qiran_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
 
 class MarriageRequestScreen extends StatelessWidget {
   const MarriageRequestScreen({super.key});
@@ -24,8 +25,8 @@ class MarriageRequestScreen extends StatelessWidget {
         final me = controller.activeProfile;
         if (me == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('القران والتناسب الصحي')),
-            body: const Center(child: Text('لا يوجد ملف نشط.')),
+            appBar: AppBar(title: const LifexText('القران والتناسب الصحي')),
+            body: const Center(child: LifexText('لا يوجد ملف نشط.')),
           );
         }
         final others = controller.allProfiles
@@ -33,7 +34,7 @@ class MarriageRequestScreen extends StatelessWidget {
             .toList();
 
         return Scaffold(
-          appBar: AppBar(title: const Text('القران والتناسب الصحي')),
+          appBar: AppBar(title: const LifexText('القران والتناسب الصحي')),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -43,11 +44,11 @@ class MarriageRequestScreen extends StatelessWidget {
                     'ثم مؤشر النسبة والتوافق، ثم طلب معرفة السبب يقابله موافقة الكشف. '
                     'الاتجاهان متماثلان. لا أمراض قبل الموافقة الثانية.',
               ),
-              Text('الملف النشط: ${me.fullName}',
+              LifexText('الملف النشط: ${me.fullName}',
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 12),
               if (others.isEmpty)
-                const Text('أضيفي ملفاً آخر من إدارة العائلة أولاً.'),
+                const LifexText('أضيفي ملفاً آخر من إدارة العائلة أولاً.'),
               for (final other in others)
                 _PairCard(me: me, other: other, controller: controller),
             ],
@@ -99,10 +100,10 @@ class _PairCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(other.fullName,
+            LifexText(other.fullName,
                 style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 12),
-            Text('١) طلب زواج ↔ موافقة',
+            LifexText('١) طلب زواج ↔ موافقة',
                 style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 6),
             if (request == null || request.status == MarriageRequestStatus.declined)
@@ -111,7 +112,7 @@ class _PairCard extends StatelessWidget {
                   ledger.send(from: me, to: other);
                   controller.saveActiveProfileChanges();
                 },
-                child: const Text('طلب زواج'),
+                child: const LifexText('طلب زواج'),
               )
             else if (incomingPending)
               Wrap(
@@ -122,7 +123,7 @@ class _PairCard extends StatelessWidget {
                       ledger.send(from: me, to: other);
                       controller.saveActiveProfileChanges();
                     },
-                    child: const Text('موافقة'),
+                    child: const LifexText('موافقة'),
                   ),
                   TextButton(
                     onPressed: () {
@@ -134,36 +135,36 @@ class _PairCard extends StatelessWidget {
                       );
                       controller.saveActiveProfileChanges();
                     },
-                    child: const Text('رفض'),
+                    child: const LifexText('رفض'),
                   ),
                 ],
               )
             else if (outgoingPending)
-              const Text('بانتظار موافقة الطرف الآخر على طلب الزواج.')
+              const LifexText('بانتظار موافقة الطرف الآخر على طلب الزواج.')
             else
-              const Text('الموافقة تمت من الطرفين على فتح النسبة.'),
+              const LifexText('الموافقة تمت من الطرفين على فتح النسبة.'),
             const SizedBox(height: 16),
-            Text('٢) مؤشر النسبة والتوافق',
+            LifexText('٢) مؤشر النسبة والتوافق',
                 style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 6),
             if (verdict == null || !verdict.ready)
-              const Text('لا نسبة قبل موافقة طلب الزواج.')
+              const LifexText('لا نسبة قبل موافقة طلب الزواج.')
             else ...[
-              Text(verdict.publicAr,
+              LifexText(verdict.publicAr,
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               LinearProgressIndicator(value: verdict.percent / 100),
-              Text('${verdict.percent}٪'),
+              LifexText('${verdict.percent}٪'),
             ],
             const SizedBox(height: 16),
-            Text('٣) طلب معرفة السبب ↔ موافقة الكشف',
+            LifexText('٣) طلب معرفة السبب ↔ موافقة الكشف',
                 style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 6),
             if (verdict == null ||
                 !verdict.ready ||
                 !engine.canAskReason(verdict))
-              const Text('طلب السبب يظهر عند تعارض مرتفع أو نتيجة غير مناسب.')
+              const LifexText('طلب السبب يظهر عند تعارض مرتفع أو نتيجة غير مناسب.')
             else if (reasonIncoming)
               Wrap(
                 spacing: 8,
@@ -178,7 +179,7 @@ class _PairCard extends StatelessWidget {
                       );
                       controller.saveActiveProfileChanges();
                     },
-                    child: const Text('موافقة الكشف'),
+                    child: const LifexText('موافقة الكشف'),
                   ),
                   TextButton(
                     onPressed: () {
@@ -190,15 +191,15 @@ class _PairCard extends StatelessWidget {
                       );
                       controller.saveActiveProfileChanges();
                     },
-                    child: const Text('رفض الكشف'),
+                    child: const LifexText('رفض الكشف'),
                   ),
                 ],
               )
             else if (request?.reasonAskStatus == MarriageRequestStatus.accepted)
-              const Text('كُشف السبب بعد الموافقة المعاكسة.')
+              const LifexText('كُشف السبب بعد الموافقة المعاكسة.')
             else if (request?.reasonAskStatus == MarriageRequestStatus.pending &&
                 request?.reasonAskFromId == me.profileId)
-              const Text('بانتظار موافقة الطرف الآخر على كشف السبب.')
+              const LifexText('بانتظار موافقة الطرف الآخر على كشف السبب.')
             else
               FilledButton.tonal(
                 onPressed: () {
@@ -212,12 +213,12 @@ class _PairCard extends StatelessWidget {
                   );
                   controller.saveActiveProfileChanges();
                 },
-                child: const Text('طلب معرفة السبب'),
+                child: const LifexText('طلب معرفة السبب'),
               ),
             if (reasons.isNotEmpty) ...[
               const SizedBox(height: 8),
-              const Text('الأسباب بعد موافقة الكشف:'),
-              for (final line in reasons) Text(line),
+              const LifexText('الأسباب بعد موافقة الكشف:'),
+              for (final line in reasons) LifexText(line),
             ],
           ],
         ),

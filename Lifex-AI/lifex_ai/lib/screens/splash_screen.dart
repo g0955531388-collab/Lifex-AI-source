@@ -25,6 +25,8 @@ import '../widgets/lifex_brand_mark.dart';
 import '../features/voice/hardware_cue_host.dart';
 import 'home_screen.dart';
 import 'profile_setup_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen(
@@ -99,7 +101,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       markColor: Theme.of(context).textTheme.headlineMedium?.color,
                     ),
                     const SizedBox(height: 8),
-                    Text(
+                    LifexText(
                       AppConstants.studioBannerCredit,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall,
@@ -118,7 +120,7 @@ class _SplashScreenState extends State<SplashScreen> {
                               vertical: 14,
                               horizontal: 28,
                             ),
-                            child: Text(context.nav('nav.enter')),
+                            child: LifexText(context.nav('nav.enter')),
                           ),
                         ),
                       ),
@@ -126,17 +128,17 @@ class _SplashScreenState extends State<SplashScreen> {
                     const SizedBox(height: 24),
                     Semantics(
                       label:
-                          '${AppConstants.ownershipStatement} ${AppConstants.humanitarianExemptionStatementAr}',
+                          tr('${AppConstants.ownershipStatement} ${AppConstants.humanitarianExemptionStatementAr}'),
                       child: ExcludeSemantics(
                         child: Column(
                           children: [
-                            Text(
+                            LifexText(
                               AppConstants.ownershipStatement,
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                             const SizedBox(height: 8),
-                            Text(
+                            LifexText(
                               AppConstants.humanitarianExemptionStatementAr,
                               textAlign: TextAlign.center,
                               style: Theme.of(context)
@@ -145,7 +147,7 @@ class _SplashScreenState extends State<SplashScreen> {
                                   ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 8),
-                            Text(
+                            LifexText(
                               '${AppConstants.academyNameAr} — ${AppConstants.ownerEmail} — ${AppConstants.ownerPhoneNumber}',
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodySmall,

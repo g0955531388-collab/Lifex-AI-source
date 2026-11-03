@@ -27,6 +27,7 @@ import 'protection_workspace_screen.dart';
 import 'smart_health_questionnaire_screen.dart';
 import 'voice_control_screen.dart';
 import 'world_workspace_screen.dart';
+import '../widgets/lifex_text.dart';
 
 class GlobalHealthDashboardScreen extends StatelessWidget {
   const GlobalHealthDashboardScreen({super.key, required this.profileId});
@@ -201,24 +202,24 @@ class GlobalHealthDashboardScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('منظومة Lifex-AI')),
+      appBar: AppBar(title: const LifexText('منظومة Lifex-AI')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('المركز الموحد',
+          LifexText('المركز الموحد',
               style: Theme.of(context)
                   .textTheme
                   .headlineSmall
                   ?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text(
+          const LifexText(
               'كل مقعد مفتوح. المحلية تُحفظ هنا. المؤسسية تبقى صادقة: تحتاج خادماً قبل أي ربط خارجي.'),
           const SizedBox(height: 16),
           for (final group in groups) ...[
             Row(children: [
               Icon(group.$2),
               const SizedBox(width: 8),
-              Text(group.$1,
+              LifexText(group.$1,
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold))
             ]),
@@ -226,8 +227,8 @@ class GlobalHealthDashboardScreen extends StatelessWidget {
             ...group.$3.map((module) => Card(
                   child: ListTile(
                     leading: CircleAvatar(child: Icon(module.icon)),
-                    title: Text(module.title),
-                    subtitle: Text(module.description),
+                    title: LifexText(module.title),
+                    subtitle: LifexText(module.description),
                     trailing:
                         const Icon(Icons.arrow_forward_ios, size: 18),
                     onTap: () => Navigator.of(context).push(

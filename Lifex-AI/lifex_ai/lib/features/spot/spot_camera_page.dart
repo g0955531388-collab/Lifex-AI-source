@@ -19,6 +19,8 @@ import '../profile/active_profile_controller.dart';
 import '../voice/voice_engine.dart';
 import '../../widgets/blind_camera_rail.dart';
 import 'spot_speech.dart';
+import '../../widgets/lifex_text.dart';
+import '../../core/i18n/lifex_runtime_translator.dart';
 
 class SpotCameraPage extends StatefulWidget {
   const SpotCameraPage({super.key});
@@ -291,7 +293,7 @@ class _SpotCameraPageState extends State<SpotCameraPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('SPOT'),
+        title: const LifexText('SPOT'),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
@@ -315,7 +317,7 @@ class _SpotCameraPageState extends State<SpotCameraPage> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Text(
+            child: LifexText(
               _line,
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white, fontSize: 18),
@@ -328,7 +330,7 @@ class _SpotCameraPageState extends State<SpotCameraPage> {
                 IconButton(
                   onPressed: _switching ? null : () => unawaited(_toggleLens()),
                   icon: const Icon(Icons.cameraswitch_outlined, color: Colors.white),
-                  tooltip: SpotSpeech.switchLens(_language),
+                  tooltip: tr(SpotSpeech.switchLens(_language)),
                 ),
                 IconButton(
                   onPressed: () => setState(() => _muted = !_muted),
@@ -336,12 +338,12 @@ class _SpotCameraPageState extends State<SpotCameraPage> {
                     _muted ? Icons.volume_off_outlined : Icons.volume_up_outlined,
                     color: Colors.white,
                   ),
-                  tooltip: _muted ? 'muted' : 'speaking',
+                  tooltip: tr(_muted ? 'muted' : 'speaking'),
                 ),
                 const Spacer(),
                 FilledButton(
                   onPressed: _reading ? null : () => unawaited(_readText()),
-                  child: Text(
+                  child: LifexText(
                     _language == 'ar'
                         ? 'اقرأ النص'
                         : _language == 'fr'

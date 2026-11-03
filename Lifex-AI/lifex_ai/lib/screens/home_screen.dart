@@ -15,7 +15,6 @@ import 'package:provider/provider.dart';
 import '../core/admin/admin_manager.dart';
 import '../core/app_config.dart';
 import '../core/i18n/lifex_i18n.dart';
-import '../core/studio_theme.dart';
 import '../core/orchestrator/lio_gateway_contracts.dart';
 import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/trial_manager.dart';
@@ -68,6 +67,8 @@ import 'device_center_screen.dart';
 import 'donations_center_screen.dart';
 import 'voice_control_screen.dart';
 import 'wallet_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -101,12 +102,16 @@ class HomeScreen extends StatelessWidget {
       final trial = context.read<TrialManager>();
       final phase = trial.phase();
       final reason = phase == TrialPhase.giftFrozen
-          ? 'REQUIRES_EXTERNAL_SETUP — نسخة الإهداء غير مخصّصة بعد. '
-              'افتح الإعدادات لإكمال التخصيص.'
-          : trial.statusLineAr();
+          ? lifexUi(
+              'REQUIRES_EXTERNAL_SETUP — نسخة الإهداء غير مخصّصة بعد. '
+                  'افتح الإعدادات لإكمال التخصيص.',
+              'REQUIRES_EXTERNAL_SETUP — the gift copy is not assigned yet. '
+                  'Open settings to finish the assignment.',
+            )
+          : trial.statusLine();
       announceForScreenReader(context, reason);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(reason)),
+        SnackBar(content: LifexText(reason)),
       );
       return;
     }
@@ -126,7 +131,7 @@ class HomeScreen extends StatelessWidget {
     if (!openWithoutProfile && profileId == null) {
       announceForScreenReader(context, BlindNavigationCopy.needsProfileText);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(BlindNavigationCopy.needsProfileText)),
+        SnackBar(content: LifexText(BlindNavigationCopy.needsProfileText)),
       );
       return;
     }
@@ -153,7 +158,10 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ActiveProfileController>(
+    return ListenableBuilder(
+      listenable: StudioThemeController.instance,
+      builder: (context, _) {
+        return Consumer<ActiveProfileController>(
       builder: (context, profileController, _) {
         final activeProfileId = profileController.activeProfileId;
         final trial = context.watch<TrialManager>();
@@ -199,6 +207,14 @@ class HomeScreen extends StatelessWidget {
               children: [
                 const FirstRunVoiceHook(),
                 const AttributionMarqueeBar(),
+                const Padding(
+                  padding: EdgeInsets.only(top: 2, bottom: 2),
+                  child: LifexText(
+                    'Lifex-AI',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  ),
+                ),
                 _HomeDirectActions(
                   onMessenger: () {
                     if (activeProfileId == null) {
@@ -208,7 +224,7 @@ class HomeScreen extends StatelessWidget {
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(BlindNavigationCopy.needsProfileText),
+                          content: LifexText(BlindNavigationCopy.needsProfileText),
                         ),
                       );
                       return;
@@ -344,8 +360,8 @@ class HomeScreen extends StatelessWidget {
                                 Theme.of(context).colorScheme.primaryContainer,
                             child: ListTile(
                               leading: const Icon(Icons.gps_fixed),
-                              title: Text(lifexUi('حالة GPS — أولوية عالية', 'GPS status — high priority')),
-                              subtitle: Text(
+                              title: LifexText(lifexUi('حالة GPS — أولوية عالية', 'GPS status — high priority')),
+                              subtitle: LifexText(
                                 '${gps.messageAr} اضغط لاقتراح الأقرب حسب الاختصاص.',
                               ),
                               onTap: () => _open(
@@ -362,11 +378,11 @@ class HomeScreen extends StatelessWidget {
                         Card(
                           child: Padding(
                             padding: const EdgeInsets.all(12),
-                            child: Text(trial.statusLineAr(feeExempt: exempt)),
+                            child: LifexText(trial.statusLine(feeExempt: exempt)),
                           ),
                         ),
                       if (showGate) const SizedBox(height: 12),
-                      Text(
+                      LifexText(
                         'صفحات الجهاز',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
@@ -809,11 +825,11 @@ class HomeScreen extends StatelessWidget {
                         isUrgent: true,
                         onTap: () {
                           if (!_allowed(context, 'emergency')) {
-                            final line = trial.statusLineAr();
+                            final line = trial.statusLine();
                             announceForScreenReader(context, line);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(line),
+                                content: LifexText(line),
                               ),
                             );
                             return;
@@ -834,6 +850,8 @@ class HomeScreen extends StatelessWidget {
         );
       },
     );
+      },
+    );
   }
 
   void _showEmergencyConfirmationDialog(
@@ -843,14 +861,15 @@ class HomeScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(lifexUi('تأكيد حالة طوارئ', 'Confirm emergency')),
-        content: const Text(
+        title: LifexText(lifexUi('تأكيد حالة طوارئ', 'Confirm emergency')),
+        content: LifexText(lifexUi(
           'ستُسجَّل حالة طوارئ على هذا الجهاز. الإرسال لجهات الثقة يحتاج قناة SMS أو دفع حقيقية. هل تريد المتابعة؟',
-        ),
+          'An emergency will be recorded on this device. Sending it to trusted contacts needs a real SMS or push channel. Continue?',
+        )),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(lifexUi('إلغاء', 'Cancel')),
+            child: LifexText(lifexUi('إلغاء', 'Cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -860,7 +879,7 @@ class HomeScreen extends StatelessWidget {
                     builder: (_) => const EmergencyContactsScreen()),
               );
             },
-            child: Text(lifexUi('جهات الثقة', 'Trusted contacts')),
+            child: LifexText(lifexUi('جهات الثقة', 'Trusted contacts')),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -917,7 +936,7 @@ class HomeScreen extends StatelessWidget {
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(msg),
+                  content: LifexText(msg),
                   backgroundColor:
                       outcome.executed && (outcome.value?.outboundSent ?? false)
                           ? Colors.red
@@ -925,7 +944,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               );
             },
-            child: Text(lifexUi('تأكيد الطوارئ', 'Confirm emergency')),
+            child: LifexText(lifexUi('تأكيد الطوارئ', 'Confirm emergency')),
           ),
         ],
       ),
@@ -954,13 +973,10 @@ class _HomeDirectActions extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(
-                child: _DirectButton(
-                  icon: Icons.chat_rounded,
-                  label: context.nav('nav.messenger'),
-                  hint: 'يفتح المسنجر على هذا الجهاز',
-                  onPressed: onMessenger,
-                ),
+              _MessengerSquare(
+                label: context.nav('nav.messenger'),
+                hint: 'يفتح المسنجر على هذا الجهاز',
+                onPressed: onMessenger,
               ),
               const SizedBox(width: 8),
               const Expanded(child: DeviceWallClockView()),
@@ -972,37 +988,49 @@ class _HomeDirectActions extends StatelessWidget {
   }
 }
 
-class _DirectButton extends StatelessWidget {
-  const _DirectButton({
-    required this.icon,
+class _MessengerSquare extends StatelessWidget {
+  const _MessengerSquare({
     required this.label,
     required this.hint,
     required this.onPressed,
   });
 
-  final IconData icon;
   final String label;
   final String hint;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
+    final ink = Theme.of(context).colorScheme.onSurface;
     return Semantics(
       button: true,
-      label: label,
-      hint: hint,
+      label: tr(label),
+      hint: tr(hint),
       child: ExcludeSemantics(
-        child: FilledButton.icon(
-          onPressed: onPressed,
-          icon: Icon(icon),
-          label: Text(label),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(52),
-            backgroundColor: StudioTheme.teal,
-            foregroundColor: Colors.white,
+        child: SizedBox(
+          width: 64,
+          height: 64,
+          child: FilledButton(
+            onPressed: onPressed,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF9B4DCA),
+              foregroundColor: ink,
+              padding: const EdgeInsets.all(4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: LifexText(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: ink, fontSize: 11, height: 1.1),
+            ),
           ),
         ),
       ),
     );
   }
 }
+

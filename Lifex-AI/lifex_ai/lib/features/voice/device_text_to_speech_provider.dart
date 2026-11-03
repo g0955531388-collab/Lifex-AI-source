@@ -56,8 +56,10 @@ class DeviceTextToSpeechProvider implements TextToSpeechProvider {
       await _tts.awaitSpeakCompletion(true);
       await _tts.setVolume(AssistantSession.instance.outputVolume.clamp(0.2, 1.0));
       final languages = await _languages();
-      final appLanguage =
-          AppConfig.instance.defaultLanguage == AppLanguage.english
+      final forced = VoiceEngine.instance.nameSpeakLocale?.trim() ?? '';
+      final appLanguage = forced.isNotEmpty
+          ? forced
+          : AppConfig.instance.defaultLanguage == AppLanguage.english
               ? 'en'
               : 'ar';
       final locale = languages.isEmpty

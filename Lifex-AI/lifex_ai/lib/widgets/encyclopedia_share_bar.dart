@@ -22,6 +22,8 @@ import '../features/profile/health_identity_manager.dart';
 import '../features/voice/voice_engine.dart';
 import '../screens/professional_directory_screen.dart';
 import 'device_wall_clock.dart';
+import 'lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class EncyclopediaShareBar extends StatelessWidget {
   const EncyclopediaShareBar({super.key});
@@ -52,7 +54,7 @@ class EncyclopediaShareBar extends StatelessWidget {
     final msg = outcome.executed
         ? (outcome.value?.messageAr ?? 'تمت المشاركة.')
         : 'توقفت المشاركة عند LIO (${outcome.decision.wireDecision}).';
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: LifexText(msg)));
   }
 
   void _openDirectory(BuildContext context) {
@@ -74,11 +76,15 @@ class EncyclopediaShareBar extends StatelessWidget {
     if (!allowed) {
       final phase = trial.phase();
       final reason = phase == TrialPhase.giftFrozen
-          ? 'REQUIRES_EXTERNAL_SETUP — نسخة الإهداء غير مخصّصة بعد. '
-              'افتح الإعدادات لإكمال التخصيص.'
-          : trial.statusLineAr();
+          ? lifexUi(
+              'REQUIRES_EXTERNAL_SETUP — نسخة الإهداء غير مخصّصة بعد. '
+                  'افتح الإعدادات لإكمال التخصيص.',
+              'REQUIRES_EXTERNAL_SETUP — the gift copy is not assigned yet. '
+                  'Open settings to finish the assignment.',
+            )
+          : trial.statusLine();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(reason)),
+        SnackBar(content: LifexText(reason)),
       );
       return;
     }
@@ -107,7 +113,7 @@ class EncyclopediaShareBar extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: () => _share(context),
                       icon: const Icon(Icons.share),
-                      label: Text(context.nav('nav.share')),
+                      label: LifexText(context.nav('nav.share')),
                       style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(48),
                       ),
@@ -128,7 +134,7 @@ class EncyclopediaShareBar extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: () => _openDirectory(context),
                       icon: const Icon(Icons.badge_outlined),
-                      label: Text(context.nav('nav.fullDirectory')),
+                      label: LifexText(context.nav('nav.fullDirectory')),
                       style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(48),
                       ),
@@ -188,8 +194,8 @@ class _SpeakingWallClockState extends State<SpeakingWallClock> {
     final spoken = _clock.spokenLabel(_now);
     return Semantics(
       button: true,
-      label: spoken,
-      hint: 'ينطق الساعة والتاريخ',
+      label: tr(spoken),
+      hint: tr('ينطق الساعة والتاريخ'),
       onTap: () => unawaited(_speak()),
       child: ExcludeSemantics(
         child: Material(
@@ -205,13 +211,13 @@ class _SpeakingWallClockState extends State<SpeakingWallClock> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    LifexText(
                       _clock.timeLabel(_now),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    Text(
+                    LifexText(
                       _clock.dateLabel(_now),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

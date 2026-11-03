@@ -10,6 +10,8 @@ import '../core/admin/admin_manager.dart';
 import '../core/admin/admin_permissions.dart';
 import '../core/admin/owner_identity_policy.dart';
 import '../core/attribution/project_attribution.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key, required this.currentUserLifexId});
@@ -34,7 +36,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   void _showStatus(String messageAr) {
     setState(() => _statusMessageAr = messageAr);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(messageAr)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: LifexText(messageAr)));
   }
 
   void _grant(GlobalAdminRole role) {
@@ -101,7 +103,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     const policy = OwnerIdentityPolicy();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('لوحة تحكم الأدمن')),
+      appBar: AppBar(title: const LifexText('لوحة تحكم الأدمن')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -112,19 +114,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  const LifexText(
                     ProjectAttribution.officialStatementShortAr,
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
-                  Text(
+                  LifexText(
                     myRole == GlobalAdminRole.owner
                         ? 'أنت المالك التشغيلي. الصيانة ومفاتيح التشغيل وتعيين '
                             'مدير وموظف ومشرف، مأجورين أو متطوعين. '
                             'هذا لا يفتح ملفات المرضى.'
                         : 'دورك: ${_roleLabelAr(myRole)}',
                   ),
-                  Text(
+                  LifexText(
                     'Lifex-ID: ${widget.currentUserLifexId}',
                     style: const TextStyle(fontSize: 12, color: Colors.black54),
                   ),
@@ -136,33 +138,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Card(
             child: ListTile(
               leading: const Icon(Icons.verified_user_outlined),
-              title: const Text('دورك الحالي'),
-              subtitle: Text(_roleLabelAr(myRole)),
+              title: const LifexText('دورك الحالي'),
+              subtitle: LifexText(_roleLabelAr(myRole)),
             ),
           ),
           const SizedBox(height: 8),
-          Text('صلاحياتك (${myPerms.length})',
+          LifexText('صلاحياتك (${myPerms.length})',
               style: Theme.of(context).textTheme.titleMedium),
           ...myPerms.map(
             (p) => ListTile(
               dense: true,
               leading: const Icon(Icons.check_circle_outline, size: 20),
-              title: Text(_permissionLabelAr(p)),
+              title: LifexText(_permissionLabelAr(p)),
             ),
           ),
           if (myRole != GlobalAdminRole.owner) ...[
             const SizedBox(height: 8),
-            Text(
+            LifexText(
               policy.activationHintAr(),
               style: const TextStyle(fontSize: 12, color: Colors.orange),
             ),
           ],
           const SizedBox(height: 16),
           if (canGrantAdmin || canGrantModerator || canGrantEmployee) ...[
-            Text('تعيين الطاقم',
+            LifexText('تعيين الطاقم',
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
-            Text(
+            LifexText(
               canGrantAdmin
                   ? 'كمالك: تعيّن مديراً أو موظفاً أو مشرفاً، مأجوراً أو متطوعاً، '
                       'وتسحب أدوارهم. دور المالك لا يُمنح يدوياً.'
@@ -174,11 +176,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               segments: const [
                 ButtonSegment(
                   value: StaffEngagement.paid,
-                  label: Text('مأجور'),
+                  label: LifexText('مأجور'),
                 ),
                 ButtonSegment(
                   value: StaffEngagement.volunteer,
-                  label: Text('متطوع'),
+                  label: LifexText('متطوع'),
                 ),
               ],
               selected: {_engagement},
@@ -189,10 +191,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 8),
             TextField(
               controller: _targetIdController,
-              decoration: const InputDecoration(
-                labelText: 'معرّف Lifex-ID للمستخدم المستهدف',
+              decoration: InputDecoration(
+                labelText: tr('معرّف Lifex-ID للمستخدم المستهدف'),
                 border: OutlineInputBorder(),
-                hintText: 'مثال: LFX-482913',
+                hintText: tr('مثال: LFX-482913'),
               ),
             ),
             const SizedBox(height: 12),
@@ -203,35 +205,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 if (canGrantAdmin)
                   FilledButton.icon(
                     icon: const Icon(Icons.admin_panel_settings_outlined),
-                    label: const Text('تعيين مدير'),
+                    label: const LifexText('تعيين مدير'),
                     onPressed: () => _grant(GlobalAdminRole.admin),
                   ),
                 if (canGrantEmployee)
                   FilledButton.icon(
                     icon: const Icon(Icons.badge_outlined),
-                    label: const Text('تعيين موظف'),
+                    label: const LifexText('تعيين موظف'),
                     onPressed: () => _grant(GlobalAdminRole.employee),
                   ),
                 if (canGrantModerator)
                   OutlinedButton.icon(
                     icon: const Icon(Icons.shield_outlined),
-                    label: const Text('تعيين مشرف'),
+                    label: const LifexText('تعيين مشرف'),
                     onPressed: () => _grant(GlobalAdminRole.moderator),
                   ),
                 OutlinedButton.icon(
                   icon: const Icon(Icons.remove_moderator_outlined),
-                  label: const Text('سحب الدور'),
+                  label: const LifexText('سحب الدور'),
                   onPressed: _revoke,
                 ),
               ],
             ),
             const Divider(height: 32),
           ],
-          Text('الطاقم الإداري الحالي',
+          LifexText('الطاقم الإداري الحالي',
               style: Theme.of(context).textTheme.titleMedium),
           if (staff.isEmpty)
             const ListTile(
-              title: Text('لا أدوار إدارية أخرى على هذا الجهاز بعد.'),
+              title: LifexText('لا أدوار إدارية أخرى على هذا الجهاز بعد.'),
             )
           else
             ...staff.entries.map(
@@ -241,16 +243,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ? Icons.star
                       : Icons.person_outline,
                 ),
-                title: Text(e.key),
-                subtitle: Text(_staffLine(e.key, e.value)),
+                title: LifexText(e.key),
+                subtitle: LifexText(_staffLine(e.key, e.value)),
               ),
             ),
           const Divider(height: 32),
           if (canManageToggles) ...[
-            Text('مفاتيح الأحداث الدقيقة',
+            LifexText('مفاتيح الأحداث الدقيقة',
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
-            const Text(
+            const LifexText(
               'تفعيل أو تعطيل ميزات على مستوى النظام كاملاً دون تحديث التطبيق.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
@@ -265,7 +267,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               );
             }).map(
               (entry) => SwitchListTile(
-                title: Text(_eventLabelAr(entry.key)),
+                title: LifexText(_eventLabelAr(entry.key)),
                 value: entry.value,
                 onChanged: (value) => _toggleEvent(entry.key, value),
               ),
@@ -273,7 +275,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ],
           if (_statusMessageAr != null) ...[
             const SizedBox(height: 16),
-            Text(_statusMessageAr!, style: const TextStyle(fontSize: 13)),
+            LifexText(_statusMessageAr!, style: const TextStyle(fontSize: 13)),
           ],
         ],
       ),

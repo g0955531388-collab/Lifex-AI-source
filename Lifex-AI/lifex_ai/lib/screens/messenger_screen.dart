@@ -23,6 +23,8 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
 import 'blood_request_screen.dart';
 import 'health_chat_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class MessengerScreen extends StatefulWidget {
   const MessengerScreen({super.key, this.initialTab = 0});
@@ -233,19 +235,19 @@ class _MessengerScreenState extends State<MessengerScreen> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setLocal) => AlertDialog(
-          title: Text(_t(context, 'newGroup')),
+          title: LifexText(_t(context, 'newGroup')),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: title,
-                  decoration: InputDecoration(labelText: _t(context, 'nameHint')),
+                  decoration: InputDecoration(labelText: tr(_t(context, 'nameHint'))),
                 ),
                 for (final other in others)
                   CheckboxListTile(
                     value: selected.contains(other.profileId),
-                    title: Text(_shownName(other)),
+                    title: LifexText(_shownName(other)),
                     onChanged: (value) {
                       setLocal(() {
                         if (value == true) {
@@ -262,11 +264,11 @@ class _MessengerScreenState extends State<MessengerScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(_t(context, 'cancel')),
+              child: LifexText(_t(context, 'cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(_t(context, 'create')),
+              child: LifexText(_t(context, 'create')),
             ),
           ],
         ),
@@ -320,20 +322,20 @@ class _MessengerScreenState extends State<MessengerScreen> {
           final me = controller.activeProfile;
           if (me == null) {
             return Scaffold(
-              appBar: AppBar(title: Text(sample.text)),
-              body: Center(child: Text(_t(context, 'noPeers'))),
+              appBar: AppBar(title: LifexText(sample.text)),
+              body: Center(child: LifexText(_t(context, 'noPeers'))),
             );
           }
           final others = controller.allProfiles
               .where((item) => item.profileId != me.profileId)
               .toList();
           return Scaffold(
-            appBar: AppBar(title: Text(sample.text)),
+            appBar: AppBar(title: LifexText(sample.text)),
             body: Column(
               children: [
                 if (sample.fallback)
                   MaterialBanner(
-                    content: Text(MessengerPhrases.line(code, 'fallbackNote').text),
+                    content: LifexText(MessengerPhrases.line(code, 'fallbackNote').text),
                     actions: const [SizedBox.shrink()],
                   ),
                 Padding(
@@ -343,18 +345,18 @@ class _MessengerScreenState extends State<MessengerScreen> {
                     child: FilledButton.icon(
                       onPressed: () => _sendOffline(context),
                       icon: const Icon(Icons.wifi_off),
-                      label: Text(_t(context, 'offlineSend')),
+                      label: LifexText(_t(context, 'offlineSend')),
                     ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Text(_t(context, 'localOnly')),
+                  child: LifexText(_t(context, 'localOnly')),
                 ),
                 if (_notice.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.all(8),
-                    child: Text(_notice),
+                    child: LifexText(_notice),
                   ),
                 Expanded(child: _page(context, controller, me, others)),
               ],
@@ -365,19 +367,19 @@ class _MessengerScreenState extends State<MessengerScreen> {
               destinations: [
                 NavigationDestination(
                   icon: const Icon(Icons.chat_outlined),
-                  label: _t(context, 'chats'),
+                  label: tr(_t(context, 'chats')),
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.groups_outlined),
-                  label: _t(context, 'groups'),
+                  label: tr(_t(context, 'groups')),
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.call_outlined),
-                  label: _t(context, 'calls'),
+                  label: tr(_t(context, 'calls')),
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.meeting_room_outlined),
-                  label: _t(context, 'meetings'),
+                  label: tr(_t(context, 'meetings')),
                 ),
               ],
             ),
@@ -416,51 +418,51 @@ class _MessengerScreenState extends State<MessengerScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(
+        LifexText(
           '${_t(context, 'myAlias')}: ${_shownName(me)}',
         ),
-        Text('${_t(context, 'myId')}: ${MessengerDesk.lifexIdOf(me)}'),
-        Text(
+        LifexText('${_t(context, 'myId')}: ${MessengerDesk.lifexIdOf(me)}'),
+        LifexText(
           '${_t(context, 'myPhone')}: ${PhoneMessengerDesk.phoneOf(me).isEmpty ? _t(context, 'noPhone') : PhoneMessengerDesk.phoneOf(me)}',
         ),
         TextField(
           controller: _alias,
-          decoration: InputDecoration(labelText: _t(context, 'aliasHint')),
+          decoration: InputDecoration(labelText: tr(_t(context, 'aliasHint'))),
         ),
         TextField(
           controller: _phone,
           keyboardType: TextInputType.phone,
-          decoration: InputDecoration(labelText: _t(context, 'phoneHint')),
+          decoration: InputDecoration(labelText: tr(_t(context, 'phoneHint'))),
         ),
         TextField(
           controller: _email,
           keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(labelText: _t(context, 'emailHint')),
+          decoration: InputDecoration(labelText: tr(_t(context, 'emailHint'))),
         ),
         TextField(
           controller: _place,
-          decoration: InputDecoration(labelText: _t(context, 'placeHint')),
+          decoration: InputDecoration(labelText: tr(_t(context, 'placeHint'))),
         ),
         TextField(
           controller: _query,
           decoration: InputDecoration(
-            labelText: _t(context, 'searchHint'),
+            labelText: tr(_t(context, 'searchHint')),
             prefixIcon: const Icon(Icons.search),
           ),
           onChanged: (_) => setState(() {}),
         ),
         FilledButton.tonal(
           onPressed: () => _register(controller, me),
-          child: Text(_t(context, 'registerMessenger')),
+          child: LifexText(_t(context, 'registerMessenger')),
         ),
         TextField(
           controller: _smsBody,
-          decoration: InputDecoration(labelText: _t(context, 'phoneMessage')),
+          decoration: InputDecoration(labelText: tr(_t(context, 'phoneMessage'))),
         ),
         FilledButton.icon(
           onPressed: () => _openByContact(me, others),
           icon: const Icon(Icons.person_search),
-          label: Text(_t(context, 'openByContact')),
+          label: LifexText(_t(context, 'openByContact')),
         ),
         Wrap(
           spacing: 8,
@@ -473,7 +475,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
                 others,
                 MessengerPhonePath.onDevice,
               ),
-              child: Text(_t(context, 'chats')),
+              child: LifexText(_t(context, 'chats')),
             ),
             FilledButton.tonal(
               onPressed: () => _routePhone(
@@ -482,7 +484,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
                 others,
                 MessengerPhonePath.sms,
               ),
-              child: Text(_t(context, 'phoneMessage')),
+              child: LifexText(_t(context, 'phoneMessage')),
             ),
             OutlinedButton(
               onPressed: () => _routePhone(
@@ -491,7 +493,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
                 others,
                 MessengerPhonePath.wifi,
               ),
-              child: const Text('Wi-Fi'),
+              child: const LifexText('Wi-Fi'),
             ),
             OutlinedButton(
               onPressed: () => _routePhone(
@@ -500,14 +502,14 @@ class _MessengerScreenState extends State<MessengerScreen> {
                 others,
                 MessengerPhonePath.bluetooth,
               ),
-              child: const Text('Bluetooth'),
+              child: const LifexText('Bluetooth'),
             ),
           ],
         ),
         const Divider(),
         TextField(
           controller: _peerId,
-          decoration: InputDecoration(labelText: _t(context, 'idHint')),
+          decoration: InputDecoration(labelText: tr(_t(context, 'idHint'))),
         ),
         FilledButton.icon(
           onPressed: () {
@@ -533,12 +535,12 @@ class _MessengerScreenState extends State<MessengerScreen> {
             );
           },
           icon: const Icon(Icons.badge_outlined),
-          label: Text(_t(context, 'openById')),
+          label: LifexText(_t(context, 'openById')),
         ),
         const Divider(),
         TextField(
           controller: _announce,
-          decoration: InputDecoration(labelText: _t(context, 'adminCompose')),
+          decoration: InputDecoration(labelText: tr(_t(context, 'adminCompose'))),
         ),
         FilledButton(
           onPressed: () {
@@ -555,14 +557,14 @@ class _MessengerScreenState extends State<MessengerScreen> {
             }
             _show(context, action);
           },
-          child: Text(_t(context, 'announcements')),
+          child: LifexText(_t(context, 'announcements')),
         ),
         for (final item in announcements.reversed.take(3))
-          ListTile(title: Text(item['text']?.toString() ?? '')),
+          ListTile(title: LifexText(item['text']?.toString() ?? '')),
         const Divider(),
         TextField(
           controller: _blood,
-          decoration: InputDecoration(labelText: _t(context, 'urgentBlood')),
+          decoration: InputDecoration(labelText: tr(_t(context, 'urgentBlood'))),
         ),
         FilledButton.tonal(
           onPressed: () {
@@ -578,26 +580,26 @@ class _MessengerScreenState extends State<MessengerScreen> {
             }
             _show(context, action);
           },
-          child: Text(_t(context, 'blood')),
+          child: LifexText(_t(context, 'blood')),
         ),
         TextButton(
           onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const BloodRequestScreen()),
           ),
-          child: Text(_t(context, 'bloodDesk')),
+          child: LifexText(_t(context, 'bloodDesk')),
         ),
         for (final item in notes.reversed.take(3))
-          ListTile(title: Text(item['text']?.toString() ?? '')),
+          ListTile(title: LifexText(item['text']?.toString() ?? '')),
         const Divider(),
-        if (others.isEmpty) Text(_t(context, 'noPeers')),
+        if (others.isEmpty) LifexText(_t(context, 'noPeers')),
         if (_query.text.trim().isNotEmpty && _searchHits(me, others).isEmpty)
-          Text(_t(context, 'searchEmpty')),
+          LifexText(_t(context, 'searchEmpty')),
         for (final hit in _listed(me, others))
           ListTile(
             leading: const Icon(Icons.chat),
-            title: Text(_shownName(hit.profile)),
-            subtitle: Text(
+            title: LifexText(_shownName(hit.profile)),
+            subtitle: LifexText(
               hit.via.isEmpty
                   ? _t(context, 'deliveredHere')
                   : _t(context, 'via${_viaSuffix(hit.via)}'),
@@ -680,13 +682,13 @@ class _MessengerScreenState extends State<MessengerScreen> {
         FilledButton.icon(
           onPressed: () => _newGroup(controller, me, others),
           icon: const Icon(Icons.group_add_outlined),
-          label: Text(_t(context, 'newGroup')),
+          label: LifexText(_t(context, 'newGroup')),
         ),
         for (final group in groups.reversed)
           ListTile(
             leading: const Icon(Icons.groups),
-            title: Text(group['title']?.toString() ?? ''),
-            subtitle: Text(_t(context, 'deliveredHere')),
+            title: LifexText(group['title']?.toString() ?? ''),
+            subtitle: LifexText(_t(context, 'deliveredHere')),
             onTap: () => _openRoom(
               controller,
               me,
@@ -709,16 +711,16 @@ class _MessengerScreenState extends State<MessengerScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(_t(context, 'callNotBridged')),
-        if (others.isEmpty) Text(_t(context, 'noPeers')),
+        LifexText(_t(context, 'callNotBridged')),
+        if (others.isEmpty) LifexText(_t(context, 'noPeers')),
         for (final other in others)
           ListTile(
-            title: Text(_shownName(other)),
+            title: LifexText(_shownName(other)),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  tooltip: _t(context, 'voice'),
+                  tooltip: tr(_t(context, 'voice')),
                   onPressed: () {
                     final action = _desk.placeCall(
                       host: me,
@@ -731,7 +733,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
                   icon: const Icon(Icons.call),
                 ),
                 IconButton(
-                  tooltip: _t(context, 'video'),
+                  tooltip: tr(_t(context, 'video')),
                   onPressed: () {
                     final action = _desk.placeCall(
                       host: me,
@@ -748,8 +750,8 @@ class _MessengerScreenState extends State<MessengerScreen> {
           ),
         for (final call in calls.reversed.take(8))
           ListTile(
-            title: Text('${call['kind']} · ${call['state']}'),
-            subtitle: Text(_t(context, 'callNotBridged')),
+            title: LifexText('${call['kind']} · ${call['state']}'),
+            subtitle: LifexText(_t(context, 'callNotBridged')),
           ),
       ],
     );
@@ -765,11 +767,11 @@ class _MessengerScreenState extends State<MessengerScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(_t(context, 'meetingNotZoom')),
+        LifexText(_t(context, 'meetingNotZoom')),
         TextField(
           controller: _phone,
           keyboardType: TextInputType.phone,
-          decoration: InputDecoration(labelText: _t(context, 'phoneHint')),
+          decoration: InputDecoration(labelText: tr(_t(context, 'phoneHint'))),
         ),
         FilledButton(
           onPressed: () {
@@ -788,20 +790,20 @@ class _MessengerScreenState extends State<MessengerScreen> {
                 .toList();
             unawaited(_openVideoRoom(context, controller, me, invited));
           },
-          child: Text(_t(context, 'inviteByPhone')),
+          child: LifexText(_t(context, 'inviteByPhone')),
         ),
         FilledButton.icon(
           onPressed: others.isEmpty
               ? null
               : () => _openVideoRoom(context, controller, me, others),
           icon: const Icon(Icons.videocam_outlined),
-          label: Text(_t(context, 'videoRoom')),
+          label: LifexText(_t(context, 'videoRoom')),
         ),
         for (final room in rooms.reversed)
           ListTile(
             leading: const Icon(Icons.meeting_room_outlined),
-            title: Text(room['conversationId']?.toString() ?? ''),
-            subtitle: Text(_t(context, 'videoStaysHere')),
+            title: LifexText(room['conversationId']?.toString() ?? ''),
+            subtitle: LifexText(_t(context, 'videoStaysHere')),
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -898,22 +900,22 @@ class _GroupRoomState extends State<_GroupRoom> {
   Widget build(BuildContext context) {
     final posts = _desk.posts(widget.me, widget.threadId);
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(title: LifexText(widget.title)),
       body: Column(
         children: [
-          if (_status.isNotEmpty) Padding(padding: const EdgeInsets.all(8), child: Text(_status)),
+          if (_status.isNotEmpty) Padding(padding: const EdgeInsets.all(8), child: LifexText(_status)),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(12),
               children: [
                 for (final post in posts)
                   ListTile(
-                    title: Text(
+                    title: LifexText(
                       (post['text'] as String?)?.isNotEmpty == true
                           ? post['text'].toString()
                           : _t('attach'),
                     ),
-                    subtitle: Text(
+                    subtitle: LifexText(
                       post['fileName']?.toString().isNotEmpty == true
                           ? post['fileName'].toString()
                           : _t('deliveredHere'),
@@ -928,7 +930,7 @@ class _GroupRoomState extends State<_GroupRoom> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: _t('attach'),
+                    tooltip: tr(_t('attach')),
                     onPressed: _pick,
                     icon: const Icon(Icons.attach_file),
                   ),
@@ -936,13 +938,13 @@ class _GroupRoomState extends State<_GroupRoom> {
                     child: TextField(
                       controller: _input,
                       decoration: InputDecoration(
-                        hintText: _fileName.isEmpty ? _t('hint') : _fileName,
+                        hintText: tr(_fileName.isEmpty ? _t('hint') : _fileName),
                       ),
                       onSubmitted: (_) => _send(),
                     ),
                   ),
                   IconButton.filled(
-                    tooltip: _t('send'),
+                    tooltip: tr(_t('send')),
                     onPressed: _send,
                     icon: const Icon(Icons.send),
                   ),

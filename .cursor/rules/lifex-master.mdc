@@ -1,0 +1,28 @@
+---
+description: Lifex-AI master engineering rules — always apply
+alwaysApply: true
+---
+
+# Lifex-AI Master Engineering
+
+Official names: project **Lifex-AI**, package **lifex_ai**. Dart + Flutter only. Do not rename the package. Do not force-push or rewrite git history. Do not freeze-break APK/GitHub unless the user asks.
+
+Lifex-AI is health support, not a doctor. Never auto-prescribe. Never turn observation or hypothesis into confirmed diagnosis. Never treat Unknown as Safe or as a fact.
+
+Keep separate: DATA, KNOWLEDGE, OBSERVATION, INTERPRETATION, HYPOTHESIS, DIAGNOSIS, DECISION, ACTION, CONTROL.
+
+Source of truth is the relational database. Graph, search, cache, and AI summaries are projections/views only.
+
+54 = global knowledge (Disease, Medication, MedicalDevice, LaboratoryTest). 55 = personal records that reference 54 by id (PatientCondition, PatientMedication, PatientDevice, PatientLabResult). Do not duplicate 54 entities in 55.
+
+Family membership is not health-data access. Alias is not a new Person or Patient. Emergency access is minimum necessary plus audit.
+
+AI and UI never talk to SQL. Path: Query Service → Identity → Authorization → Consent → Scope → Purpose → Repository.
+
+Device: DISCOVERED ≠ CONNECTED ≠ AUTHENTICATED ≠ AUTHORIZED ≠ CONTROLABLE. Graph does not control devices. Automation cannot bypass authorization or prescribe.
+
+Money: integer minor units, double-entry, no PAN/CVV, licensed provider confirmation. Risk ≠ guilt.
+
+56 = exchange adapters (FHIR/HL7/DICOM mapping). FHIR is not the Lifex domain model. Reuse existing engines; no duplicate repositories or engines.
+
+Fix minimally. Do not rebuild the app. Do not invent medical facts, device capabilities, or unsupported commands.

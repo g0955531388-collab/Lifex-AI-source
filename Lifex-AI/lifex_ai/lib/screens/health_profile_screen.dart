@@ -19,6 +19,8 @@ import '../features/profile/health_identity_manager.dart';
 import '../features/profile/health_profile.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'unit_branch_navigator.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class HealthProfileScreen extends StatelessWidget {
   const HealthProfileScreen({
@@ -49,7 +51,7 @@ class HealthProfileScreen extends StatelessWidget {
             : (controller.activeProfile ?? profile);
         return Scaffold(
           appBar: AppBar(
-            title: Text(
+            title: LifexText(
               preferThisProfile
                   ? 'ملف مرتبط بالحصة'
                   : (l10n?.homeMyHealthProfile ?? 'ملفي الصحي'),
@@ -57,7 +59,7 @@ class HealthProfileScreen extends StatelessWidget {
           ),
           body: live == null
               ? Center(
-                  child: Text(
+                  child: LifexText(
                       l10n?.noHealthProfileLoaded ?? 'لا يوجد ملف صحي محمّل.'),
                 )
               : SingleChildScrollView(
@@ -68,19 +70,19 @@ class HealthProfileScreen extends StatelessWidget {
                       if (preferThisProfile)
                         const Padding(
                           padding: EdgeInsets.only(bottom: 12),
-                          child: Text(
+                          child: LifexText(
                             'عرض ملف مرتبط بهذه الحصة. الملف النشط لحساب الطبيب لم يُبدَّل.',
                           ),
                         ),
                       Semantics(
                         header: true,
-                        label: '${live.fullName}. المعرف ${_userId(live)}',
+                        label: tr('${live.fullName}. المعرف ${_userId(live)}'),
                         child: Wrap(
                           spacing: 12,
                           runSpacing: 8,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            Text(
+                            LifexText(
                               live.fullName,
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
@@ -95,9 +97,9 @@ class HealthProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text('العمر: ${live.ageInYears} سنة'),
+                      LifexText('العمر: ${live.ageInYears} سنة'),
                       if (live.dateOfBirth != null)
-                        Text(
+                        LifexText(
                           'تاريخ الميلاد: ${live.dateOfBirth!.year}/${live.dateOfBirth!.month}/${live.dateOfBirth!.day}',
                         ),
                       const SizedBox(height: 16),
@@ -132,7 +134,7 @@ class HealthProfileScreen extends StatelessWidget {
                       _InfoSection(
                         titleAr: 'الحساسية',
                         children: live.allergies.isEmpty
-                            ? [const Text('لا توجد حساسية مسجَّلة.')]
+                            ? [const LifexText('لا توجد حساسية مسجَّلة.')]
                             : live.allergies
                                 .map((a) => _InfoRow(
                                       labelAr: a.substance,
@@ -144,9 +146,9 @@ class HealthProfileScreen extends StatelessWidget {
                       _InfoSection(
                         titleAr: 'الحالات المزمنة',
                         children: live.chronicConditions.isEmpty
-                            ? [const Text('لا توجد حالات مزمنة مسجَّلة.')]
+                            ? [const LifexText('لا توجد حالات مزمنة مسجَّلة.')]
                             : live.chronicConditions
-                                .map((c) => Text(c.conditionName))
+                                .map((c) => LifexText(c.conditionName))
                                 .toList(),
                       ),
                       const SizedBox(height: 16),
@@ -155,15 +157,15 @@ class HealthProfileScreen extends StatelessWidget {
                         onChanged: controller.notifyProfileChanged,
                       ),
                       const SizedBox(height: 16),
-                      Text('أقسام الملف الصحي',
+                      LifexText('أقسام الملف الصحي',
                           style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 8),
                       for (final branch in UnitBranchCatalog.healthCv)
                         Card(
                           child: ListTile(
                             leading: CircleAvatar(child: Icon(branch.icon)),
-                            title: Text(branch.titleAr),
-                            subtitle: Text(branch.subtitleAr),
+                            title: LifexText(branch.titleAr),
+                            subtitle: LifexText(branch.subtitleAr),
                             trailing:
                                 const Icon(Icons.arrow_forward_ios, size: 16),
                             onTap: () => UnitBranchNavigator.open(
@@ -175,9 +177,9 @@ class HealthProfileScreen extends StatelessWidget {
                         ),
                       const SizedBox(height: 24),
                       Semantics(
-                        label: 'تنويه: هذه البيانات للاطلاع الشخصي فقط وليست '
+                        label: tr('تنويه: هذه البيانات للاطلاع الشخصي فقط وليست '
                             'بديلاً عن الفحص الطبي المباشر. يُرجى إبقاء هذه '
-                            'المعلومات محدَّثة لتكون مفيدة في حالات الطوارئ.',
+                            'المعلومات محدَّثة لتكون مفيدة في حالات الطوارئ.'),
                         child: ExcludeSemantics(
                           child: Container(
                             padding: const EdgeInsets.all(12),
@@ -188,7 +190,7 @@ class HealthProfileScreen extends StatelessWidget {
                                   .withOpacity(0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text(
+                            child: const LifexText(
                               'هذه البيانات للاطلاع الشخصي فقط وليست بديلاً عن '
                               'الفحص الطبي المباشر. يُرجى إبقاء هذه المعلومات '
                               'محدَّثة لتكون مفيدة في حالات الطوارئ.',
@@ -219,7 +221,7 @@ class _InfoSection extends StatelessWidget {
       children: [
         Semantics(
           header: true,
-          child: Text(titleAr, style: Theme.of(context).textTheme.titleMedium),
+          child: LifexText(titleAr, style: Theme.of(context).textTheme.titleMedium),
         ),
         const SizedBox(height: 8),
         ...children,
@@ -239,17 +241,17 @@ class _InfoRow extends StatelessWidget {
     // دمج التسمية والقيمة في إعلان واحد متصل لقارئ الشاشة ("فصيلة الدم:
     // O positive") بدلاً من نطق نصّين منفصلين قد يفصل بينهما القارئ.
     return Semantics(
-      label: '$labelAr: $valueAr',
+      label: tr('$labelAr: $valueAr'),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 2),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             ExcludeSemantics(
-              child: Text(labelAr, style: const TextStyle(color: Colors.grey)),
+              child: LifexText(labelAr, style: const TextStyle(color: Colors.grey)),
             ),
             ExcludeSemantics(
-              child: Text(valueAr,
+              child: LifexText(valueAr,
                   style: const TextStyle(fontWeight: FontWeight.w600)),
             ),
           ],

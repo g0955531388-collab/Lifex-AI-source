@@ -17,6 +17,8 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/accessible_widgets.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class DonationsCenterScreen extends StatefulWidget {
   const DonationsCenterScreen({super.key, this.initialQuery});
@@ -218,7 +220,7 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
     final balance = _walletBalanceMinor;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('التبرعات الصحية')),
+      appBar: AppBar(title: const LifexText('التبرعات الصحية')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -227,9 +229,9 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
                 'البحث يعرض حملات/ملفات تبرع عامة موافقة فقط. '
                 'ليس استعلاماً على ملفات المرضى. التبرع المالي عبر المحفظة والرسوم من سياسة الرسوم.',
           ),
-          Text('رصيد المحفظة (أصغر وحدة): $balance'),
+          LifexText('رصيد المحفظة (أصغر وحدة): $balance'),
           const SizedBox(height: 8),
-          Text(
+          LifexText(
             'مصدر المتبرع: ${_donorSource.name}',
             style: Theme.of(context).textTheme.titleSmall,
           ),
@@ -237,14 +239,14 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
             spacing: 8,
             children: [
               ChoiceChip(
-                label: const Text('حسابي'),
+                label: const LifexText('حسابي'),
                 selected: _donorSource == DonationPartySource.selfAccount,
                 onSelected: (_) => setState(
                   () => _donorSource = DonationPartySource.selfAccount,
                 ),
               ),
               ChoiceChip(
-                label: const Text('هاتف (اختيار لاحق)'),
+                label: const LifexText('هاتف (اختيار لاحق)'),
                 selected: _donorSource == DonationPartySource.phoneContact,
                 onSelected: (_) {
                   setState(
@@ -256,7 +258,7 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
                 },
               ),
               ChoiceChip(
-                label: const Text('دليل Lifex'),
+                label: const LifexText('دليل Lifex'),
                 selected: _donorSource == DonationPartySource.lifexDirectory,
                 onSelected: (_) => setState(
                   () => _donorSource = DonationPartySource.lifexDirectory,
@@ -267,9 +269,9 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: _search,
-            decoration: const InputDecoration(
-              labelText: 'بحث (مرضى السرطان، قلب، كرسي…)',
-              hintText: 'أريد التبرع لمرضى السرطان',
+            decoration: InputDecoration(
+              labelText: tr('بحث (مرضى السرطان، قلب، كرسي…)'),
+              hintText: tr('أريد التبرع لمرضى السرطان'),
             ),
             onSubmitted: (_) => _runSearch(),
           ),
@@ -281,7 +283,7 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
             onTap: _runSearch,
           ),
           const SizedBox(height: 12),
-          Text(
+          LifexText(
             'النتائج (${_results.length})',
             style: Theme.of(context).textTheme.titleMedium,
           ),
@@ -292,7 +294,7 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
+                    const LifexText(
                       'EMPTY — لا نتائج عامة موافقة حالياً.\n'
                       'ليست رفض صلاحية وليست قائمة مرضى مخفية.',
                     ),
@@ -301,21 +303,21 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
                       spacing: 8,
                       children: [
                         ActionChip(
-                          label: const Text('مرضى السرطان'),
+                          label: const LifexText('مرضى السرطان'),
                           onPressed: () {
                             _search.text = 'أريد التبرع لمرضى السرطان';
                             _runSearch();
                           },
                         ),
                         ActionChip(
-                          label: const Text('أمراض القلب'),
+                          label: const LifexText('أمراض القلب'),
                           onPressed: () {
                             _search.text = 'أريد التبرع لمرضى القلب';
                             _runSearch();
                           },
                         ),
                         ActionChip(
-                          label: const Text('كراسي متحركة'),
+                          label: const LifexText('كراسي متحركة'),
                           onPressed: () {
                             _search.text = 'أريد التبرع بكرسي متحرك';
                             _runSearch();
@@ -333,8 +335,8 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
                   ? Theme.of(context).colorScheme.primaryContainer
                   : null,
               child: ListTile(
-                title: Text(b.alias ?? b.displayName),
-                subtitle: Text(
+                title: LifexText(b.alias ?? b.displayName),
+                subtitle: LifexText(
                   '${b.needCategory.name} · ${b.locationArea} · ${b.urgency}\n'
                   '${b.needDescription}',
                 ),
@@ -349,9 +351,9 @@ class _DonationsCenterScreenState extends State<DonationsCenterScreen> {
           TextField(
             controller: _amount,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'مبلغ التبرع (أصغر وحدة)',
-              hintText: '10000 = 100.00 إن كان المضاعف 100',
+            decoration: InputDecoration(
+              labelText: tr('مبلغ التبرع (أصغر وحدة)'),
+              hintText: tr('10000 = 100.00 إن كان المضاعف 100'),
             ),
           ),
           Row(

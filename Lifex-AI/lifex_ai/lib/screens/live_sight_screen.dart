@@ -39,6 +39,8 @@ import '../features/accessibility/lifex_blind_vision_engine.dart';
 import '../features/accessibility/live_vision_provider.dart';
 import '../features/accessibility/live_sight_conductor.dart';
 import '../features/accessibility/local_object_detector.dart';
+import '../features/accessibility/vision_provider_state.dart';
+import '../features/accessibility/blind_box_speech.dart';
 import '../features/accessibility/scan_mode.dart';
 import '../features/accessibility/visual_assist_floor.dart';
 import '../features/accessibility/vision_engine_app.dart';
@@ -49,6 +51,8 @@ import '../features/voice/voice_engine.dart';
 import '../features/voice/voice_turn_desk.dart';
 import '../widgets/blind_camera_rail.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 enum BlindCameraDelivery { liveStream, singleFrame }
 
@@ -92,7 +96,8 @@ class LiveSightScreen extends StatefulWidget {
   State<LiveSightScreen> createState() => _LiveSightScreenState();
 }
 
-class _LiveSightScreenState extends State<LiveSightScreen> {
+class _LiveSightScreenState extends State<LiveSightScreen>
+    with WidgetsBindingObserver {
   final LiveSightConductor _conductor = LiveSightConductor();
   final LiveSightScheduler _scheduler = LiveSightScheduler(
     interval: const Duration(seconds: 4),
@@ -104,7 +109,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     window: const Duration(milliseconds: 300),
   );
   final BlindFrameTrace _trace = BlindFrameTrace();
-  final LocalObjectDetector _detector = const LocalObjectDetector();
+  final LocalObjectDetector _detector = LocalObjectDetector();
   final LifexBlindVisionEngine _vision = LifexBlindVisionEngine(
     localAnalyzer: const NoModelLocalVisionAnalyzer(),
     cloudAnalyzer: const ClosedCloudVisionAnalyzer(),
@@ -135,12 +140,14 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
   DateTime? _lastProbeAt;
   bool? _lastOnline;
   DateTime? _nextOpenAt;
+  int _liveFailures = 0;
   String _lastLiveSpeech = '';
   bool _earBusy = false;
   bool _detailLock = false;
   bool _hadFrame = false;
   bool _detectorRan = false;
   bool _toldDetectorMissing = false;
+  bool _toldVisionState = false;
   bool _toldLocalModel = false;
   bool _strictDirection = true;
   bool _showOptions = false;
@@ -158,9 +165,12 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
   var _toldHearingGap = false;
   var _toldSpeechGap = false;
   var _toldCloudSending = false;
+  var _offeredCloud = false;
   String? _pendingOpening;
   String _languageCode = 'ar';
+  String _nameLanguage = 'ar';
   List<String> _lastLabels = const [];
+  List<DetectedObject> _lastObjects = const [];
   String _lastReadText = '';
   String _sceneLine = '';
   String _heardHazardKey = '';
@@ -176,6 +186,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     VisualAssistFloorSwitch.listen(_onVisualFloor);
     VisualAssistFloorSwitch.take(VisualAssistFloor.legacy);
     _delivery = widget.delivery;
@@ -204,6 +215,10 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
   void _useUserLanguage() {
     _languageCode =
         AppConfig.instance.defaultLanguage == AppLanguage.english ? 'en' : 'ar';
+  }
+
+  void _useDeviceNameLanguage() {
+    _nameLanguage = BlindCameraSpeech.deviceNameCode();
   }
 
   void _onVisualFloor(VisualAssistFloor floor) {
@@ -243,8 +258,15 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     }
   }
 
+  /// نافذة الإذن تجعل التطبيق inactive فقط؛ paused يعني أنه خرج من الشاشة.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) _stopSession();
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _closed = true;
     VisualAssistFloorSwitch.unlisten(_onVisualFloor);
     LiveSightScreen._openSessions =
@@ -257,6 +279,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     AssistantSession.instance.unbindSight();
     _dropLens();
     unawaited(_reader.close());
+    unawaited(_detector.close());
     unawaited(_geminiLive.close());
     unawaited(VoiceEngine.instance.interruptIfSpeaking());
     final ear = VoiceEngine.instance.state;
@@ -445,6 +468,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
           live: _delivery == BlindCameraDelivery.liveStream,
         )} ${_lensName()}',
       );
+      await _announceVisionState();
       if (!GeminiBlindLink.held) await _forceDirectGemini();
       await _runInitialOrder();
     } catch (error) {
@@ -457,6 +481,29 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
         BlindCameraSpeech.lensFailed(_languageCode),
       );
     }
+  }
+
+  Future<void> _announceVisionState() async {
+    if (_toldVisionState || _closed) return;
+    _toldVisionState = true;
+    var check = LocalObjectDetector.lastCheck;
+    if (check == null) {
+      await _announce(VisionStateSpeech.checkingModel);
+      check = await LocalObjectDetector.checkModel();
+      if (_closed || !mounted) return;
+    }
+    final state = resolveVisionProviderState(
+      cameraGranted: true,
+      cameraInitFailed: !_open,
+      localModelLoaded: check.loaded,
+      cloudRequested: false,
+      cloudConsent: _cloudAllowed,
+      online: _lastOnline,
+      cloudConnecting: false,
+      cloudStreaming: _bidi?.isReady == true,
+    );
+    if (state == VisionProviderState.ready) return;
+    await _announce(VisionStateSpeech.of(state));
   }
 
   Future<void> _startStream() async {
@@ -546,7 +593,12 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
         failure: reading.sceneRan ? '' : 'المصنّف لم يعد نتيجة',
       );
       debugPrint('BlindCamera $resultLine');
-      final detection = _detector.run();
+      final detection = _includeScene
+          ? await _detector.detect(
+              input,
+              mirrored: _direction == CameraLensDirection.front,
+            )
+          : _detector.run();
       _detectorRan = detection.ran;
       if (!detection.ran && !_toldDetectorMissing) {
         _toldDetectorMissing = true;
@@ -561,26 +613,30 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
       }
       if (_closed || !mounted || generation != _generation) return;
       _hadFrame = reading.sceneRan;
-      final detectedLabels = [
+      final boxed = [
         for (final object in detection.objects)
-          if (object.hasBox &&
-              object.confidence >= BlindSceneBrief.speechFloor)
-            object.label,
+          if (object.hasBox) object,
       ];
-      _lastLabels = detectedLabels.isNotEmpty
-          ? detectedLabels
+      _lastObjects = boxed;
+      _lastLabels = boxed.isNotEmpty
+          ? [for (final object in boxed) BlindBoxSpeech.keyOf(object)]
           : BlindSceneBrief.acceptedLabels(reading.hits);
       _lastReadText = reading.text;
       if (mounted) setState(() {});
       if (!_scheduler.narrationEnabled) return;
+      _useUserLanguage();
+      _useDeviceNameLanguage();
       var sceneLine = await _vision.analyzeClassifiedFrame(
         modelRan: reading.sceneRan,
         hits: reading.hits,
         reportUnavailable: !_toldLocalModel,
-        languageCode: _languageCode,
+        languageCode: _nameLanguage,
       );
       if (!reading.sceneRan) _toldLocalModel = true;
       if (_closed || !mounted || generation != _generation) return;
+      if (boxed.isNotEmpty) {
+        sceneLine = BlindBoxSpeech.line(boxed, _nameLanguage);
+      }
       if (reading.sceneRan && sceneLine.trim().isEmpty) {
         sceneLine = VisualAssistOpening.unsure(_languageCode);
       }
@@ -758,8 +814,8 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     String text, {
     List<String> barcodes = const [],
   }) async {
-    _useUserLanguage();
-    final arabic = BlindCameraSpeech.explainsInArabic(_languageCode);
+    _useDeviceNameLanguage();
+    final arabic = BlindCameraSpeech.explainsInArabic(_nameLanguage);
     final scene = _includeScene
         ? BlindWalkSpeech.line(sceneLine, arabic: arabic)
         : '';
@@ -768,19 +824,33 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
         : '';
     final spoken = BlindCameraSpeech.forDeviceLanguage(
       [scene, read].where((part) => part.trim().isNotEmpty).join('\n'),
-      _languageCode,
+      _nameLanguage,
     );
     final codes = barcodes.where((code) => code.trim().isNotEmpty).toList();
-    var sceneSpeech =
-        codes.isEmpty ? spoken : '$spoken\nالرموز: ${codes.join('، ')}.';
+    final codeLine = arabic
+        ? 'الرموز: ${codes.join('، ')}.'
+        : 'Codes: ${codes.join(', ')}.';
+    var sceneSpeech = codes.isEmpty ? spoken : '$spoken\n$codeLine';
     if (_scanMode && _includeScene) {
       final delta = scanSpeechDelta(previous: _scanSpoken, next: _lastLabels);
       _scanSpoken = List<String>.of(_lastLabels);
       if (delta.isEmpty && read.trim().isEmpty && codes.isEmpty) return;
       if (delta.isNotEmpty) {
-        sceneSpeech = BlindWalkSpeech.line(delta.join('، '), arabic: arabic);
+        final fresh = [
+          for (final object in _lastObjects)
+            if (delta.contains(BlindBoxSpeech.keyOf(object))) object,
+        ];
+        sceneSpeech = fresh.isNotEmpty
+            ? BlindBoxSpeech.line(fresh, _nameLanguage)
+            : BlindWalkSpeech.line(
+                BlindCameraSpeech.spokenNameList(
+                  delta,
+                  languageCode: _nameLanguage,
+                ),
+                arabic: arabic,
+              );
         if (codes.isNotEmpty) {
-          sceneSpeech = '$sceneSpeech\nالرموز: ${codes.join('، ')}.';
+          sceneSpeech = '$sceneSpeech\n$codeLine';
         }
       }
     }
@@ -823,12 +893,18 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     setState(() => _spoken = voicedText);
     debugPrint('BlindCamera ${_trace.reachedSpeech(sequence, DateTime.now())}');
     if (!mounted || _closed || sequence != _generation) return;
-    final accepted = urgent
-        ? await SpeechDesk.instance.speakInterruptible(
-            voicedText,
-            hapticAfter: () => HapticFeedback.heavyImpact(),
-          )
-        : await SpeechDesk.instance.speakQueued(voicedText);
+    VoiceEngine.instance.nameSpeakLocale = _nameLanguage;
+    final bool accepted;
+    try {
+      accepted = urgent
+          ? await SpeechDesk.instance.speakInterruptible(
+              voicedText,
+              hapticAfter: () => HapticFeedback.heavyImpact(),
+            )
+          : await SpeechDesk.instance.speakQueued(voicedText);
+    } finally {
+      VoiceEngine.instance.nameSpeakLocale = null;
+    }
     if (!accepted && urgent && mounted && !_closed) {
       setState(() => _spoken = 'تعذّر النطق.\n$voicedText');
     }
@@ -838,17 +914,22 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     if (_detailLock || _closed) return;
     _detailLock = true;
     try {
+      _useDeviceNameLanguage();
       final body = !_detectorRan
           ? (_sceneLine.trim().isEmpty
-              ? LocalObjectDetector.notInstalledAr
+              ? LocalObjectDetector.unavailableLine(_languageCode)
               : _sceneLine)
           : BlindSceneBrief.details(
               _lastLabels,
               hadFrame: _hadFrame,
-              languageCode: _languageCode,
+              languageCode: _nameLanguage,
             );
       final lead = prefix.trim();
-      await _announce(lead.isEmpty ? body : '$lead\n$body', urgent: true);
+      await _announce(
+        lead.isEmpty ? body : '$lead\n$body',
+        urgent: true,
+        names: true,
+      );
     } finally {
       _detailLock = false;
     }
@@ -869,10 +950,14 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
   Future<void> _onSceneTap() async {
     final scene = _sceneLine.trim();
     if (scene.isNotEmpty) {
-      await _announce(BlindWalkSpeech.line(
-        scene,
-        arabic: BlindCameraSpeech.explainsInArabic(_languageCode),
-      ));
+      _useDeviceNameLanguage();
+      await _announce(
+        BlindWalkSpeech.line(
+          scene,
+          arabic: BlindCameraSpeech.explainsInArabic(_nameLanguage),
+        ),
+        names: true,
+      );
       return;
     }
     final streaming = _lens?.value.isStreamingImages == true;
@@ -914,9 +999,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
   Future<void> _forceDirectGemini() async {
     if (_closed || GeminiBlindLink.held) return;
     if (_directGeminiTried) {
-      if (_externalLaunchFailed && !_cloudAllowed) {
-        await _setCloudAllowed(true);
-      }
+      if (_externalLaunchFailed) await _offerCloudConsent();
       return;
     }
     _directGeminiTried = true;
@@ -937,7 +1020,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
       packageInstalled: installed,
     );
     if (route == DirectGeminiRoute.internal) {
-      await _setCloudAllowed(true);
+      await _offerCloudConsent();
       return;
     }
     _dropLens();
@@ -1030,6 +1113,13 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     if (allowed) _startLiveLoop();
   }
 
+  /// الصورة لا تُرسل إلى مزوّد خارجي إلا بموافقة صريحة من المستخدم.
+  Future<void> _offerCloudConsent() async {
+    if (_cloudAllowed || _offeredCloud || _closed) return;
+    _offeredCloud = true;
+    await _announce(cloudConsentOffer(_languageCode));
+  }
+
   Future<void> _setCloudAllowed(bool allowed) async {
     if (!mounted || _closed) return;
     setState(() => _cloudAllowed = allowed);
@@ -1039,6 +1129,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
       _toldLiveDown = false;
       _toldOffline = false;
       _toldCloudSending = false;
+      _liveFailures = 0;
       _nextOpenAt = null;
       _lastProbeAt = null;
       _geminiHasFloor = false;
@@ -1047,6 +1138,8 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
       await _announce(VisualAssistOpening.cloudStopped(_languageCode));
       return;
     }
+    _liveFailures = 0;
+    _toldLiveDown = false;
     _startLiveLoop();
     await _tickLive();
   }
@@ -1149,6 +1242,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     }
     _bidi = session;
     _toldLiveDown = false;
+    _liveFailures = 0;
     _nextOpenAt = null;
     _liveSpeech = session.spoken.listen((text) {
       if (_closed || !_cloudAllowed || text == _lastLiveSpeech) return;
@@ -1170,13 +1264,22 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
 
   Future<void> _sayLiveDown() async {
     if (_toldLiveDown || _closed) return;
-    _toldLiveDown = true;
-    _nextOpenAt = DateTime.now().add(const Duration(seconds: 8));
+    _liveFailures += 1;
     if (_geminiHasFloor) {
       _geminiHasFloor = false;
       _scheduler.narrationEnabled = true;
     }
-    await _announce(VisualAssistOpening.cloudDown(_languageCode));
+    if (!geminiReconnectAllowed(_liveFailures)) {
+      _toldLiveDown = true;
+      _nextOpenAt = null;
+      await _announce(VisualAssistOpening.cloudDown(_languageCode));
+      return;
+    }
+    _nextOpenAt = DateTime.now().add(geminiReconnectDelay(_liveFailures));
+    await _announce(lifexUi(
+      'انقطع الاتصال، جارٍ إعادة المحاولة',
+      'The connection dropped. Retrying.',
+    ));
   }
 
   Future<Uint8List?> _jpegSample() async {
@@ -1402,19 +1505,32 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     }
   }
 
-  Future<void> _announce(String text, {bool urgent = false}) async {
-    _useUserLanguage();
+  Future<void> _announce(
+    String text, {
+    bool urgent = false,
+    bool names = false,
+  }) async {
+    if (names) {
+      _useDeviceNameLanguage();
+    } else {
+      _useUserLanguage();
+    }
     final spoken = BlindCameraSpeech.forDeviceLanguage(
       _takeOpening(text),
-      _languageCode,
+      names ? _nameLanguage : _languageCode,
     );
     if (!mounted || _closed) return;
     setState(() => _spoken = spoken);
-    if (urgent) {
-      await SpeechDesk.instance.speakInterruptible(spoken);
-      return;
+    if (names) VoiceEngine.instance.nameSpeakLocale = _nameLanguage;
+    try {
+      if (urgent) {
+        await SpeechDesk.instance.speakInterruptible(spoken);
+        return;
+      }
+      await SpeechDesk.instance.speakQueued(spoken);
+    } finally {
+      if (names) VoiceEngine.instance.nameSpeakLocale = null;
     }
-    await SpeechDesk.instance.speakQueued(spoken);
   }
 
   Future<void> _chooseDelivery(BlindCameraDelivery next) async {
@@ -1494,7 +1610,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
       child = ColoredBox(
         color: Colors.black,
         child: Center(
-          child: Text(
+          child: LifexText(
             _consented ? 'العدسة لم تُهيأ بعد' : 'العدسة مغلقة حتى الموافقة',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyLarge?.copyWith(color: Colors.white),
@@ -1535,7 +1651,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
           : _spoken,
       child: Scaffold(
       appBar: AppBar(
-        title: Text(lifexUi('كاميرا المكفوفين', 'Visual assistant')),
+        title: LifexText(lifexUi('كاميرا المكفوفين', 'Visual assistant')),
         actions: [
           IconButton(
             tooltip: lifexUi(
@@ -1578,19 +1694,19 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  LifexText(
                     'لغة الشرح: $_languageCode',
                     style: theme.textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  const LifexText(
                     'البث الحي هو الإطار الجاري. اللقطة الواحدة لا تتكرر وحدها.',
                   ),
                   const SizedBox(height: 12),
-                  Text('ماذا تفتح؟', style: theme.textTheme.titleSmall),
+                  LifexText('ماذا تفتح؟', style: theme.textTheme.titleSmall),
                   RadioListTile<BlindCameraDelivery>(
-                    title: Text(context.nav('nav.live')),
-                    subtitle: Text(context.nav('nav.liveHint')),
+                    title: LifexText(context.nav('nav.live')),
+                    subtitle: LifexText(context.nav('nav.liveHint')),
                     value: BlindCameraDelivery.liveStream,
                     groupValue: _delivery,
                     onChanged: (value) {
@@ -1598,17 +1714,17 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                     },
                   ),
                   RadioListTile<BlindCameraDelivery>(
-                    title: Text(context.nav('nav.single')),
-                    subtitle: Text(context.nav('nav.singleHint')),
+                    title: LifexText(context.nav('nav.single')),
+                    subtitle: LifexText(context.nav('nav.singleHint')),
                     value: BlindCameraDelivery.singleFrame,
                     groupValue: _delivery,
                     onChanged: (value) {
                       if (value != null) unawaited(_chooseDelivery(value));
                     },
                   ),
-                  Text('ماذا يُشرح؟', style: theme.textTheme.titleSmall),
+                  LifexText('ماذا يُشرح؟', style: theme.textTheme.titleSmall),
                   RadioListTile<BlindCameraAsk>(
-                    title: Text(context.nav('nav.scene')),
+                    title: LifexText(context.nav('nav.scene')),
                     value: BlindCameraAsk.scene,
                     groupValue: _ask,
                     onChanged: (value) {
@@ -1616,7 +1732,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                     },
                   ),
                   RadioListTile<BlindCameraAsk>(
-                    title: Text(context.nav('nav.text')),
+                    title: LifexText(context.nav('nav.text')),
                     value: BlindCameraAsk.text,
                     groupValue: _ask,
                     onChanged: (value) {
@@ -1624,7 +1740,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                     },
                   ),
                   RadioListTile<BlindCameraAsk>(
-                    title: Text(context.nav('nav.both')),
+                    title: LifexText(context.nav('nav.both')),
                     value: BlindCameraAsk.both,
                     groupValue: _ask,
                     onChanged: (value) {
@@ -1632,15 +1748,15 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                     },
                   ),
                   SwitchListTile(
-                    title: Text(lifexUi(
+                    title: LifexText(lifexUi(
                       'اتصال جيميني الحي',
                       'Gemini live connection',
                     )),
-                    subtitle: Text(lifexUi(
-                      'يفتح مع الكاميرا عند وجود الإنترنت. الإيقاف يقطع الإرسال. '
-                      'الوصف ليس تشخيصاً ولا قياس مسافة.',
-                      'It opens with the camera when the internet is available. '
-                      'Stopping cuts the sending. The description is not a diagnosis and not a distance.',
+                    subtitle: LifexText(lifexUi(
+                      'الصورة تُرسل إلى موفر خارجي بعد هذه الموافقة فقط. '
+                      'الإيقاف يقطع الإرسال فوراً. الوصف ليس تشخيصاً ولا قياس مسافة.',
+                      'The picture is sent to an external provider only after this consent. '
+                      'Stopping cuts the sending at once. The description is not a diagnosis and not a distance.',
                     )),
                     value: _cloudAllowed,
                     onChanged: (value) => unawaited(_setCloudAllowed(value)),
@@ -1653,7 +1769,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
           FilledButton.icon(
             onPressed: _askConsentThenOpen,
             icon: const Icon(Icons.videocam_outlined),
-            label: Text(_open ? 'العدسة مفتوحة على هذه الصفحة' : 'ابدأ'),
+            label: LifexText(_open ? 'العدسة مفتوحة على هذه الصفحة' : 'ابدأ'),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1662,61 +1778,61 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
             children: [
               OutlinedButton(
                 onPressed: _repeatLast,
-                child: Text(context.nav('nav.repeat')),
+                child: LifexText(context.nav('nav.repeat')),
               ),
               OutlinedButton(
                 onPressed: _speakDetails,
-                child: Text(context.nav('nav.details')),
+                child: LifexText(context.nav('nav.details')),
               ),
               OutlinedButton(
                 onPressed: _hearCommand,
-                child: Text(context.nav('nav.listen')),
+                child: LifexText(context.nav('nav.listen')),
               ),
               OutlinedButton(
                 onPressed: () => _switchDirection(CameraLensDirection.front),
-                child: Text(context.nav('nav.front')),
+                child: LifexText(context.nav('nav.front')),
               ),
               OutlinedButton(
                 onPressed: () => _switchDirection(CameraLensDirection.back),
-                child: Text(context.nav('nav.back')),
+                child: LifexText(context.nav('nav.back')),
               ),
               OutlinedButton(
                 onPressed: _askCloud,
-                child: Text(context.nav('nav.askCloud')),
+                child: LifexText(context.nav('nav.askCloud')),
               ),
               OutlinedButton(
                 onPressed: () => _openEngineApp('lens'),
-                child: Text(context.nav('nav.lens')),
+                child: LifexText(context.nav('nav.lens')),
               ),
               OutlinedButton(
                 onPressed: () => _openEngineApp('gemini'),
-                child: Text(context.nav('nav.gemini')),
+                child: LifexText(context.nav('nav.gemini')),
               ),
               OutlinedButton(
                 onPressed: () => _openEngineApp('copilot'),
-                child: Text(context.nav('nav.copilot')),
+                child: LifexText(context.nav('nav.copilot')),
               ),
               OutlinedButton(
                 onPressed: () => _openEngineApp('chatgpt'),
-                child: Text(context.nav('nav.chatgpt')),
+                child: LifexText(context.nav('nav.chatgpt')),
               ),
               OutlinedButton(
                 onPressed: () => _openEngineApp('claude'),
-                child: Text(context.nav('nav.claude')),
+                child: LifexText(context.nav('nav.claude')),
               ),
               OutlinedButton(
                 onPressed: _pauseNarration,
-                child: Text(context.nav('nav.pause')),
+                child: LifexText(context.nav('nav.pause')),
               ),
               OutlinedButton(
                 onPressed: _resumeNarration,
-                child: Text(context.nav('nav.resume')),
+                child: LifexText(context.nav('nav.resume')),
               ),
               OutlinedButton(
                 onPressed: () => setState(() {
                   _scheduler.interval = const Duration(seconds: 2);
                 }),
-                child: Text(context.nav('nav.every2')),
+                child: LifexText(context.nav('nav.every2')),
               ),
               OutlinedButton(
                 onPressed: () => setState(() {
@@ -1726,13 +1842,13 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                     _scanSpoken = const [];
                   }
                 }),
-                child: Text(context.nav(_scanMode ? 'nav.scanOn' : 'nav.scanOff')),
+                child: LifexText(context.nav(_scanMode ? 'nav.scanOn' : 'nav.scanOff')),
               ),
               OutlinedButton(
                 onPressed: () => setState(() {
                   _scheduler.interval = const Duration(seconds: 4);
                 }),
-                child: Text(context.nav('nav.every4')),
+                child: LifexText(context.nav('nav.every4')),
               ),
               if (_zoomReady) ...[
                 Semantics(
@@ -1740,7 +1856,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                   label: context.nav('nav.zoomInHint'),
                   child: OutlinedButton(
                     onPressed: () => _nudgeZoom(0.5),
-                    child: Text(context.nav('nav.zoomIn')),
+                    child: LifexText(context.nav('nav.zoomIn')),
                   ),
                 ),
                 Semantics(
@@ -1748,7 +1864,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                   label: context.nav('nav.zoomOutHint'),
                   child: OutlinedButton(
                     onPressed: () => _nudgeZoom(-0.5),
-                    child: Text(context.nav('nav.zoomOut')),
+                    child: LifexText(context.nav('nav.zoomOut')),
                   ),
                 ),
               ],
@@ -1757,7 +1873,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                 label: context.nav(_torchOn ? 'nav.torchStop' : 'nav.torchOff'),
                 child: OutlinedButton(
                   onPressed: _toggleTorch,
-                  child: Text(context.nav(_torchOn ? 'nav.torchOn' : 'nav.torchOff')),
+                  child: LifexText(context.nav(_torchOn ? 'nav.torchOn' : 'nav.torchOff')),
                 ),
               ),
               Semantics(
@@ -1765,7 +1881,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                 label: context.nav('nav.focusHint'),
                 child: OutlinedButton(
                   onPressed: _autoFocus,
-                  child: Text(context.nav('nav.focus')),
+                  child: LifexText(context.nav('nav.focus')),
                 ),
               ),
               Semantics(
@@ -1773,7 +1889,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                 label: context.nav(_barcodeOn ? 'nav.barcodeStop' : 'nav.barcodeRead'),
                 child: OutlinedButton(
                   onPressed: () => setState(() => _barcodeOn = !_barcodeOn),
-                  child: Text(
+                  child: LifexText(
                     context.nav(_barcodeOn ? 'nav.barcodeOn' : 'nav.barcodeOff'),
                   ),
                 ),
@@ -1785,16 +1901,16 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
             FilledButton.icon(
               onPressed: _busy ? null : _captureOnce,
               icon: const Icon(Icons.photo_camera_outlined),
-              label: Text(context.nav('nav.capture')),
+              label: LifexText(context.nav('nav.capture')),
             ),
           ],
           const SizedBox(height: 12),
           Semantics(
             liveRegion: true,
-            child: Text(_spoken, style: theme.textTheme.bodyLarge),
+            child: LifexText(_spoken, style: theme.textTheme.bodyLarge),
           ),
           const SizedBox(height: 8),
-          Text(_trace.statusAr()),
+          LifexText(_trace.statusAr()),
         ],
                   ),
                 Positioned(
@@ -1804,7 +1920,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                   height: 1,
                   child: Semantics(
                     liveRegion: true,
-                    label: _spoken,
+                    label: tr(_spoken),
                     child: const SizedBox.expand(),
                   ),
                 ),
@@ -1813,13 +1929,13 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                   bottom: 12,
                   child: Semantics(
                     button: true,
-                    label: _switchLabel(),
+                    label: tr(_switchLabel()),
                     child: SizedBox(
                       width: 72,
                       height: 72,
                       child: FloatingActionButton(
                         heroTag: 'blind-assist-lens',
-                        tooltip: _switchLabel(),
+                        tooltip: tr(_switchLabel()),
                         onPressed: () => unawaited(_toggleLens()),
                         child: const Icon(Icons.cameraswitch_outlined),
                       ),
@@ -1831,9 +1947,9 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
                   bottom: 12,
                   child: Semantics(
                     button: true,
-                    label: _showOptions
+                    label: tr(_showOptions
                         ? 'إخفاء خيارات المساعد البصري'
-                        : 'خيارات المساعد البصري',
+                        : 'خيارات المساعد البصري'),
                     child: SizedBox(
                       width: 72,
                       height: 72,

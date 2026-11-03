@@ -15,6 +15,8 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class CareOrderScreen extends StatefulWidget {
   const CareOrderScreen({
@@ -182,8 +184,8 @@ class _CareOrderScreenState extends State<CareOrderScreen> {
         final profile = controller.activeProfile;
         if (profile == null) {
           return Scaffold(
-            appBar: AppBar(title: Text(widget.titleAr)),
-            body: const Center(child: Text('لا يوجد ملف صحي نشط.')),
+            appBar: AppBar(title: LifexText(widget.titleAr)),
+            body: const Center(child: LifexText('لا يوجد ملف صحي نشط.')),
           );
         }
         final store = ProfileBoxStore(profile);
@@ -192,7 +194,7 @@ class _CareOrderScreenState extends State<CareOrderScreen> {
             .where((item) => item['unitType'] == widget.unitType)
             .toList();
         return Scaffold(
-          appBar: AppBar(title: Text(widget.titleAr)),
+          appBar: AppBar(title: LifexText(widget.titleAr)),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -200,25 +202,25 @@ class _CareOrderScreenState extends State<CareOrderScreen> {
               TextField(
                 controller: _summary,
                 decoration:
-                    const InputDecoration(labelText: 'نص الطلب من الطبيب'),
+                    InputDecoration(labelText: tr('نص الطلب من الطبيب')),
               ),
               CheckboxListTile(
                 value: _share,
                 contentPadding: EdgeInsets.zero,
-                title: const Text(
+                title: const LifexText(
                   'أوافق على إرسال نص الطلب فقط إلى الجهة التي أختارها على هذا الجهاز',
                 ),
                 controlAffinity: ListTileControlAffinity.leading,
                 onChanged: (value) => setState(() => _share = value == true),
               ),
               if (_share) ..._recipientPicker(controller, profile),
-              if (_exchangeAr.isNotEmpty) Text(_exchangeAr),
+              if (_exchangeAr.isNotEmpty) LifexText(_exchangeAr),
               FilledButton(
                 onPressed: () => _createOrder(controller, profile, store),
-                child: const Text('إنشاء طلب'),
+                child: const LifexText('إنشاء طلب'),
               ),
               const SizedBox(height: 12),
-              Text(
+              LifexText(
                 'طلبات وصلت إلى هذه الوحدة',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
@@ -229,21 +231,21 @@ class _CareOrderScreenState extends State<CareOrderScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(packet['text']?.toString() ?? ''),
-                        Text('الغرض: ${packet['purpose']}'),
-                        Text(
+                        LifexText(packet['text']?.toString() ?? ''),
+                        LifexText('الغرض: ${packet['purpose']}'),
+                        LifexText(
                           packet['distanceKm'] == null
                               ? 'بلا مسافة محسوبة'
                               : '${(packet['distanceKm'] as num).toStringAsFixed(1)} كم',
                         ),
                         if ((packet['resultNote'] as String?)?.isNotEmpty ==
                             true)
-                          Text('رد الوحدة: ${packet['resultNote']}'),
+                          LifexText('رد الوحدة: ${packet['resultNote']}'),
                         if (packet['status'] != 'answered') ...[
                           TextField(
                             controller: _reply,
-                            decoration: const InputDecoration(
-                              labelText: 'رد الوحدة على نص الطلب',
+                            decoration: InputDecoration(
+                              labelText: tr('رد الوحدة على نص الطلب'),
                             ),
                           ),
                           OutlinedButton(
@@ -259,7 +261,7 @@ class _CareOrderScreenState extends State<CareOrderScreen> {
                               controller.saveActiveProfileChanges();
                               _reply.clear();
                             },
-                            child: const Text('حفظ رد الوحدة'),
+                            child: const LifexText('حفظ رد الوحدة'),
                           ),
                         ],
                       ],
@@ -273,16 +275,16 @@ class _CareOrderScreenState extends State<CareOrderScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(orders[i]['title']?.toString() ?? ''),
-                        Text('الحالة: ${orders[i]['status']}'),
+                        LifexText(orders[i]['title']?.toString() ?? ''),
+                        LifexText('الحالة: ${orders[i]['status']}'),
                         if ((orders[i]['resultAr'] as String?)?.isNotEmpty ==
                             true)
-                          Text(orders[i]['resultAr'].toString()),
+                          LifexText(orders[i]['resultAr'].toString()),
                         if (orders[i]['status'] != 'ready') ...[
                           TextField(
                             controller: _result,
-                            decoration: const InputDecoration(
-                                labelText: 'النتيجة للطبيب'),
+                            decoration: InputDecoration(
+                                labelText: tr('النتيجة للطبيب')),
                           ),
                           OutlinedButton(
                             onPressed: () {
@@ -302,7 +304,7 @@ class _CareOrderScreenState extends State<CareOrderScreen> {
                               );
                               _result.clear();
                             },
-                            child: const Text('حفظ النتيجة'),
+                            child: const LifexText('حفظ النتيجة'),
                           ),
                         ],
                       ],
@@ -344,33 +346,33 @@ class _CareOrderScreenState extends State<CareOrderScreen> {
         ? 'لم يُحدد مرسل إليه. اكتب الاسم أو المعرّف، أو ابحث بالصوت.'
         : 'سيُرسل النص إلى ${pending.profile.fullName} (${pending.profile.profileId}).';
     return [
-      Text(suggestionLine),
+      LifexText(suggestionLine),
       const SizedBox(height: 8),
       Row(
         children: [
           Expanded(
             child: TextField(
               controller: _query,
-              decoration: const InputDecoration(
-                labelText: 'اسم الوحدة أو معرّفها',
+              decoration: InputDecoration(
+                labelText: tr('اسم الوحدة أو معرّفها'),
               ),
               onChanged: (_) => setState(() => _selectedId = null),
             ),
           ),
           IconButton(
-            tooltip: 'بحث صوتي عن الوحدة',
+            tooltip: tr('بحث صوتي عن الوحدة'),
             onPressed: _hearRecipient,
             icon: const Icon(Icons.mic_none),
           ),
         ],
       ),
-      Text(pendingLine),
+      LifexText(pendingLine),
       for (final row in ranked.take(8))
         RadioListTile<String>(
           value: row.profile.profileId,
           groupValue: pending?.profile.profileId,
-          title: Text(row.profile.fullName),
-          subtitle: Text(
+          title: LifexText(row.profile.fullName),
+          subtitle: LifexText(
             row.distanceKm == null
                 ? '${row.profile.profileId} · بلا مسافة محسوبة'
                 : '${row.profile.profileId} · ${row.distanceKm!.toStringAsFixed(1)} كم',

@@ -7,6 +7,7 @@ library lifex_ai.widgets.barcode_scan_button;
 import 'package:flutter/material.dart';
 
 import '../screens/barcode_lens_page.dart';
+import 'lifex_text.dart';
 
 class BarcodeScanButton extends StatelessWidget {
   const BarcodeScanButton({
@@ -30,7 +31,7 @@ class BarcodeScanButton extends StatelessWidget {
         onCode(code.trim());
       },
       icon: const Icon(Icons.qr_code_scanner),
-      label: Text(shown.isEmpty ? 'اقرأ الباركود بالكاميرا' : shown),
+      label: LifexText(shown.isEmpty ? 'اقرأ الباركود بالكاميرا' : shown),
     );
   }
 }

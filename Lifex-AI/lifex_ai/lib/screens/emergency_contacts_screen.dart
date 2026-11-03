@@ -14,6 +14,8 @@ import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../widgets/lifex_record_edit.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 enum _ContactLevel { notifyOnly, monitoring, delegate }
 
@@ -70,7 +72,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     if (_contacts.length >= maxEmergencyPhoneContactsPerProfile) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('الحد الأقصى 10 أرقام موثوقة للطوارئ.'),
+          content: LifexText('الحد الأقصى 10 أرقام موثوقة للطوارئ.'),
         ),
       );
       return;
@@ -90,7 +92,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
       if (!added.success) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(added.messageAr)),
+          SnackBar(content: LifexText(added.messageAr)),
         );
         return;
       }
@@ -155,14 +157,14 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('جهات الثقة للطوارئ')),
+      appBar: AppBar(title: const LifexText('جهات الثقة للطوارئ')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _add,
         icon: const Icon(Icons.person_add_alt_1),
-        label: const Text('إضافة جهة'),
+        label: const LifexText('إضافة جهة'),
       ),
       body: _contacts.isEmpty
-          ? const Center(child: Text('لم تتم إضافة جهات ثقة بعد.'))
+          ? const Center(child: LifexText('لم تتم إضافة جهات ثقة بعد.'))
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: _contacts.length,
@@ -172,15 +174,15 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                   child: ListTile(
                     leading: const CircleAvatar(
                         child: Icon(Icons.verified_user_outlined)),
-                    title: Text(contact['name']?.toString() ?? ''),
-                    subtitle: Text(
+                    title: LifexText(contact['name']?.toString() ?? ''),
+                    subtitle: LifexText(
                         '${contact['phone'] ?? contact['lifexId']} — ${_levelLabel(contact['level']?.toString())}'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         LifexRecordEditButton(onPressed: () => _edit(index)),
                         IconButton(
-                      tooltip: 'حذف جهة الثقة',
+                      tooltip: tr('حذف جهة الثقة'),
                       icon: const Icon(Icons.delete_outline),
                       onPressed: () async {
                         final profileId = context
@@ -273,32 +275,32 @@ class _ContactDialogState extends State<_ContactDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.title ?? 'إضافة جهة ثقة'),
+      title: LifexText(widget.title ?? 'إضافة جهة ثقة'),
       content: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(
               controller: _name,
-              decoration: const InputDecoration(labelText: 'اسم الجهة')),
+              decoration: InputDecoration(labelText: tr('اسم الجهة'))),
           TextField(
               controller: _lifexId,
               decoration:
-                  const InputDecoration(labelText: 'Lifex-ID أو المعرّف')),
+                  InputDecoration(labelText: tr('Lifex-ID أو المعرّف'))),
           TextField(
               controller: _phone,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                  labelText: 'رقم الهاتف الموثوق (حتى 10 أرقام)')),
+              decoration: InputDecoration(
+                  labelText: tr('رقم الهاتف الموثوق (حتى 10 أرقام)'))),
           DropdownButtonFormField<_ContactLevel>(
             value: _level,
-            decoration: const InputDecoration(labelText: 'الصلاحية'),
+            decoration: InputDecoration(labelText: tr('الصلاحية')),
             items: const [
               DropdownMenuItem(
                   value: _ContactLevel.notifyOnly,
-                  child: Text('إشعار طوارئ فقط')),
+                  child: LifexText('إشعار طوارئ فقط')),
               DropdownMenuItem(
-                  value: _ContactLevel.monitoring, child: Text('مراقبة صحية')),
+                  value: _ContactLevel.monitoring, child: LifexText('مراقبة صحية')),
               DropdownMenuItem(
-                  value: _ContactLevel.delegate, child: Text('مفوّض كامل')),
+                  value: _ContactLevel.delegate, child: LifexText('مفوّض كامل')),
             ],
             onChanged: (value) =>
                 setState(() => _level = value ?? _ContactLevel.notifyOnly),
@@ -308,7 +310,7 @@ class _ContactDialogState extends State<_ContactDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء')),
+            child: const LifexText('إلغاء')),
         FilledButton(
           onPressed: () {
             if (_name.text.trim().isEmpty ||
@@ -322,7 +324,7 @@ class _ContactDialogState extends State<_ContactDialog> {
               'level': _level.name,
             });
           },
-          child: const Text('حفظ'),
+          child: const LifexText('حفظ'),
         ),
       ],
     );

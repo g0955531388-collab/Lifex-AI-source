@@ -15,6 +15,8 @@ import '../features/ai/public_search_desk.dart';
 import '../features/ai/unified_ai_hub_gateway.dart';
 import 'ai_agent_screen.dart';
 import 'partner_sign_in_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class AiHubScreen extends StatefulWidget {
   const AiHubScreen({super.key, required this.profileId});
@@ -102,11 +104,11 @@ class _AiHubScreenState extends State<AiHubScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('ربط حساب ${_providerLabelsAr[provider]}'),
+        title: LifexText('ربط حساب ${_providerLabelsAr[provider]}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            LifexText(
               'أدخل مفتاح API الخاص بك. يُحفظ على هذا الجهاز فقط. '
               'لن أختبره مع ${_providerLabelsAr[provider]} حتى يوجد اتصال حقيقي بالمحرك.',
               style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -115,8 +117,8 @@ class _AiHubScreenState extends State<AiHubScreen> {
             TextField(
               controller: keyController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'مفتاح API',
+              decoration: InputDecoration(
+                labelText: tr('مفتاح API'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -125,11 +127,11 @@ class _AiHubScreenState extends State<AiHubScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('إلغاء'),
+            child: const LifexText('إلغاء'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('ربط الحساب'),
+            child: const LifexText('ربط الحساب'),
           ),
         ],
       ),
@@ -177,18 +179,18 @@ class _AiHubScreenState extends State<AiHubScreen> {
     final agreed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('فصل ${_providerLabelsAr[provider]}'),
-        content: const Text(
+        title: LifexText('فصل ${_providerLabelsAr[provider]}'),
+        content: const LifexText(
           'الفصل يحذف المفتاح من هذا الجهاز. لا يتم إلا إذا وافقت الآن.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('إبقاء الربط'),
+            child: const LifexText('إبقاء الربط'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('أوافق على الفصل'),
+            child: const LifexText('أوافق على الفصل'),
           ),
         ],
       ),
@@ -283,12 +285,12 @@ class _AiHubScreenState extends State<AiHubScreen> {
     final connectedProviders = _connected.map((a) => a.provider).toSet();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('مركز الذكاء الاصطناعي')),
+      appBar: AppBar(title: const LifexText('مركز الذكاء الاصطناعي')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text(
+            const LifexText(
               'البحث يعمل بلا مفتاح: مرجع الجهاز ومحرك عام. '
               'مفتاح Gemini أو ChatGPT أو Claude اختياري ويبقى على هذا الجهاز حتى توافق على الفصل. '
               'طلب الدخول بأي موقع غير إباحي حقّك؛ التنفيذ للشركاء فقط.',
@@ -302,14 +304,14 @@ class _AiHubScreenState extends State<AiHubScreen> {
                   ),
                 );
               },
-              child: const Text('طلب الدخول بحساب لايفكس لموقع تختاره'),
+              child: const LifexText('طلب الدخول بحساب لايفكس لموقع تختاره'),
             ),
             const SizedBox(height: 16),
             Card(
               child: ListTile(
                 leading: const Icon(Icons.psychology_outlined),
-                title: const Text('الوكيل الذكي'),
-                subtitle: const Text(
+                title: const LifexText('الوكيل الذكي'),
+                subtitle: const LifexText(
                   'محادثة مباشرة أو تخطيط متعدد الخطوات فوق المعرفة الطبية',
                 ),
                 trailing: const Icon(Icons.chevron_left),
@@ -326,8 +328,8 @@ class _AiHubScreenState extends State<AiHubScreen> {
             const SizedBox(height: 8),
             TextField(
               controller: _search,
-              decoration: const InputDecoration(
-                labelText: 'ابحث بلا مفتاح، أو بالمحرك المربوط',
+              decoration: InputDecoration(
+                labelText: tr('ابحث بلا مفتاح، أو بالمحرك المربوط'),
                 border: OutlineInputBorder(),
               ),
               onSubmitted: (_) => _searchWithEngine(),
@@ -342,36 +344,36 @@ class _AiHubScreenState extends State<AiHubScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.search),
-              label: const Text('بحث'),
+              label: const LifexText('بحث'),
             ),
             if (_localHits.isNotEmpty) ...[
               const SizedBox(height: 8),
-              const Text('من المرجع المحلي على الجهاز'),
+              const LifexText('من المرجع المحلي على الجهاز'),
               for (final hit in _localHits)
                 ListTile(
-                  title: Text(hit.titleAr),
-                  subtitle: Text('${hit.kindAr} — ${hit.detailAr}'),
+                  title: LifexText(hit.titleAr),
+                  subtitle: LifexText('${hit.kindAr} — ${hit.detailAr}'),
                 ),
             ],
             if (_publicReplyAr != null && _publicReplyAr!.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
-              const Text(
+              const LifexText(
                 'خلاصة محرك عام بلا مفتاح. ليست تشخيصاً من Lifex-AI.',
               ),
               const SizedBox(height: 4),
-              Text(_publicReplyAr!),
+              LifexText(_publicReplyAr!),
             ],
             if (_engineReplyAr != null) ...[
               const SizedBox(height: 8),
-              const Text(
+              const LifexText(
                 'رد المحرك المربوط بمفتاح. ليس تشخيصاً من Lifex-AI. الربط يبقى حتى توافق على الفصل.',
               ),
               const SizedBox(height: 4),
-              Text(_engineReplyAr!),
+              LifexText(_engineReplyAr!),
             ],
             const SizedBox(height: 8),
             if (_statusMessageAr != null) ...[
-              Text(_statusMessageAr!, style: const TextStyle(fontSize: 13)),
+              LifexText(_statusMessageAr!, style: const TextStyle(fontSize: 13)),
               const SizedBox(height: 12),
             ],
             for (final provider in [
@@ -382,8 +384,8 @@ class _AiHubScreenState extends State<AiHubScreen> {
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.smart_toy_outlined),
-                  title: Text(_providerLabelsAr[provider]!),
-                  subtitle: Text(
+                  title: LifexText(_providerLabelsAr[provider]!),
+                  subtitle: LifexText(
                     connectedProviders.contains(provider) ? 'متصل' : 'غير متصل',
                     style: TextStyle(
                       color: connectedProviders.contains(provider)
@@ -400,11 +402,11 @@ class _AiHubScreenState extends State<AiHubScreen> {
                       : connectedProviders.contains(provider)
                           ? OutlinedButton(
                               onPressed: () => _disconnect(provider),
-                              child: const Text('فصل'),
+                              child: const LifexText('فصل'),
                             )
                           : FilledButton(
                               onPressed: () => _showConnectDialog(provider),
-                              child: const Text('ربط'),
+                              child: const LifexText('ربط'),
                             ),
                 ),
               ),

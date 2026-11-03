@@ -17,6 +17,8 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class CareCycleScreen extends StatefulWidget {
   const CareCycleScreen({super.key});
@@ -174,8 +176,8 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
         final patient = controller.activeProfile;
         if (patient == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('دورة الرعاية')),
-            body: const Center(child: Text('لا يوجد ملف صحي نشط.')),
+            appBar: AppBar(title: const LifexText('دورة الرعاية')),
+            body: const Center(child: LifexText('لا يوجد ملف صحي نشط.')),
           );
         }
         final others = controller.allProfiles
@@ -183,10 +185,10 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
             .toList();
         return Scaffold(
           appBar: AppBar(
-            title: const Text('دورة الرعاية'),
+            title: const LifexText('دورة الرعاية'),
             actions: [
               IconButton(
-                tooltip: _speak ? 'إيقاف النطق' : 'تشغيل النطق',
+                tooltip: tr(_speak ? 'إيقاف النطق' : 'تشغيل النطق'),
                 onPressed: () => setState(() => _speak = !_speak),
                 icon: Icon(_speak ? Icons.volume_up : Icons.volume_off),
               ),
@@ -201,31 +203,31 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
               ),
               TextField(
                 controller: _complaint,
-                decoration: const InputDecoration(labelText: 'الشكوى الحالية'),
+                decoration: InputDecoration(labelText: tr('الشكوى الحالية')),
               ),
               TextField(
                 controller: _duration,
-                decoration: const InputDecoration(labelText: 'المدة'),
+                decoration: InputDecoration(labelText: tr('المدة')),
               ),
               TextField(
                 controller: _severity,
-                decoration: const InputDecoration(labelText: 'الشدة'),
+                decoration: InputDecoration(labelText: tr('الشدة')),
               ),
               const SizedBox(height: 8),
               FilledButton(
                 onPressed: () => _analyze(patient),
-                child: const Text('تقرير أولي'),
+                child: const LifexText('تقرير أولي'),
               ),
-              Text(_status),
+              LifexText(_status),
               if (_report?.urgent == true)
-                const Text('التوجه إلى الطوارئ يسبق البحث عن موعد عادي.'),
+                const LifexText('التوجه إلى الطوارئ يسبق البحث عن موعد عادي.'),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _specialty,
-                decoration: const InputDecoration(labelText: 'الاختصاص'),
+                decoration: InputDecoration(labelText: tr('الاختصاص')),
                 items: [
                   for (final item in DoctorDirectory.specialtiesAr)
-                    DropdownMenuItem(value: item, child: Text(item)),
+                    DropdownMenuItem(value: item, child: LifexText(item)),
                 ],
                 onChanged: (value) {
                   if (value != null) setState(() => _specialty = value);
@@ -233,13 +235,13 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
               ),
               FilledButton(
                 onPressed: _busy ? null : () => _locate(patient),
-                child: const Text('أقرب اختصاص من موقعي'),
+                child: const LifexText('أقرب اختصاص من موقعي'),
               ),
               if (_places != null) ...[
                 for (final place in [..._places!.doctors, ..._places!.units])
                   ListTile(
-                    title: Text('${place.kindAr}: ${place.title}'),
-                    subtitle: Text(
+                    title: LifexText('${place.kindAr}: ${place.title}'),
+                    subtitle: LifexText(
                       place.ranked
                           ? '${place.km!.toStringAsFixed(1)} كم — ${place.detail}'
                           : 'بلا ترتيب مسافة. ${place.detail}',
@@ -248,19 +250,19 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
               ],
               TextField(
                 controller: _doctorName,
-                decoration: const InputDecoration(labelText: 'اسم الطبيب'),
+                decoration: InputDecoration(labelText: tr('اسم الطبيب')),
               ),
               DropdownButtonFormField<String?>(
                 value: _doctorId,
-                decoration: const InputDecoration(
-                  labelText: 'ملف الطبيب على هذا الجهاز',
+                decoration: InputDecoration(
+                  labelText: tr('ملف الطبيب على هذا الجهاز'),
                 ),
                 items: [
-                  const DropdownMenuItem(value: null, child: Text('لا ملف')),
+                  const DropdownMenuItem(value: null, child: LifexText('لا ملف')),
                   for (final item in others)
                     DropdownMenuItem(
                       value: item.profileId,
-                      child: Text(item.fullName),
+                      child: LifexText(item.fullName),
                     ),
                 ],
                 onChanged: (value) => setState(() => _doctorId = value),
@@ -269,7 +271,7 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
                 value: _shareFull,
                 onChanged: (value) =>
                     setState(() => _shareFull = value ?? false),
-                title: const Text('أوافق على إرسال السيرة التي أكتبها للطبيب'),
+                title: const LifexText('أوافق على إرسال السيرة التي أكتبها للطبيب'),
                 controlAffinity: ListTileControlAffinity.leading,
               ),
               FilledButton(
@@ -293,11 +295,11 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
                   controller.saveActiveProfileChanges();
                   await _say(result.messageAr);
                 },
-                child: const Text('طبيبي المعتمد'),
+                child: const LifexText('طبيبي المعتمد'),
               ),
               TextField(
                 controller: _slotTime,
-                decoration: const InputDecoration(labelText: 'وقت الحصة'),
+                decoration: InputDecoration(labelText: tr('وقت الحصة')),
               ),
               FilledButton(
                 onPressed: () async {
@@ -318,14 +320,14 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
                   controller.saveActiveProfileChanges();
                   await _say(blocked ?? 'حُفظت الحصة على جهاز الطبيب.');
                 },
-                child: const Text('حجز الحصة'),
+                child: const LifexText('حجز الحصة'),
               ),
               DropdownButtonFormField<String>(
                 value: _unitKind,
-                decoration: const InputDecoration(labelText: 'وحدة أخرى'),
+                decoration: InputDecoration(labelText: tr('وحدة أخرى')),
                 items: [
                   for (final item in _unitsKinds)
-                    DropdownMenuItem(value: item, child: Text(item)),
+                    DropdownMenuItem(value: item, child: LifexText(item)),
                 ],
                 onChanged: (value) {
                   if (value != null) setState(() => _unitKind = value);
@@ -352,30 +354,30 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
                   controller.saveActiveProfileChanges();
                   await _say(blocked ?? 'حُفظ طلب الوحدة على هذا الجهاز.');
                 },
-                child: const Text('طلب الوحدة'),
+                child: const LifexText('طلب الوحدة'),
               ),
               const Divider(),
               TextField(
                 controller: _substance,
-                decoration: const InputDecoration(
-                  labelText: 'المادة كما يكتبها الطبيب',
+                decoration: InputDecoration(
+                  labelText: tr('المادة كما يكتبها الطبيب'),
                 ),
               ),
               TextField(
                 controller: _dose,
-                decoration: const InputDecoration(labelText: 'الجرعة'),
+                decoration: InputDecoration(labelText: tr('الجرعة')),
               ),
               TextField(
                 controller: _form,
-                decoration: const InputDecoration(labelText: 'الشكل الدوائي'),
+                decoration: InputDecoration(labelText: tr('الشكل الدوائي')),
               ),
               TextField(
                 controller: _course,
-                decoration: const InputDecoration(labelText: 'المدة'),
+                decoration: InputDecoration(labelText: tr('المدة')),
               ),
               TextField(
                 controller: _instructions,
-                decoration: const InputDecoration(labelText: 'التعليمات'),
+                decoration: InputDecoration(labelText: tr('التعليمات')),
               ),
               FilledButton(
                 onPressed: () async {
@@ -396,37 +398,37 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
                   controller.saveActiveProfileChanges();
                   await _say(line);
                 },
-                child: const Text('حفظ الوصفة'),
+                child: const LifexText('حفظ الوصفة'),
               ),
               TextField(
                 controller: _pharmacyName,
-                decoration: const InputDecoration(labelText: 'اسم الصيدلية'),
+                decoration: InputDecoration(labelText: tr('اسم الصيدلية')),
               ),
               DropdownButtonFormField<String?>(
                 value: _pharmacyId,
-                decoration: const InputDecoration(
-                  labelText: 'ملف الصيدلية على هذا الجهاز',
+                decoration: InputDecoration(
+                  labelText: tr('ملف الصيدلية على هذا الجهاز'),
                 ),
                 items: [
-                  const DropdownMenuItem(value: null, child: Text('لا ملف')),
+                  const DropdownMenuItem(value: null, child: LifexText('لا ملف')),
                   for (final item in others)
                     DropdownMenuItem(
                       value: item.profileId,
-                      child: Text(item.fullName),
+                      child: LifexText(item.fullName),
                     ),
                 ],
                 onChanged: (value) => setState(() => _pharmacyId = value),
               ),
               TextField(
                 controller: _code,
-                decoration: const InputDecoration(
-                  labelText: 'رمز الصنف في دفتر الصيدلي',
+                decoration: InputDecoration(
+                  labelText: tr('رمز الصنف في دفتر الصيدلي'),
                 ),
               ),
               TextField(
                 controller: _units,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'الكمية'),
+                decoration: InputDecoration(labelText: tr('الكمية')),
               ),
               FilledButton(
                 onPressed: () async {
@@ -446,7 +448,7 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
                   controller.saveActiveProfileChanges();
                   await _say(line);
                 },
-                child: const Text('صيدليتي المعتمدة'),
+                child: const LifexText('صيدليتي المعتمدة'),
               ),
               FilledButton(
                 onPressed: () async {
@@ -459,7 +461,7 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
                   controller.saveActiveProfileChanges();
                   await _say(line);
                 },
-                child: const Text('طلب الكمية'),
+                child: const LifexText('طلب الكمية'),
               ),
               FilledButton(
                 onPressed: () async {
@@ -476,14 +478,14 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
                   controller.saveActiveProfileChanges();
                   await _say(line);
                 },
-                child: const Text('قبول الصيدلي وحجز الكمية'),
+                child: const LifexText('قبول الصيدلي وحجز الكمية'),
               ),
               const Divider(),
               TextField(
                 controller: _amount,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'المبلغ بأصغر وحدة عملة',
+                decoration: InputDecoration(
+                  labelText: tr('المبلغ بأصغر وحدة عملة'),
                 ),
               ),
               FilledButton(
@@ -495,7 +497,7 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
                   setState(() => _quote = quote);
                   await _say(quote.messageAr);
                 },
-                child: const Text('عرض المبلغ والعمولة'),
+                child: const LifexText('عرض المبلغ والعمولة'),
               ),
               FilledButton(
                 onPressed: _quote == null
@@ -505,7 +507,7 @@ class _CareCycleScreenState extends State<CareCycleScreen> {
                         setState(() => _quote = next);
                         await _say(next.messageAr);
                       },
-                child: const Text('طلب استرداد'),
+                child: const LifexText('طلب استرداد'),
               ),
             ],
           ),

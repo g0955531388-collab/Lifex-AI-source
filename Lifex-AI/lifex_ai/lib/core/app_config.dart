@@ -8,8 +8,9 @@
 library;
 
 import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'lifex_locale.dart';
@@ -36,6 +37,9 @@ class AppConfig {
 
   static const explicitLanguageKey = 'lifex_explicit_language_v1';
 
+  /// لغة الهاتف وقت ضغط زر الترجمة. تغيّرها بعد ذلك يعيد اتباع الهاتف.
+  static const explicitDeviceKey = 'lifex_explicit_language_device_v1';
+
   /// اللغة الحاكمة: الاختيار المحفوظ، وإلا لغة الجهاز، وإلا الإنجليزية.
   AppLanguage get defaultLanguage {
     final explicit = explicitLanguage == null
@@ -58,9 +62,25 @@ class AppConfig {
     }
   }
 
+  String deviceLanguageCode() => _deviceLanguageCode().trim().toLowerCase();
+
+  /// لغة الهاتف التي كانت قائمة لحظة اختيار زر الترجمة.
+  String? explicitDeviceCode;
+
+  /// آخر فعل يحكم: زر الترجمة، أو تغيير لغة الهاتف بعده.
+  /// اختيار قديم بلا ختم لغة الهاتف يُسقط، فتعود المنظومة إلى لغة الهاتف.
   Future<void> loadExplicitLanguage() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(explicitLanguageKey);
+    final stamped = prefs.getString(explicitDeviceKey);
+    final device = deviceLanguageCode();
+    if (raw != null && stamped != device) {
+      explicitLanguage = null;
+      explicitDeviceCode = null;
+      await prefs.remove(explicitLanguageKey);
+      await prefs.remove(explicitDeviceKey);
+      return;
+    }
     if (raw == 'ar') {
       explicitLanguage = AppLanguage.arabic;
     } else if (raw == 'en') {
@@ -68,18 +88,22 @@ class AppConfig {
     } else {
       explicitLanguage = null;
     }
+    explicitDeviceCode = explicitLanguage == null ? null : stamped;
   }
 
   Future<void> saveExplicitLanguage() async {
-    final prefs = await SharedPreferences.getInstance();
     final chosen = explicitLanguage;
+    explicitDeviceCode = chosen == null ? null : deviceLanguageCode();
+    final prefs = await SharedPreferences.getInstance();
     if (chosen == null) {
       await prefs.remove(explicitLanguageKey);
+      await prefs.remove(explicitDeviceKey);
     } else {
       await prefs.setString(
         explicitLanguageKey,
         chosen == AppLanguage.arabic ? 'ar' : 'en',
       );
+      await prefs.setString(explicitDeviceKey, explicitDeviceCode!);
     }
   }
 
@@ -200,6 +224,28 @@ class StudioThemeController extends ChangeNotifier {
         : AppLanguage.arabic;
     unawaited(AppConfig.instance.saveExplicitLanguage());
     notifyListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.reassembleApplication();
+    });
+  }
+
+  /// لغة الهاتف تغيّرت أثناء التشغيل: تتبعها المنظومة كلها.
+  void followDeviceLanguage() {
+    final config = AppConfig.instance;
+    final before = config.defaultLanguage;
+    if (config.explicitLanguage != null &&
+        config.explicitDeviceCode == config.deviceLanguageCode()) {
+      notifyListeners();
+      return;
+    }
+    config.explicitLanguage = null;
+    unawaited(AppConfig.instance.saveExplicitLanguage());
+    notifyListeners();
+    if (AppConfig.instance.defaultLanguage != before) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        WidgetsBinding.instance.reassembleApplication();
+      });
+    }
   }
 
   void refresh() => notifyListeners();

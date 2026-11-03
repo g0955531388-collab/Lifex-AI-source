@@ -10,6 +10,8 @@ import '../features/accessibility/vision_model_update_desk.dart';
 import '../features/knowledge/official_resource.dart';
 import '../features/search/external_link_desk.dart';
 import 'live_sight_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class VisionResourceScreen extends StatefulWidget {
   const VisionResourceScreen({super.key, this.profileId = ''});
@@ -68,21 +70,21 @@ class _VisionResourceScreenState extends State<VisionResourceScreen> {
       controls: const ['افتح العدسة الحية', 'فتح صفحة الناشر'],
       body: 'صفحات الناشرين لا تثبّت نموذجاً. العدسة الحية مسار منفصل.',
       child: Scaffold(
-      appBar: AppBar(title: const Text('موارد الرؤية')),
+      appBar: AppBar(title: const LifexText('موارد الرؤية')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
+          const LifexText(
             'هذه صفحات ناشرين. تعريف الكاميرا غير نموذج تفسير الصورة، وإطار LiteRT غير ملف النموذج. لا يُثبَّت ملف تنفيذي من هنا.',
           ),
           const SizedBox(height: 8),
-          const Text(
+          const LifexText(
             'الزر الطولي الكبير غير مثبت موضعه ولا وظيفته في هذا المستودع ولا في نسخة الواجهة المرجعية المفحوصة. لم يُركب زر بادعاء اتفاق. الحسم المطلوب: الموضع، والوظيفة الثابتة، وهل يبدأ الاستماع أم وصف المشهد.',
           ),
           const SizedBox(height: 8),
           SwitchListTile(
-            title: const Text('تحديث نماذج الكاميرا تلقائياً'),
-            subtitle: const Text('مفعّل ما لم توقفه. لا يعود وحده بعد الإيقاف.'),
+            title: const LifexText('تحديث نماذج الكاميرا تلقائياً'),
+            subtitle: const LifexText('مفعّل ما لم توقفه. لا يعود وحده بعد الإيقاف.'),
             value: _auto,
             onChanged: (value) async {
               setState(() => _auto = value);
@@ -90,8 +92,8 @@ class _VisionResourceScreenState extends State<VisionResourceScreen> {
             },
           ),
           SwitchListTile(
-            title: const Text('النماذج الكبيرة عبر Wi-Fi فقط'),
-            subtitle: const Text('بلا قياس للشبكة لا يبدأ التنزيل.'),
+            title: const LifexText('النماذج الكبيرة عبر Wi-Fi فقط'),
+            subtitle: const LifexText('بلا قياس للشبكة لا يبدأ التنزيل.'),
             value: _wifiOnly,
             onChanged: (value) async {
               setState(() => _wifiOnly = value);
@@ -100,16 +102,16 @@ class _VisionResourceScreenState extends State<VisionResourceScreen> {
           ),
           Semantics(
             button: true,
-            label: 'حدّث ذكاء الكاميرا الآن',
+            label: tr('حدّث ذكاء الكاميرا الآن'),
             child: OutlinedButton(
               onPressed: _updateNow,
-              child: const Text('حدّث ذكاء الكاميرا الآن'),
+              child: const LifexText('حدّث ذكاء الكاميرا الآن'),
             ),
           ),
           const SizedBox(height: 8),
           Semantics(
             button: true,
-            label: 'افتح العدسة الحية',
+            label: tr('افتح العدسة الحية'),
             child: FilledButton.icon(
               onPressed: () {
                 Navigator.push(
@@ -120,18 +122,18 @@ class _VisionResourceScreenState extends State<VisionResourceScreen> {
                 );
               },
               icon: const Icon(Icons.videocam),
-              label: const Text('افتح العدسة الحية'),
+              label: const LifexText('افتح العدسة الحية'),
             ),
           ),
           if (_note != null) ...[
             const SizedBox(height: 12),
-            Semantics(liveRegion: true, label: _note, child: Text(_note!)),
+            Semantics(liveRegion: true, label: tr(_note), child: LifexText(_note!)),
           ],
           for (final resource in OfficialResourceCatalog.vision)
             Card(
               child: ListTile(
-                title: Text(resource.name),
-                subtitle: Text(
+                title: LifexText(resource.name),
+                subtitle: LifexText(
                   '${resource.kindAr} — ${resource.publisher}\n'
                   '${resource.requirementAr}\n'
                   '${resource.noteAr}\n'

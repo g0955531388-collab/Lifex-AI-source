@@ -20,6 +20,8 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class HealthChatScreen extends StatelessWidget {
   const HealthChatScreen({super.key});
@@ -31,15 +33,15 @@ class HealthChatScreen extends StatelessWidget {
         final me = controller.activeProfile;
         if (me == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('القناة الصحية')),
-            body: const Center(child: Text('لا يوجد ملف نشط.')),
+            appBar: AppBar(title: const LifexText('القناة الصحية')),
+            body: const Center(child: LifexText('لا يوجد ملف نشط.')),
           );
         }
         final others = controller.allProfiles
             .where((item) => item.profileId != me.profileId)
             .toList();
         return Scaffold(
-          appBar: AppBar(title: const Text('القناة الصحية')),
+          appBar: AppBar(title: const LifexText('القناة الصحية')),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -56,26 +58,26 @@ class HealthChatScreen extends StatelessWidget {
                     ? null
                     : () => _openLocalMeeting(context, controller, me, others),
                 icon: const Icon(Icons.groups_outlined),
-                label: const Text('غرفة اجتماع محلية'),
+                label: const LifexText('غرفة اجتماع محلية'),
               ),
               for (final room
                   in ProfileBoxStore(me).list(BoxKeys.meetingRooms))
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.meeting_room_outlined),
-                  title: Text(room['conversationId'] as String? ?? 'غرفة'),
-                  subtitle: Text(
+                  title: LifexText(room['conversationId'] as String? ?? 'غرفة'),
+                  subtitle: LifexText(
                     'حضور: ${(room['participantLifexIds'] as List?)?.length ?? 0}',
                   ),
                 ),
               if (others.isEmpty)
-                const Text('أضيفي ملفاً آخر من العائلة لتبدأ محادثة ثنائية.'),
+                const LifexText('أضيفي ملفاً آخر من العائلة لتبدأ محادثة ثنائية.'),
               for (final other in others)
                 Card(
                   child: ListTile(
                     leading: const Icon(Icons.chat),
-                    title: Text(other.fullName),
-                    subtitle: Text(
+                    title: LifexText(other.fullName),
+                    subtitle: LifexText(
                       other.billingSeat == 'hospital' ||
                               other.billingSeat == 'healthUnit'
                           ? 'محادثة سريرية — مرفقات طبية مسموحة'
@@ -107,16 +109,16 @@ class HealthChatScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setLocal) => AlertDialog(
-          title: const Text('غرفة اجتماع محلية'),
+          title: const LifexText('غرفة اجتماع محلية'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('تُحفظ أسماء الحضور على هذا الجهاز. لا تبدأ مكالمة.'),
+                const LifexText('تُحفظ أسماء الحضور على هذا الجهاز. لا تبدأ مكالمة.'),
                 for (final other in others)
                   CheckboxListTile(
                     value: selected.contains(other.profileId),
-                    title: Text(other.fullName),
+                    title: LifexText(other.fullName),
                     controlAffinity: ListTileControlAffinity.leading,
                     onChanged: (value) {
                       setLocal(() {
@@ -134,11 +136,11 @@ class HealthChatScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('إلغاء'),
+              child: const LifexText('إلغاء'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('فتح السجل'),
+              child: const LifexText('فتح السجل'),
             ),
           ],
         ),
@@ -150,7 +152,7 @@ class HealthChatScreen extends StatelessWidget {
     );
     if (room == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('اختر مشاركاً واحداً على الأقل معك.')),
+        const SnackBar(content: LifexText('اختر مشاركاً واحداً على الأقل معك.')),
       );
       return;
     }
@@ -267,13 +269,13 @@ class _ThreadPageState extends State<HealthThreadPage> {
       HealthThreadLedger.threadId(widget.me.profileId, widget.other.profileId),
     );
     return Scaffold(
-      appBar: AppBar(title: Text(widget.other.fullName)),
+      appBar: AppBar(title: LifexText(widget.other.fullName)),
       body: Column(
         children: [
           if (_statusAr != null)
             Padding(
               padding: const EdgeInsets.all(8),
-              child: Text(_statusAr!),
+              child: LifexText(_statusAr!),
             ),
           Expanded(
             child: ListView.builder(
@@ -295,13 +297,13 @@ class _ThreadPageState extends State<HealthThreadPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(post.text.isEmpty ? '(مرفق)' : post.text),
+                          LifexText(post.text.isEmpty ? '(مرفق)' : post.text),
                           if (post.fileName.isNotEmpty)
-                            Text(
+                            LifexText(
                               '📎 ${post.fileName} (${post.sizeBytes} بايت)',
                               style: const TextStyle(fontSize: 12),
                             ),
-                          Text(
+                          LifexText(
                             post.read ? 'قُرئت' : 'وُصلت على هذا الجهاز',
                             style: const TextStyle(fontSize: 11),
                           ),
@@ -319,7 +321,7 @@ class _ThreadPageState extends State<HealthThreadPage> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'إرفاق صورة أو ملف من المعرض',
+                    tooltip: tr('إرفاق صورة أو ملف من المعرض'),
                     onPressed: _pickFile,
                     icon: const Icon(Icons.attach_file),
                   ),
@@ -329,9 +331,9 @@ class _ThreadPageState extends State<HealthThreadPage> {
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _send(),
                       decoration: InputDecoration(
-                        hintText: _fileName == null
+                        hintText: tr(_fileName == null
                             ? 'رسالة صحية…'
-                            : 'مرفق: $_fileName',
+                            : 'مرفق: $_fileName'),
                         border: const OutlineInputBorder(),
                       ),
                     ),
@@ -339,7 +341,7 @@ class _ThreadPageState extends State<HealthThreadPage> {
                   IconButton.filled(
                     onPressed: _send,
                     icon: const Icon(Icons.send),
-                    tooltip: 'إرسال',
+                    tooltip: tr('إرسال'),
                   ),
                 ],
               ),

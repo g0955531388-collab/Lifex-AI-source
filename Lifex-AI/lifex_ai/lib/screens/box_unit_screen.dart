@@ -19,6 +19,8 @@ import '../features/profile/active_profile_controller.dart';
 import '../widgets/honesty_banner.dart';
 import 'health_profile_screen.dart';
 import 'unit_branch_navigator.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class BoxUnitScreen extends StatelessWidget {
   const BoxUnitScreen({super.key, required this.unit});
@@ -32,18 +34,18 @@ class BoxUnitScreen extends StatelessWidget {
         final profile = controller.activeProfile;
         if (profile == null) {
           return Scaffold(
-            appBar: AppBar(title: Text(unit.titleAr)),
-            body: const Center(child: Text('لا يوجد ملف صحي نشط.')),
+            appBar: AppBar(title: LifexText(unit.titleAr)),
+            body: const Center(child: LifexText('لا يوجد ملف صحي نشط.')),
           );
         }
         final store = ProfileBoxStore(profile);
         final branches = UnitBranchCatalog.forUnit(unit.id);
         return Scaffold(
-          appBar: AppBar(title: Text(unit.titleAr)),
+          appBar: AppBar(title: LifexText(unit.titleAr)),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(unit.subtitleAr,
+              LifexText(unit.subtitleAr,
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               HonestyBanner.localAndServer(),
@@ -67,18 +69,18 @@ class BoxUnitScreen extends StatelessWidget {
                 _ExemptionCard(),
               ],
               const SizedBox(height: 16),
-              Text('أقسام الوحدة',
+              LifexText('أقسام الوحدة',
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               if (branches.isEmpty)
-                const Text('لا فروع معرفة لهذه الوحدة بعد.')
+                const LifexText('لا فروع معرفة لهذه الوحدة بعد.')
               else
                 for (final branch in branches)
                   Card(
                     child: ListTile(
                       leading: CircleAvatar(child: Icon(branch.icon)),
-                      title: Text(branch.titleAr),
-                      subtitle: Text(
+                      title: LifexText(branch.titleAr),
+                      subtitle: LifexText(
                         _branchSubtitle(store, branch),
                       ),
                       isThreeLine: true,
@@ -133,18 +135,18 @@ class _UnitMembershipBar extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            LifexText(
               'المتابعون الخارجيون على هذا الجهاز: $count',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 4),
-            Text(
+            LifexText(
               member
                   ? 'صفتك: عضو. يحق لهذه الوحدة فحص ملفك الصحي على هذا الجهاز.'
                   : 'صفتك: زائر. اعتماد الوحدة يجعلك عضواً ويسمح لها بفحص ملفك.',
             ),
             const SizedBox(height: 4),
-            const Text(
+            const LifexText(
               'المتابعة الخارجية تُبقيك زائراً ولا تمنح حق الفحص. '
               'الاعتماد ليس ترخيصاً وطنياً ولا يكشف ملفات الآخرين.',
             ),
@@ -171,7 +173,7 @@ class _UnitMembershipBar extends StatelessWidget {
                                 : 'المتابعة الخارجية مسجّلة من قبل.',
                           );
                         },
-                  child: Text(
+                  child: LifexText(
                     following ? 'متابع خارجي' : 'متابعون خارجيون',
                   ),
                 ),
@@ -200,7 +202,7 @@ class _UnitMembershipBar extends StatelessWidget {
                     controller.saveActiveProfileChanges();
                   },
                   child:
-                      Text(member ? 'عضو — إلغاء الاعتماد' : 'اعتماد الوحدة'),
+                      LifexText(member ? 'عضو — إلغاء الاعتماد' : 'اعتماد الوحدة'),
                 ),
                 if (profile != null &&
                     _desk.mayExamineHealthFile(store, unitId, profileId))
@@ -213,13 +215,13 @@ class _UnitMembershipBar extends StatelessWidget {
                         ),
                       ),
                     ),
-                    child: const Text('فحص الملف الصحي'),
+                    child: const LifexText('فحص الملف الصحي'),
                   ),
               ],
             ),
             if (_desk.notices(store, unitId).isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(
+              LifexText(
                 'إشعارات الوحدة',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
@@ -227,8 +229,8 @@ class _UnitMembershipBar extends StatelessWidget {
                   in _desk.notices(store, unitId).reversed.take(8))
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(notice['title']?.toString() ?? ''),
-                  subtitle: Text(notice['detail']?.toString() ?? ''),
+                  title: LifexText(notice['title']?.toString() ?? ''),
+                  subtitle: LifexText(notice['detail']?.toString() ?? ''),
                 ),
             ],
           ],
@@ -245,8 +247,8 @@ class _UnitMembershipBar extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('متابعون خارجيون'),
-        content: Text(
+        title: const LifexText('متابعون خارجيون'),
+        content: LifexText(
           names.isEmpty
               ? '$lead\nلا متابع مسجّل على هذا الجهاز.'
               : '$lead\n${names.join('\n')}',
@@ -254,7 +256,7 @@ class _UnitMembershipBar extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('إغلاق'),
+            child: const LifexText('إغلاق'),
           ),
         ],
       ),
@@ -330,9 +332,9 @@ class _UnitBookingCardState extends State<_UnitBookingCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('حجز حصة', style: Theme.of(context).textTheme.titleSmall),
+            LifexText('حجز حصة', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 4),
-            const Text(
+            const LifexText(
               'مثل حجز الطبيب: الحصة الفارغة تُحجز على هذا الجهاز، '
               'والمأخوذة تبقى محجوزة. قبل الحصة اضغط حصتك لإلغائها، '
               'فيُطلب استرداد المبلغ بعد عمولة النظام 5٪. '
@@ -342,14 +344,14 @@ class _UnitBookingCardState extends State<_UnitBookingCard> {
             TextField(
               controller: _prepaid,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'دفع مسبق بالوحدة الصغرى',
-                helperText: 'اتركه فارغاً للحجز بلا دفع.',
+              decoration: InputDecoration(
+                labelText: tr('دفع مسبق بالوحدة الصغرى'),
+                helperText: tr('اتركه فارغاً للحجز بلا دفع.'),
               ),
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(UnitSlotBoard.dayKey(_day)),
+              title: LifexText(UnitSlotBoard.dayKey(_day)),
               trailing: const Icon(Icons.calendar_today_outlined),
               onTap: () async {
                 final picked = await showDatePicker(
@@ -366,9 +368,9 @@ class _UnitBookingCardState extends State<_UnitBookingCard> {
             ),
             SegmentedButton<String>(
               segments: const [
-                ButtonSegment(value: 'all', label: Text('الفترتان')),
-                ButtonSegment(value: 'am', label: Text('صباحي')),
-                ButtonSegment(value: 'pm', label: Text('مسائي')),
+                ButtonSegment(value: 'all', label: LifexText('الفترتان')),
+                ButtonSegment(value: 'am', label: LifexText('صباحي')),
+                ButtonSegment(value: 'pm', label: LifexText('مسائي')),
               ],
               selected: {_period},
               onSelectionChanged: (value) =>
@@ -376,7 +378,7 @@ class _UnitBookingCardState extends State<_UnitBookingCard> {
             ),
             if (_statusAr != null) ...[
               const SizedBox(height: 8),
-              Text(_statusAr!),
+              LifexText(_statusAr!),
             ],
             const SizedBox(height: 8),
             Wrap(
@@ -424,7 +426,7 @@ class _UnitBookingCardState extends State<_UnitBookingCard> {
                                           ? '$time حضرت'
                                           : '$time محجوز'))));
                       return ActionChip(
-                        label: Text(label),
+                        label: LifexText(label),
                         onPressed: holder == null ||
                                 (booked &&
                                     (!mine || attended || (!before && !during)))
@@ -510,8 +512,8 @@ class _ExemptionCard extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: const Icon(Icons.verified_outlined),
-        title: const Text('الإعفاء الإنساني'),
-        subtitle: Text(
+        title: const LifexText('الإعفاء الإنساني'),
+        subtitle: LifexText(
           result.isExempt
               ? result.reasonAr!
               : 'التثبيت في فرع المعاقين: بطاقة إعاقة أو بطاقة مريض دائم من البلد المسجّل فيه صاحب الحساب.',
@@ -564,16 +566,16 @@ class _UnitAgentCardState extends State<_UnitAgentCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('وكيل الوحدة', style: Theme.of(context).textTheme.titleMedium),
+            LifexText('وكيل الوحدة', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
-            Text(
+            LifexText(
               member
                   ? 'أنت مدير هذه الوحدة على هذا الجهاز. الوكيل لا يعمل إلا إذا فعّلته.'
                   : 'الوكيل متوقف. مدير الوحدة المعتمد فقط يستطيع تشغيله.',
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('تشغيل الوكيل لإدارة نقل الملفات'),
+              title: const LifexText('تشغيل الوكيل لإدارة نقل الملفات'),
               value: enabled,
               onChanged: member
                   ? (value) {
@@ -592,22 +594,22 @@ class _UnitAgentCardState extends State<_UnitAgentCard> {
               value: _targetId,
               items: [
                 for (final unit in targets)
-                  DropdownMenuItem(value: unit.id, child: Text(unit.titleAr)),
+                  DropdownMenuItem(value: unit.id, child: LifexText(unit.titleAr)),
               ],
               onChanged: enabled
                   ? (value) => setState(() => _targetId = value)
                   : null,
-              decoration: const InputDecoration(labelText: 'الوحدة المستقبلة'),
+              decoration: InputDecoration(labelText: tr('الوحدة المستقبلة')),
             ),
             TextField(
               controller: _fileName,
               enabled: enabled,
-              decoration: const InputDecoration(labelText: 'اسم الملف'),
+              decoration: InputDecoration(labelText: tr('اسم الملف')),
             ),
             TextField(
               controller: _note,
               enabled: enabled,
-              decoration: const InputDecoration(labelText: 'ملاحظة النقل'),
+              decoration: InputDecoration(labelText: tr('ملاحظة النقل')),
             ),
             const SizedBox(height: 8),
             FilledButton(
@@ -629,20 +631,20 @@ class _UnitAgentCardState extends State<_UnitAgentCard> {
                       controller.saveActiveProfileChanges();
                       setState(() => _status = result.messageAr);
                     },
-              child: const Text('نقل الملف إلى الوحدة'),
+              child: const LifexText('نقل الملف إلى الوحدة'),
             ),
             if (_status.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(_status),
+              LifexText(_status),
             ],
             if (inbox.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text('ملفات هذه الوحدة على الجهاز: ${inbox.length}'),
+              LifexText('ملفات هذه الوحدة على الجهاز: ${inbox.length}'),
               for (final item in inbox.reversed.take(5))
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(item['fileName']?.toString() ?? ''),
-                  subtitle: Text(
+                  title: LifexText(item['fileName']?.toString() ?? ''),
+                  subtitle: LifexText(
                     '${item['fromUnitId']} → ${item['toUnitId']} · ${item['status']}',
                   ),
                 ),

@@ -25,6 +25,8 @@ import '../features/voice/voice_engine.dart';
 import '../widgets/voice_fill_button.dart';
 import 'camera_notes_screen.dart';
 import 'stamped_reports_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class SmartHealthQuestionnaireScreen extends StatefulWidget {
   const SmartHealthQuestionnaireScreen({super.key});
@@ -105,7 +107,7 @@ class _SmartHealthQuestionnaireScreenState
     profile.lastUpdatedAt = DateTime.now();
     context.read<ActiveProfileController>().saveActiveProfileChanges();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('تم حفظ الاستبيان الصحي في ملفك.')),
+      const SnackBar(content: LifexText('تم حفظ الاستبيان الصحي في ملفك.')),
     );
     VoiceEngine.instance.speak(
       'تم حفظ إجاباتك في ملفك على هذا الجهاز. ليست معالجة سحابية ولا تقريراً طبياً.',
@@ -116,16 +118,16 @@ class _SmartHealthQuestionnaireScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('إذن الكاميرا'),
-        content: Text('التقاط ${question.label} بموافقتك. ليست قراءة تامة للصورة.'),
+        title: const LifexText('إذن الكاميرا'),
+        content: LifexText('التقاط ${question.label} بموافقتك. ليست قراءة تامة للصورة.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('رفض'),
+            child: const LifexText('رفض'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('موافق'),
+            child: const LifexText('موافق'),
           ),
         ],
       ),
@@ -244,12 +246,12 @@ class _SmartHealthQuestionnaireScreenState
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ملخص إدخالك'),
-        content: SingleChildScrollView(child: Text(text)),
+        title: const LifexText('ملخص إدخالك'),
+        content: SingleChildScrollView(child: LifexText(text)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إغلاق'),
+            child: const LifexText('إغلاق'),
           ),
         ],
       ),
@@ -267,7 +269,7 @@ class _SmartHealthQuestionnaireScreenState
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('نُسخ JSON الاستبيان إلى الحافظة. ليس تقريراً طبياً.')),
+      const SnackBar(content: LifexText('نُسخ JSON الاستبيان إلى الحافظة. ليس تقريراً طبياً.')),
     );
   }
 
@@ -285,7 +287,7 @@ class _SmartHealthQuestionnaireScreenState
     await Clipboard.setData(ClipboardData(text: buf.toString()));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('نُسخ نص الأقسام إلى الحافظة.')),
+      const SnackBar(content: LifexText('نُسخ نص الأقسام إلى الحافظة.')),
     );
   }
 
@@ -295,15 +297,15 @@ class _SmartHealthQuestionnaireScreenState
     final progress = (_section + 1) / _sections.length;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('الاستبيان الصحي الناطق'),
+        title: const LifexText('الاستبيان الصحي الناطق'),
         actions: [
           IconButton(
-            tooltip: 'قراءة هذا القسم',
+            tooltip: tr('قراءة هذا القسم'),
             onPressed: _speakSection,
             icon: const Icon(Icons.volume_up_outlined),
           ),
           IconButton(
-            tooltip: 'أوراق وتقارير مصوّرة',
+            tooltip: tr('أوراق وتقارير مصوّرة'),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CameraNotesScreen()),
@@ -311,17 +313,17 @@ class _SmartHealthQuestionnaireScreenState
             icon: const Icon(Icons.photo_camera_outlined),
           ),
           IconButton(
-            tooltip: 'نسخ JSON',
+            tooltip: tr('نسخ JSON'),
             onPressed: _copyJson,
             icon: const Icon(Icons.copy_outlined),
           ),
           IconButton(
-            tooltip: 'نسخ نص الأقسام',
+            tooltip: tr('نسخ نص الأقسام'),
             onPressed: _copyPlainText,
             icon: const Icon(Icons.notes_outlined),
           ),
           IconButton(
-            tooltip: 'حفظ الاستبيان',
+            tooltip: tr('حفظ الاستبيان'),
             onPressed: _save,
             icon: const Icon(Icons.save_outlined),
           ),
@@ -335,10 +337,10 @@ class _SmartHealthQuestionnaireScreenState
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('القسم ${_section + 1} من ${_sections.length}',
+                LifexText('القسم ${_section + 1} من ${_sections.length}',
                     style: Theme.of(context).textTheme.labelLarge),
                 Flexible(
-                  child: Text(
+                  child: LifexText(
                     current.title,
                     style: Theme.of(context).textTheme.titleMedium,
                     textAlign: TextAlign.end,
@@ -349,7 +351,7 @@ class _SmartHealthQuestionnaireScreenState
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
+            child: LifexText(
               'بيانات تنظيمية لملفك. ليست تشخيصاً ولا قراءة لصورة. '
               'التقاط التقارير من الكاميرا بعد موافقة ظاهرة.',
               style: TextStyle(fontSize: 12, color: Colors.orange),
@@ -358,14 +360,14 @@ class _SmartHealthQuestionnaireScreenState
           if (_consistencyAr != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Text(
+              child: LifexText(
                 _consistencyAr!,
                 style: const TextStyle(fontSize: 13, color: Colors.amber),
               ),
             ),
           SwitchListTile(
-            title: const Text('نطق الحقل عند التركيز'),
-            subtitle: const Text('للمكفوفين. يقرأ اسم الحقل فقط، بلا تشخيص'),
+            title: const LifexText('نطق الحقل عند التركيز'),
+            subtitle: const LifexText('للمكفوفين. يقرأ اسم الحقل فقط، بلا تشخيص'),
             value: _speakOnFocus,
             onChanged: (value) => setState(() => _speakOnFocus = value),
           ),
@@ -386,14 +388,14 @@ class _SmartHealthQuestionnaireScreenState
                       Expanded(
                         child: OutlinedButton(
                           onPressed: _showConsistency,
-                          child: const Text('تعارضات الإدخال'),
+                          child: const LifexText('تعارضات الإدخال'),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: OutlinedButton(
                           onPressed: _showSummary,
-                          child: const Text('ملخص إدخالي'),
+                          child: const LifexText('ملخص إدخالي'),
                         ),
                       ),
                     ],
@@ -409,7 +411,7 @@ class _SmartHealthQuestionnaireScreenState
                               _speakSection();
                             },
                             icon: const Icon(Icons.arrow_back),
-                            label: const Text('السابق'),
+                            label: const LifexText('السابق'),
                           ),
                         ),
                       if (_section > 0) const SizedBox(width: 10),
@@ -433,7 +435,7 @@ class _SmartHealthQuestionnaireScreenState
                           icon: Icon(_section == _sections.length - 1
                               ? Icons.check
                               : Icons.arrow_forward),
-                          label: Text(_section == _sections.length - 1
+                          label: LifexText(_section == _sections.length - 1
                               ? 'حفظ ثم التقرير المختوم'
                               : 'التالي'),
                         ),
@@ -455,7 +457,7 @@ class _SmartHealthQuestionnaireScreenState
       case QuestionKind.yesNo:
         child = Card(
           child: SwitchListTile(
-            title: Text(question.label),
+            title: LifexText(question.label),
             value: _answers[question.key] == true,
             onChanged: (value) =>
                 setState(() => _answers[question.key] = value),
@@ -470,10 +472,10 @@ class _SmartHealthQuestionnaireScreenState
           padding: const EdgeInsets.only(bottom: 12),
           child: DropdownButtonFormField<String>(
             value: safeValue,
-            decoration: InputDecoration(labelText: question.label),
+            decoration: InputDecoration(labelText: tr(question.label)),
             items: question.options!
                 .map((option) =>
-                    DropdownMenuItem(value: option, child: Text(option)))
+                    DropdownMenuItem(value: option, child: LifexText(option)))
                 .toList(),
             onChanged: (value) =>
                 setState(() => _answers[question.key] = value),
@@ -483,8 +485,8 @@ class _SmartHealthQuestionnaireScreenState
       case QuestionKind.photo:
         child = Card(
           child: ListTile(
-            title: Text(question.label),
-            subtitle: Text(
+            title: LifexText(question.label),
+            subtitle: LifexText(
               (_answers[question.key] ?? 'لم تُلتقط بعد. الكاميرا إشارة تقريبية.').toString(),
             ),
             trailing: const Icon(Icons.camera_alt_outlined),
@@ -507,7 +509,7 @@ class _SmartHealthQuestionnaireScreenState
                       : TextInputType.multiline,
                   maxLines: question.kind == QuestionKind.number ? 1 : 3,
                   decoration: InputDecoration(
-                    labelText: question.label,
+                    labelText: tr(question.label),
                     border: const OutlineInputBorder(),
                   ),
                   onChanged: (value) => _answers[question.key] = value,

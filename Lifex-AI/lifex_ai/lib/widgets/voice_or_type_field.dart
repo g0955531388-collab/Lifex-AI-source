@@ -7,6 +7,7 @@ library lifex_ai.widgets.voice_or_type_field;
 import 'package:flutter/material.dart';
 
 import '../features/voice/voice_engine.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class VoiceOrTypeField extends StatefulWidget {
   const VoiceOrTypeField({
@@ -55,17 +56,17 @@ class _VoiceOrTypeFieldState extends State<VoiceOrTypeField> {
             child: TextField(
               controller: widget.controller,
               keyboardType: widget.keyboardType,
-              decoration: InputDecoration(labelText: widget.label),
+              decoration: InputDecoration(labelText: tr(widget.label)),
             ),
           ),
           const SizedBox(width: 8),
           Semantics(
             button: true,
-            label: 'إملاء ${widget.label}',
+            label: tr('إملاء ${widget.label}'),
             child: IconButton(
               onPressed: _busy ? null : _listen,
               icon: const Icon(Icons.mic_none),
-              tooltip: 'إملاء',
+              tooltip: tr('إملاء'),
             ),
           ),
         ],

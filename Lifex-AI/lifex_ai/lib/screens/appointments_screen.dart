@@ -15,6 +15,8 @@ import '../features/scheduling/user_appointment_store.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/accessible_widgets.dart';
 import '../widgets/lifex_record_edit.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 enum _CalendarView { month, week, day }
 
@@ -158,26 +160,26 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('مواعيدي'),
+        title: const LifexText('مواعيدي'),
         actions: [
           IconButton(
-            tooltip: 'اقرأ مواعيد اليوم',
+            tooltip: tr('اقرأ مواعيد اليوم'),
             onPressed: () => _announce(_store.spokenDayAr(_selectedDay)),
             icon: const Icon(Icons.record_voice_over_outlined),
           ),
           IconButton(
-            tooltip: 'اليوم',
+            tooltip: tr('اليوم'),
             onPressed: _goToday,
             icon: const Icon(Icons.today_outlined),
           ),
           PopupMenuButton<_CalendarView>(
-            tooltip: 'تغيير العرض',
+            tooltip: tr('تغيير العرض'),
             initialValue: _view,
             onSelected: (v) => setState(() => _view = v),
             itemBuilder: (_) => const [
-              PopupMenuItem(value: _CalendarView.month, child: Text('شهر')),
-              PopupMenuItem(value: _CalendarView.week, child: Text('أسبوع')),
-              PopupMenuItem(value: _CalendarView.day, child: Text('يوم')),
+              PopupMenuItem(value: _CalendarView.month, child: LifexText('شهر')),
+              PopupMenuItem(value: _CalendarView.week, child: LifexText('أسبوع')),
+              PopupMenuItem(value: _CalendarView.day, child: LifexText('يوم')),
             ],
             icon: const Icon(Icons.calendar_view_month),
           ),
@@ -186,13 +188,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addOrEdit(),
         icon: const Icon(Icons.add),
-        label: const Text('إضافة موعد'),
+        label: const LifexText('إضافة موعد'),
       ),
       body: profile == null
           ? const Center(
               child: Padding(
                 padding: EdgeInsets.all(24),
-                child: Text(
+                child: LifexText(
                   'EMPTY — وحدة المواعيد متاحة.\n'
                   'لا يوجد ملف صحي نشط. أنشئ ملفاً من الشاشة الرئيسية لحفظ المواعيد.',
                   textAlign: TextAlign.center,
@@ -210,16 +212,16 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 if (_view == _CalendarView.week) _buildWeekStrip(),
                 if (_view == _CalendarView.day)
                   ListTile(
-                    title: Text(dayLabel),
-                    subtitle: const Text('عرض يومي'),
+                    title: LifexText(dayLabel),
+                    subtitle: const LifexText('عرض يومي'),
                   ),
                 const Divider(height: 1),
                 Expanded(
                   child: dayItems.isEmpty
                       ? Center(
                           child: Semantics(
-                            label: dayLabel,
-                            child: const Text(
+                            label: tr(dayLabel),
+                            child: const LifexText(
                               'EMPTY — لا مواعيد في هذا اليوم.\n'
                               'اضغط إضافة موعد أو اختر يوماً آخر.',
                               textAlign: TextAlign.center,
@@ -236,11 +238,11 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                                 leading: const CircleAvatar(
                                   child: Icon(Icons.event),
                                 ),
-                                title: Text(
+                                title: LifexText(
                                   '${appointment.timeHm} ${appointment.title}'
                                       .trim(),
                                 ),
-                                subtitle: Text(
+                                subtitle: LifexText(
                                   '${appointment.type} — ${appointment.place}\n'
                                   'تذكير: ${appointment.reminderMinutes} د '
                                   '· ${appointment.recurrence.name} '
@@ -264,9 +266,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                                               ),
                                     ),
                                     IconButton(
-                                      tooltip: appointment.canDirectDelete
+                                      tooltip: tr(appointment.canDirectDelete
                                           ? 'حذف الموعد المحلي'
-                                          : 'طلب إلغاء',
+                                          : 'طلب إلغاء'),
                                       icon: const Icon(Icons.delete_outline),
                                       onPressed: () => _remove(appointment),
                                     ),
@@ -301,7 +303,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         Semantics(
           button: true,
           label:
-              '${day.day} ${_monthNameAr(day.month)}، ${count == 0 ? 'بلا مواعيد' : 'يحتوي على $count موعد'}',
+              tr('${day.day} ${_monthNameAr(day.month)}، ${count == 0 ? 'بلا مواعيد' : 'يحتوي على $count موعد'}'),
           child: InkWell(
             onTap: () {
               setState(() => _selectedDay = day);
@@ -321,9 +323,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('$d'),
+                  LifexText('$d'),
                   if (count > 0)
-                    Text('•$count', style: const TextStyle(fontSize: 10)),
+                    LifexText('•$count', style: const TextStyle(fontSize: 10)),
                 ],
               ),
             ),
@@ -337,7 +339,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         Row(
           children: [
             IconButton(
-              tooltip: 'الشهر السابق',
+              tooltip: tr('الشهر السابق'),
               onPressed: () {
                 setState(() {
                   _visibleMonth =
@@ -348,14 +350,14 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               icon: const Icon(Icons.chevron_left),
             ),
             Expanded(
-              child: Text(
+              child: LifexText(
                 '${_monthNameAr(_visibleMonth.month)} ${_visibleMonth.year}',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
             IconButton(
-              tooltip: 'الشهر التالي',
+              tooltip: tr('الشهر التالي'),
               onPressed: () {
                 setState(() {
                   _visibleMonth =
@@ -395,7 +397,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             padding: const EdgeInsets.all(4),
             child: ChoiceChip(
               selected: selected,
-              label: Text('${day.day}${count > 0 ? ' ($count)' : ''}'),
+              label: LifexText('${day.day}${count > 0 ? ' ($count)' : ''}'),
               onSelected: (_) {
                 setState(() {
                   _selectedDay = day;
@@ -488,37 +490,37 @@ class _AppointmentWizardState extends State<_AppointmentWizard> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.initial == null ? 'إضافة موعد' : 'تعديل موعد'),
+      title: LifexText(widget.initial == null ? 'إضافة موعد' : 'تعديل موعد'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _title,
-              decoration: const InputDecoration(labelText: 'العنوان'),
+              decoration: InputDecoration(labelText: tr('العنوان')),
             ),
             DropdownButtonFormField<String>(
               value: _type,
-              decoration: const InputDecoration(labelText: 'النوع'),
+              decoration: InputDecoration(labelText: tr('النوع')),
               items: const [
-                DropdownMenuItem(value: 'doctor', child: Text('طبيب')),
-                DropdownMenuItem(value: 'hospital', child: Text('مستشفى')),
-                DropdownMenuItem(value: 'laboratory', child: Text('مختبر')),
-                DropdownMenuItem(value: 'imaging', child: Text('تصوير')),
-                DropdownMenuItem(value: 'pharmacy', child: Text('صيدلية')),
-                DropdownMenuItem(value: 'dentistry', child: Text('أسنان')),
-                DropdownMenuItem(value: 'rehabilitation', child: Text('تأهيل')),
-                DropdownMenuItem(value: 'blood', child: Text('دم')),
-                DropdownMenuItem(value: 'telehealth', child: Text('عن بُعد')),
-                DropdownMenuItem(value: 'follow_up', child: Text('متابعة')),
-                DropdownMenuItem(value: 'device_service', child: Text('خدمة جهاز')),
-                DropdownMenuItem(value: 'other', child: Text('أخرى')),
+                DropdownMenuItem(value: 'doctor', child: LifexText('طبيب')),
+                DropdownMenuItem(value: 'hospital', child: LifexText('مستشفى')),
+                DropdownMenuItem(value: 'laboratory', child: LifexText('مختبر')),
+                DropdownMenuItem(value: 'imaging', child: LifexText('تصوير')),
+                DropdownMenuItem(value: 'pharmacy', child: LifexText('صيدلية')),
+                DropdownMenuItem(value: 'dentistry', child: LifexText('أسنان')),
+                DropdownMenuItem(value: 'rehabilitation', child: LifexText('تأهيل')),
+                DropdownMenuItem(value: 'blood', child: LifexText('دم')),
+                DropdownMenuItem(value: 'telehealth', child: LifexText('عن بُعد')),
+                DropdownMenuItem(value: 'follow_up', child: LifexText('متابعة')),
+                DropdownMenuItem(value: 'device_service', child: LifexText('خدمة جهاز')),
+                DropdownMenuItem(value: 'other', child: LifexText('أخرى')),
               ],
               onChanged: (v) => setState(() => _type = v ?? 'other'),
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(
+              title: LifexText(
                 'التاريخ: ${_date.toIso8601String().split('T').first}',
               ),
               trailing: const Icon(Icons.calendar_today),
@@ -526,37 +528,37 @@ class _AppointmentWizardState extends State<_AppointmentWizard> {
             ),
             TextField(
               controller: _time,
-              decoration: const InputDecoration(
-                labelText: 'الوقت (HH:mm)',
+              decoration: InputDecoration(
+                labelText: tr('الوقت (HH:mm)'),
                 hintText: '09:00',
               ),
             ),
             TextField(
               controller: _place,
-              decoration: const InputDecoration(labelText: 'المكان / الجهة'),
+              decoration: InputDecoration(labelText: tr('المكان / الجهة')),
             ),
             TextField(
               controller: _notes,
-              decoration: const InputDecoration(labelText: 'ملاحظات'),
+              decoration: InputDecoration(labelText: tr('ملاحظات')),
             ),
             DropdownButtonFormField<int>(
               value: _reminder,
-              decoration: const InputDecoration(labelText: 'التذكير قبل'),
+              decoration: InputDecoration(labelText: tr('التذكير قبل')),
               items: const [
-                DropdownMenuItem(value: 5, child: Text('5 دقائق')),
-                DropdownMenuItem(value: 15, child: Text('15 دقيقة')),
-                DropdownMenuItem(value: 30, child: Text('30 دقيقة')),
-                DropdownMenuItem(value: 60, child: Text('ساعة')),
-                DropdownMenuItem(value: 1440, child: Text('يوم')),
+                DropdownMenuItem(value: 5, child: LifexText('5 دقائق')),
+                DropdownMenuItem(value: 15, child: LifexText('15 دقيقة')),
+                DropdownMenuItem(value: 30, child: LifexText('30 دقيقة')),
+                DropdownMenuItem(value: 60, child: LifexText('ساعة')),
+                DropdownMenuItem(value: 1440, child: LifexText('يوم')),
               ],
               onChanged: (v) => setState(() => _reminder = v ?? 30),
             ),
             DropdownButtonFormField<AppointmentRecurrence>(
               value: _recurrence,
-              decoration: const InputDecoration(labelText: 'التكرار'),
+              decoration: InputDecoration(labelText: tr('التكرار')),
               items: AppointmentRecurrence.values
                   .map(
-                    (r) => DropdownMenuItem(value: r, child: Text(r.name)),
+                    (r) => DropdownMenuItem(value: r, child: LifexText(r.name)),
                   )
                   .toList(),
               onChanged: (v) =>
@@ -564,13 +566,13 @@ class _AppointmentWizardState extends State<_AppointmentWizard> {
             ),
             DropdownButtonFormField<String>(
               value: _timezone,
-              decoration: const InputDecoration(labelText: 'المنطقة الزمنية'),
+              decoration: InputDecoration(labelText: tr('المنطقة الزمنية')),
               items: const [
-                DropdownMenuItem(value: 'local', child: Text('توقيت الجهاز')),
-                DropdownMenuItem(value: 'UTC', child: Text('UTC')),
+                DropdownMenuItem(value: 'local', child: LifexText('توقيت الجهاز')),
+                DropdownMenuItem(value: 'UTC', child: LifexText('UTC')),
                 DropdownMenuItem(
                   value: 'Asia/Damascus',
-                  child: Text('Asia/Damascus'),
+                  child: LifexText('Asia/Damascus'),
                 ),
               ],
               onChanged: (v) => setState(() => _timezone = v ?? 'local'),
@@ -581,7 +583,7 @@ class _AppointmentWizardState extends State<_AppointmentWizard> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('إلغاء'),
+          child: const LifexText('إلغاء'),
         ),
         FilledButton(
           onPressed: () {
@@ -611,7 +613,7 @@ class _AppointmentWizardState extends State<_AppointmentWizard> {
               ),
             );
           },
-          child: const Text('حفظ'),
+          child: const LifexText('حفظ'),
         ),
       ],
     );

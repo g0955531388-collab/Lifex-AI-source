@@ -4,7 +4,7 @@ import 'package:lifex_ai/features/accessibility/local_object_detector.dart';
 
 void main() {
   test('الكاشف غير المثبت لا يعيد أجساماً ولا يدّعي أنه رأى إطاراً', () {
-    final outcome = const LocalObjectDetector().run();
+    final outcome = LocalObjectDetector().run();
     expect(outcome.ran, isFalse);
     expect(outcome.objects, isEmpty);
     expect(outcome.reasonAr, contains('ليس كشف أجسام'));

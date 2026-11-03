@@ -18,6 +18,8 @@ import '../features/finance/wallet_account.dart';
 import '../features/finance/wallet_manager.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_profile.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key, required this.profileId});
@@ -137,7 +139,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
+                    const LifexText(
                       'الخطوة 1/3 — المبلغ (دولار صحيح، وحدات صغرى داخل النظام).',
                     ),
                     const SizedBox(height: 12),
@@ -146,8 +148,8 @@ class _WalletScreenState extends State<WalletScreen> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: false,
                       ),
-                      decoration: const InputDecoration(
-                        labelText: 'المبلغ (دولار)',
+                      decoration: InputDecoration(
+                        labelText: tr('المبلغ (دولار)'),
                         border: OutlineInputBorder(),
                       ),
                       onChanged: (_) => setLocal(() {}),
@@ -159,11 +161,11 @@ class _WalletScreenState extends State<WalletScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('الخطوة 2/3 — وسيلة الدفع'),
+                    const LifexText('الخطوة 2/3 — وسيلة الدفع'),
                     const SizedBox(height: 12),
                     ...methods.map(
                       (m) => RadioListTile<String>(
-                        title: Text(
+                        title: LifexText(
                           '${m.labelAr} (${m.availability.name})',
                         ),
                         value: m.id,
@@ -174,7 +176,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       ),
                     ),
                     if (!methods.any((m) => m.id == methodId && m.canCharge))
-                      const Text(
+                      const LifexText(
                         'الوسيلة المختارة غير متاحة. اختر Sandbox.',
                         style: TextStyle(color: Colors.orange),
                       ),
@@ -185,26 +187,26 @@ class _WalletScreenState extends State<WalletScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('الخطوة 3/3 — الرسوم والتأكيد'),
+                    const LifexText('الخطوة 3/3 — الرسوم والتأكيد'),
                     const SizedBox(height: 12),
-                    Text(preview?.summaryAr() ?? 'لا معاينة رسوم'),
+                    LifexText(preview?.summaryAr() ?? 'لا معاينة رسوم'),
                     const SizedBox(height: 8),
-                    Text(
+                    LifexText(
                       session?.spokenStatusAr() ?? '',
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
-                    const Text(
+                    const LifexText(
                       'الرسوم من Fee Policy. Sandbox ≠ أموال حقيقية.',
                       style: TextStyle(fontSize: 11, color: Colors.grey),
                     ),
                   ],
                 );
               default:
-                body = Text(resultMessage);
+                body = LifexText(resultMessage);
             }
 
             return AlertDialog(
-              title: const Text('شحن الرصيد'),
+              title: const LifexText('شحن الرصيد'),
               content: SingleChildScrollView(child: body),
               actions: [
                 TextButton(
@@ -212,12 +214,12 @@ class _WalletScreenState extends State<WalletScreen> {
                     session?.cancel();
                     Navigator.of(dialogContext).pop();
                   },
-                  child: Text(step >= 3 ? 'إغلاق' : 'إلغاء'),
+                  child: LifexText(step >= 3 ? 'إغلاق' : 'إلغاء'),
                 ),
                 if (step > 0 && step < 3)
                   TextButton(
                     onPressed: () => setLocal(() => step -= 1),
-                    child: const Text('رجوع'),
+                    child: const LifexText('رجوع'),
                   ),
                 if (step == 0)
                   FilledButton(
@@ -248,7 +250,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       _lastSessionId = session!.sessionId;
                       setLocal(() => step = 1);
                     },
-                    child: const Text('التالي — وسيلة الدفع'),
+                    child: const LifexText('التالي — وسيلة الدفع'),
                   ),
                 if (step == 1)
                   FilledButton(
@@ -287,7 +289,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       );
                       setLocal(() => step = 2);
                     },
-                    child: const Text('التالي — الرسوم'),
+                    child: const LifexText('التالي — الرسوم'),
                   ),
                 if (step == 2)
                   FilledButton(
@@ -334,7 +336,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             });
                             await _refreshWalletView();
                           },
-                    child: const Text('تأكيد الشحن'),
+                    child: const LifexText('تأكيد الشحن'),
                   ),
               ],
             );
@@ -356,14 +358,14 @@ class _WalletScreenState extends State<WalletScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('تحويل داخلي'),
+        title: const LifexText('تحويل داخلي'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: toController,
-              decoration: const InputDecoration(
-                labelText: 'معرّف مستلم Lifex (profileId)',
+              decoration: InputDecoration(
+                labelText: tr('معرّف مستلم Lifex (profileId)'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -371,13 +373,13 @@ class _WalletScreenState extends State<WalletScreen> {
             TextField(
           controller: amountController,
               keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-                labelText: 'المبلغ (دولار)',
+          decoration: InputDecoration(
+                labelText: tr('المبلغ (دولار)'),
             border: OutlineInputBorder(),
           ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            const LifexText(
               'Contact ≠ Financial Account. التحويل لمحفظة Lifex فقط.',
               style: TextStyle(fontSize: 11, color: Colors.grey),
             ),
@@ -386,11 +388,11 @@ class _WalletScreenState extends State<WalletScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('إلغاء'),
+            child: const LifexText('إلغاء'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('مراجعة وتأكيد'),
+            child: const LifexText('مراجعة وتأكيد'),
           ),
         ],
       ),
@@ -406,12 +408,13 @@ class _WalletScreenState extends State<WalletScreen> {
       gatewayRequest: _req(action: 'preview_topup_fee', risk: LioActionRisk.low),
       amountInSmallestUnit: dollars * 100,
     );
+    if (!mounted) return;
     final policyId = feePreview.value?.policyId ?? 'n/a';
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('تأكيد التحويل'),
-        content: Text(
+        title: const LifexText('تأكيد التحويل'),
+        content: LifexText(
           'إلى: $toId\n'
           'المبلغ: ${dollars.toStringAsFixed(2)}\n'
           'رسوم التحويل: 0.00 (لا سياسة تحويل منشورة غير الصفر)\n'
@@ -420,11 +423,11 @@ class _WalletScreenState extends State<WalletScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('رجوع'),
+            child: const LifexText('رجوع'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('تأكيد'),
+            child: const LifexText('تأكيد'),
           ),
         ],
       ),
@@ -547,18 +550,18 @@ class _WalletScreenState extends State<WalletScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(_transactionLabelAr(tx.type),
+            LifexText(_transactionLabelAr(tx.type),
                 style: Theme.of(ctx).textTheme.titleMedium),
-            Text('الحالة: ${tx.status.name}'),
-            Text(
+            LifexText('الحالة: ${tx.status.name}'),
+            LifexText(
               'المبلغ: \$${(tx.amountInSmallestUnit / 100).toStringAsFixed(2)}',
             ),
             if (tx.relatedGatewayTransactionId != null)
-              Text('مرجع المزود: ${tx.relatedGatewayTransactionId}'),
+              LifexText('مرجع المزود: ${tx.relatedGatewayTransactionId}'),
             if (tx.counterpartyProfileId != null)
-              Text('الطرف المقابل: ${tx.counterpartyProfileId}'),
-            Text(tx.isSandbox ? 'البيئة: SANDBOX' : 'البيئة: LIVE'),
-            Text('الوقت: ${tx.recordedAt.toIso8601String()}'),
+              LifexText('الطرف المقابل: ${tx.counterpartyProfileId}'),
+            LifexText(tx.isSandbox ? 'البيئة: SANDBOX' : 'البيئة: LIVE'),
+            LifexText('الوقت: ${tx.recordedAt.toIso8601String()}'),
           ],
         ),
       ),
@@ -586,11 +589,11 @@ class _WalletScreenState extends State<WalletScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('محفظتي'),
+        title: const LifexText('محفظتي'),
         actions: [
           if (_lastSessionId != null)
             IconButton(
-              tooltip: 'استئناف آخر جلسة شحن',
+              tooltip: tr('استئناف آخر جلسة شحن'),
               onPressed: _resumeLastSession,
               icon: const Icon(Icons.restore),
             ),
@@ -610,18 +613,18 @@ class _WalletScreenState extends State<WalletScreen> {
                       Semantics(
                         liveRegion: true,
                         label:
-                            'الرصيد المتاح ${(balances.availableMinor / 100).toStringAsFixed(2)} '
-                            'معلق ${(balances.pendingMinor / 100).toStringAsFixed(2)}',
+                            tr('الرصيد المتاح ${(balances.availableMinor / 100).toStringAsFixed(2)} '
+                            'معلق ${(balances.pendingMinor / 100).toStringAsFixed(2)}'),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('الرصيد المتاح',
+                            const LifexText('الرصيد المتاح',
                                 style: TextStyle(fontSize: 14)),
-                            Text(
+                            LifexText(
                               '\$${(balances.availableMinor / 100).toStringAsFixed(2)}',
                               style: Theme.of(context).textTheme.headlineMedium,
                             ),
-                            Text(
+                            LifexText(
                               'معلّق: \$${(balances.pendingMinor / 100).toStringAsFixed(2)} — '
                               'محجوز: \$${(balances.reservedMinor / 100).toStringAsFixed(2)} — '
                               '${balances.currencyCode}',
@@ -632,16 +635,16 @@ class _WalletScreenState extends State<WalletScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
+                      LifexText(
                         'المزوّد: $_gatewayName',
                         style:
                             const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 12),
-                      Text(plan.titleAr,
+                      LifexText(plan.titleAr,
                           style: const TextStyle(fontWeight: FontWeight.w600)),
-                      Text('\$${plan.usd} / سنة — ${plan.includesAr}'),
-                      Text(
+                      LifexText('\$${plan.usd} / سنة — ${plan.includesAr}'),
+                      LifexText(
                         exemption.isExempt
                             ? (exemption.reasonAr ?? 'معفى: لا أجور ولا رسوم.')
                             : 'تحويل الأموال والخدمات الخاصة: رسوم حسب سياسة المنصة.',
@@ -654,15 +657,15 @@ class _WalletScreenState extends State<WalletScreen> {
                           items: const [
                             DropdownMenuItem(
                               value: BillingSeat.individual,
-                              child: Text('فرد — 100 دولار سنوياً'),
+                              child: LifexText('فرد — 100 دولار سنوياً'),
                             ),
                             DropdownMenuItem(
                               value: BillingSeat.healthUnit,
-                              child: Text('وحدة صحية — 300 دولار سنوياً'),
+                              child: LifexText('وحدة صحية — 300 دولار سنوياً'),
                             ),
                             DropdownMenuItem(
                               value: BillingSeat.hospital,
-                              child: Text('مستشفى — 600 دولار سنوياً'),
+                              child: LifexText('مستشفى — 600 دولار سنوياً'),
                             ),
                           ],
                           onChanged: (value) {
@@ -683,25 +686,25 @@ class _WalletScreenState extends State<WalletScreen> {
                             onPressed:
                                 _isProcessing ? null : _showTopUpWizard,
                             icon: const Icon(Icons.add),
-                        label: const Text('شحن الرصيد'),
+                        label: const LifexText('شحن الرصيد'),
                           ),
                           OutlinedButton.icon(
                             onPressed:
                                 _isProcessing ? null : _showTransferDialog,
                             icon: const Icon(Icons.swap_horiz),
-                            label: const Text('تحويل'),
+                            label: const LifexText('تحويل'),
                           ),
                           OutlinedButton.icon(
                             onPressed: _isProcessing ? null : _withdraw,
                             icon: const Icon(Icons.account_balance),
-                            label: const Text('سحب'),
+                            label: const LifexText('سحب'),
                           ),
                           FilledButton.tonalIcon(
                             onPressed: (_isProcessing || profile == null)
                                 ? null
                                 : () => _chargeAnnual(profile),
                             icon: const Icon(Icons.event_available_outlined),
-                            label: Text(
+                            label: LifexText(
                               exemption.isExempt
                                   ? 'تفعيل بلا رسوم'
                                   : 'اشتراك \$${plan.usd}',
@@ -713,7 +716,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         const SizedBox(height: 8),
                         Semantics(
                           liveRegion: true,
-                          child: Text(
+                          child: LifexText(
                             _statusMessageAr!,
                             style: const TextStyle(fontSize: 13),
                           ),
@@ -729,7 +732,7 @@ class _WalletScreenState extends State<WalletScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Align(
                 alignment: Alignment.centerRight,
-                child: Text(
+                child: LifexText(
                   'كشف الحساب / المعاملات',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
@@ -746,8 +749,8 @@ class _WalletScreenState extends State<WalletScreen> {
                         Semantics(
                           liveRegion: true,
                           label:
-                              'المحفظة جاهزة بلا حركات. الرصيد صفر حتى شحن Sandbox.',
-                          child: const Text(
+                              tr('المحفظة جاهزة بلا حركات. الرصيد صفر حتى شحن Sandbox.'),
+                          child: const LifexText(
                             'EMPTY — لا حركات بعد.\n'
                             'هذا ليس عطلاً وليس حظراً بالاشتراك.\n'
                             'الخطوة التالية: شحن Sandbox (اختبار معزول، ليس مالاً حقيقياً).',
@@ -755,7 +758,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        const LifexText(
                           'شحن سريع للاختبار:',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontWeight: FontWeight.w600),
@@ -770,7 +773,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                 onPressed: _isProcessing
                                     ? null
                                     : () => _quickSandboxTopUp(d),
-                                child: Text('\$$d'),
+                                child: LifexText('\$$d'),
                               ),
                           ],
                         ),
@@ -779,11 +782,11 @@ class _WalletScreenState extends State<WalletScreen> {
                           onPressed:
                               _isProcessing ? null : _showTopUpWizard,
                           icon: const Icon(Icons.add_card),
-                          label: const Text(
+                          label: const LifexText(
                               'بدء شحن كامل — مبلغ ثم وسيلة ثم رسوم'),
                         ),
                         const SizedBox(height: 8),
-                        Text(
+                        LifexText(
                           _feePreviewHintAr ?? '',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
@@ -810,13 +813,13 @@ class _WalletScreenState extends State<WalletScreen> {
                                 ? Theme.of(context).colorScheme.primary
                                 : Theme.of(context).colorScheme.error,
                           ),
-                          title: Text(_transactionLabelAr(tx.type)),
-                          subtitle: Text(
+                          title: LifexText(_transactionLabelAr(tx.type)),
+                          subtitle: LifexText(
                             '${tx.status.name} — ${tx.recordedAt.year}/'
                             '${tx.recordedAt.month}/${tx.recordedAt.day}'
                             '${tx.isSandbox ? ' — SANDBOX' : ''}',
                           ),
-                          trailing: Text(
+                          trailing: LifexText(
                             '${isCredit ? '+' : '-'}\$'
                             '${(tx.amountInSmallestUnit / 100).toStringAsFixed(2)}',
                             style: TextStyle(

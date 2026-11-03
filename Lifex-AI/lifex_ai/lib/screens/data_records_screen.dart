@@ -13,6 +13,7 @@ import 'doctor_directory_screen.dart';
 import 'emergency_contacts_screen.dart';
 import 'family_management_screen.dart';
 import 'medications_screen.dart';
+import '../widgets/lifex_text.dart';
 
 class DataRecordsScreen extends StatelessWidget {
   const DataRecordsScreen({super.key});
@@ -24,12 +25,12 @@ class DataRecordsScreen extends StatelessWidget {
     final profileId = controller.activeProfileId;
     return Scaffold(
       appBar: AppBar(
-        title: Text(lifexUi('تعديل البيانات', 'Edit records')),
+        title: LifexText(lifexUi('تعديل البيانات', 'Edit records')),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          Text(lifexUi(
+          LifexText(lifexUi(
             'التعديل للسجل الشخصي على هذا الجهاز. المرجع العام لا يُستبدل كحقيقة، والجرعة لا تُغيَّر من هنا.',
             'Edit applies to your personal record on this device. General reference is not replaced as fact, and a dose is not changed here.',
           )),
@@ -121,7 +122,7 @@ class DataRecordsScreen extends StatelessWidget {
 
   void _needProfile(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(BlindNavigationCopy.needsProfileText)),
+      SnackBar(content: LifexText(BlindNavigationCopy.needsProfileText)),
     );
   }
 }
@@ -141,8 +142,8 @@ class _RecordRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        title: Text(title),
-        subtitle: Text(subtitle),
+        title: LifexText(title),
+        subtitle: LifexText(subtitle),
         trailing: LifexRecordEditButton(onPressed: onEdit),
         onTap: onEdit,
       ),

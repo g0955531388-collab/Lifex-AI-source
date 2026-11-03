@@ -13,6 +13,8 @@ import '../features/outreach/partner_sign_in_policy.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_identity_manager.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class PartnerSignInScreen extends StatefulWidget {
   const PartnerSignInScreen({super.key});
@@ -63,7 +65,7 @@ class _PartnerSignInScreenState extends State<PartnerSignInScreen> {
         : HealthIdentityManager.instance.getByProfileId(profile.profileId)?.lifexId;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('الدخول بحساب لايفكس')),
+      appBar: AppBar(title: const LifexText('الدخول بحساب لايفكس')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -75,9 +77,9 @@ class _PartnerSignInScreenState extends State<PartnerSignInScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: _destination,
-            decoration: const InputDecoration(
-              labelText: 'عنوان الموقع',
-              hintText: 'مثال: chatgpt.com أو عيادة شريكة',
+            decoration: InputDecoration(
+              labelText: tr('عنوان الموقع'),
+              hintText: tr('مثال: chatgpt.com أو عيادة شريكة'),
               border: OutlineInputBorder(),
             ),
             onSubmitted: (_) => _evaluate(),
@@ -85,24 +87,24 @@ class _PartnerSignInScreenState extends State<PartnerSignInScreen> {
           const SizedBox(height: 12),
           FilledButton(
             onPressed: _evaluate,
-            child: const Text('التحقق من حق الدخول'),
+            child: const LifexText('التحقق من حق الدخول'),
           ),
           if (_decision != null) ...[
             const SizedBox(height: 12),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Text(_decision!.messageAr),
+                child: LifexText(_decision!.messageAr),
               ),
             ),
           ],
           if (_decision?.offersLocalAccount == true) ...[
             const SizedBox(height: 8),
             ListTile(
-              title: const Text('حساب التسجيل'),
-              subtitle: Text(_accountCard(profile?.fullName, lifexId)),
+              title: const LifexText('حساب التسجيل'),
+              subtitle: LifexText(_accountCard(profile?.fullName, lifexId)),
               trailing: IconButton(
-                tooltip: 'نسخ حساب التسجيل',
+                tooltip: tr('نسخ حساب التسجيل'),
                 icon: const Icon(Icons.copy),
                 onPressed: () async {
                   await Clipboard.setData(
@@ -113,7 +115,7 @@ class _PartnerSignInScreenState extends State<PartnerSignInScreen> {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('نُسخ حساب التسجيل. بلا ملف صحي وبلا كلمة سر.'),
+                      content: LifexText('نُسخ حساب التسجيل. بلا ملف صحي وبلا كلمة سر.'),
                     ),
                   );
                 },

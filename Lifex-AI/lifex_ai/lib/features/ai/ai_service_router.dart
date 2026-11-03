@@ -63,9 +63,16 @@ abstract class ExternalAiEngineClient {
   });
 }
 
+/// نموذج النص المدعوم. gemini-2.5-flash يرفضه الخادم برمز 404.
+const geminiFlashModel = 'models/gemini-3.8-flash';
+
+const _retiredGeminiFlash = 'models/gemini-2.5-flash';
+
 /// يختار نموذجاً يولّد نصاً من قائمة Gemini. يفضّل flash ويتجاوز التضمين.
 String? chooseGeminiModelName(List<dynamic> models) {
   String? fallback;
+  String? flash;
+  var sawRetiredFlash = false;
   for (final item in models) {
     if (item is! Map) continue;
     final name = item['name'];
@@ -73,21 +80,29 @@ String? chooseGeminiModelName(List<dynamic> models) {
     final methods = item['supportedGenerationMethods'];
     if (methods is List && !methods.contains('generateContent')) continue;
     final lower = name.toLowerCase();
+    if (lower == _retiredGeminiFlash) {
+      sawRetiredFlash = true;
+      continue;
+    }
     if (lower.contains('embed') ||
         lower.contains('aqa') ||
         lower.contains('tts') ||
         lower.contains('image')) {
       continue;
     }
+    if (lower == geminiFlashModel) return name;
     fallback ??= name;
-    if (lower.contains('flash')) return name;
+    if (lower.contains('flash')) flash ??= name;
   }
+  if (flash != null) return flash;
+  if (sawRetiredFlash) return geminiFlashModel;
   return fallback;
 }
 
 /// يختار نموذجاً اسمه يحتوي live. غيابه لا يُستبدل بنموذج نصي.
 String? chooseGeminiLiveModelName(List<dynamic> models) {
   String? fallback;
+  String? flashFallback;
   for (final item in models) {
     if (item is! Map) continue;
     final name = item['name'];
@@ -107,9 +122,10 @@ String? chooseGeminiLiveModelName(List<dynamic> models) {
       continue;
     }
     fallback ??= name;
-    if (lower.contains('flash') || lower.contains('3.8')) return name;
+    if (lower.contains('3.8-live')) return name;
+    flashFallback ??= lower.contains('flash') ? name : null;
   }
-  return fallback;
+  return flashFallback ?? fallback;
 }
 
 String? chooseOpenAiModelId(List<dynamic> models) {

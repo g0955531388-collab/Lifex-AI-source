@@ -16,6 +16,8 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/reports/stamped_report.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class YouthGuideScreen extends StatefulWidget {
   const YouthGuideScreen({super.key});
@@ -48,7 +50,7 @@ class _YouthGuideScreenState extends State<YouthGuideScreen> {
     Clipboard.setData(ClipboardData(text: stamped));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('حُفظ ميثاق اليافع في الملف ونُسخ مختوماً.'),
+        content: LifexText('حُفظ ميثاق اليافع في الملف ونُسخ مختوماً.'),
       ),
     );
   }
@@ -58,15 +60,15 @@ class _YouthGuideScreenState extends State<YouthGuideScreen> {
     final chapters = _book.search(_query);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('دليل اليافعين'),
+        title: const LifexText('دليل اليافعين'),
         actions: [
           IconButton(
-            tooltip: _english ? 'العربية' : 'English',
+            tooltip: tr(_english ? 'العربية' : 'English'),
             onPressed: () => setState(() => _english = !_english),
             icon: const Icon(Icons.translate),
           ),
           IconButton(
-            tooltip: 'إيقاف النطق',
+            tooltip: tr('إيقاف النطق'),
             onPressed: () => VoiceEngine.instance.stopListening(),
             icon: const Icon(Icons.stop),
           ),
@@ -75,7 +77,7 @@ class _YouthGuideScreenState extends State<YouthGuideScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
+          LifexText(
             AppConstants.studioBannerCredit,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
@@ -89,20 +91,20 @@ class _YouthGuideScreenState extends State<YouthGuideScreen> {
             onChanged: (value) => setState(() => _textScale = value),
           ),
           TextField(
-            decoration: const InputDecoration(
-              labelText: 'بحث داخل الدليل',
+            decoration: InputDecoration(
+              labelText: tr('بحث داخل الدليل'),
               prefixIcon: Icon(Icons.search),
             ),
             onChanged: (value) => setState(() => _query = value.trim()),
           ),
           const SizedBox(height: 12),
-          Text('الفهرس', style: Theme.of(context).textTheme.titleMedium),
+          LifexText('الفهرس', style: Theme.of(context).textTheme.titleMedium),
           Wrap(
             spacing: 8,
             children: [
               for (final chapter in _book.chapters())
                 ActionChip(
-                  label: Text(chapter.kickerAr),
+                  label: LifexText(chapter.kickerAr),
                   onPressed: () => _speak(chapter),
                 ),
             ],
@@ -121,23 +123,23 @@ class _YouthGuideScreenState extends State<YouthGuideScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          LifexText(
                             chapter.kickerAr,
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text(
+                          LifexText(
                             chapter.titleAr,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 8),
-                          Text(_english ? chapter.bodyEn : chapter.bodyAr),
+                          LifexText(_english ? chapter.bodyEn : chapter.bodyAr),
                           TextButton.icon(
                             onPressed: () => _speak(chapter),
                             icon: const Icon(Icons.volume_up_outlined),
-                            label: const Text('قراءة هذا القسم'),
+                            label: const LifexText('قراءة هذا القسم'),
                           ),
                         ],
                       ),
@@ -149,7 +151,7 @@ class _YouthGuideScreenState extends State<YouthGuideScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        LifexText(
                           'خريطة المهارات',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
@@ -157,8 +159,8 @@ class _YouthGuideScreenState extends State<YouthGuideScreen> {
                         for (final row in _book.skillMap())
                           ListTile(
                             dense: true,
-                            title: Text(row.domainAr),
-                            subtitle: Text('${row.skillAr}\n${row.practiceAr}'),
+                            title: LifexText(row.domainAr),
+                            subtitle: LifexText('${row.skillAr}\n${row.practiceAr}'),
                           ),
                       ],
                     ),
@@ -170,7 +172,7 @@ class _YouthGuideScreenState extends State<YouthGuideScreen> {
           FilledButton.icon(
             onPressed: _savePact,
             icon: const Icon(Icons.bookmark_added_outlined),
-            label: const Text('حفظ ميثاق اليافع في الملف'),
+            label: const LifexText('حفظ ميثاق اليافع في الملف'),
           ),
         ],
       ),

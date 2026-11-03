@@ -26,6 +26,8 @@ import '../widgets/honesty_banner.dart';
 import 'box_unit_screen.dart';
 import 'manual_vitals_screen.dart';
 import 'permission_transparency_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class ProtectionWorkspaceScreen extends StatelessWidget {
   const ProtectionWorkspaceScreen({super.key});
@@ -40,8 +42,8 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
         final energy = context.watch<EnergyManager>();
         if (profile == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('الحماية حتى آخر يوم')),
-            body: const Center(child: Text('لا يوجد ملف صحي نشط.')),
+            appBar: AppBar(title: const LifexText('الحماية حتى آخر يوم')),
+            body: const Center(child: LifexText('لا يوجد ملف صحي نشط.')),
           );
         }
         final store = ProfileBoxStore(profile);
@@ -58,7 +60,7 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
         final battery = energy.batteryMonitor.lastKnownStatus;
         final hasReader = energy.batteryMonitor.reader != null;
         return Scaffold(
-          appBar: AppBar(title: const Text('الحماية حتى آخر يوم')),
+          appBar: AppBar(title: const LifexText('الحماية حتى آخر يوم')),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -67,11 +69,11 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                     'حماية الجهاز محلية على هذا الهاتف. المسح عن بعد وقفل الأجهزة الأخرى يحتاج خادماً. بلا Device Admin.',
               ),
               const SizedBox(height: 12),
-              Text('حارس الجهاز',
+              LifexText('حارس الجهاز',
                   style: Theme.of(context).textTheme.titleMedium),
               ListTile(
-                title: const Text('هذا الجهاز'),
-                subtitle: Text(
+                title: const LifexText('هذا الجهاز'),
+                subtitle: LifexText(
                   guardian['registered'] == true
                       ? 'مسجَّل محلياً'
                       : 'غير مسجَّل بعد',
@@ -88,16 +90,16 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                     });
                     controller.saveActiveProfileChanges();
                   },
-                  child: const Text('تسجيل'),
+                  child: const LifexText('تسجيل'),
                 ),
               ),
               ListTile(
-                title: const Text('حضور هذا الجهاز'),
-                subtitle: Text(presence),
+                title: const LifexText('حضور هذا الجهاز'),
+                subtitle: LifexText(presence),
               ),
               ListTile(
-                title: const Text('الإبلاغ عن فقدان'),
-                subtitle: Text(guardian['lost'] == true
+                title: const LifexText('الإبلاغ عن فقدان'),
+                subtitle: LifexText(guardian['lost'] == true
                     ? 'مُبلَّغ محلياً — بانتظار خادم للقفل البعيد'
                     : 'لم يُبلَّغ'),
                 trailing: FilledButton(
@@ -122,7 +124,7 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                     });
                     controller.saveActiveProfileChanges();
                   },
-                  child: const Text('فقدان'),
+                  child: const LifexText('فقدان'),
                 ),
               ),
               Card(
@@ -131,18 +133,18 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('سياسة أين جوالي',
+                      LifexText('سياسة أين جوالي',
                           style: Theme.of(context).textTheme.titleSmall),
                       const SizedBox(height: 8),
-                      Text(const LostPhonePolicy().nearbyActionAr()),
+                      LifexText(const LostPhonePolicy().nearbyActionAr()),
                       const SizedBox(height: 6),
-                      Text(const LostPhonePolicy().farSmsTemplate()),
+                      LifexText(const LostPhonePolicy().farSmsTemplate()),
                       const SizedBox(height: 6),
-                      Text(const LostPhonePolicy().simChangeWithoutPinAr()),
+                      LifexText(const LostPhonePolicy().simChangeWithoutPinAr()),
                       const SizedBox(height: 8),
-                      Text(LostPhoneDesk.limitAr),
+                      LifexText(LostPhoneDesk.limitAr),
                       const SizedBox(height: 8),
-                      Text(
+                      LifexText(
                         (guardian['pinHash']?.toString().isNotEmpty == true)
                             ? 'بصمة الرمز محفوظة. الرمز نفسه غير مخزّن.'
                             : guardian['pin']?.toString().isNotEmpty == true
@@ -151,8 +153,8 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                       ),
                       TextField(
                         obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'رمز أين جوالي',
+                        decoration: InputDecoration(
+                          labelText: tr('رمز أين جوالي'),
                         ),
                         onSubmitted: (value) async {
                           final desk = LostPhoneDesk();
@@ -168,7 +170,7 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Semantics(
                         button: true,
-                        label: 'فحص جاهزية العثور',
+                        label: tr('فحص جاهزية العثور'),
                         child: OutlinedButton(
                           onPressed: () async {
                             bool? locationOn;
@@ -197,17 +199,17 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                             });
                             controller.saveActiveProfileChanges();
                           },
-                          child: const Text('أعد فحص الجاهزية'),
+                          child: const LifexText('أعد فحص الجاهزية'),
                         ),
                       ),
-                      Text(
+                      LifexText(
                         guardian['findReadinessAr']?.toString() ??
                             LostPhoneDesk().readinessAr(),
                       ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('أوافق على متطلبات العثور'),
-                        subtitle: const Text(
+                        title: const LifexText('أوافق على متطلبات العثور'),
+                        subtitle: const LifexText(
                           'الموافقة وحدها لا تفعّل الحماية إذا لم تُقاس البيانات والموقع.',
                         ),
                         value: guardian['findConsent'] == true,
@@ -225,29 +227,29 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Text('الطاقة', style: Theme.of(context).textTheme.titleMedium),
+              LifexText('الطاقة', style: Theme.of(context).textTheme.titleMedium),
               ListTile(
-                title: const Text('قراءة البطارية'),
-                subtitle: Text(
+                title: const LifexText('قراءة البطارية'),
+                subtitle: LifexText(
                   hasReader
                       ? 'المستوى ${battery.level}% — ${battery.isCharging ? 'يشحن' : 'لا يشحن'}'
                       : 'لا توجد قراءة من النظام حتى يُربط قارئ بطارية حقيقي',
                 ),
               ),
               ListTile(
-                title: const Text('وضع البقاء'),
-                subtitle: Text(
+                title: const LifexText('وضع البقاء'),
+                subtitle: LifexText(
                   energy.survivalMode.isActive
                       ? 'مفعّل — الطوارئ تبقى والتنبيهات تبقى'
                       : 'غير مفعّل. يُفعَّل تحت ${energy.survivalMode.activationThresholdPercent}% عند توفر قراءة',
                 ),
               ),
-              Text(
+              LifexText(
                 'يبقى يعمل: ${alwaysActiveFeatures.join('، ')}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 16),
-              Text('المراقبة عن بعد',
+              LifexText('المراقبة عن بعد',
                   style: Theme.of(context).textTheme.titleMedium),
               const HonestyBanner(
                 messageAr:
@@ -257,8 +259,8 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                 if (member.profileId != profile.profileId)
                   Card(
                     child: ListTile(
-                      title: Text(member.fullName),
-                      subtitle: Text(_bondLabel(bonds.forProfile(member.profileId))),
+                      title: LifexText(member.fullName),
+                      subtitle: LifexText(_bondLabel(bonds.forProfile(member.profileId))),
                       trailing: PopupMenuButton<WatchBondGrade>(
                         onSelected: (grade) async {
                           var counterpartHere = false;
@@ -267,8 +269,8 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                             counterpartHere = await showDialog<bool>(
                                   context: context,
                                   builder: (ctx) => AlertDialog(
-                                    title: const Text('موافقة الطرفين'),
-                                    content: const Text(
+                                    title: const LifexText('موافقة الطرفين'),
+                                    content: const LifexText(
                                       'المستوى الحي لا يكتمل إلا إذا كان الطرف الآخر أمام الشاشة ويوافق. '
                                       'حتى بعد ذلك لن أبث صورة إلى شبكة قبل خادم معتمد.',
                                     ),
@@ -276,12 +278,12 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                                       TextButton(
                                         onPressed: () =>
                                             Navigator.pop(ctx, false),
-                                        child: const Text('الطرف غائب'),
+                                        child: const LifexText('الطرف غائب'),
                                       ),
                                       FilledButton(
                                         onPressed: () =>
                                             Navigator.pop(ctx, true),
-                                        child: const Text('نعم، يوافق أمامي'),
+                                        child: const LifexText('نعم، يوافق أمامي'),
                                       ),
                                     ],
                                   ),
@@ -300,30 +302,30 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
                         itemBuilder: (_) => const [
                           PopupMenuItem(
                             value: WatchBondGrade.notices,
-                            child: Text('إشعارات محلية'),
+                            child: LifexText('إشعارات محلية'),
                           ),
                           PopupMenuItem(
                             value: WatchBondGrade.followup,
-                            child: Text('متابعة محلية'),
+                            child: LifexText('متابعة محلية'),
                           ),
                           PopupMenuItem(
                             value: WatchBondGrade.liveWatch,
-                            child: Text('نية بث حي'),
+                            child: LifexText('نية بث حي'),
                           ),
                           PopupMenuItem(
                             value: WatchBondGrade.emergency,
-                            child: Text('طوارئ عائلية'),
+                            child: LifexText('طوارئ عائلية'),
                           ),
                         ],
                       ),
                     ),
                   ),
               if (controller.allProfiles.length <= 1)
-                const Text('أضف فرد عائلة من الإعدادات لربط مراقب.'),
+                const LifexText('أضف فرد عائلة من الإعدادات لربط مراقب.'),
               const SizedBox(height: 12),
               ListTile(
                 leading: const Icon(Icons.security_outlined),
-                title: const Text('شفافية الصلاحيات'),
+                title: const LifexText('شفافية الصلاحيات'),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const PermissionTransparencyScreen(),
@@ -332,7 +334,7 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
               ),
               ListTile(
                 leading: const Icon(Icons.devices_outlined),
-                title: const Text('سجل الأجهزة المرتبطة'),
+                title: const LifexText('سجل الأجهزة المرتبطة'),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const BoxUnitScreen(
@@ -343,7 +345,7 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
               ),
               ListTile(
                 leading: const Icon(Icons.monitor_heart_outlined),
-                title: const Text('الأجهزة الطبية والقياسات'),
+                title: const LifexText('الأجهزة الطبية والقياسات'),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const BoxUnitScreen(
@@ -354,8 +356,8 @@ class ProtectionWorkspaceScreen extends StatelessWidget {
               ),
               ListTile(
                 leading: const Icon(Icons.favorite_outline),
-                title: const Text('قياسات يدوية'),
-                subtitle: const Text('ليست من الكاميرا وليست تشخيصاً'),
+                title: const LifexText('قياسات يدوية'),
+                subtitle: const LifexText('ليست من الكاميرا وليست تشخيصاً'),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const ManualVitalsScreen(),

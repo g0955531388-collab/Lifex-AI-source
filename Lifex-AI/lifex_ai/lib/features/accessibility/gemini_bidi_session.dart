@@ -10,6 +10,39 @@ import '../../core/app_config.dart';
 
 const geminiLiveModelFallback = 'models/gemini-3.8-live';
 
+/// النموذج الحالي أولاً، ثم بديل Live عند رفض الخادم (رمز 1008).
+const geminiLiveModelCandidates = <String>[
+  'models/gemini-3.8-live',
+  'models/gemini-2.5-flash-native-audio-preview-12-2025',
+];
+
+const geminiReconnectMaxAttempts = 5;
+
+/// تراجع أسّي: 1 ثم 2 ثم 4 ثم 8 ثم 16 ثانية، وبحد 30 ثانية.
+Duration geminiReconnectDelay(int failedAttempts) {
+  if (failedAttempts < 1) return Duration.zero;
+  final shift = failedAttempts - 1;
+  final seconds = shift >= 5 ? 30 : (1 << shift);
+  return Duration(seconds: seconds > 30 ? 30 : seconds);
+}
+
+bool geminiReconnectAllowed(int failedAttempts) =>
+    failedAttempts > 0 && failedAttempts < geminiReconnectMaxAttempts;
+
+String? geminiLiveModelAfterRejection(String rejected) {
+  final trimmed = rejected.trim();
+  final index = geminiLiveModelCandidates.indexWhere(
+    (name) => name == trimmed || trimmed.endsWith(name.split('/').last),
+  );
+  if (index >= 0 && index + 1 < geminiLiveModelCandidates.length) {
+    return geminiLiveModelCandidates[index + 1];
+  }
+  for (final name in geminiLiveModelCandidates) {
+    if (name != trimmed && !trimmed.endsWith(name.split('/').last)) return name;
+  }
+  return null;
+}
+
 const geminiLiveInstructionAr =
     'تم فتح الاتصال الحي مع كاميرا Lifex-AI. '
     'هذا توجيه داخلي ولا يُعرض على الشاشة. '
@@ -20,7 +53,9 @@ const geminiLiveInstructionAr =
     'جملتك الأولى يجب أن تكون حرفياً: أهلا بك انا مساعدك البصري في لايفيكس انا اسمع وأرى. '
     'لا تذكر مسافة بالأمتار ولا تقل إن الطريق آمن. '
     'لا تشخّص ولا تخترع اسماً أو جرعة. '
-    'إذا لم تتضح الصورة فقل: لم أتمكن من تمييز المشهد بثقة.';
+    'إذا لم تتضح الصورة فقل: لم أتمكن من تمييز المشهد بثقة. '
+    'صف ما في الإطار فقط مع الموضع: يسار أو وسط أو يمين. '
+    'لا تقدّر مسافات أو أمتار. كن موجزاً. رد بالعربية.';
 
 const geminiLiveInstructionEn =
     'A live camera connection inside Lifex-AI is open. '
@@ -32,7 +67,9 @@ const geminiLiveInstructionEn =
     'Your first sentence must be exactly: Welcome. I am your visual assistant in Lifex. I hear and see. '
     'Do not state a distance in meters and do not say the way is safe. '
     'Do not diagnose and do not invent a name or a dose. '
-    'If the picture is unclear, say you cannot identify the scene with confidence.';
+    'If the picture is unclear, say you cannot identify the scene with confidence. '
+    'Describe only what is in the frame and its place: left, center, or right. '
+    'Do not estimate distances or meters. Be brief. Reply in English.';
 
 String geminiLiveInstructionFor(AppLanguage language) =>
     language == AppLanguage.english
@@ -86,11 +123,17 @@ class LiveServerEvent {
     required this.failed,
     required this.texts,
     this.audioPresent = false,
+    this.goAway = false,
+    this.modelRejected = false,
   });
 
   final bool setupComplete;
   final bool failed;
   final List<String> texts;
+  final bool goAway;
+
+  /// رفض اسم النموذج، ومنه رمز الخادم 1008.
+  final bool modelRejected;
 
   /// صوت خام من النموذج. لا يُشغَّل لأن المسافة والأمان لا يُفلتران من الموجة.
   final bool audioPresent;
@@ -106,11 +149,28 @@ LiveServerEvent parseLiveServerMessage(String raw) {
         texts: [],
       );
     }
-    if (decoded['error'] != null) {
+    if (decoded.containsKey('goAway')) {
       return const LiveServerEvent(
+        setupComplete: false,
+        failed: false,
+        texts: [],
+        goAway: true,
+      );
+    }
+    final error = decoded['error'];
+    if (error != null) {
+      var rejected = false;
+      if (error is Map) {
+        final code = error['code'];
+        final status = '${error['status'] ?? ''} ${error['message'] ?? ''}'
+            .toLowerCase();
+        rejected = code == 1008 || status.contains('1008');
+      }
+      return LiveServerEvent(
         setupComplete: false,
         failed: true,
         texts: [],
+        modelRejected: rejected,
       );
     }
     if (decoded.containsKey('setupComplete')) {
@@ -179,6 +239,7 @@ Map<String, Object?> geminiLiveSetupMessage({
       'model': name,
       'generationConfig': {
         'responseModalities': ['TEXT'],
+        'mediaResolution': 'MEDIA_RESOLUTION_LOW',
       },
       'systemInstruction': {
         'parts': [
@@ -253,6 +314,8 @@ class IoLiveSocketConnector implements LiveSocketConnector {
   }
 }
 
+enum GeminiFramePhase { idle, connecting, setup, streaming }
+
 class GeminiBidiVisionSession {
   GeminiBidiVisionSession._(this._socket);
 
@@ -261,10 +324,14 @@ class GeminiBidiVisionSession {
   StreamSubscription<String>? _subscription;
   var _ready = false;
   var _closed = false;
+  var modelRejected = false;
+  GeminiFramePhase _phase = GeminiFramePhase.connecting;
   DateTime? _lastSent;
   String _lastSpoken = '';
 
-  bool get isReady => _ready && !_closed;
+  bool get isReady => _phase == GeminiFramePhase.streaming && _ready && !_closed;
+
+  GeminiFramePhase get phase => _closed ? GeminiFramePhase.idle : _phase;
 
   /// تبقى كاذبة حتى تكتمل تهيئة الجلسة.
   bool get framesLeaveDevice => isReady;
@@ -277,6 +344,29 @@ class GeminiBidiVisionSession {
     LiveSocketConnector connector = const IoLiveSocketConnector(),
   }) async {
     if (!geminiCredentialUsable(apiKey)) return null;
+    var candidate = model;
+    final seen = <String>{};
+    while (seen.add(candidate)) {
+      final opened = await _openCandidate(
+        apiKey: apiKey,
+        model: candidate,
+        connector: connector,
+      );
+      if (opened.session != null) return opened.session;
+      if (!opened.modelRejected) return null;
+      final next = geminiLiveModelAfterRejection(candidate);
+      if (next == null) return null;
+      candidate = next;
+    }
+    return null;
+  }
+
+  static Future<({GeminiBidiVisionSession? session, bool modelRejected})>
+      _openCandidate({
+    required String apiKey,
+    required String model,
+    required LiveSocketConnector connector,
+  }) async {
     final uri = Uri(
       scheme: 'wss',
       host: 'generativelanguage.googleapis.com',
@@ -288,22 +378,24 @@ class GeminiBidiVisionSession {
     try {
       socket = await connector.connect(uri).timeout(const Duration(seconds: 8));
     } catch (_) {
-      return null;
+      return (session: null, modelRejected: false);
     }
     final session = GeminiBidiVisionSession._(socket);
     final ready = session._waitUntilReady();
     try {
+      session._phase = GeminiFramePhase.setup;
       socket.add(jsonEncode(geminiLiveSetupMessage(model: model)));
     } catch (_) {
       await session.close();
-      return null;
+      return (session: null, modelRejected: false);
     }
     final opened = await ready;
     if (!opened) {
+      final rejected = session.modelRejected;
       await session.close();
-      return null;
+      return (session: null, modelRejected: rejected);
     }
-    return session;
+    return (session: session, modelRejected: false);
   }
 
   Future<bool> _waitUntilReady() {
@@ -311,18 +403,30 @@ class GeminiBidiVisionSession {
     _subscription = _socket.messages.listen(
       (raw) {
         final event = parseLiveServerMessage(raw);
+        if (event.goAway) {
+          _ready = false;
+          _phase = GeminiFramePhase.idle;
+          if (!done.isCompleted) done.complete(false);
+          scheduleMicrotask(() {
+            if (!_closed) unawaited(close());
+          });
+          return;
+        }
         if (event.failed) {
           _ready = false;
+          if (event.modelRejected) modelRejected = true;
           if (!done.isCompleted) done.complete(false);
           return;
         }
         if (event.setupComplete && !done.isCompleted) {
           _ready = true;
+          _phase = GeminiFramePhase.streaming;
           done.complete(true);
           try {
             _socket.add(jsonEncode(geminiLiveKickoffMessage()));
           } catch (_) {
             _ready = false;
+            _phase = GeminiFramePhase.idle;
             if (!done.isCompleted) done.complete(false);
           }
         }
@@ -343,10 +447,12 @@ class GeminiBidiVisionSession {
       },
       onError: (_) {
         _ready = false;
+        _phase = GeminiFramePhase.idle;
         if (!done.isCompleted) done.complete(false);
       },
       onDone: () {
         _ready = false;
+        _phase = GeminiFramePhase.idle;
         if (!done.isCompleted) done.complete(false);
       },
     );
@@ -381,12 +487,13 @@ class GeminiBidiVisionSession {
     }
   }
 
-  /// إطار واحد كحد أقصى كل ثانية. الإطار الفارغ لا يُرسل.
+  /// لا إطار جديد قبل 800ms من آخر إرسال، وبعد STREAMING فقط.
+  /// الإطار الذي يصل أثناء المهلة يُسقط. الجلسة تبقى مفتوحة.
   Future<bool> sendJpeg(Uint8List jpeg) async {
     if (!isReady || jpeg.isEmpty || jpeg.length > 1200000) return false;
     final now = DateTime.now();
     if (_lastSent != null &&
-        now.difference(_lastSent!) < const Duration(seconds: 1)) {
+        now.difference(_lastSent!) < const Duration(milliseconds: 800)) {
       return true;
     }
     _lastSent = now;
@@ -395,12 +502,14 @@ class GeminiBidiVisionSession {
       return true;
     } catch (_) {
       _ready = false;
+      _phase = GeminiFramePhase.idle;
       return false;
     }
   }
 
   Future<void> close() async {
     _ready = false;
+    _phase = GeminiFramePhase.idle;
     if (_closed) return;
     _closed = true;
     await _subscription?.cancel();

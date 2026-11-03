@@ -10,6 +10,7 @@ library lifex_ai.widgets.lifex_brand_mark;
 import 'package:flutter/material.dart';
 
 import '../core/app_constants.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class LifexBrandMark extends StatelessWidget {
   const LifexBrandMark({super.key, this.size = 168});
@@ -21,7 +22,7 @@ class LifexBrandMark extends StatelessWidget {
     return Semantics(
       image: true,
       label:
-          'ختم Lifex-AI الرسمي. ${AppConstants.academyHandle}. البريد ${AppConstants.officialContactEmail}.',
+          tr('ختم Lifex-AI الرسمي. ${AppConstants.academyHandle}. البريد ${AppConstants.officialContactEmail}.'),
       child: ClipOval(
         child: Image.asset(
           AppConstants.officialSealAsset,

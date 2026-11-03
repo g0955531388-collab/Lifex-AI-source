@@ -16,6 +16,8 @@ import '../features/education/personal_shelf.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class PersonalShelfScreen extends StatefulWidget {
   const PersonalShelfScreen({super.key});
@@ -193,11 +195,11 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
     final kept =
         profile == null ? const <ShelfVolumeRecord>[] : PersonalShelfStore(profile).kept();
     return Scaffold(
-      appBar: AppBar(title: const Text('رفّ التحميل الشخصي')),
+      appBar: AppBar(title: const LifexText('رفّ التحميل الشخصي')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
+          LifexText(
             AppConstants.studioBannerCredit,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
@@ -214,8 +216,8 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: _url,
-            decoration: const InputDecoration(
-              labelText: 'رابط https لصفحة نصية أو HTML',
+            decoration: InputDecoration(
+              labelText: tr('رابط https لصفحة نصية أو HTML'),
               hintText: 'https://…',
             ),
             keyboardType: TextInputType.url,
@@ -223,8 +225,8 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
           const SizedBox(height: 8),
           TextField(
             controller: _priceMinor,
-            decoration: const InputDecoration(
-              labelText: 'السعر بالوحدات الصغرى (0 = محتوى مفتوح)',
+            decoration: InputDecoration(
+              labelText: tr('السعر بالوحدات الصغرى (0 = محتوى مفتوح)'),
             ),
             keyboardType: TextInputType.number,
           ),
@@ -238,20 +240,20 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.download_outlined),
-            label: Text(_busy ? 'ينزّل…' : 'تنزيل إلى الجهاز'),
+            label: LifexText(_busy ? 'ينزّل…' : 'تنزيل إلى الجهاز'),
           ),
           if (_statusAr != null) ...[
             const SizedBox(height: 8),
-            Text(_statusAr!),
+            LifexText(_statusAr!),
           ],
           const SizedBox(height: 16),
-          Text('مقترحات ملكية عامة للتجربة',
+          LifexText('مقترحات ملكية عامة للتجربة',
               style: Theme.of(context).textTheme.titleMedium),
           for (final hint in ShelfDownloadPolicy.hints)
             Card(
               child: ListTile(
-                title: Text(hint.titleAr),
-                subtitle: Text(hint.noteAr),
+                title: LifexText(hint.titleAr),
+                subtitle: LifexText(hint.noteAr),
                 trailing: const Icon(Icons.download_outlined),
                 onTap: _busy
                     ? null
@@ -262,21 +264,21 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
               ),
             ),
           const SizedBox(height: 16),
-          Text('في مكتبتك (${kept.length})',
+          LifexText('في مكتبتك (${kept.length})',
               style: Theme.of(context).textTheme.titleMedium),
           if (kept.isEmpty)
-            const Text('لا كتب منزّلة بعد. الكتب المدمجة تُقرأ من رواق المعرفة.'),
+            const LifexText('لا كتب منزّلة بعد. الكتب المدمجة تُقرأ من رواق المعرفة.'),
           for (final record in kept)
             Card(
               child: ListTile(
-                title: Text(record.titleAr),
-                subtitle: Text(
+                title: LifexText(record.titleAr),
+                subtitle: LifexText(
                   '${record.bytes} بايت\n${record.sourceUrl}',
                 ),
                 isThreeLine: true,
                 onTap: () => _open(record),
                 trailing: IconButton(
-                  tooltip: 'حذف من الجهاز',
+                  tooltip: tr('حذف من الجهاز'),
                   onPressed: () => _drop(record),
                   icon: const Icon(Icons.delete_outline),
                 ),
@@ -302,17 +304,17 @@ class ShelfReaderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(titleAr),
+        title: LifexText(titleAr),
         actions: [
           IconButton(
-            tooltip: 'قراءة',
+            tooltip: tr('قراءة'),
             onPressed: () => VoiceEngine.instance.speak(
               body.length > 1200 ? body.substring(0, 1200) : body,
             ),
             icon: const Icon(Icons.volume_up_outlined),
           ),
           IconButton(
-            tooltip: 'إيقاف',
+            tooltip: tr('إيقاف'),
             onPressed: () => VoiceEngine.instance.stopListening(),
             icon: const Icon(Icons.stop),
           ),
@@ -326,7 +328,7 @@ class ShelfReaderScreen extends StatelessWidget {
                 'نص حفظته أنت على الجهاز. ليس محتوى طبياً لليفكس ما لم يكن كذلك أصلاً.',
           ),
           const SizedBox(height: 12),
-          Text(body),
+          LifexText(body),
         ],
       ),
     );

@@ -11,6 +11,8 @@ import 'package:provider/provider.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/determination_credential_policy.dart';
 import '../widgets/accessible_widgets.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class DisabilityFixationScreen extends StatefulWidget {
   const DisabilityFixationScreen({super.key});
@@ -86,32 +88,32 @@ class _DisabilityFixationScreenState extends State<DisabilityFixationScreen> {
       message:
           'وحدة المعاقين. التثبيت ببطاقة إعاقة أو بطاقة مريض دائم من البلد المسجّل فيه.',
       child: Scaffold(
-        appBar: AppBar(title: const Text('تثبيت وحدة المعاقين')),
+        appBar: AppBar(title: const LifexText('تثبيت وحدة المعاقين')),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(
+            LifexText(
               'المعاق ومريض المرض المستعصي يُثبَّتان هنا. البطاقة من البلد المسجّل فيه صاحب الحساب.',
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _accountCountry,
-              decoration: const InputDecoration(
-                labelText: 'البلد المسجّل فيه صاحب الحساب',
+              decoration: InputDecoration(
+                labelText: tr('البلد المسجّل فيه صاحب الحساب'),
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<DeterminationCardKind>(
               value: _kind,
-              decoration: const InputDecoration(
-                labelText: 'نوع البطاقة',
+              decoration: InputDecoration(
+                labelText: tr('نوع البطاقة'),
                 border: OutlineInputBorder(),
               ),
               items: [
                 for (final kind in kinds)
-                  DropdownMenuItem(value: kind, child: Text(kind.labelAr)),
+                  DropdownMenuItem(value: kind, child: LifexText(kind.labelAr)),
               ],
               onChanged: (value) {
                 if (value != null) setState(() => _kind = value);
@@ -120,16 +122,16 @@ class _DisabilityFixationScreenState extends State<DisabilityFixationScreen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _cardCountry,
-              decoration: const InputDecoration(
-                labelText: 'بلد إصدار البطاقة',
+              decoration: InputDecoration(
+                labelText: tr('بلد إصدار البطاقة'),
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _cardRef,
-              decoration: const InputDecoration(
-                labelText: 'رقم أو مرجع البطاقة',
+              decoration: InputDecoration(
+                labelText: tr('رقم أو مرجع البطاقة'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -138,7 +140,7 @@ class _DisabilityFixationScreenState extends State<DisabilityFixationScreen> {
               onPressed: _save,
               child: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 14),
-                child: Text('تثبيت'),
+                child: LifexText('تثبيت'),
               ),
             ),
             const SizedBox(height: 16),

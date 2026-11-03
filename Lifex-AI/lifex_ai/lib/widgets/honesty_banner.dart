@@ -6,6 +6,8 @@
 library lifex_ai.widgets.honesty_banner;
 
 import 'package:flutter/material.dart';
+import 'lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class HonestyBanner extends StatelessWidget {
   const HonestyBanner({
@@ -28,11 +30,11 @@ class HonestyBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: messageAr,
+      label: tr(messageAr),
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(14),
-          child: Text(messageAr),
+          child: LifexText(messageAr),
         ),
       ),
     );

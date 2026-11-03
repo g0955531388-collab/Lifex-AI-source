@@ -10,6 +10,7 @@ library lifex_ai.screens.permission_transparency_screen;
 import 'package:flutter/material.dart';
 
 import '../core/permission_transparency.dart';
+import '../widgets/lifex_text.dart';
 
 class PermissionTransparencyScreen extends StatefulWidget {
   const PermissionTransparencyScreen({super.key});
@@ -26,11 +27,11 @@ class _PermissionTransparencyScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('شفافية الصلاحيات')),
+      appBar: AppBar(title: const LifexText('شفافية الصلاحيات')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
+          const LifexText(
             'لا يُفعَّل أي إذن حسّاس تلقائياً. لكل إذن شرح صحي، موافقة '
             'صريحة، ويمكن إيقافه لاحقاً من هنا.',
             style: TextStyle(fontSize: 13, color: Colors.grey),
@@ -43,21 +44,21 @@ class _PermissionTransparencyScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    LifexText(
                       PermissionTransparencyManager.titlesAr[permission]!,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 6),
-                    Text(
+                    LifexText(
                       PermissionTransparencyManager.explanationsAr[permission]!,
                       style: const TextStyle(fontSize: 13),
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(
+                      title: LifexText(
                         _manager.isGranted(permission) ? 'مسموح' : 'مرفوض',
                       ),
-                      subtitle: Text(
+                      subtitle: LifexText(
                         _manager.recordOf(permission) == null
                             ? 'لم يُتخذ قرار بعد'
                             : 'آخر قرار: ${_manager.recordOf(permission)!.decidedAt.toIso8601String().substring(0, 16)}',

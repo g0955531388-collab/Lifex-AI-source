@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import '../../widgets/lifex_text.dart';
 
 class LocalVideoRoomPage extends StatefulWidget {
   const LocalVideoRoomPage({
@@ -71,7 +72,7 @@ class _LocalVideoRoomPageState extends State<LocalVideoRoomPage> {
     final camera = _camera;
     final ready = camera != null && camera.value.isInitialized;
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(title: LifexText(widget.title)),
       body: Column(
         children: [
           Expanded(
@@ -81,7 +82,7 @@ class _LocalVideoRoomPageState extends State<LocalVideoRoomPage> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Text(widget.note),
+            child: LifexText(widget.note),
           ),
           SizedBox(
             height: 88,
@@ -94,7 +95,7 @@ class _LocalVideoRoomPageState extends State<LocalVideoRoomPage> {
                     padding: const EdgeInsets.only(right: 8),
                     child: Chip(
                       avatar: Icon(_muted ? Icons.mic_off : Icons.mic),
-                      label: Text(name),
+                      label: LifexText(name),
                     ),
                   ),
               ],

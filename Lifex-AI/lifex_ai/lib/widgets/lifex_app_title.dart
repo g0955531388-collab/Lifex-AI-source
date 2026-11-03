@@ -2,6 +2,7 @@
 library lifex_ai.widgets.lifex_app_title;
 
 import 'package:flutter/material.dart';
+import 'lifex_text.dart';
 
 class LifexAppTitle extends StatelessWidget {
   const LifexAppTitle({
@@ -27,7 +28,7 @@ class LifexAppTitle extends StatelessWidget {
     return Column(
       crossAxisAlignment: align,
       children: [
-        Text(
+        LifexText(
           'Lifex-AI',
           textAlign: textAlign,
           style: TextStyle(
@@ -39,7 +40,7 @@ class LifexAppTitle extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 2),
-        Text(
+        LifexText(
           'Global Health Network',
           textAlign: textAlign,
           style: TextStyle(

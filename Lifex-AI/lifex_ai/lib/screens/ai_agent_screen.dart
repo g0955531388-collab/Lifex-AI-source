@@ -17,6 +17,8 @@ import '../core/agent/agent_state.dart';
 import '../core/agent/agents/report_agent.dart';
 import '../core/orchestrator/lio_gateway_contracts.dart';
 import '../core/orchestrator/lio_sensitive_action_entry.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 enum _AppMode { chat, agent }
 
@@ -203,7 +205,7 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(lifexUi('وكيل Lifex-AI', 'Lifex-AI Agent')),
+        title: LifexText(lifexUi('وكيل Lifex-AI', 'Lifex-AI Agent')),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Padding(
@@ -212,12 +214,12 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
               segments: const [
                 ButtonSegment(
                   value: _AppMode.chat,
-                  label: Text('محادثة'),
+                  label: LifexText('محادثة'),
                   icon: Icon(Icons.chat_bubble_outline),
                 ),
                 ButtonSegment(
                   value: _AppMode.agent,
-                  label: Text('وكيل'),
+                  label: LifexText('وكيل'),
                   icon: Icon(Icons.auto_awesome),
                 ),
               ],
@@ -251,7 +253,7 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
   Widget _buildChatBody() {
     if (_chatReplyAr == null) {
       return const Center(
-        child: Text(
+        child: LifexText(
           'اطرح سؤالاً صحياً عاماً — رد مباشر دون خطوات تنفيذية.',
           style: TextStyle(color: Colors.grey),
           textAlign: TextAlign.center,
@@ -262,7 +264,7 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Text(_chatReplyAr!),
+          child: LifexText(_chatReplyAr!),
         ),
       ),
     );
@@ -271,7 +273,7 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
   Widget _buildAgentBody() {
     if (_currentTaskId == null) {
       return const Center(
-        child: Text(
+        child: LifexText(
           'اطلب تحليل مستند، صورة، أو استفساراً صحياً — سيقوم الوكيل '
           'بتنفيذه عبر عدة خطوات قابلة للتتبع.',
           style: TextStyle(color: Colors.grey),
@@ -290,7 +292,7 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const LifexText(
                     'المهمة الحالية',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
@@ -301,7 +303,7 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
                     OutlinedButton.icon(
                       onPressed: _cancelTask,
                       icon: const Icon(Icons.stop_circle_outlined),
-                      label: const Text('إيقاف المهمة'),
+                      label: const LifexText('إيقاف المهمة'),
                     ),
                   ],
                 ],
@@ -355,11 +357,11 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(step.labelAr),
+                LifexText(step.labelAr),
                 if (showLiveLabel)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: Text(
+                    child: LifexText(
                       _currentStepLabelAr,
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
@@ -393,26 +395,26 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
                   color: result.isSuccessful ? scheme.primary : scheme.error,
                 ),
                 const SizedBox(width: 8),
-                Text(
+                LifexText(
                   result.isSuccessful ? 'المهمة اكتملت' : 'تعذّر إكمال المهمة',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(displayText),
+            LifexText(displayText),
             if (result.completedActions.isNotEmpty) ...[
               const SizedBox(height: 12),
               ExpansionTile(
                 tilePadding: EdgeInsets.zero,
-                title: const Text('الأدوات المستخدمة', style: TextStyle(fontSize: 13)),
+                title: const LifexText('الأدوات المستخدمة', style: TextStyle(fontSize: 13)),
                 children: [
                   for (final action in result.completedActions)
                     ListTile(
                       dense: true,
                       leading: const Icon(Icons.build_outlined, size: 16),
-                      title: Text(action.toolName, style: const TextStyle(fontSize: 13)),
-                      subtitle: Text(action.reason, style: const TextStyle(fontSize: 11)),
+                      title: LifexText(action.toolName, style: const TextStyle(fontSize: 13)),
+                      subtitle: LifexText(action.reason, style: const TextStyle(fontSize: 11)),
                     ),
                 ],
               ),
@@ -431,9 +433,9 @@ class _AiAgentScreenState extends State<AiAgentScreen> {
             controller: _inputController,
             enabled: !_isRunning,
             decoration: InputDecoration(
-              hintText: _mode == _AppMode.agent
+              hintText: tr(_mode == _AppMode.agent
                   ? 'مثال: حلل هذا التقرير وأنشئ ملخصاً'
-                  : 'اطرح سؤالك هنا',
+                  : 'اطرح سؤالك هنا'),
               border: const OutlineInputBorder(),
             ),
             onSubmitted: (_) => _submit(),

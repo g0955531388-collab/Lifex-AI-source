@@ -12,6 +12,7 @@ import '../../core/app_config.dart';
 import '../location/device_location_reader.dart';
 import '../voice/voice_engine.dart';
 import 'clock_chime.dart';
+import 'clock_display.dart';
 
 enum AlarmPlace { inside, outside, unconfirmed }
 
@@ -292,13 +293,18 @@ class SpeakingAlarmWatch {
       (alarm) =>
           alarm.enabled && alarm.hour == local.hour && alarm.minute == local.minute,
     );
-    if (due.isEmpty) return;
-    final read = fix ?? await const DeviceLocationReader().peek();
     final say = speak ?? VoiceEngine.instance.speak;
     final ring = tone ??
         (String ref, double volume) =>
             ClockTonePlayer.instance.play(ref, volume: volume);
-    final volume = (await ClockChimeSettings.load()).volume;
+    final chime = await ClockChimeSettings.load();
+    final volume = chime.volume;
+    final arabic = AppConfig.instance.defaultLanguage != AppLanguage.english;
+    if (due.isEmpty) {
+      await _autoAnnounce(local, chime, arabic, say, ring);
+      return;
+    }
+    final read = fix ?? await const DeviceLocationReader().peek();
     for (final alarm in due) {
       final stamp =
           '${alarm.id}|${local.year}-${local.month}-${local.day}|${local.hour}:${local.minute}';
@@ -314,13 +320,13 @@ class SpeakingAlarmWatch {
         hereLongitude: read.fix?.longitude,
         accuracyMeters: read.fix?.accuracyMeters,
       );
-      final time = '${local.hour.toString().padLeft(2, '0')}:'
-          '${local.minute.toString().padLeft(2, '0')}';
       final phrase = speakingAlarmPhrase(
         name: alarm.name,
-        timeLabel: time,
+        timeLabel: arabic
+            ? naturalTimeArabic(local, prefix: false)
+            : naturalTimeEnglish(local),
         place: place,
-        arabic: AppConfig.instance.defaultLanguage != AppLanguage.english,
+        arabic: arabic,
       );
       final epoch = ++_ringEpoch;
       ringing.value = alarm.name;
@@ -336,5 +342,34 @@ class SpeakingAlarmWatch {
       );
       if (epoch == _ringEpoch) ringing.value = null;
     }
+  }
+
+  /// إعلان دوري اختياري، مطفأ افتراضياً، بترتيب النطق والنغمة نفسه ومرة واحدة في الدقيقة.
+  Future<void> _autoAnnounce(
+    DateTime local,
+    ClockChimeSettings chime,
+    bool arabic,
+    Future<void> Function(String text) say,
+    Future<bool> Function(String toneRef, double volume) ring,
+  ) async {
+    final display = await ClockDisplaySettings.load();
+    if (!display.autoAnnounce.dueAt(local) || chime.order == ChimeOrder.off) {
+      return;
+    }
+    if (ringing.value != null) return;
+    final stamp =
+        'auto|${local.year}-${local.month}-${local.day}|${local.hour}:${local.minute}';
+    if (!_spoken.add(stamp)) return;
+    final text = arabic
+        ? '${naturalTimeArabic(local)}.'
+        : "It's ${naturalTimeEnglish(local)}.";
+    await runChime(
+      order: chime.order,
+      tone: () => ring(chime.toneRef, chime.volume),
+      speak: () async {
+        await say(text);
+        return true;
+      },
+    );
   }
 }

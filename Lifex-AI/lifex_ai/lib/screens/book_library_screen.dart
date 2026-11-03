@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import '../widgets/accessible_widgets.dart';
 import '../features/knowledge/official_resource.dart';
 import '../features/search/external_link_desk.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class BookLibraryScreen extends StatefulWidget {
   const BookLibraryScreen({super.key, this.initialPhrase = ''});
@@ -48,21 +50,21 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
           ? 'اكتب عنواناً أو مؤلفاً ثم اختر الفهرس. الكتاب لا يُنسخ إلى التطبيق.'
           : 'عبارة المكتبة: ${_phrase.text.trim()}. الفتح عند الناشر فقط.',
       child: Scaffold(
-      appBar: AppBar(title: const Text('مكتبة Lifex-AI')),
+      appBar: AppBar(title: const LifexText('مكتبة Lifex-AI')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
+          const LifexText(
             'البحث هنا يفتح فهرس الناشر. القراءة أو التنزيل يظهران على موقعه وفق شروطه، ولا يُنسخ الكتاب إلى التطبيق.',
           ),
           const SizedBox(height: 12),
           Semantics(
             textField: true,
-            label: 'عبارة البحث عن كتاب',
+            label: tr('عبارة البحث عن كتاب'),
             child: TextField(
               controller: _phrase,
-              decoration: const InputDecoration(
-                labelText: 'عنوان أو مؤلف أو موضوع',
+              decoration: InputDecoration(
+                labelText: tr('عنوان أو مؤلف أو موضوع'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -71,16 +73,16 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
             const SizedBox(height: 12),
             Semantics(
               liveRegion: true,
-              label: _note,
-              child: Text(_note!),
+              label: tr(_note),
+              child: LifexText(_note!),
             ),
           ],
           const SizedBox(height: 12),
           for (final resource in OfficialResourceCatalog.books)
             Card(
               child: ListTile(
-                title: Text(resource.name),
-                subtitle: Text(
+                title: LifexText(resource.name),
+                subtitle: LifexText(
                   '${resource.kindAr} — ${resource.publisher}\n'
                   '${resource.noteAr}\n'
                   'آخر تحقق من الرابط: ${resource.checkedOn}',

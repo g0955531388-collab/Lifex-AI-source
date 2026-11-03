@@ -5,6 +5,9 @@ library lifex_ai.screens.blood_request_screen;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/admin/admin_manager.dart';
+import '../core/admin/admin_permissions.dart';
+
 import '../features/blood_network/blood_appeal_banner_view.dart';
 import '../features/blood_network/blood_appeal_desk.dart';
 import '../features/blood_network/blood_request_engine.dart';
@@ -13,6 +16,9 @@ import '../features/hospital/hospital_blood_bank.dart';
 import '../features/messaging/chat_engine.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../features/profile/health_profile.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class BloodRequestScreen extends StatefulWidget {
   const BloodRequestScreen({super.key, this.preferType});
@@ -53,6 +59,16 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
     super.dispose();
   }
 
+  /// الدور يُقرأ عند كل نشر ولا يُخزَّن، فسحب الدور يُغلق النشر فوراً.
+  bool _adminAuthorized(HealthProfile publisher) {
+    final id = publisher.questionnaireData['accountLifexId'];
+    if (id is! String || id.trim().isEmpty) return false;
+    return GlobalAdminManager.instance.hasPermission(
+      id.trim(),
+      GlobalAdminPermission.manageSystemEventToggles,
+    );
+  }
+
   Future<void> _send(ActiveProfileController profiles) async {
     final publisher = profiles.activeProfile;
     if (publisher == null) {
@@ -83,6 +99,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
       unitsNeeded: unitsText.isEmpty ? null : int.tryParse(unitsText),
       allowExpansion: _allowExpansion,
       chat: _chat,
+      adminAuthorized: _adminAuthorized(publisher),
     );
     profiles.notifyProfileChanged();
     setState(() {
@@ -98,7 +115,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
     final profiles = context.watch<ActiveProfileController>();
     final donor = profiles.activeProfile;
     return Scaffold(
-      appBar: AppBar(title: const Text('طلب دم')),
+      appBar: AppBar(title: const LifexText('طلب دم')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -109,56 +126,56 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
               onOpen: () {},
               onChanged: () => setState(() {}),
             ),
-          const Text(
+          const LifexText(
             'النداء الرسمي يصدر عن حساب مفوّض. الدعوة أولية وليست قبولًا طبيًا. '
             'الإرسال إلى هواتف خارج هذا الجهاز غير متاح.',
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _unitName,
-            decoration: const InputDecoration(labelText: 'اسم الوحدة'),
+            decoration: InputDecoration(labelText: tr('اسم الوحدة')),
           ),
           TextField(
             controller: _address,
-            decoration: const InputDecoration(labelText: 'العنوان'),
+            decoration: InputDecoration(labelText: tr('العنوان')),
           ),
           TextField(
             controller: _city,
-            decoration: const InputDecoration(labelText: 'المدينة'),
+            decoration: InputDecoration(labelText: tr('المدينة')),
           ),
           TextField(
             controller: _contact,
-            decoration: const InputDecoration(labelText: 'وسيلة التواصل'),
+            decoration: InputDecoration(labelText: tr('وسيلة التواصل')),
           ),
           TextField(
             controller: _reason,
-            decoration: const InputDecoration(labelText: 'وصف الحاجة'),
+            decoration: InputDecoration(labelText: tr('وصف الحاجة')),
           ),
           TextField(
             controller: _lat,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'خط العرض'),
+            decoration: InputDecoration(labelText: tr('خط العرض')),
           ),
           TextField(
             controller: _lon,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'خط الطول'),
+            decoration: InputDecoration(labelText: tr('خط الطول')),
           ),
           TextField(
             controller: _units,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'عدد الوحدات، إن حُدّد',
+            decoration: InputDecoration(
+              labelText: tr('عدد الوحدات، إن حُدّد'),
             ),
           ),
           DropdownButtonFormField<BloodTypeSimple>(
             value: _type,
-            decoration: const InputDecoration(labelText: 'الزمرة المطلوبة'),
+            decoration: InputDecoration(labelText: tr('الزمرة المطلوبة')),
             items: [
               for (final type in BloodTypeSimple.values)
                 DropdownMenuItem(
                   value: type,
-                  child: Text(BloodTypeMatch.label(type)),
+                  child: LifexText(BloodTypeMatch.label(type)),
                 ),
             ],
             onChanged: (value) {
@@ -167,19 +184,19 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
           ),
           DropdownButtonFormField<BloodRequestUrgency>(
             value: _urgency,
-            decoration: const InputDecoration(labelText: 'درجة الاستعجال'),
+            decoration: InputDecoration(labelText: tr('درجة الاستعجال')),
             items: const [
               DropdownMenuItem(
                 value: BloodRequestUrgency.routine,
-                child: Text('عادي'),
+                child: LifexText('عادي'),
               ),
               DropdownMenuItem(
                 value: BloodRequestUrgency.urgent,
-                child: Text('عاجل'),
+                child: LifexText('عاجل'),
               ),
               DropdownMenuItem(
                 value: BloodRequestUrgency.critical,
-                child: Text('حرج'),
+                child: LifexText('حرج'),
               ),
             ],
             onChanged: (value) {
@@ -188,18 +205,18 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('السماح بتوسيع النطاق داخل الحد'),
-            subtitle: const Text('لا يتخطى ٤٠ كم ولا يغيّر المدينة.'),
+            title: const LifexText('السماح بتوسيع النطاق داخل الحد'),
+            subtitle: const LifexText('لا يتخطى ٤٠ كم ولا يغيّر المدينة.'),
             value: _allowExpansion,
             onChanged: (value) => setState(() => _allowExpansion = value),
           ),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: () => _send(profiles),
-            child: const Text('نشر النداء للمؤهلين على هذا الجهاز'),
+            child: const LifexText('نشر النداء للمؤهلين على هذا الجهاز'),
           ),
           const SizedBox(height: 12),
-          Text(_statusAr),
+          LifexText(_statusAr),
         ],
       ),
     );

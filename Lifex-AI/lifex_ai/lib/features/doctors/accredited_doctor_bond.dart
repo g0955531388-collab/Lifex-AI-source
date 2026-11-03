@@ -21,12 +21,20 @@ class AccreditedBondResult {
 class AccreditedDoctorBond {
   const AccreditedDoctorBond();
 
+  /// ما يصل إلى الطبيب حين يختار المريض الحد الأدنى: الاسم واسم الطبيب فقط.
+  static String minimumText({
+    required HealthProfile patient,
+    required String doctorName,
+  }) =>
+      'الحد الأدنى للرعاية: اختار المريض ${patient.fullName} الطبيب $doctorName. لم تُرسل السيرة الكاملة.';
+
+  /// المشاركة الكاملة اختيار صريح من المريض؛ الافتراضي هو الحد الأدنى.
   AccreditedBondResult accredit({
     required HealthProfile patient,
     required HealthProfile? doctor,
     required String doctorName,
     required String cvPlainText,
-    bool shareFullRecord = true,
+    bool shareFullRecord = false,
   }) {
     ProfileBoxStore(patient).add(BoxKeys.doctorMyDoctors, {
       'title': doctorName,

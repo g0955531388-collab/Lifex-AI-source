@@ -26,6 +26,8 @@ import 'layered_lens_studio_screen.dart';
 import 'live_sight_screen.dart';
 import 'medical_reference_screen.dart';
 import 'thumbnail_manage_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class CameraNotesScreen extends StatefulWidget {
   const CameraNotesScreen({super.key});
@@ -49,18 +51,18 @@ class _CameraNotesScreenState extends State<CameraNotesScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('إذن الكاميرا'),
-        content: const Text(
+        title: const LifexText('إذن الكاميرا'),
+        content: const LifexText(
           'لالتقاط أوراق أو شاشات أو منطقة جسم بموافقتك الظاهرة. لا تصوير خفي لمن يمسك الهاتف.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('رفض'),
+            child: const LifexText('رفض'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('موافق'),
+            child: const LifexText('موافق'),
           ),
         ],
       ),
@@ -136,7 +138,7 @@ class _CameraNotesScreenState extends State<CameraNotesScreen> {
         ? const <Map<String, dynamic>>[]
         : ProfileBoxStore(profile).list(BoxKeys.cameraNotes);
     return Scaffold(
-      appBar: AppBar(title: const Text('الكاميرا الذكية')),
+      appBar: AppBar(title: const LifexText('الكاميرا الذكية')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -161,37 +163,37 @@ class _CameraNotesScreenState extends State<CameraNotesScreen> {
               );
             },
             icon: const Icon(Icons.visibility_outlined),
-            label: const Text('كاميرا المكفوفين'),
+            label: const LifexText('كاميرا المكفوفين'),
           ),
           const SizedBox(height: 8),
-          const Text(
+          const LifexText(
             'البث الحي يقرأ إطارات العدسة. كاشف الصناديق غير محمّل، فتصنيف الصورة ليس كشف أجسام ولا يقدّر مسافة.',
           ),
           DropdownButtonFormField<String>(
             value: _kind,
             items: const [
-              DropdownMenuItem(value: 'document', child: Text('ورقة / وثيقة وطنية')),
-              DropdownMenuItem(value: 'screen', child: Text('شاشة جهاز')),
-              DropdownMenuItem(value: 'body', child: Text('منطقة جسم')),
-              DropdownMenuItem(value: 'bedsore', child: Text('قرحة فراش')),
-              DropdownMenuItem(value: 'tongue', child: Text('لسان')),
-              DropdownMenuItem(value: 'skin', child: Text('جلد')),
-              DropdownMenuItem(value: 'hair', child: Text('شعر')),
-              DropdownMenuItem(value: 'vessel', child: Text('شرايين بارزة')),
+              DropdownMenuItem(value: 'document', child: LifexText('ورقة / وثيقة وطنية')),
+              DropdownMenuItem(value: 'screen', child: LifexText('شاشة جهاز')),
+              DropdownMenuItem(value: 'body', child: LifexText('منطقة جسم')),
+              DropdownMenuItem(value: 'bedsore', child: LifexText('قرحة فراش')),
+              DropdownMenuItem(value: 'tongue', child: LifexText('لسان')),
+              DropdownMenuItem(value: 'skin', child: LifexText('جلد')),
+              DropdownMenuItem(value: 'hair', child: LifexText('شعر')),
+              DropdownMenuItem(value: 'vessel', child: LifexText('شرايين بارزة')),
             ],
             onChanged: (value) {
               if (value != null) setState(() => _kind = value);
             },
-            decoration: const InputDecoration(labelText: 'نوع الالتقاط'),
+            decoration: InputDecoration(labelText: tr('نوع الالتقاط')),
           ),
           TextField(
             controller: _note,
-            decoration: const InputDecoration(labelText: 'ملاحظة'),
+            decoration: InputDecoration(labelText: tr('ملاحظة')),
           ),
           FilledButton.icon(
             onPressed: _capture,
             icon: const Icon(Icons.camera_alt_outlined),
-            label: const Text('افتح العدسة والتقط'),
+            label: const LifexText('افتح العدسة والتقط'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
@@ -207,7 +209,7 @@ class _CameraNotesScreenState extends State<CameraNotesScreen> {
               );
             },
             icon: const Icon(Icons.videocam_outlined),
-            label: const Text('البث الحي على هذه الشاشة'),
+            label: const LifexText('البث الحي على هذه الشاشة'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
@@ -220,7 +222,7 @@ class _CameraNotesScreenState extends State<CameraNotesScreen> {
               );
             },
             icon: const Icon(Icons.filter_none_outlined),
-            label: const Text('تقريب العدسة'),
+            label: const LifexText('تقريب العدسة'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
@@ -233,16 +235,16 @@ class _CameraNotesScreenState extends State<CameraNotesScreen> {
               );
             },
             icon: const Icon(Icons.image_outlined),
-            label: const Text('مصغّرات الأوراق'),
+            label: const LifexText('مصغّرات الأوراق'),
           ),
-          if (_status.isNotEmpty) Text(_status),
+          if (_status.isNotEmpty) LifexText(_status),
           for (final note in notes)
             ListTile(
-              title: Text(note['title']?.toString() ?? ''),
-              subtitle: Text(note['detail']?.toString() ?? ''),
+              title: LifexText(note['title']?.toString() ?? ''),
+              subtitle: LifexText(note['detail']?.toString() ?? ''),
             ),
           ListTile(
-            title: const Text('مرجع العلامات البصرية'),
+            title: const LifexText('مرجع العلامات البصرية'),
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -360,17 +362,17 @@ class _LensShotPageState extends State<_LensShotPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('عدسة الالتقاط')),
+      appBar: AppBar(title: const LifexText('عدسة الالتقاط')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           if (_error != null)
-            Text(_error!, style: Theme.of(context).textTheme.bodyLarge),
+            LifexText(_error!, style: Theme.of(context).textTheme.bodyLarge),
           _preview(),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _lensReady && !_busy ? _shoot : null,
-            child: const Text('التقط واحفظ'),
+            child: const LifexText('التقط واحفظ'),
           ),
         ],
       ),

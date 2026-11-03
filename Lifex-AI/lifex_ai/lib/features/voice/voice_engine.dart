@@ -14,6 +14,7 @@ library lifex_ai.features.voice.voice_engine;
 
 import '../../core/app_config.dart';
 import '../../core/error_handler.dart';
+import '../../core/i18n/lifex_runtime_translator.dart';
 import 'speech_queue.dart';
 
 /// حالة تشغيل محرك الصوت العامة.
@@ -47,6 +48,9 @@ class VoiceEngine {
   final List<VoiceStateListener> _listeners = [];
   String? partialTranscript;
   String? activeLocaleId;
+
+  /// لغة نطق أسماء الكاميرا. تُفرض من لغة الجهاز طوال الجملة ثم تُمسح.
+  String? nameSpeakLocale;
   String lastSignalAr = 'الصوت في وضع الانتظار';
   int speechEpoch = 0;
   final SpeechQueue _speech = SpeechQueue();
@@ -256,10 +260,12 @@ class VoiceEngine {
     if (text.trim().isEmpty) {
       return const VoiceOperationResult.failure('لا يوجد نص للقراءة.');
     }
+    final forcedNames = nameSpeakLocale?.trim().isNotEmpty ?? false;
+    final spoken = forcedNames ? text : tr(text);
     VoiceOperationResult? emitted;
     final accepted = urgent
         ? await _speech.speakInterruptible(
-            text: text,
+            text: spoken,
             stop: stopSpeaking,
             hapticAfter: hapticAfter,
             speak: (value) async {
@@ -268,7 +274,7 @@ class VoiceEngine {
             },
           )
         : await _speech.speakQueued(
-            text: text,
+            text: spoken,
             speak: (value) async {
               emitted = await _emit(value);
               return emitted!.success;

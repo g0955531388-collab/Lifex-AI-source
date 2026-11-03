@@ -25,6 +25,8 @@ import '../features/profile/inventor_owner_profile.dart';
 import '../services/cloud/cloud_sync_manager.dart';
 import '../widgets/accessible_widgets.dart';
 import 'home_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -130,7 +132,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
     if (!result.success) {
       setState(() {
-        _errorMessageAr = result.errorMessage ?? 'تعذّر إنشاء ملف المخترع.';
+        _errorMessageAr = result.errorMessage ??
+            lifexUi(
+              'تعذّر إنشاء ملف المخترع.',
+              'The inventor profile could not be created.',
+            );
       });
       return;
     }
@@ -180,7 +186,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     if (!result.success) {
       setState(() {
-        _errorMessageAr = result.errorMessage ?? 'تعذّر إنشاء الملف الصحي.';
+        _errorMessageAr = result.errorMessage ??
+            lifexUi(
+              'تعذّر إنشاء الملف الصحي.',
+              'The health profile could not be created.',
+            );
       });
       return;
     }
@@ -206,10 +216,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenArrival(
+    return ListenableBuilder(
+      listenable: StudioThemeController.instance,
+      builder: (context, _) {
+        return ScreenArrival(
       message: BlindNavigationCopy.profileArrivalText,
       child: Scaffold(
-        appBar: AppBar(title: const Text('إنشاء ملفك الصحي')),
+        appBar: AppBar(
+          title: LifexText(lifexUi('إنشاء ملفك الصحي', 'Create your health profile')),
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -218,9 +233,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'مرحباً بك في Lifex-AI. لنبدأ بإنشاء ملفك الصحي '
-                    'الأساسي. يمكنك إضافة أفراد عائلتك لاحقاً من الإعدادات.',
+                  LifexText(
+                    lifexUi(
+                      'مرحباً بك في Lifex-AI. لنبدأ بإنشاء ملفك الصحي '
+                          'الأساسي. يمكنك إضافة أفراد عائلتك لاحقاً من الإعدادات.',
+                      'Welcome to Lifex-AI. Start by creating your basic health profile. You can add family members later from settings.',
+                    ),
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 16),
@@ -228,29 +246,33 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: _createInventorOwnerFile,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        child: Text(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: LifexText(lifexUi(
                           'ملف شخص للمخترع والأدمن: غازي سليم بكفلاوي',
-                        ),
+                          'A person file for the inventor and admin: غازي سليم بكفلاوي',
+                        )),
                       ),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'يستخدم البريد والهاتف المعتمدين. لا يُكتب عمر ولا فصيلة دم. الاسم وحده لا يفتح الصلاحية.',
+                  LifexText(
+                    lifexUi(
+                      'يستخدم البريد والهاتف المعتمدين. لا يُكتب عمر ولا فصيلة دم. الاسم وحده لا يفتح الصلاحية.',
+                      'Uses the approved email and phone. Age and blood type are not written. The name alone does not open access.',
+                    ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 24),
                   TextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'الاسم الكامل',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: lifexUi('الاسم الكامل', 'Full name'),
+                      border: const OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'يُرجى إدخال الاسم.';
+                        return lifexUi('يُرجى إدخال الاسم.', 'Enter the name.');
                       }
                       return null;
                     },
@@ -259,18 +281,27 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   TextFormField(
                     controller: _ageController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'العمر بعدد السنوات',
-                      border: OutlineInputBorder(),
-                      helperText: 'اكتب العمر رقماً، مثل 34',
+                    decoration: InputDecoration(
+                      labelText: lifexUi('العمر بعدد السنوات', 'Age in years'),
+                      border: const OutlineInputBorder(),
+                      helperText: lifexUi(
+                        'اكتب العمر رقماً، مثل 34',
+                        'Write the age as a number, such as 34',
+                      ),
                     ),
                     validator: (value) {
                       final years = int.tryParse(value?.trim() ?? '');
                       if (years == null) {
-                        return 'يُرجى كتابة العمر بعدد السنوات.';
+                        return lifexUi(
+                          'يُرجى كتابة العمر بعدد السنوات.',
+                          'Write the age as a number of years.',
+                        );
                       }
                       if (years < 0 || years > 130) {
-                        return 'اكتب عمراً بين 0 و 130 سنة.';
+                        return lifexUi(
+                          'اكتب عمراً بين 0 و 130 سنة.',
+                          'Write an age from 0 to 130 years.',
+                        );
                       }
                       return null;
                     },
@@ -278,22 +309,31 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   const SizedBox(height: 16),
                   Semantics(
                     button: true,
-                    label: _dateOfBirth == null
-                        ? 'تاريخ الميلاد اختياري'
-                        : 'تاريخ الميلاد ${_dateOfBirth!.year}/${_dateOfBirth!.month}/${_dateOfBirth!.day}',
-                    hint: 'يفتح اختيار التاريخ، ويمكن تركه فارغاً',
+                    label: tr(_dateOfBirth == null
+                        ? lifexUi('تاريخ الميلاد اختياري', 'Date of birth is optional')
+                        : lifexUi(
+                            'تاريخ الميلاد ${_dateOfBirth!.year}/${_dateOfBirth!.month}/${_dateOfBirth!.day}',
+                            'Date of birth ${_dateOfBirth!.year}/${_dateOfBirth!.month}/${_dateOfBirth!.day}',
+                          )),
+                    hint: lifexUi(
+                      'يفتح اختيار التاريخ، ويمكن تركه فارغاً',
+                      'Opens the date picker, and it can be left empty',
+                    ),
                     onTap: _pickDateOfBirth,
                     child: ExcludeSemantics(
                       child: InkWell(
                         onTap: _pickDateOfBirth,
                         child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'تاريخ الميلاد (اختياري)',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: lifexUi(
+                              'تاريخ الميلاد (اختياري)',
+                              'Date of birth (optional)',
+                            ),
+                            border: const OutlineInputBorder(),
                           ),
-                          child: Text(
+                          child: LifexText(
                             _dateOfBirth == null
-                                ? 'يمكن تركه فارغاً'
+                                ? lifexUi('يمكن تركه فارغاً', 'It can be left empty')
                                 : '${_dateOfBirth!.year}/${_dateOfBirth!.month}/${_dateOfBirth!.day}',
                           ),
                         ),
@@ -303,22 +343,25 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<BiologicalSex>(
                     value: _sex,
-                    decoration: const InputDecoration(
-                      labelText: 'الجنس البيولوجي (لأغراض طبية بحتة)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: lifexUi(
+                        'الجنس البيولوجي (لأغراض طبية بحتة)',
+                        'Biological sex (for the medical record only)',
+                      ),
+                      border: const OutlineInputBorder(),
                     ),
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: BiologicalSex.unspecified,
-                        child: Text('تفضّل عدم التحديد'),
+                        child: LifexText(lifexUi('تفضّل عدم التحديد', 'Prefer not to say')),
                       ),
                       DropdownMenuItem(
                         value: BiologicalSex.male,
-                        child: Text('ذكر'),
+                        child: LifexText(lifexUi('ذكر', 'Male')),
                       ),
                       DropdownMenuItem(
                         value: BiologicalSex.female,
-                        child: Text('أنثى'),
+                        child: LifexText(lifexUi('أنثى', 'Female')),
                       ),
                     ],
                     onChanged: (value) {
@@ -329,37 +372,45 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'البريد الإلكتروني (اختياري)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: lifexUi('البريد الإلكتروني (اختياري)', 'Email (optional)'),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'رقم الهاتف (اختياري)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: lifexUi('رقم الهاتف (اختياري)', 'Phone (optional)'),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('أنا من ذوي الهمم / الإعاقة'),
-                    subtitle: const Text(
+                    title: LifexText(lifexUi(
+                      'أنا من ذوي الهمم / الإعاقة',
+                      'I am a person with a disability',
+                    )),
+                    subtitle: LifexText(lifexUi(
                       'التثبيت لاحقاً في وحدة المعاقين ببطاقة إعاقة أو بطاقة مريض دائم من البلد المسجّل فيه.',
-                    ),
+                      'Later fixation in the disability unit uses a disability card or a permanent-patient card from the registered country.',
+                    )),
                     value: _isPersonOfDetermination,
                     onChanged: (value) =>
                         setState(() => _isPersonOfDetermination = value),
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('مكفوف / ضعف بصر شديد في هذه الفئة'),
-                    subtitle: const Text(
+                    title: LifexText(lifexUi(
+                      'مكفوف / ضعف بصر شديد في هذه الفئة',
+                      'Blind or severe low vision in this group',
+                    )),
+                    subtitle: LifexText(lifexUi(
                       'الإعفاء يتبع بطاقة الإعاقة في وحدة المعاقين، من البلد المسجّل فيه.',
-                    ),
+                      'The exemption follows the disability card in the disability unit, from the registered country.',
+                    )),
                     value: _isBlind,
                     onChanged: (value) => setState(() {
                       _isBlind = value;
@@ -368,8 +419,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(AccessModePreference.title(english: _english)),
-                    subtitle: Text(
+                    title: LifexText(AccessModePreference.title(english: _english)),
+                    subtitle: LifexText(
                       AccessModePreference.subtitle(english: _english),
                     ),
                     value: _accessEnabled,
@@ -380,10 +431,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(_english
+                    title: LifexText(_english
                         ? 'Resume accessibility after phone boot'
                         : 'استئناف وضع الوصول بعد إقلاع الهاتف'),
-                    subtitle: Text(
+                    subtitle: LifexText(
                       BootAccessPreference.decide(
                         userEnabled: _bootAccess,
                         english: _english,
@@ -394,17 +445,21 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   ),
                   TextFormField(
                     controller: _accountCountryController,
-                    decoration: const InputDecoration(
-                      labelText: 'بلد صاحب الحساب',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: lifexUi('بلد صاحب الحساب', 'Account holder country'),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('استقبال طلبات التبرع بالدم'),
-                    subtitle: const Text(
+                    title: LifexText(lifexUi(
+                      'استقبال طلبات التبرع بالدم',
+                      'Receive blood donation requests',
+                    )),
+                    subtitle: LifexText(lifexUi(
                       'إن أوقفت هذا الخيار لن يصلك فلاش أو تنبيه تبرع.',
-                    ),
+                      'If you turn this off, a donation flash or alert will not reach you.',
+                    )),
                     value: _acceptsBloodDonationAlerts,
                     onChanged: (value) =>
                         setState(() => _acceptsBloodDonationAlerts = value),
@@ -422,15 +477,21 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     width: double.infinity,
                     child: Semantics(
                       button: true,
-                      label: 'إنشاء الملف والمتابعة',
-                      hint: 'يحفظ الملف وينتقل للرئيسية',
+                      label: lifexUi('إنشاء الملف والمتابعة', 'Create the profile and continue'),
+                      hint: lifexUi(
+                        'يحفظ الملف وينتقل للرئيسية',
+                        'Saves the profile and opens home',
+                      ),
                       onTap: _submit,
                       child: ExcludeSemantics(
                         child: FilledButton(
                           onPressed: _submit,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 14),
-                            child: Text('إنشاء الملف والمتابعة'),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: LifexText(lifexUi(
+                              'إنشاء الملف والمتابعة',
+                              'Create the profile and continue',
+                            )),
                           ),
                         ),
                       ),
@@ -442,6 +503,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           ),
         ),
       ),
+    );
+      },
     );
   }
 }

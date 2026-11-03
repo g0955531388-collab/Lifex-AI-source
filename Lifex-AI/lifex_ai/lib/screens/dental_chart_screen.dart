@@ -13,6 +13,8 @@ import '../features/dental/dental_dashboard.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class DentalChartScreen extends StatelessWidget {
   const DentalChartScreen({super.key});
@@ -26,14 +28,14 @@ class DentalChartScreen extends StatelessWidget {
         final profile = controller.activeProfile;
         if (profile == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('مخطط الأسنان')),
-            body: const Center(child: Text('لا يوجد ملف صحي نشط.')),
+            appBar: AppBar(title: const LifexText('مخطط الأسنان')),
+            body: const Center(child: LifexText('لا يوجد ملف صحي نشط.')),
           );
         }
         final store = ProfileBoxStore(profile);
         final chart = DentalChart.fromJson(store.map(_key));
         return Scaffold(
-          appBar: AppBar(title: const Text('مخطط الأسنان')),
+          appBar: AppBar(title: const LifexText('مخطط الأسنان')),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -46,14 +48,14 @@ class DentalChartScreen extends StatelessWidget {
               FilledButton.icon(
                 onPressed: () => _recordSession(context, controller, store),
                 icon: const Icon(Icons.timer_outlined),
-                label: const Text('تسجيل جلسة عيادة'),
+                label: const LifexText('تسجيل جلسة عيادة'),
               ),
               const SizedBox(height: 8),
               for (final session in store.list(BoxKeys.dentalSessions))
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(session['workTypeAr'] as String? ?? 'جلسة'),
-                  subtitle: Text(
+                  title: LifexText(session['workTypeAr'] as String? ?? 'جلسة'),
+                  subtitle: LifexText(
                     '${session['durationMinutes'] ?? '—'} د • '
                     '${session['priceMinorUnits'] ?? '—'} وحدة صغرى • '
                     '${session['dentalProviderId'] ?? ''}',
@@ -65,7 +67,7 @@ class DentalChartScreen extends StatelessWidget {
                 children: [
                   for (final tooth in DentalChart.fdiAdult)
                     ActionChip(
-                      label: Text('$tooth'),
+                      label: LifexText('$tooth'),
                       avatar: chart.noteFor(tooth).isEmpty
                           ? null
                           : const Icon(Icons.notes, size: 16),
@@ -75,23 +77,23 @@ class DentalChartScreen extends StatelessWidget {
                         final saved = await showDialog<String>(
                           context: context,
                           builder: (_) => AlertDialog(
-                            title: Text('السن $tooth'),
+                            title: LifexText('السن $tooth'),
                             content: TextField(
                               controller: field,
                               maxLines: 3,
-                              decoration: const InputDecoration(
-                                labelText: 'ملاحظة أو خطة',
+                              decoration: InputDecoration(
+                                labelText: tr('ملاحظة أو خطة'),
                               ),
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: const Text('إلغاء'),
+                                child: const LifexText('إلغاء'),
                               ),
                               FilledButton(
                                 onPressed: () =>
                                     Navigator.pop(context, field.text),
-                                child: const Text('حفظ'),
+                                child: const LifexText('حفظ'),
                               ),
                             ],
                           ),
@@ -127,37 +129,37 @@ class DentalChartScreen extends StatelessWidget {
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('جلسة عيادة'),
+        title: const LifexText('جلسة عيادة'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: workType,
-                decoration: const InputDecoration(labelText: 'نوع العمل'),
+                decoration: InputDecoration(labelText: tr('نوع العمل')),
               ),
               TextField(
                 controller: minutes,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'المدة بالدقائق'),
+                decoration: InputDecoration(labelText: tr('المدة بالدقائق')),
               ),
               TextField(
                 controller: materials,
-                decoration: const InputDecoration(
-                  labelText: 'المواد، مفصولة بفاصلة',
+                decoration: InputDecoration(
+                  labelText: tr('المواد، مفصولة بفاصلة'),
                 ),
               ),
               TextField(
                 controller: price,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'السعر بالوحدة الصغرى',
+                decoration: InputDecoration(
+                  labelText: tr('السعر بالوحدة الصغرى'),
                 ),
               ),
               TextField(
                 controller: provider,
-                decoration: const InputDecoration(
-                  labelText: 'معرف الطبيب أو العيادة',
+                decoration: InputDecoration(
+                  labelText: tr('معرف الطبيب أو العيادة'),
                 ),
               ),
             ],
@@ -166,11 +168,11 @@ class DentalChartScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('إلغاء'),
+            child: const LifexText('إلغاء'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('حفظ'),
+            child: const LifexText('حفظ'),
           ),
         ],
       ),
@@ -190,7 +192,7 @@ class DentalChartScreen extends StatelessWidget {
     final priceMinor = int.tryParse(priceText.trim());
     if (durationMinutes == null || priceMinor == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('المدة والسعر رقمان صحيحان.')),
+        const SnackBar(content: LifexText('المدة والسعر رقمان صحيحان.')),
       );
       return;
     }
@@ -210,7 +212,7 @@ class DentalChartScreen extends StatelessWidget {
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('لم تُحفظ الجلسة. نوع العمل والطبيب والمدة والسعر لازمة.'),
+          content: LifexText('لم تُحفظ الجلسة. نوع العمل والطبيب والمدة والسعر لازمة.'),
         ),
       );
       return;

@@ -17,6 +17,8 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/barcode_scan_button.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class NearbyCareScreen extends StatefulWidget {
   const NearbyCareScreen({super.key});
@@ -56,8 +58,8 @@ class _NearbyCareScreenState extends State<NearbyCareScreen> {
     final agreed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('قراءة الموقع'),
-        content: const Text(
+        title: const LifexText('قراءة الموقع'),
+        content: const LifexText(
           'يُقرأ موقع هذا الجهاز لاقتراح أقرب طبيب حسب الاختصاص، '
           'وأقرب مستشفى ومختبر وصيدلية وأشعة وطب أسنان من السجلات التي تحمل إحداثيات. '
           'ليس دليلاً وطنياً ولا تشخيصاً.',
@@ -65,11 +67,11 @@ class _NearbyCareScreenState extends State<NearbyCareScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('رفض'),
+            child: const LifexText('رفض'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('أوافق'),
+            child: const LifexText('أوافق'),
           ),
         ],
       ),
@@ -228,8 +230,8 @@ class _NearbyCareScreenState extends State<NearbyCareScreen> {
         ? 'بلا إحداثيات في السجل، فلم يُحسب الأقرب'
         : '${place.km!.toStringAsFixed(1)} كم من موقع الجهاز';
     return ListTile(
-      title: Text('${place.kindAr}: ${place.title}'),
-      subtitle: Text('$distance\n${place.detail}'),
+      title: LifexText('${place.kindAr}: ${place.title}'),
+      subtitle: LifexText('$distance\n${place.detail}'),
     );
   }
 
@@ -238,7 +240,7 @@ class _NearbyCareScreenState extends State<NearbyCareScreen> {
     final report = _report;
     final fix = _fix;
     return Scaffold(
-      appBar: AppBar(title: const Text('الأقرب من موقعي')),
+      appBar: AppBar(title: const LifexText('الأقرب من موقعي')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -247,10 +249,10 @@ class _NearbyCareScreenState extends State<NearbyCareScreen> {
                 'الأقرب يعني نفس الاختصاص ثم أقرب إحداثيات مسجّلة. مكان باختصاص آخر أو بلا موقع لا يُعرض كأنه الأقرب.',
           ),
           const SizedBox(height: 12),
-          Text(_status),
+          LifexText(_status),
           if (fix != null) ...[
             const SizedBox(height: 8),
-            Text(
+            LifexText(
               'موقع الجهاز ${fix.latitude.toStringAsFixed(5)}, ${fix.longitude.toStringAsFixed(5)}'
               '${fix.accuracyMeters == null ? '' : ' · دقة ${fix.accuracyMeters!.round()} م'}',
             ),
@@ -259,61 +261,61 @@ class _NearbyCareScreenState extends State<NearbyCareScreen> {
           FilledButton.icon(
             onPressed: _busy ? null : _locate,
             icon: const Icon(Icons.my_location),
-            label: Text(_busy ? 'يقرأ الموقع...' : 'اقرأ موقعي واقترح الأقرب'),
+            label: LifexText(_busy ? 'يقرأ الموقع...' : 'اقرأ موقعي واقترح الأقرب'),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: _specialty,
             items: DoctorDirectory.specialtiesAr
-                .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+                .map((item) => DropdownMenuItem(value: item, child: LifexText(item)))
                 .toList(),
             onChanged: (value) {
               if (value == null) return;
               setState(() => _specialty = value);
               if (_fix != null) _refresh();
             },
-            decoration: const InputDecoration(labelText: 'اختصاص الطبيب'),
+            decoration: InputDecoration(labelText: tr('اختصاص الطبيب')),
           ),
           if (report != null) ...[
             const SizedBox(height: 16),
-            Text('أطباء $_specialty', style: Theme.of(context).textTheme.titleMedium),
+            LifexText('أطباء $_specialty', style: Theme.of(context).textTheme.titleMedium),
             if (report.doctors.isEmpty)
-              const ListTile(title: Text('لا طبيب بهذا الاختصاص في الملف'))
+              const ListTile(title: LifexText('لا طبيب بهذا الاختصاص في الملف'))
             else
               for (final place in report.doctors) _placeTile(place),
             const SizedBox(height: 8),
-            Text(
+            LifexText(
               'وحدات $_specialty',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             if (report.units.isEmpty)
               const ListTile(
-                title: Text('لا وحدة بهذا الاختصاص في الملف'),
+                title: LifexText('لا وحدة بهذا الاختصاص في الملف'),
               )
             else
               for (final place in report.units) _placeTile(place),
           ],
           const Divider(height: 32),
-          Text('تسجيل مكان بإحداثيات الجهاز', style: Theme.of(context).textTheme.titleMedium),
+          LifexText('تسجيل مكان بإحداثيات الجهاز', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: _kind,
             items: const [
-              DropdownMenuItem(value: 'doctor', child: Text('طبيب')),
-              DropdownMenuItem(value: 'hospital', child: Text('مستشفى')),
-              DropdownMenuItem(value: 'lab', child: Text('مختبر')),
-              DropdownMenuItem(value: 'pharmacy', child: Text('صيدلية')),
-              DropdownMenuItem(value: 'radiology', child: Text('أشعة')),
-              DropdownMenuItem(value: 'dental', child: Text('أسنان')),
+              DropdownMenuItem(value: 'doctor', child: LifexText('طبيب')),
+              DropdownMenuItem(value: 'hospital', child: LifexText('مستشفى')),
+              DropdownMenuItem(value: 'lab', child: LifexText('مختبر')),
+              DropdownMenuItem(value: 'pharmacy', child: LifexText('صيدلية')),
+              DropdownMenuItem(value: 'radiology', child: LifexText('أشعة')),
+              DropdownMenuItem(value: 'dental', child: LifexText('أسنان')),
             ],
             onChanged: (value) {
               if (value != null) setState(() => _kind = value);
             },
-            decoration: const InputDecoration(labelText: 'نوع المكان'),
+            decoration: InputDecoration(labelText: tr('نوع المكان')),
           ),
           TextField(
             controller: _name,
-            decoration: const InputDecoration(labelText: 'الاسم'),
+            decoration: InputDecoration(labelText: tr('الاسم')),
           ),
           const SizedBox(height: 8),
           BarcodeScanButton(
@@ -323,7 +325,7 @@ class _NearbyCareScreenState extends State<NearbyCareScreen> {
           const SizedBox(height: 8),
           FilledButton(
             onPressed: _saveHere,
-            child: const Text('احفظ هذا المكان بموقعي الحالي'),
+            child: const LifexText('احفظ هذا المكان بموقعي الحالي'),
           ),
         ],
       ),

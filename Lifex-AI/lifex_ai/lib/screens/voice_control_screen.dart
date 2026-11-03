@@ -18,6 +18,7 @@ import '../app_navigator.dart';
 import '../core/orchestrator/lio_gateway_contracts.dart';
 import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../core/permission_transparency.dart';
+import '../features/clock/clock_voice.dart';
 import '../features/energy/energy_manager.dart';
 import '../features/energy/phone_battery_brief.dart';
 import '../features/emergency/emergency_phone_contacts_registry.dart';
@@ -80,10 +81,13 @@ import 'permission_transparency_screen.dart';
 import 'pharmacy_stock_screen.dart';
 import 'project_box_hub_screen.dart';
 import 'smart_health_questionnaire_screen.dart';
+import 'speaking_alarm_screen.dart';
 import 'book_library_screen.dart';
 import 'system_search_screen.dart';
 import 'vision_resource_screen.dart';
 import 'thumbnail_manage_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class VoiceControlScreen extends StatefulWidget {
   const VoiceControlScreen({
@@ -241,8 +245,8 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('المساعد الصوتي الصحي'),
-        content: const Text(
+        title: const LifexText('المساعد الصوتي الصحي'),
+        content: const LifexText(
           'الميكروفون للاستماع والرد وأنت على هذه الشاشة. '
           'ليس تسجيلاً بعد إغلاقها، ولا يُرسل مقطع صوتي لخادم. '
           'يمكنك إيقافه لاحقاً من شفافية الصلاحيات.',
@@ -250,11 +254,11 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('رفض'),
+            child: const LifexText('رفض'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('السماح بهذه الوظيفة'),
+            child: const LifexText('السماح بهذه الوظيفة'),
           ),
         ],
       ),
@@ -753,16 +757,16 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (_) => AlertDialog(
-            title: const Text('طلب طوارئ'),
-            content: Text(_emergencyVoice.prompt(arabic: arabic)),
+            title: const LifexText('طلب طوارئ'),
+            content: LifexText(_emergencyVoice.prompt(arabic: arabic)),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('أنا بخير')),
+                  child: const LifexText('أنا بخير')),
               FilledButton(
                   style: FilledButton.styleFrom(backgroundColor: Colors.red),
                   onPressed: () => Navigator.pop(context, true),
-                  child: const Text('سجّل محلياً')),
+                  child: const LifexText('سجّل محلياً')),
             ],
           ),
         );
@@ -1709,6 +1713,26 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
         );
         await reply(VoiceReply(ar: speech.arabic, en: speech.english));
         break;
+      case VoiceCommandIntent.tellTime:
+        _conversation.clear();
+        await reply(const ClockVoice().timeReply(DateTime.now()));
+        break;
+      case VoiceCommandIntent.openClockAlarms:
+        _conversation.clear();
+        await reply(
+          ClockVoice.openAlarmsReply,
+          thenOpen: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SpeakingAlarmScreen()),
+            );
+          },
+        );
+        break;
+      case VoiceCommandIntent.stopClockAlarm:
+        _conversation.clear();
+        await reply(await const ClockVoice().stopAlarm());
+        break;
       case VoiceCommandIntent.unknown:
         await reply(
           const VoiceReply(
@@ -1731,7 +1755,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
       controls: const ['تحدث الآن', 'أوقف القراءة', 'اختبر النطق', 'اقرأ الشاشة'],
       body: _replyAr ?? _engine.lastSignalAr,
       child: Scaffold(
-      appBar: AppBar(title: const Text('التحكم الصوتي')),
+      appBar: AppBar(title: const LifexText('التحكم الصوتي')),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -1762,15 +1786,15 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                   color: _signalColor(context),
                   size: 16,
                 ),
-                label: Text(_signalLabel()),
+                label: LifexText(_signalLabel()),
               ),
               const SizedBox(height: 8),
-              Text(
+              LifexText(
                 'لغة الجهاز/المتحدث: $locale',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              Text(
+              LifexText(
                 _engine.lastSignalAr,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium,
@@ -1780,7 +1804,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Text('مباشر: ${_engine.partialTranscript}',
+                    child: LifexText('مباشر: ${_engine.partialTranscript}',
                         textAlign: TextAlign.center),
                   ),
                 ),
@@ -1793,7 +1817,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child:
-                        Text('سمعت: $_lastText', textAlign: TextAlign.center),
+                        LifexText('سمعت: $_lastText', textAlign: TextAlign.center),
                   ),
                 ),
               ],
@@ -1801,14 +1825,14 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                 const SizedBox(height: 12),
                 Semantics(
                   liveRegion: true,
-                  label: 'الرد: $_replyAr',
+                  label: tr('الرد: $_replyAr'),
                   child: Card(
                     color:
                         Theme.of(context).colorScheme.surfaceContainerHighest,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child:
-                          Text('الرد: $_replyAr', textAlign: TextAlign.center),
+                          LifexText('الرد: $_replyAr', textAlign: TextAlign.center),
                     ),
                   ),
                 ),
@@ -1816,15 +1840,15 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
               const SizedBox(height: 20),
               Semantics(
                 textField: true,
-                label: 'مربع الأمر. الكتابة والصوت يصلان إلى المسار نفسه.',
+                label: tr('مربع الأمر. الكتابة والصوت يصلان إلى المسار نفسه.'),
                 child: TextField(
                   controller: _typed,
                   focusNode: _typedFocus,
                   textInputAction: TextInputAction.send,
                   enabled: !_sessionBusy,
-                  decoration: const InputDecoration(
-                    labelText: 'اكتب الأمر نفسه',
-                    hintText: 'مثل: ملفي الصحي، بنك الدم، ما الموجود أمامي',
+                  decoration: InputDecoration(
+                    labelText: tr('اكتب الأمر نفسه'),
+                    hintText: tr('مثل: ملفي الصحي، بنك الدم، ما الموجود أمامي'),
                     border: OutlineInputBorder(),
                   ),
                   onSubmitted: (_) => unawaited(_submitTyped()),
@@ -1836,11 +1860,11 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                 child: FilledButton.tonalIcon(
                   onPressed: _sessionBusy ? null : _submitTyped,
                   icon: const Icon(Icons.keyboard_return),
-                  label: const Text('تنفيذ المكتوب'),
+                  label: const LifexText('تنفيذ المكتوب'),
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
+              LifexText(
                 'الكتابة تستخدم نفس محلل الأوامر الصوتية. لا تحتاج ميكروفوناً.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
@@ -1848,11 +1872,11 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
               const SizedBox(height: 28),
               Semantics(
                 button: true,
-                label: speaking
+                label: tr(speaking
                     ? 'أوقف القراءة'
                     : listening
                         ? 'أوقف الاستماع'
-                        : 'تحدث الآن',
+                        : 'تحدث الآن'),
                 child: FilledButton.icon(
                   onPressed: speaking
                       ? () => unawaited(_stopReading())
@@ -1867,7 +1891,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                       : listening
                           ? Icons.stop_circle
                           : Icons.mic),
-                  label: Text(
+                  label: LifexText(
                     speaking
                         ? 'أوقف القراءة'
                         : listening
@@ -1879,7 +1903,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
               const SizedBox(height: 12),
               Semantics(
                 button: true,
-                label: 'اختبر النطق',
+                label: tr('اختبر النطق'),
                 child: OutlinedButton.icon(
                   onPressed: speaking
                       ? null
@@ -1888,13 +1912,13 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                             en: 'This is a speech test. Hearing this sentence means the engine replied.',
                           ))),
                   icon: const Icon(Icons.record_voice_over),
-                  label: const Text('اختبر النطق'),
+                  label: const LifexText('اختبر النطق'),
                 ),
               ),
               const SizedBox(height: 18),
               SwitchListTile(
-                title: const Text('أذن رقمية على هذه الشاشة'),
-                subtitle: const Text(
+                title: const LifexText('أذن رقمية على هذه الشاشة'),
+                subtitle: const LifexText(
                     'تستمع لكلمة ليفكس أو Lifex ما دامت الشاشة مفتوحة. ليست تجسساً بعد إغلاقها.'),
                 value: _privacy.screenEarEnabled,
                 onChanged: (value) {
@@ -1907,8 +1931,8 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                 },
               ),
               SwitchListTile(
-                title: const Text('إبقاء نص الأوامر على الشاشة'),
-                subtitle: const Text(
+                title: const LifexText('إبقاء نص الأوامر على الشاشة'),
+                subtitle: const LifexText(
                     'لا يُحفظ مقطع صوتي. النص يظهر هنا فقط إن فعّلت هذا.'),
                 value: _privacy.storeTranscripts,
                 onChanged: (value) =>
@@ -1916,27 +1940,27 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
               ),
               ExpansionTile(
                 leading: const Icon(Icons.touch_app_outlined),
-                title: const Text('معايرة زر الاستماع'),
-                subtitle: Text(_cue.kindLabelAr(_cue.kind)),
+                title: const LifexText('معايرة زر الاستماع'),
+                subtitle: LifexText(_cue.kindLabelAr(_cue.kind)),
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(_cue.honestyAr()),
+                        LifexText(_cue.honestyAr()),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<HardwareCueKind>(
                           value: _cue.kind,
-                          decoration: const InputDecoration(
-                            labelText: 'الزر',
+                          decoration: InputDecoration(
+                            labelText: tr('الزر'),
                             border: OutlineInputBorder(),
                           ),
                           items: [
                             for (final kind in HardwareCueKind.values)
                               DropdownMenuItem(
                                 value: kind,
-                                child: Text(_cue.kindLabelAr(kind)),
+                                child: LifexText(_cue.kindLabelAr(kind)),
                               ),
                           ],
                           onChanged: (value) {
@@ -1948,16 +1972,16 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                         const SizedBox(height: 12),
                         DropdownButtonFormField<int>(
                           value: _cue.tapCount.clamp(2, 4),
-                          decoration: const InputDecoration(
-                            labelText: 'عدد الضغطات',
+                          decoration: InputDecoration(
+                            labelText: tr('عدد الضغطات'),
                             border: OutlineInputBorder(),
                           ),
                           items: const [
-                            DropdownMenuItem(value: 2, child: Text('مرتين')),
+                            DropdownMenuItem(value: 2, child: LifexText('مرتين')),
                             DropdownMenuItem(
-                                value: 3, child: Text('ثلاث مرات')),
+                                value: 3, child: LifexText('ثلاث مرات')),
                             DropdownMenuItem(
-                                value: 4, child: Text('أربع مرات')),
+                                value: 4, child: LifexText('أربع مرات')),
                           ],
                           onChanged: (value) {
                             if (value == null) return;
@@ -1968,22 +1992,22 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                         const SizedBox(height: 12),
                         DropdownButtonFormField<StartSignalKind>(
                           value: _cue.startSignal,
-                          decoration: const InputDecoration(
-                            labelText: 'إشارة البدء',
+                          decoration: InputDecoration(
+                            labelText: tr('إشارة البدء'),
                             border: OutlineInputBorder(),
                           ),
                           items: const [
                             DropdownMenuItem(
                               value: StartSignalKind.tone,
-                              child: Text('نغمة'),
+                              child: LifexText('نغمة'),
                             ),
                             DropdownMenuItem(
                               value: StartSignalKind.voice,
-                              child: Text('جملة نطق'),
+                              child: LifexText('جملة نطق'),
                             ),
                             DropdownMenuItem(
                               value: StartSignalKind.both,
-                              child: Text('نغمة ثم جملة'),
+                              child: LifexText('نغمة ثم جملة'),
                             ),
                           ],
                           onChanged: (value) {
@@ -1999,8 +2023,8 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
               ),
               ListTile(
                 leading: const Icon(Icons.monitor_heart_outlined),
-                title: const Text('مراقبة سريرية ظاهرة'),
-                subtitle: const Text('إشعار دائم بموافقة. ليست تجسساً'),
+                title: const LifexText('مراقبة سريرية ظاهرة'),
+                subtitle: const LifexText('إشعار دائم بموافقة. ليست تجسساً'),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -2010,7 +2034,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
               ),
               ListTile(
                 leading: const Icon(Icons.security_outlined),
-                title: const Text('شفافية الميكروفون'),
+                title: const LifexText('شفافية الميكروفون'),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -2018,7 +2042,7 @@ class _VoiceControlScreenState extends State<VoiceControlScreen>
                   ),
                 ),
               ),
-              const Text(
+              const LifexText(
                 'من ملف وحدة الصوت: استماع، فهم اللغة، تنفيذ، رد. '
                 'قل: ليفكس، ذكرني بالدواء — Lifex, what is in front of me — '
                 'ليفكس أنا لا أستطيع التنفس',

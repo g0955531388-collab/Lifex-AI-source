@@ -4,6 +4,8 @@
 /// =============================================================
 library lifex_ai.features.accessibility.blind_camera_speech;
 
+import 'dart:ui' show PlatformDispatcher;
+
 class BlindCameraSpeech {
   const BlindCameraSpeech._();
 
@@ -114,6 +116,34 @@ class BlindCameraSpeech {
 
   static bool explainsInArabic(String languageCode) =>
       languageCode.toLowerCase().startsWith('ar');
+
+  /// أسماء الأشياء المرئية تتبع لغة الهاتف، لا زر الواجهة.
+  /// العربية تُترجم من الجدول. غير العربية تبقى أسماء المصنّف الإنجليزية، بلا اختراع لغة ناقصة.
+  static String deviceNameCode({String? languageCode}) {
+    final code = (languageCode ?? _phoneLanguageCode()).trim().toLowerCase();
+    if (code.startsWith('ar')) return 'ar';
+    return 'en';
+  }
+
+  static String _phoneLanguageCode() {
+    try {
+      return PlatformDispatcher.instance.locale.languageCode;
+    } catch (_) {
+      return 'en';
+    }
+  }
+
+  static String spokenNameList(
+    Iterable<String> labels, {
+    required String languageCode,
+  }) {
+    final arabic = explainsInArabic(languageCode);
+    final names = [
+      for (final label in labels)
+        if (label.trim().isNotEmpty) phraseForLabel(label, languageCode),
+    ];
+    return names.join(arabic ? '، ' : ', ');
+  }
 
   static String phraseForLabel(String label, String languageCode) {
     final name = label.trim();

@@ -49,8 +49,10 @@ void main() {
     DateTime? now,
     DateTime? expires,
     int? units = 2,
+    bool admin = false,
   }) {
     return const BloodAppealDesk().publish(
+      adminAuthorized: admin,
       unitStore: store,
       publisher: publisher,
       candidates: people,
@@ -130,6 +132,18 @@ void main() {
     final outcome = send(store, publisher, [publisher]);
     expect(outcome.errorAr, contains('تفويض'));
     expect(store.list(BloodAppealDesk.appealsKey), isEmpty);
+  });
+
+  test('الدور الإداري ينشر بلا تفويض مخزَّن، ولا يترك تفويضاً بعده', () {
+    final publisher = person(id: 'owner', name: 'المالك', alerts: false);
+    final store = ProfileBoxStore(publisher);
+    final near = person(id: 'near2', name: 'قريب');
+    final outcome = send(store, publisher, [publisher, near], admin: true);
+    expect(outcome.errorAr, isNull);
+    expect(outcome.invited, 1);
+    expect(BloodAppealDesk.mayPublish(store, publisher.profileId), isFalse);
+    final again = send(store, publisher, [publisher], key: 'second');
+    expect(again.errorAr, contains('تفويض'));
   });
 
   test('المرض المزمن لا يمنع الدعوة ولا يظهر في الرسالة', () {

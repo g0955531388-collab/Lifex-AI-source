@@ -1,0 +1,28 @@
+UI|lib/screens/accessibility_assistant_screen.dart|53|appBar: AppBar(title: const Text('المساعد البصري')),
+UI|lib/screens/accessibility_assistant_screen.dart|59|label: 'هذه أداة مساعدة إضافية. العصا البيضاء أو كلب الإرشاد '
+UI|lib/screens/accessibility_assistant_screen.dart|72|label: 'البث الحي على هذه الشاشة',
+UI|lib/screens/accessibility_assistant_screen.dart|77|label: 'صف لي المكان',
+UI|lib/screens/accessibility_assistant_screen.dart|82|label: 'هل يوجد عائق أمامي؟',
+UI|lib/screens/accessibility_assistant_screen.dart|99|label: 'اقرأ لي هذا النص',
+UI|lib/screens/accessibility_assistant_screen.dart|104|label: 'الرادار الضوئي',
+UI|lib/screens/accessibility_assistant_screen.dart|115|label: 'مرجع العلامات البصرية',
+UI|lib/screens/accessibility_assistant_screen.dart|172|hint: enabled ? hint : 'انتظر انتهاء القراءة الحالية',
+UI|lib/screens/admin_dashboard_screen.dart|104|appBar: AppBar(title: const Text('لوحة تحكم الأدمن')),
+UI|lib/screens/admin_dashboard_screen.dart|139|title: const Text('دورك الحالي'),
+UI|lib/screens/admin_dashboard_screen.dart|144|Text('صلاحياتك (${myPerms.length})',
+---OTHER TOP---
+OTHER|352|lib/features/network_box/unit_branch_catalog.dart
+OTHER|245|lib/features/voice/command_parser.dart
+OTHER|171|lib/features/profile/health_questionnaire_schema.dart
+OTHER|145|lib/features/education/youth_guide_book.dart
+OTHER|122|lib/screens/voice_control_screen.dart
+OTHER|112|lib/features/accessibility/blind_camera_speech.dart
+OTHER|105|lib/features/family/child_rights_book.dart
+OTHER|77|lib/features/messaging/messenger_phrases.dart
+OTHER|72|lib/features/education/royal_intelligence.dart
+OTHER|65|lib/features/education/choice_mirror_book.dart
+OTHER|63|lib/core/ui/lifex_unified_web_portal.dart
+OTHER|60|lib/core/network_canon.dart
+OTHER|59|lib/screens/global_health_dashboard_screen.dart
+OTHER|58|lib/features/network_box/box_unit_catalog.dart
+OTHER|58|lib/features/care_cycle/care_cycle_desk.dart

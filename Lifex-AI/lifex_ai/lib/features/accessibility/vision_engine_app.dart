@@ -84,6 +84,14 @@ DirectGeminiRoute directGeminiRoute({
   return DirectGeminiRoute.internal;
 }
 
+/// المسار الداخلي يعرض الموافقة ولا يمنحها؛ الوصف المحلي يبقى حتى يوافق المستخدم.
+String cloudConsentOffer(String languageCode) {
+  if (languageCode.toLowerCase().startsWith('ar')) {
+    return 'الوصف المحلي يعمل الآن. لإرسال الصورة إلى جيميني قل: أوافق على الإرسال السحابي، أو فعّل اتصال جيميني الحي من الخيارات.';
+  }
+  return 'The local description is running. To send the picture to Gemini, turn on the Gemini live connection in the options.';
+}
+
 class VisionAppOpen {
   const VisionAppOpen({required this.code, required this.spokenAr});
 

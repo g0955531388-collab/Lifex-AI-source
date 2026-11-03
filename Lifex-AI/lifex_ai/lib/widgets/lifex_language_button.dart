@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../core/app_config.dart';
 import '../core/i18n/lifex_i18n.dart';
+import 'lifex_text.dart';
 
 class LifexLanguageButton extends StatelessWidget {
   const LifexLanguageButton({super.key});
@@ -21,11 +22,14 @@ class LifexLanguageButton extends StatelessWidget {
           label: context.nav('nav.languageHint'),
           child: FilledButton.tonal(
             style: FilledButton.styleFrom(
-              minimumSize: const Size(48, 48),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              minimumSize: const Size(36, 32),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
             ),
             onPressed: StudioThemeController.instance.toggleLanguage,
-            child: Text(
+            child: LifexText(
               context.nav(arabic ? 'nav.languageAr' : 'nav.languageEn'),
             ),
           ),

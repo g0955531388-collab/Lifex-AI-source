@@ -18,6 +18,7 @@ import '../widgets/honesty_banner.dart';
 import '../widgets/lifex_brand_mark.dart';
 import '../widgets/voice_fill_button.dart';
 import 'doctor_directory_screen.dart';
+import '../widgets/lifex_text.dart';
 
 class StampedReportsScreen extends StatefulWidget {
   const StampedReportsScreen({super.key});
@@ -78,7 +79,7 @@ class _StampedReportsScreenState extends State<StampedReportsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
+          content: LifexText(
             'نُسخ التقرير. الصقه في درايف أو واتساب أو للطابعة من حسابك أنت.',
           ),
         ),
@@ -88,7 +89,7 @@ class _StampedReportsScreenState extends State<StampedReportsScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
+        content: LifexText(
           'ورقة المشاركة لجهازك: صديق أو طبيب أو طابعة أو ${CvDocumentVault.cloudChoices.join(' / ')}.',
         ),
       ),
@@ -99,7 +100,7 @@ class _StampedReportsScreenState extends State<StampedReportsScreen> {
   Widget build(BuildContext context) {
     final profile = context.watch<ActiveProfileController>().activeProfile;
     return Scaffold(
-      appBar: AppBar(title: const Text('التقارير المختومة')),
+      appBar: AppBar(title: const LifexText('التقارير المختومة')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -112,20 +113,20 @@ class _StampedReportsScreenState extends State<StampedReportsScreen> {
           const SizedBox(height: 12),
           FilledButton(
             onPressed: profile == null ? null : _compile,
-            child: const Text('إنتاج تقرير السي في المختوم'),
+            child: const LifexText('إنتاج تقرير السي في المختوم'),
           ),
           if (_shareHint != null) ...[
             const SizedBox(height: 8),
-            Text(_shareHint!),
-            Text('الاختصاص المقترح: $_specialty'),
+            LifexText(_shareHint!),
+            LifexText('الاختصاص المقترح: $_specialty'),
           ],
           if (_doctors.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text('أطباء ملفك — $_specialty — من الأقرب فالأبعد (كم مسجّل)'),
+            LifexText('أطباء ملفك — $_specialty — من الأقرب فالأبعد (كم مسجّل)'),
             for (final doctor in _doctors)
               ListTile(
-                title: Text(doctor['title']?.toString() ?? ''),
-                subtitle: Text(
+                title: LifexText(doctor['title']?.toString() ?? ''),
+                subtitle: LifexText(
                   '${doctor['detail']} · ${doctor['km'] ?? '—'} كم',
                 ),
               ),
@@ -135,7 +136,7 @@ class _StampedReportsScreenState extends State<StampedReportsScreen> {
               context,
               MaterialPageRoute(builder: (_) => const DoctorDirectoryScreen()),
             ),
-            child: const Text('أطباء النظام على هذا الجهاز'),
+            child: const LifexText('أطباء النظام على هذا الجهاز'),
           ),
           if (_text != null) ...[
             const SizedBox(height: 12),
@@ -153,14 +154,14 @@ class _StampedReportsScreenState extends State<StampedReportsScreen> {
                     await Clipboard.setData(ClipboardData(text: _text!));
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('نُسخ. أرسله أنت إن شئت.')),
+                      const SnackBar(content: LifexText('نُسخ. أرسله أنت إن شئت.')),
                     );
                   },
-                  child: const Text('نسخ'),
+                  child: const LifexText('نسخ'),
                 ),
                 FilledButton(
                   onPressed: _share,
-                  child: const Text('مشاركة / سحابة / طباعة'),
+                  child: const LifexText('مشاركة / سحابة / طباعة'),
                 ),
               ],
             ),

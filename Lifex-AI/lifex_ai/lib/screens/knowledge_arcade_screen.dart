@@ -16,6 +16,7 @@ import 'empowerment_lab_screen.dart';
 import 'personal_shelf_screen.dart';
 import 'royal_intelligence_screen.dart';
 import 'youth_guide_screen.dart';
+import '../widgets/lifex_text.dart';
 
 class KnowledgeArcadeScreen extends StatelessWidget {
   const KnowledgeArcadeScreen({super.key});
@@ -51,17 +52,17 @@ class KnowledgeArcadeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     const arcade = KnowledgeArcade();
     return Scaffold(
-      appBar: AppBar(title: const Text(KnowledgeArcade.nameAr)),
+      appBar: AppBar(title: const LifexText(KnowledgeArcade.nameAr)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
+          LifexText(
             AppConstants.studioBannerCredit,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
-          Text(
+          LifexText(
             KnowledgeArcade.mottoAr,
             style: Theme.of(context).textTheme.titleMedium,
           ),
@@ -69,8 +70,8 @@ class KnowledgeArcadeScreen extends StatelessWidget {
           const HonestyBanner(messageAr: KnowledgeArcade.disclaimerAr),
           const SizedBox(height: 12),
           for (final library in arcade.libraries()) ...[
-            Text(library.titleAr, style: Theme.of(context).textTheme.titleLarge),
-            Text(library.subtitleAr, style: Theme.of(context).textTheme.bodySmall),
+            LifexText(library.titleAr, style: Theme.of(context).textTheme.titleLarge),
+            LifexText(library.subtitleAr, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 8),
             for (final volume in library.volumes)
               Card(
@@ -82,9 +83,9 @@ class KnowledgeArcadeScreen extends StatelessWidget {
                             ? Icons.quiz_outlined
                             : Icons.menu_book_outlined,
                   ),
-                  title: Text(volume.titleAr),
-                  subtitle: Text(volume.blurbAr),
-                  trailing: Text(
+                  title: LifexText(volume.titleAr),
+                  subtitle: LifexText(volume.blurbAr),
+                  trailing: LifexText(
                     volume.readableNow ? 'اقرأ' : 'نزّل',
                     style: Theme.of(context).textTheme.labelLarge,
                   ),

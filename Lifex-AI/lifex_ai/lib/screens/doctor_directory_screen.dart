@@ -19,6 +19,8 @@ import '../widgets/honesty_banner.dart';
 import 'doctor_diary_screen.dart';
 import 'nearby_care_screen.dart';
 import 'public_doctor_face_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class DoctorDirectoryScreen extends StatefulWidget {
   const DoctorDirectoryScreen({super.key});
@@ -63,7 +65,7 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(lifexUi(
+          content: LifexText(lifexUi(
             'هذا السطر بلا معرّف محلي، فلا يُستبدل.',
             'This row has no local id, so it is not replaced.',
           )),
@@ -110,11 +112,11 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
         final profile = controller.activeProfile;
         if (profile == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('الأطباء')),
+            appBar: AppBar(title: const LifexText('الأطباء')),
             body: const Center(
               child: Padding(
                 padding: EdgeInsets.all(24),
-                child: Text(
+                child: LifexText(
                   'EMPTY — وحدة الأطباء متاحة.\n'
                   'لا يوجد ملف صحي نشط بعد.\n'
                   'أنشئ ملفاً لإضافة أطباء محليين. ليس ACCESS DENIED.',
@@ -130,7 +132,7 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
           specialty: _filter,
         );
         return Scaffold(
-          appBar: AppBar(title: const Text('الأطباء')),
+          appBar: AppBar(title: const LifexText('الأطباء')),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -142,8 +144,8 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                 Card(
                   child: ListTile(
                     leading: const Icon(Icons.info_outline),
-                    title: Text(lifexUi('لا أطباء محفوظون', 'No doctors saved')),
-                    subtitle: const Text(
+                    title: LifexText(lifexUi('لا أطباء محفوظون', 'No doctors saved')),
+                    subtitle: const LifexText(
                       'EMPTY — لا أطباء محفوظين على هذا الجهاز بعد. '
                       'أضف طبيباً أدناه. الدليل العام يبقى مفتوحاً.',
                     ),
@@ -151,8 +153,8 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                 ),
               ListTile(
                 leading: const Icon(Icons.near_me_outlined),
-                title: const Text('الأقرب من موقعي'),
-                subtitle: const Text('الأقرب ضمن الاختصاص ثم ضمن موقع الجهاز'),
+                title: const LifexText('الأقرب من موقعي'),
+                subtitle: const LifexText('الأقرب ضمن الاختصاص ثم ضمن موقع الجهاز'),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -162,8 +164,8 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.event_note_outlined),
-                title: const Text('يوميات الطبيب'),
-                subtitle: const Text('حصص اليوم على هذا الجهاز'),
+                title: const LifexText('يوميات الطبيب'),
+                subtitle: const LifexText('حصص اليوم على هذا الجهاز'),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -174,23 +176,23 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
               DropdownButtonFormField<String>(
                 value: _filter ?? '__all__',
                 items: [
-                  const DropdownMenuItem(value: '__all__', child: Text('الكل')),
+                  const DropdownMenuItem(value: '__all__', child: LifexText('الكل')),
                   ...DoctorDirectory.specialtiesAr.map(
-                    (item) => DropdownMenuItem(value: item, child: Text(item)),
+                    (item) => DropdownMenuItem(value: item, child: LifexText(item)),
                   ),
                 ],
                 onChanged: (value) => setState(
                   () => _filter = value == '__all__' ? null : value,
                 ),
-                decoration: const InputDecoration(labelText: 'كل الاختصاصات'),
+                decoration: InputDecoration(labelText: tr('كل الاختصاصات')),
               ),
               for (final doctor in doctors)
                 ListTile(
-                  title: Text(
+                  title: LifexText(
                     '${doctor['title'] ?? ''}'
                     '${_listedId(doctor)}',
                   ),
-                  subtitle: Text(
+                  subtitle: LifexText(
                     '${doctor['detail']} · ${doctor['km'] ?? '—'} كم',
                   ),
                   onTap: () => Navigator.push(
@@ -206,70 +208,70 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
               const Divider(),
               TextField(
                 controller: _name,
-                decoration: const InputDecoration(labelText: 'اسم الطبيب'),
+                decoration: InputDecoration(labelText: tr('اسم الطبيب')),
               ),
               DropdownButtonFormField<String>(
                 value: _specialty,
                 items: DoctorDirectory.specialtiesAr
                     .map((item) =>
-                        DropdownMenuItem(value: item, child: Text(item)))
+                        DropdownMenuItem(value: item, child: LifexText(item)))
                     .toList(),
                 onChanged: (value) {
                   if (value != null) setState(() => _specialty = value);
                 },
-                decoration: const InputDecoration(labelText: 'الاختصاص'),
+                decoration: InputDecoration(labelText: tr('الاختصاص')),
               ),
               TextField(
                 controller: _phone,
-                decoration: const InputDecoration(labelText: 'هاتف أو عنوان'),
+                decoration: InputDecoration(labelText: tr('هاتف أو عنوان')),
               ),
               TextField(
                 controller: _km,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'المسافة كم'),
+                decoration: InputDecoration(labelText: tr('المسافة كم')),
               ),
               TextField(
                 controller: _city,
-                decoration: const InputDecoration(labelText: 'المدينة'),
+                decoration: InputDecoration(labelText: tr('المدينة')),
               ),
               TextField(
                 controller: _address,
-                decoration: const InputDecoration(labelText: 'العنوان'),
+                decoration: InputDecoration(labelText: tr('العنوان')),
               ),
               TextField(
                 controller: _email,
-                decoration: const InputDecoration(labelText: 'البريد'),
+                decoration: InputDecoration(labelText: tr('البريد')),
               ),
               TextField(
                 controller: _note,
-                decoration: const InputDecoration(
-                  labelText: 'ملاحظة الحضور التي يكتبها الطبيب',
+                decoration: InputDecoration(
+                  labelText: tr('ملاحظة الحضور التي يكتبها الطبيب'),
                 ),
               ),
               TextField(
                 controller: _disabilityNote,
-                decoration: const InputDecoration(
-                  labelText: 'دعم ذوي الإعاقة الذي يعلنه الطبيب',
+                decoration: InputDecoration(
+                  labelText: tr('دعم ذوي الإعاقة الذي يعلنه الطبيب'),
                 ),
               ),
               TextField(
                 controller: _discount,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'اقتراح خصم بالمئة، إن كتبه الطبيب',
+                decoration: InputDecoration(
+                  labelText: tr('اقتراح خصم بالمئة، إن كتبه الطبيب'),
                 ),
               ),
               TextField(
                 controller: _license,
-                decoration: const InputDecoration(
-                  labelText: 'رقم الاعتماد الوطني',
+                decoration: InputDecoration(
+                  labelText: tr('رقم الاعتماد الوطني'),
                 ),
               ),
               TextField(
                 controller: _brief,
                 maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'نبذة الإعلان العامة',
+                decoration: InputDecoration(
+                  labelText: tr('نبذة الإعلان العامة'),
                 ),
               ),
               DropdownButtonFormField<String>(
@@ -277,19 +279,19 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                 items: [
                   const DropdownMenuItem(
                     value: '',
-                    child: Text('بلا ملف طبيب على الجهاز'),
+                    child: LifexText('بلا ملف طبيب على الجهاز'),
                   ),
                   ...controller.allProfiles.map(
                     (item) => DropdownMenuItem(
                       value: item.profileId,
-                      child: Text('ملف: ${item.fullName}'),
+                      child: LifexText('ملف: ${item.fullName}'),
                     ),
                   ),
                 ],
                 onChanged: (value) => setState(
                     () => _linkedProfileId = value == '' ? null : value),
-                decoration: const InputDecoration(
-                  labelText: 'ربط بملف الطبيب لاستلام الإشعار والسي في',
+                decoration: InputDecoration(
+                  labelText: tr('ربط بملف الطبيب لاستلام الإشعار والسي في'),
                 ),
               ),
               BarcodeScanButton(
@@ -334,7 +336,7 @@ class _DoctorDirectoryScreenState extends State<DoctorDirectoryScreen> {
                   _disabilityNote.clear();
                   _discount.clear();
                 },
-                child: const Text('حفظ طبيب محلي'),
+                child: const LifexText('حفظ طبيب محلي'),
               ),
             ],
           ),
@@ -384,7 +386,7 @@ class _DoctorEditDialogState extends State<_DoctorEditDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(lifexUi('تعديل الطبيب المحلي', 'Edit the local doctor')),
+      title: LifexText(lifexUi('تعديل الطبيب المحلي', 'Edit the local doctor')),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -398,7 +400,7 @@ class _DoctorEditDialogState extends State<_DoctorEditDialog> {
             DropdownButtonFormField<String>(
               value: _specialty,
               items: DoctorDirectory.specialtiesAr
-                  .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+                  .map((item) => DropdownMenuItem(value: item, child: LifexText(item)))
                   .toList(),
               onChanged: (value) {
                 if (value != null) setState(() => _specialty = value);
@@ -419,7 +421,7 @@ class _DoctorEditDialogState extends State<_DoctorEditDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(lifexUi('إلغاء', 'Cancel')),
+          child: LifexText(lifexUi('إلغاء', 'Cancel')),
         ),
         FilledButton(
           onPressed: () {
@@ -430,7 +432,7 @@ class _DoctorEditDialogState extends State<_DoctorEditDialog> {
               'specialty': _specialty,
             });
           },
-          child: Text(lifexUi('حفظ', 'Save')),
+          child: LifexText(lifexUi('حفظ', 'Save')),
         ),
       ],
     );

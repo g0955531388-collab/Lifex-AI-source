@@ -20,6 +20,8 @@ import '../widgets/voice_fill_button.dart';
 import 'partner_sign_in_screen.dart';
 import 'thumbnail_manage_screen.dart';
 import 'unit_branch_navigator.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class IdentityWorkspaceScreen extends StatefulWidget {
   const IdentityWorkspaceScreen({super.key});
@@ -116,7 +118,7 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
         lifexId != null && GlobalAdminManager.instance.isOwner(lifexId);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
+        content: LifexText(
           opened
               ? 'حُفظت وسيلة الاتصال. دور المالك التشغيلي مفتوح لهذه الهوية. '
                   'الصلاحية للصيانة وتعيين الطاقم، وليست فتحاً لملفات المرضى.'
@@ -136,9 +138,9 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
             ? null
             : HealthIdentityManager.instance.getByProfileId(profile.profileId);
         return Scaffold(
-          appBar: AppBar(title: const Text('الهوية من الصفر')),
+          appBar: AppBar(title: const LifexText('الهوية من الصفر')),
           body: profile == null
-              ? const Center(child: Text('لا يوجد ملف صحي نشط.'))
+              ? const Center(child: LifexText('لا يوجد ملف صحي نشط.'))
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
@@ -147,7 +149,7 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
                           'الهوية الحقيقية للجهات الصحية المخوّلة فقط. الهوية المستعارة للمجتمع والتعليم. التحقق الوثائقي يحتاج خادماً.',
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    const LifexText(
                       'مالك النظام: أدخل البريد الإلكتروني أو الهاتف المسجّل للمالك ثم احفظ. عند المطابقة تُفعّل صلاحيات المالك فوراً على هذا الجهاز.',
                     ),
                     const SizedBox(height: 12),
@@ -164,83 +166,83 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
                           builder: (_) => const ThumbnailManageScreen(),
                         ),
                       ),
-                      child: Text(lifexUi('إدارة الصورة المصغّرة', 'Profile thumbnail')),
+                      child: LifexText(lifexUi('إدارة الصورة المصغّرة', 'Profile thumbnail')),
                     ),
                     ListTile(
-                      title: const Text('الاسم الحقيقي'),
-                      subtitle: Text(profile.fullName),
+                      title: const LifexText('الاسم الحقيقي'),
+                      subtitle: LifexText(profile.fullName),
                     ),
                     ListTile(
-                      title: const Text('Lifex-Health ID'),
-                      subtitle: Text(identity?.lifexId ?? 'يُنشأ مع الملف'),
+                      title: const LifexText('Lifex-Health ID'),
+                      subtitle: LifexText(identity?.lifexId ?? 'يُنشأ مع الملف'),
                     ),
                     ListTile(
-                      title: const Text('مستوى التحقق'),
-                      subtitle: Text(
+                      title: const LifexText('مستوى التحقق'),
+                      subtitle: LifexText(
                           '${identity?.verificationLevel.name ?? 'unverified'} — التحقق الوثائقي ليس محلياً'),
                     ),
                     const SizedBox(height: 8),
-                    Text('الهوية الحقيقية للجهات المخوّلة',
+                    LifexText('الهوية الحقيقية للجهات المخوّلة',
                         style: Theme.of(context).textTheme.titleMedium),
                     TextField(
                       controller: _phone,
                       keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'رقم الهاتف',
+                      decoration: InputDecoration(
+                        labelText: tr('رقم الهاتف'),
                       ),
                     ),
                     TextField(
                       controller: _nationalId,
-                      decoration: const InputDecoration(
-                        labelText: 'الرقم الوطني الحقيقي (اختياري)',
+                      decoration: InputDecoration(
+                        labelText: tr('الرقم الوطني الحقيقي (اختياري)'),
                       ),
                     ),
                     TextField(
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'البريد الإلكتروني',
+                      decoration: InputDecoration(
+                        labelText: tr('البريد الإلكتروني'),
                       ),
                     ),
                     TextField(
                       controller: _nationality,
-                      decoration: const InputDecoration(
-                        labelText: 'الجنسية (اختياري)',
+                      decoration: InputDecoration(
+                        labelText: tr('الجنسية (اختياري)'),
                       ),
                     ),
                     TextField(
                       controller: _residence,
-                      decoration: const InputDecoration(
-                        labelText: 'مكان الإقامة (اختياري)',
+                      decoration: InputDecoration(
+                        labelText: tr('مكان الإقامة (اختياري)'),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text('الهوية المستعارة للمجتمع والتعليم',
+                    LifexText('الهوية المستعارة للمجتمع والتعليم',
                         style: Theme.of(context).textTheme.titleMedium),
                     TextField(
                       controller: _alias,
-                      decoration: const InputDecoration(
-                        labelText: 'الهوية المستعارة',
-                        hintText: 'مثال: مريض الأمل',
+                      decoration: InputDecoration(
+                        labelText: tr('الهوية المستعارة'),
+                        hintText: tr('مثال: مريض الأمل'),
                       ),
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('في الصفحات العامة استخدم المستعار'),
-                      subtitle: const Text(
+                      title: const LifexText('في الصفحات العامة استخدم المستعار'),
+                      subtitle: const LifexText(
                           'الطبيب والمستشفى والإسعاف يرون الاسم الحقيقي حسب صلاحياتك'),
                       value: _publicAliasMode,
                       onChanged: (value) =>
                           setState(() => _publicAliasMode = value),
                     ),
                     const SizedBox(height: 12),
-                    Text('من التكوين',
+                    LifexText('من التكوين',
                         style: Theme.of(context).textTheme.titleMedium),
                     TextField(
                       controller: _origin,
                       maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'حمل أو ولادة أو بداية الملف',
+                      decoration: InputDecoration(
+                        labelText: tr('حمل أو ولادة أو بداية الملف'),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -257,12 +259,12 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: _save,
-                      child: const Text('حفظ الهوية'),
+                      child: const LifexText('حفظ الهوية'),
                     ),
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
                       icon: const Icon(Icons.login_outlined),
-                      label: const Text('الدخول بحساب لايفكس في موقع آخر'),
+                      label: const LifexText('الدخول بحساب لايفكس في موقع آخر'),
                       onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -274,8 +276,8 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
                     Card(
                       child: ListTile(
                         leading: const Icon(Icons.emergency_outlined),
-                        title: const Text('معلومات الطوارئ'),
-                        subtitle: const Text('جهات الثقة على هذا الجهاز'),
+                        title: const LifexText('معلومات الطوارئ'),
+                        subtitle: const LifexText('جهات الثقة على هذا الجهاز'),
                         onTap: () => UnitBranchNavigator.open(
                           context,
                           UnitBranchCatalog.healthCv.firstWhere(
@@ -288,8 +290,8 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
                     Card(
                       child: ListTile(
                         leading: const Icon(Icons.family_restroom_outlined),
-                        title: const Text('أفراد العائلة'),
-                        subtitle: const Text(
+                        title: const LifexText('أفراد العائلة'),
+                        subtitle: const LifexText(
                             'ملفات مستقلة. الإشعارات باسم كل فرد'),
                         onTap: () => UnitBranchNavigator.open(
                           context,

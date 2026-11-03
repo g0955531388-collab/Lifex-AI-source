@@ -15,6 +15,8 @@ import 'package:flutter/services.dart';
 import '../core/medical_record_canon.dart';
 import '../core/reference_ledger.dart';
 import '../widgets/encyclopedia_share_bar.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 enum MedicalReferenceKind { cameraSigns, conditions, growth, drugs }
 
@@ -193,17 +195,17 @@ class _MedicalReferenceScreenState extends State<MedicalReferenceScreen> {
   Widget build(BuildContext context) {
     final filtered = _filtered;
     return Scaffold(
-      appBar: AppBar(title: Text(_title)),
+      appBar: AppBar(title: LifexText(_title)),
       bottomNavigationBar: const EncyclopediaShareBar(),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _errorAr != null
-              ? Center(child: Text(_errorAr!))
+              ? Center(child: LifexText(_errorAr!))
               : Column(
                   children: [
                     const Padding(
                       padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: Text(
+                      child: LifexText(
                         'مرجع توعوي فقط. لا يشخص ولا يستبدل الطبيب. '
                         'العلامات البصرية لا تؤكد مرضاً من صورة واحدة.',
                         style: TextStyle(fontSize: 13, color: Colors.orange),
@@ -215,7 +217,7 @@ class _MedicalReferenceScreenState extends State<MedicalReferenceScreen> {
                         controller: _query,
                         onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
-                          hintText: 'بحث في ${_all.length} مدخلاً',
+                          hintText: tr('بحث في ${_all.length} مدخلاً'),
                           prefixIcon: const Icon(Icons.search),
                           border: const OutlineInputBorder(),
                         ),
@@ -230,10 +232,10 @@ class _MedicalReferenceScreenState extends State<MedicalReferenceScreen> {
                             margin: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 4),
                             child: ListTile(
-                              title: Text(item.title),
+                              title: LifexText(item.title),
                               subtitle: item.subtitle.isEmpty
                                   ? null
-                                  : Text(item.subtitle),
+                                  : LifexText(item.subtitle),
                             ),
                           );
                         },

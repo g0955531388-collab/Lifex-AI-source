@@ -8,6 +8,8 @@ import 'package:flutter/services.dart';
 import '../core/studio_theme.dart';
 import '../features/accessibility/blind_assist_gate.dart';
 import '../features/spot/spot_speech.dart';
+import 'lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class BlindCameraRail extends StatelessWidget {
   const BlindCameraRail({
@@ -76,7 +78,7 @@ class _Half extends StatelessWidget {
     final label = armed ? '$_spoken. اللمسة التالية تفتح.' : _spoken;
     return Semantics(
       button: true,
-      label: label,
+      label: tr(label),
       child: Material(
         color: armed ? const Color(0xFF0E6E66) : StudioTheme.teal,
         child: InkWell(
@@ -87,7 +89,7 @@ class _Half extends StatelessWidget {
           child: Center(
             child: RotatedBox(
               quarterTurns: 3,
-              child: Text(
+              child: LifexText(
                 title,
                 style: const TextStyle(
                   color: Colors.white,

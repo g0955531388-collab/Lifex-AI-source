@@ -8,6 +8,7 @@ library lifex_ai.core.trial_manager;
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'app_config.dart';
 import 'app_constants.dart';
 
 enum TrialPhase {
@@ -124,6 +125,12 @@ class TrialManager {
   bool get asksForSubscription =>
       phase() == TrialPhase.reducedMonth || phase() == TrialPhase.residual;
 
+  String statusLine({bool feeExempt = false, bool adminAccess = false}) =>
+      lifexUi(
+        statusLineAr(feeExempt: feeExempt, adminAccess: adminAccess),
+        statusLineEn(feeExempt: feeExempt, adminAccess: adminAccess),
+      );
+
   String statusLineAr({bool feeExempt = false, bool adminAccess = false}) {
     if (adminAccess) {
       return 'وصول المالك/الأدمن الكامل مفعّل على هذا الحساب؛ لا تنطبق عليه مدة التجربة.';
@@ -146,6 +153,31 @@ class TrialManager {
         return 'شهر مجاني بخدمات أقل من الكاملة. متبقٍ تقريباً $left يوماً ثم يُطلب الاشتراك.';
       case TrialPhase.residual:
         return 'بلا اشتراك أو انتهى. تبقى الإشعارات والتبرعات ونداء الإسعاف وطلب الدم. الباقي يتوقف.';
+    }
+  }
+
+  String statusLineEn({bool feeExempt = false, bool adminAccess = false}) {
+    if (adminAccess) {
+      return 'Full owner or admin access is on for this account. The trial length does not apply.';
+    }
+    switch (phase(feeExempt: feeExempt, adminAccess: adminAccess)) {
+      case TrialPhase.subscribed:
+        return feeExempt
+            ? 'A full copy with a humanitarian exemption recorded on this device.'
+            : 'A yearly subscription recorded on this device until ${subscriptionUntil?.toIso8601String().split('T').first ?? ''}.';
+      case TrialPhase.giftWorking:
+        final left = AppConstants.giftCopyDays -
+            DateTime.now().difference(giftStartedAt ?? installedAt).inDays;
+        return 'A gift copy from a regular subscriber. It runs for about $left days, then it stops until it is assigned.';
+      case TrialPhase.giftFrozen:
+        return 'The gift copy stopped after ${AppConstants.giftCopyDays} days. Assign it as a new subscriber to enter the reduced free month.';
+      case TrialPhase.reducedMonth:
+        final start = claimedAt ?? installedAt;
+        final left = AppConstants.trialPeriodDays -
+            DateTime.now().difference(start).inDays;
+        return 'A free month with fewer services than the full copy. About $left days remain, then a subscription is required.';
+      case TrialPhase.residual:
+        return 'No subscription, or it has ended. Notifications, donations, the ambulance request, and the blood request remain. The rest stops.';
     }
   }
 

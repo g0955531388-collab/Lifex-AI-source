@@ -13,7 +13,7 @@ class FlutterSecureSecretStore implements SecureSecretStore {
   FlutterSecureSecretStore({FlutterSecureStorage? storage})
       : _storage = storage ??
             const FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
+              aOptions: AndroidOptions(),
             );
 
   static const implementationId = 'FlutterSecureSecretStore';

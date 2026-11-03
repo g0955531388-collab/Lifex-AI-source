@@ -4,6 +4,8 @@ library lifex_ai.features.blood_network.blood_donation_prefs_card;
 import 'package:flutter/material.dart';
 
 import '../profile/health_profile.dart';
+import '../../widgets/lifex_text.dart';
+import '../../core/i18n/lifex_runtime_translator.dart';
 
 class BloodDonationPrefsCard extends StatefulWidget {
   const BloodDonationPrefsCard({
@@ -60,12 +62,12 @@ class _BloodDonationPrefsCardState extends State<BloodDonationPrefsCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('إشعارات التبرع بالدم',
+            LifexText('إشعارات التبرع بالدم',
                 style: Theme.of(context).textTheme.titleMedium),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('تفعيل إشعارات التبرع بالدم'),
-              subtitle: const Text(
+              title: const LifexText('تفعيل إشعارات التبرع بالدم'),
+              subtitle: const LifexText(
                   'الإيقاف يوقف النداءات القادمة ولا يحذف المحادثات.'),
               value: widget.profile.acceptsBloodDonationAlerts,
               onChanged: (value) {
@@ -81,7 +83,7 @@ class _BloodDonationPrefsCardState extends State<BloodDonationPrefsCard> {
             ),
             TextField(
               controller: _city,
-              decoration: const InputDecoration(labelText: 'المدينة المفضلة'),
+              decoration: InputDecoration(labelText: tr('المدينة المفضلة')),
               onChanged: (value) {
                 widget.profile.questionnaireData['bloodCity'] = value.trim();
                 widget.onChanged();
@@ -90,8 +92,8 @@ class _BloodDonationPrefsCardState extends State<BloodDonationPrefsCard> {
             TextField(
               controller: _radius,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'نصف القطر المفضل بالكيلومتر',
+              decoration: InputDecoration(
+                labelText: tr('نصف القطر المفضل بالكيلومتر'),
               ),
               onChanged: (value) {
                 widget.profile.questionnaireData['bloodRadiusKm'] =
@@ -107,7 +109,7 @@ class _BloodDonationPrefsCardState extends State<BloodDonationPrefsCard> {
             ])
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(channel.$2),
+                title: LifexText(channel.$2),
                 value: channels.contains(channel.$1),
                 onChanged: widget.profile.acceptsBloodDonationAlerts
                     ? (value) {

@@ -26,6 +26,8 @@ import 'book_library_screen.dart';
 import 'box_unit_screen.dart';
 import 'project_box_hub_screen.dart';
 import 'vision_resource_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class SystemSearchScreen extends StatefulWidget {
   const SystemSearchScreen({
@@ -270,18 +272,18 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
       ],
       body: status,
       child: Scaffold(
-      appBar: AppBar(title: const Text('بحث المنظومة')),
+      appBar: AppBar(title: const LifexText('بحث المنظومة')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Semantics(
             textField: true,
-            label: 'عبارة البحث',
+            label: tr('عبارة البحث'),
             child: TextField(
               controller: _field,
               autofocus: widget.initialQuery.isEmpty,
-              decoration: const InputDecoration(
-                labelText: 'وحدة أو مرض أو دواء أو عرض',
+              decoration: InputDecoration(
+                labelText: tr('وحدة أو مرض أو دواء أو عرض'),
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
@@ -290,7 +292,7 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
+          LifexText(
             query.isEmpty
                 ? 'اكتب داخل الحقل لتظهر نتائج المنظومة فوراً.'
                 : 'داخل المنظومة: $localCount',
@@ -299,31 +301,31 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
           if (lookupFailed)
             const ListTile(
               leading: Icon(Icons.error_outline),
-              title: Text(SearchHandoff.failedAr),
+              title: LifexText(SearchHandoff.failedAr),
             )
           else if (unloaded)
             const ListTile(
               leading: Icon(Icons.downloading_outlined),
-              title: Text(SearchHandoff.unloadedAr),
+              title: LifexText(SearchHandoff.unloadedAr),
             )
           else if (query.isNotEmpty && hits.isEmpty && units.isEmpty)
             const ListTile(
               leading: Icon(Icons.search_off),
-              title: Text(SearchHandoff.emptyAr),
+              title: LifexText(SearchHandoff.emptyAr),
             ),
           if (hits.isNotEmpty) ...[
-            Text(knowledge.disclaimerAr),
+            LifexText(knowledge.disclaimerAr),
             for (final hit in hits)
               ListTile(
-                title: Text(hit.titleAr),
-                subtitle: Text('المصدر: ${hit.kindAr}\n${hit.detailAr}'),
+                title: LifexText(hit.titleAr),
+                subtitle: LifexText('المصدر: ${hit.kindAr}\n${hit.detailAr}'),
                 isThreeLine: true,
               ),
           ],
           for (final unit in units)
             ListTile(
-              title: Text(unit.titleAr),
-              subtitle: Text('وحدة — ${unit.subtitleAr}'),
+              title: LifexText(unit.titleAr),
+              subtitle: LifexText('وحدة — ${unit.subtitleAr}'),
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => BoxUnitScreen(unit: unit)),
@@ -339,20 +341,20 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.public),
-            label: const Text('ابحث في المحلي والإنترنت'),
+            label: const LifexText('ابحث في المحلي والإنترنت'),
           ),
           if (_outsideAr != null) ...[
             const SizedBox(height: 8),
-            const Text(
+            const LifexText(
               'خلاصة محرك عام بلا مفتاح. ليست تشخيصاً، والملف الصحي لم يُرسل.',
             ),
-            Text(_outsideAr!),
+            LifexText(_outsideAr!),
           ],
           const SizedBox(height: 12),
-          const Text('النتائج المحلية تظهر مع خلاصة الإنترنت. الملف الصحي لا يُرسل.'),
+          const LifexText('النتائج المحلية تظهر مع خلاصة الإنترنت. الملف الصحي لا يُرسل.'),
           const SizedBox(height: 12),
           if (_web) ...[
-            Text(
+            LifexText(
               'ستغادر التطبيق إلى ${engine.host}. يُرسل نص البحث الذي كتبته فقط، ولا يُرسل الملف الصحي.',
             ),
             const SizedBox(height: 8),
@@ -363,7 +365,7 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
                 for (final item in engines)
                   DropdownMenuItem(
                     value: item.id,
-                    child: Text('${item.labelAr} — ${item.host}'),
+                    child: LifexText('${item.labelAr} — ${item.host}'),
                   ),
               ],
               onChanged: (value) {
@@ -373,50 +375,50 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
             const SizedBox(height: 8),
             Semantics(
               button: true,
-              label: 'فتح المتصفح على ${engine.labelAr}',
+              label: tr('فتح المتصفح على ${engine.labelAr}'),
               child: FilledButton.icon(
                 onPressed: _openWeb,
                 icon: const Icon(Icons.open_in_new),
-                label: Text('فتح ${engine.labelAr} في المتصفح'),
+                label: LifexText('فتح ${engine.labelAr} في المتصفح'),
               ),
             ),
             if (_linkNote != null) ...[
               const SizedBox(height: 8),
               Semantics(
                 liveRegion: true,
-                label: _linkNote,
-                child: Text(_linkNote!),
+                label: tr(_linkNote),
+                child: LifexText(_linkNote!),
               ),
             ],
             const SizedBox(height: 12),
-            const Text(
+            const LifexText(
               'إعداد المحركات: أضف رابط https يحتوي {query}. حذف المحركات الثابتة غير متاح.',
             ),
             TextField(
               controller: _engineName,
-              decoration: const InputDecoration(labelText: 'اسم المحرك'),
+              decoration: InputDecoration(labelText: tr('اسم المحرك')),
             ),
             TextField(
               controller: _engineTemplate,
-              decoration: const InputDecoration(
-                labelText: 'قالب الرابط',
+              decoration: InputDecoration(
+                labelText: tr('قالب الرابط'),
                 hintText: 'https://example.com/search?q={query}',
               ),
             ),
             Row(
               children: [
-                TextButton(onPressed: _addEngine, child: const Text('إضافة محرك')),
+                TextButton(onPressed: _addEngine, child: const LifexText('إضافة محرك')),
                 TextButton(
                   onPressed: _removeSelectedUserEngine,
-                  child: const Text('حذف المحرك المضاف'),
+                  child: const LifexText('حذف المحرك المضاف'),
                 ),
               ],
             ),
-            if (_engineFormNote != null) Text(_engineFormNote!),
+            if (_engineFormNote != null) LifexText(_engineFormNote!),
           ],
           ListTile(
               leading: const Icon(Icons.inventory_2_outlined),
-              title: const Text('صندوق المشروع'),
+              title: const LifexText('صندوق المشروع'),
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ProjectBoxHubScreen()),
@@ -425,8 +427,8 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
             if (aliasSeat?.openBlood == true)
               ListTile(
                 leading: const Icon(Icons.bloodtype_outlined),
-                title: const Text('شبكة الدم'),
-                subtitle: const Text(
+                title: const LifexText('شبكة الدم'),
+                subtitle: const LifexText(
                   'فرع التبرعات. التنبيه للموافقين على هذا الجهاز فقط',
                 ),
                 onTap: () => Navigator.push(
@@ -438,8 +440,8 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
               const SizedBox(height: 8),
               Semantics(
                 liveRegion: true,
-                label: ExternalSearchCatalog.offerAr,
-                child: const Text(ExternalSearchCatalog.offerAr),
+                label: tr(ExternalSearchCatalog.offerAr),
+                child: const LifexText(ExternalSearchCatalog.offerAr),
               ),
               const SizedBox(height: 8),
               _OfferSpeaker(query: query, onSpeak: _speakOffer),
@@ -448,19 +450,19 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
                   setState(() => _web = true);
                   unawaited(_searchOutside());
                 },
-                child: const Text('أظهر المتصفح مع البحث'),
+                child: const LifexText('أظهر المتصفح مع البحث'),
               ),
               const SizedBox(height: 8),
               OutlinedButton(
                 onPressed: () => unawaited(_acceptOfferByVoice()),
-                child: const Text('قل نعم لتوسيع البحث'),
+                child: const LifexText('قل نعم لتوسيع البحث'),
               ),
             ],
           const Divider(),
           ListTile(
             leading: const Icon(Icons.menu_book_outlined),
-            title: const Text('مكتبة الفهارس'),
-            subtitle: const Text('تفتح مصدر الكتاب ولا تنسخ نصه'),
+            title: const LifexText('مكتبة الفهارس'),
+            subtitle: const LifexText('تفتح مصدر الكتاب ولا تنسخ نصه'),
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -470,8 +472,8 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.visibility_outlined),
-            title: const Text('موارد الرؤية'),
-            subtitle: const Text('صفحات الناشرين. لا تثبيت تلقائي'),
+            title: const LifexText('موارد الرؤية'),
+            subtitle: const LifexText('صفحات الناشرين. لا تثبيت تلقائي'),
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(

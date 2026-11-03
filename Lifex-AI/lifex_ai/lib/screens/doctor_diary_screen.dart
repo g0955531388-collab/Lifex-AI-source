@@ -16,6 +16,8 @@ import '../features/profile/health_profile.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
 import 'health_profile_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class DoctorDiaryScreen extends StatefulWidget {
   const DoctorDiaryScreen({super.key});
@@ -158,31 +160,31 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
         return StatefulBuilder(
           builder: (ctx, setLocal) {
             return AlertDialog(
-              title: const Text('حجز الحصة'),
+              title: const LifexText('حجز الحصة'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: field,
-                    decoration: const InputDecoration(
-                      labelText: 'اسم مستعار أو ملاحظة',
+                    decoration: InputDecoration(
+                      labelText: tr('اسم مستعار أو ملاحظة'),
                     ),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     value: linked ?? '',
-                    decoration: const InputDecoration(
-                      labelText: 'ربط بملف عائلي إن وُجد',
+                    decoration: InputDecoration(
+                      labelText: tr('ربط بملف عائلي إن وُجد'),
                     ),
                     items: [
                       const DropdownMenuItem(
                         value: '',
-                        child: Text('بلا ربط'),
+                        child: LifexText('بلا ربط'),
                       ),
                       for (final member in profiles.allProfiles)
                         DropdownMenuItem(
                           value: member.profileId,
-                          child: Text(member.fullName),
+                          child: LifexText(member.fullName),
                         ),
                     ],
                     onChanged: (value) => setLocal(() => linked = value),
@@ -192,14 +194,14 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('إلغاء'),
+                  child: const LifexText('إلغاء'),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(
                     ctx,
                     '${field.text.trim()}|||${linked ?? ''}',
                   ),
-                  child: const Text('حفظ'),
+                  child: const LifexText('حفظ'),
                 ),
               ],
             );
@@ -229,24 +231,24 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
           text: _slots[index][key]?.toString() ?? '',
         );
         return AlertDialog(
-          title: Text(exam ? 'ملاحظة الفحص' : 'رسالة تقدير خاصة'),
+          title: LifexText(exam ? 'ملاحظة الفحص' : 'رسالة تقدير خاصة'),
           content: TextField(
             controller: field,
             maxLines: 4,
             decoration: InputDecoration(
-              hintText: exam
+              hintText: tr(exam
                   ? 'ما كتبه الطبيب لهذه الحصة. ليست نتيجة مختبر.'
-                  : 'أولوية ظاهرة لذوي الهمم. ليست خصماً مالياً.',
+                  : 'أولوية ظاهرة لذوي الهمم. ليست خصماً مالياً.'),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('إغلاق'),
+              child: const LifexText('إغلاق'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, field.text.trim()),
-              child: const Text('حفظ'),
+              child: const LifexText('حفظ'),
             ),
           ],
         );
@@ -262,18 +264,18 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('إلغاء الموعد'),
-        content: Text(
+        title: const LifexText('إلغاء الموعد'),
+        content: LifexText(
           'إلغاء حصة ${_slots[index]['time']}؟ تُفرَّغ الحصة على هذا الجهاز فقط.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('لا'),
+            child: const LifexText('لا'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('نعم، إلغاء'),
+            child: const LifexText('نعم، إلغاء'),
           ),
         ],
       ),
@@ -323,10 +325,10 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
     final stats = _stats;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('يومياتي — لوحة الطبيب'),
+        title: const LifexText('يومياتي — لوحة الطبيب'),
         actions: [
           IconButton(
-            tooltip: _speak ? 'إيقاف النطق' : 'تشغيل النطق',
+            tooltip: tr(_speak ? 'إيقاف النطق' : 'تشغيل النطق'),
             onPressed: () {
               setState(() => _speak = !_speak);
               _say(_speak ? 'النطق مفعّل.' : 'النطق متوقف.');
@@ -348,16 +350,16 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.notifications_active_outlined),
-                  title: Text(notice['title']?.toString() ?? 'إشعار'),
-                  subtitle: Text(notice['detail']?.toString() ?? ''),
+                  title: LifexText(notice['title']?.toString() ?? 'إشعار'),
+                  subtitle: LifexText(notice['detail']?.toString() ?? ''),
                 ),
               ),
             for (final inbox
                 in _store()?.list(BoxKeys.accreditedPatientInbox) ?? const [])
               Card(
                 child: ExpansionTile(
-                  title: Text(inbox['title']?.toString() ?? 'مريض'),
-                  subtitle: Text(
+                  title: LifexText(inbox['title']?.toString() ?? 'مريض'),
+                  subtitle: LifexText(
                     'أمراض مصرّح بها: ${inbox['detail'] ?? '—'}',
                   ),
                   children: [
@@ -370,8 +372,8 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
               ),
           ],
           ListTile(
-            title: const Text('التاريخ'),
-            subtitle: Text(_dayKey),
+            title: const LifexText('التاريخ'),
+            subtitle: LifexText(_dayKey),
             trailing: const Icon(Icons.calendar_month),
             onTap: () async {
               final picked = await showDatePicker(
@@ -389,8 +391,8 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
             },
           ),
           ListTile(
-            title: Text('ساعات العمل: $_maxPatients حصة × $_examMinutes د'),
-            subtitle: const Text(
+            title: LifexText('ساعات العمل: $_maxPatients حصة × $_examMinutes د'),
+            subtitle: const LifexText(
               'مثال: 12 ساعة وكل حصة 30 دقيقة = 24 حصة. اضبط العدد ومدة الفحص ثم ولّد.',
             ),
             onTap: () => _say('التحكم في العدد الأقصى للمرضى هذا اليوم.'),
@@ -411,8 +413,8 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
             ),
           ),
           ListTile(
-            title: Text('مدة الفحص: $_examMinutes دقيقة'),
-            subtitle: const Text('اضغط للشرح الصوتي'),
+            title: LifexText('مدة الفحص: $_examMinutes دقيقة'),
+            subtitle: const LifexText('اضغط للشرح الصوتي'),
             onTap: () => _say('مدة الفحص لكل حصة بالدقائق.'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -432,10 +434,10 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
           ),
           DropdownButtonFormField<int>(
             value: _startHour,
-            decoration: const InputDecoration(labelText: 'وقت بدء العمل'),
+            decoration: InputDecoration(labelText: tr('وقت بدء العمل')),
             items: const [
-              DropdownMenuItem(value: 9, child: Text('09:00 صباحاً')),
-              DropdownMenuItem(value: 17, child: Text('17:00 مساءً')),
+              DropdownMenuItem(value: 9, child: LifexText('09:00 صباحاً')),
+              DropdownMenuItem(value: 17, child: LifexText('17:00 مساءً')),
             ],
             onChanged: (value) {
               if (value != null) setState(() => _startHour = value);
@@ -444,11 +446,11 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
           const SizedBox(height: 8),
           FilledButton(
             onPressed: _generate,
-            child: const Text('توليد الجدول الفارغ'),
+            child: const LifexText('توليد الجدول الفارغ'),
           ),
           SwitchListTile(
-            title: const Text('موافقة مراجعة الصيدلية'),
-            subtitle: const Text(
+            title: const LifexText('موافقة مراجعة الصيدلية'),
+            subtitle: const LifexText(
               'إذن محلي ليراجع صيدلي سجلاً لاحقاً. ليست شبكة صيدليات حية.',
             ),
             value: _pharmacyReview,
@@ -466,9 +468,9 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
           TextField(
             controller: _pharmacyNames,
             enabled: _pharmacyReview,
-            decoration: const InputDecoration(
-              labelText: 'صيدليات مسمّاة للتقييد المحلي',
-              hintText: 'أسماء تفصلها فاصلة. ليست دليلاً حياً.',
+            decoration: InputDecoration(
+              labelText: tr('صيدليات مسمّاة للتقييد المحلي'),
+              hintText: tr('أسماء تفصلها فاصلة. ليست دليلاً حياً.'),
             ),
             onChanged: (_) => _persist(),
           ),
@@ -479,30 +481,30 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  LifexText(
                     'إحصاء اليوم $_dayKey',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  Text('محجوز: ${stats.booked}'),
-                  Text('متاح: ${stats.free}'),
-                  Text('حالات خاصة: ${stats.special}'),
+                  LifexText('محجوز: ${stats.booked}'),
+                  LifexText('متاح: ${stats.free}'),
+                  LifexText('حالات خاصة: ${stats.special}'),
                   TextButton(
                     onPressed: () => _say(stats.spokenAr()),
-                    child: const Text('نطق الإحصاء'),
+                    child: const LifexText('نطق الإحصاء'),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          LifexText(
             'جدول حجوزات: $_dayKey',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           if (_slots.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text(
+              child: LifexText(
                 'حدّد التاريخ ثم توليد الجدول. القائمة تبقى فارغة حتى تحجز أنت.',
               ),
             )
@@ -527,14 +529,14 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
         child: Column(
           children: [
             ListTile(
-              title: Text('${slot['time']} — ${mark.badgeAr()}'),
-              subtitle: Text(
+              title: LifexText('${slot['time']} — ${mark.badgeAr()}'),
+              subtitle: LifexText(
                 booked
                     ? (alias.isEmpty ? 'محجوز' : alias)
                     : 'حصة ${slot['index']}',
               ),
               trailing: Chip(
-                label: Text(mark.badgeAr()),
+                label: LifexText(mark.badgeAr()),
                 backgroundColor: special
                     ? Theme.of(context).colorScheme.error.withOpacity(0.25)
                     : booked
@@ -554,7 +556,7 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
                 TextButton.icon(
                   onPressed: () => _book(i),
                   icon: const Icon(Icons.person_add_alt),
-                  label: const Text('حجز'),
+                  label: const LifexText('حجز'),
                 ),
                 TextButton.icon(
                   onPressed: () {
@@ -572,23 +574,23 @@ class _DoctorDiaryScreenState extends State<DoctorDiaryScreen> {
                     Icons.accessible,
                     color: special ? Colors.orange : null,
                   ),
-                  label: const Text('حالة خاصة'),
+                  label: const LifexText('حالة خاصة'),
                 ),
                 if (special)
                   TextButton.icon(
                     onPressed: () => _note(i, exam: false),
                     icon: const Icon(Icons.favorite_outline),
-                    label: const Text('تقدير خاص'),
+                    label: const LifexText('تقدير خاص'),
                   ),
                 TextButton.icon(
                   onPressed: booked ? () => _startExam(i) : null,
                   icon: const Icon(Icons.play_arrow),
-                  label: const Text('بدء فحص'),
+                  label: const LifexText('بدء فحص'),
                 ),
                 TextButton.icon(
                   onPressed: booked ? () => _cancel(i) : null,
                   icon: const Icon(Icons.close),
-                  label: const Text('إلغاء'),
+                  label: const LifexText('إلغاء'),
                 ),
               ],
             ),

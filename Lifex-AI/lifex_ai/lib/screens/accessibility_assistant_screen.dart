@@ -14,6 +14,8 @@ import '../widgets/accessible_widgets.dart';
 import 'live_sight_screen.dart';
 import 'medical_reference_screen.dart';
 import 'optical_radar_screen.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class AccessibilityAssistantScreen extends StatefulWidget {
   const AccessibilityAssistantScreen({super.key, required this.profileId});
@@ -50,16 +52,16 @@ class _AccessibilityAssistantScreenState
       message:
           'المساعد البصري. البث الحي يشرح المشهد أو النص بلغة الجهاز. المسافة تبقى للعصا البيضاء.',
       child: Scaffold(
-      appBar: AppBar(title: const Text('المساعد البصري')),
+      appBar: AppBar(title: const LifexText('المساعد البصري')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             Semantics(
-              label: 'هذه أداة مساعدة إضافية. العصا البيضاء أو كلب الإرشاد '
-                  'يبقى وسيلة السلامة، خصوصاً عند عبور الطرق.',
+              label: tr('هذه أداة مساعدة إضافية. العصا البيضاء أو كلب الإرشاد '
+                  'يبقى وسيلة السلامة، خصوصاً عند عبور الطرق.'),
               child: const ExcludeSemantics(
-                child: Text(
+                child: LifexText(
                   'هذه أداة مساعدة إضافية. العصا البيضاء أو كلب الإرشاد '
                   'يبقى وسيلة السلامة، خصوصاً عند عبور الطرق.',
                   style: TextStyle(fontSize: 18),
@@ -130,7 +132,7 @@ class _AccessibilityAssistantScreenState
                   padding: const EdgeInsets.all(16),
                   child: Semantics(
                     liveRegion: true,
-                    child: Text(
+                    child: LifexText(
                       _lastResultAr!,
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
@@ -168,8 +170,8 @@ class _FeatureButton extends StatelessWidget {
         child: Semantics(
           button: true,
           enabled: enabled,
-          label: label,
-          hint: enabled ? hint : 'انتظر انتهاء القراءة الحالية',
+          label: tr(label),
+          hint: tr(enabled ? hint : 'انتظر انتهاء القراءة الحالية'),
           onTap: onTap,
           child: ExcludeSemantics(
             child: OutlinedButton.icon(
@@ -177,7 +179,7 @@ class _FeatureButton extends StatelessWidget {
               icon: Icon(icon),
               label: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Text(label, style: const TextStyle(fontSize: 18)),
+                child: LifexText(label, style: const TextStyle(fontSize: 18)),
               ),
             ),
           ),
