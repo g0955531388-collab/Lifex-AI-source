@@ -47,7 +47,7 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
     if (pending != null) return pending;
 
     final initialization = _speech.initialize(
-      onError: (_) => _finishActiveSession(),
+      onError: (_) => unawaited(_stopAndFinishActiveSession()),
       onStatus: (status) {
         if (status == 'done' || status == 'notListening') {
           _finishActiveSession();
@@ -61,6 +61,14 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
       return ready;
     } finally {
       _initializing = null;
+    }
+  }
+
+  Future<void> _stopAndFinishActiveSession() async {
+    try {
+      await _speech.stop();
+    } finally {
+      _finishActiveSession();
     }
   }
 
@@ -113,7 +121,9 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
           _lastWords = result.recognizedWords;
           _lastConfidence = result.confidence;
           VoiceEngine.instance.reportPartial(_lastWords);
-          if (result.finalResult) _finishActiveSession();
+          // Wait for the recognizer's done/notListening status before allowing
+          // another session, so a late status from this session cannot close
+          // the next one.
         },
       );
 
