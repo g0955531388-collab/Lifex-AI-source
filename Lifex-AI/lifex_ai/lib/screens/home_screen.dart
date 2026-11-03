@@ -11,6 +11,7 @@ library lifex_ai.screens.home_screen;
 import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
@@ -53,23 +54,26 @@ import 'wallet_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  Future<void> _openVisualCamera(
+  void _openVisualCamera(
     BuildContext context,
     CameraLensDirection direction,
     String labelAr,
-  ) async {
-    await HapticFeedback.mediumImpact();
-    try {
-      await VoiceEngine.instance.speak('أفتح $labelAr');
-    } catch (_) {
-      // لا نمنع فتح الكاميرا إذا تعذّر النطق على الجهاز.
-    }
-    if (!context.mounted) return;
+  ) {
+    unawaited(HapticFeedback.mediumImpact());
+    unawaited(_announceCameraLaunch(labelAr));
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => LiveSightScreen(lensDirection: direction),
       ),
     );
+  }
+
+  Future<void> _announceCameraLaunch(String labelAr) async {
+    try {
+      await VoiceEngine.instance.speak('أفتح $labelAr');
+    } catch (_) {
+      // لا نمنع فتح الكاميرا إذا تعذّر النطق على الجهاز.
+    }
   }
 
   bool _allowed(BuildContext context, String unitId) {
