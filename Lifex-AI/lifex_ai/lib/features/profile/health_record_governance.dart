@@ -8,6 +8,31 @@ import '../../../core/health_event_manager.dart';
 enum HealthRecordLifecycle { active, archived, deleted }
 enum HealthDeletionChannel { email, phone }
 
+Map<String, dynamic> _freezeMap(Map<String, dynamic> source) =>
+    Map<String, dynamic>.unmodifiable(
+      source.map((key, value) => MapEntry(key, _freezeValue(value))),
+    );
+
+dynamic _freezeValue(dynamic value) {
+  if (value is Map) {
+    return Map<String, dynamic>.unmodifiable(
+      value.map((key, nested) =>
+          MapEntry(key.toString(), _freezeValue(nested))),
+    );
+  }
+  if (value is List) {
+    return List<dynamic>.unmodifiable(value.map(_freezeValue));
+  }
+  return value;
+}
+
+abstract interface class AccreditedUnitAccessPort {
+  Future<bool> canReceiveHealthRecord({
+    required String profileId,
+    required String unitId,
+  });
+}
+
 abstract interface class HealthDeletionVerifier {
   Future<bool> verifyOwnership({
     required String profileId,
@@ -55,7 +80,7 @@ class ReadOnlyHealthRecordCopy {
     required this.profileId,
     required this.unitId,
     required Map<String, dynamic> payload,
-  }) : payload = Map.unmodifiable(payload);
+  }) : payload = _freezeMap(payload);
 
   final String copyId;
   final String sourceRecordId;
@@ -92,7 +117,7 @@ class HealthRecordGovernanceEntry {
     required this.profileId,
     required Map<String, dynamic> payload,
     this.lifecycle = HealthRecordLifecycle.active,
-  }) : payload = Map.unmodifiable(payload);
+  }) : payload = _freezeMap(payload);
 
   final String recordId;
   final String profileId;
@@ -124,7 +149,7 @@ class HealthRecordGovernance {
 
   final HealthDeletionVerifier _verifier;
   final HealthRecordBackupPort _backup;
-  final AccreditedUnitNotifier _notifier;
+  final AccreditedUnitNotifier _notifier;\n  final AccreditedUnitAccessPort _access;
   final Map<String, HealthRecordGovernanceEntry> _records = {};
   final Map<String, ReadOnlyHealthRecordCopy> _copies = {};
 
