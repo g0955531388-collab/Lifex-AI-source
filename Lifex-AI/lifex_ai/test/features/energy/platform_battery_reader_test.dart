@@ -34,6 +34,8 @@ class FakeSource implements BatterySource {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late FakeSource source;
   late PlatformBatteryReader reader;
 
@@ -59,7 +61,7 @@ void main() {
 
     test('failure is reported, never replaced by a made-up value', () async {
       source.levelError = Exception('no battery');
-      expect(reader.currentLevel(), throwsA(isA<BatteryReadException>()));
+      await expectLater(reader.currentLevel(), throwsA(isA<BatteryReadException>()));
     });
   });
 
@@ -73,7 +75,7 @@ void main() {
 
     test('failure is reported, not defaulted', () async {
       source.chargingError = Exception('no state');
-      expect(reader.isCharging(), throwsA(isA<BatteryReadException>()));
+      await expectLater(reader.isCharging(), throwsA(isA<BatteryReadException>()));
     });
   });
 
