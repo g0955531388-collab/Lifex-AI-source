@@ -6,14 +6,14 @@ class RecordManagementActions extends StatelessWidget {
   const RecordManagementActions({
     super.key,
     required this.onEdit,
-    required this.onDelete,
+    this.onDelete,
     this.deleteLabel = 'حذف',
     this.editLabel = 'تعديل',
     this.enabled = true,
   });
 
   final VoidCallback onEdit;
-  final Future<void> Function() onDelete;
+  final Future<void> Function()? onDelete;
   final String editLabel;
   final String deleteLabel;
   final bool enabled;
@@ -36,7 +36,7 @@ class RecordManagementActions extends StatelessWidget {
         ],
       ),
     );
-    if (confirmed == true) await onDelete();
+    if (confirmed == true) await onDelete?.call();
   }
 
   @override
@@ -45,7 +45,7 @@ class RecordManagementActions extends StatelessWidget {
         tooltip: 'إجراءات العنصر',
         onSelected: (action) {
           if (action == 'edit') onEdit();
-          if (action == 'delete') _confirmDelete(context);
+          if (action == 'delete' && onDelete != null) _confirmDelete(context);
         },
         itemBuilder: (context) => [
           PopupMenuItem(
@@ -56,14 +56,15 @@ class RecordManagementActions extends StatelessWidget {
               title: Text(editLabel),
             ),
           ),
-          PopupMenuItem(
-            value: 'delete',
-            child: ListTile(
-              dense: true,
-              leading: const Icon(Icons.delete_outline),
-              title: Text(deleteLabel),
+          if (onDelete != null)
+            PopupMenuItem(
+              value: 'delete',
+              child: ListTile(
+                dense: true,
+                leading: const Icon(Icons.delete_outline),
+                title: Text(deleteLabel),
+              ),
             ),
-          ),
         ],
       );
 }
