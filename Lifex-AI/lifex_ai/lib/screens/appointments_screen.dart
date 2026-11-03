@@ -126,8 +126,15 @@ class _AppointmentDialogState extends State<_AppointmentDialog> {
       _place.text = record['place']?.toString() ?? '';
       final rawDate = record['date']?.toString();
       if (rawDate != null) {
-        final parsed = DateTime.tryParse(rawDate.replaceAll('/', '-'));
-        if (parsed != null) _date = parsed;
+        final parts = rawDate.split('/');
+        if (parts.length == 3) {
+          final year = int.tryParse(parts[0]);
+          final month = int.tryParse(parts[1]);
+          final day = int.tryParse(parts[2]);
+          if (year != null && month != null && day != null) {
+            _date = DateTime(year, month, day);
+          }
+        }
       }
     }
   }
