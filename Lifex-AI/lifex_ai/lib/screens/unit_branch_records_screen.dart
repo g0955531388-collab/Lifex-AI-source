@@ -12,6 +12,7 @@ import '../features/network_box/profile_box_store.dart';
 import '../features/network_box/unit_branch_catalog.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/record_management_actions.dart';
 
 class UnitBranchRecordsScreen extends StatelessWidget {
   const UnitBranchRecordsScreen({super.key, required this.branch});
@@ -31,7 +32,7 @@ class UnitBranchRecordsScreen extends StatelessWidget {
           );
         }
         final store = ProfileBoxStore(profile);
-        final records = store.list(storageKey);
+        final records = store.activeRecords(storageKey);
         return Scaffold(
           appBar: AppBar(title: Text(branch.titleAr)),
           floatingActionButton: FloatingActionButton.extended(
@@ -64,11 +65,18 @@ class UnitBranchRecordsScreen extends StatelessWidget {
                       title: Text(records[i]['title']?.toString() ?? ''),
                       subtitle: Text(_subtitle(records[i])),
                       isThreeLine: _subtitle(records[i]).contains('\n'),
-                      trailing: IconButton(
-                        tooltip: 'حذف',
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () {
-                          store.removeAt(storageKey, i);
+                      trailing: RecordManagementActions(
+                        onEdit: () => _add(
+                          context,
+                          controller,
+                          store,
+                          storageKey,
+                          existing: records[i],
+                        ),
+                        onDelete: () async {
+                          final id = records[i]['id']?.toString();
+                          if (id == null) return;
+                          store.archiveById(storageKey, id);
                           controller.saveActiveProfileChanges();
                         },
                       ),
@@ -97,17 +105,19 @@ class UnitBranchRecordsScreen extends StatelessWidget {
     BuildContext context,
     ActiveProfileController controller,
     ProfileBoxStore store,
-    String storageKey,
-  ) async {
-    final title = TextEditingController();
-    final detail = TextEditingController();
+    String storageKey, {
+    Map<String, dynamic>? existing,
+  }) async {
+    final title = TextEditingController(text: existing?['title']?.toString() ?? '');
+    final detail = TextEditingController(text: existing?['detail']?.toString() ?? '');
     final extras = {
-      for (final field in branch.extraFields) field.key: TextEditingController(),
+      for (final field in branch.extraFields)
+        field.key: TextEditingController(text: existing?[field.key]?.toString() ?? ''),
     };
     final saved = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(branch.titleAr),
+        title: Text(existing == null ? branch.titleAr : 'تعديل ${branch.titleAr}'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -155,11 +165,17 @@ class UnitBranchRecordsScreen extends StatelessWidget {
       controller.dispose();
     }
     if (saved != true || heading.isEmpty) return;
-    store.add(storageKey, {
+    final values = {
       'title': heading,
       'detail': note.isEmpty ? 'بدون تفاصيل' : note,
       ...extraValues,
-    });
+    };
+    if (existing == null) {
+      store.add(storageKey, values);
+    } else {
+      final id = existing['id']?.toString();
+      if (id == null || !store.updateById(storageKey, id, values)) return;
+    }
     controller.saveActiveProfileChanges();
   }
 }
