@@ -19,6 +19,7 @@ class AppLocaleController extends ChangeNotifier with WidgetsBindingObserver {
   String get languageCode => _locale.languageCode;
   bool get isArabic => languageCode == 'ar';
   bool get usesSystemLanguage => _selection == 'system';
+  String get selection => _selection;
 
   Locale _localeForSystem() {
     final systemCode =
