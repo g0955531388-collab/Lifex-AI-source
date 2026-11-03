@@ -168,37 +168,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _persist();
             },
           ),
-          Semantics(
-            label: 'language: '
-                '${_selectedLanguage == AppLanguage.arabic ? "العربية" : "English"}',
-            hint: 'Select Arabic or English',
-            child: ListTile(
-              title: const Text('language'),
-              trailing: ExcludeSemantics(
-                child: DropdownButton<AppLanguage>(
-                  value: _selectedLanguage,
-                  items: const [
-                    DropdownMenuItem(
-                      value: AppLanguage.arabic,
-                      child: Text('العربية'),
-                    ),
-                    DropdownMenuItem(
-                      value: AppLanguage.english,
-                      child: Text('English'),
-                    ),
-                  ],
-                  onChanged: (value) async {
-                    if (value == null) return;
-                    await AppLocaleController.instance.setLanguage(
-                      value == AppLanguage.arabic ? 'ar' : 'en',
-                    );
-                    if (!mounted) return;
-                    setState(() => _selectedLanguage = value);
-                    _persist();
-                  },
+          ListTile(
+            title: const Text('language'),
+            trailing: const Icon(Icons.arrow_drop_down),
+            onTap: () async {
+              final controller = AppLocaleController.instance;
+              final selection = await showDialog<String>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Text('language'),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        dense: true,
+                        leading: Icon(
+                          controller.selection == 'system'
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                        ),
+                        title: const Text('لغة الهاتف'),
+                        onTap: () => Navigator.of(dialogContext).pop('system'),
+                      ),
+                      ListTile(
+                        dense: true,
+                        leading: Icon(
+                          controller.selection == 'en'
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                        ),
+                        title: const Text('لغة إنكليزية'),
+                        onTap: () => Navigator.of(dialogContext).pop('en'),
+                      ),
+                      ListTile(
+                        dense: true,
+                        leading: Icon(
+                          controller.selection == 'ar'
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                        ),
+                        title: const Text('لغة عربية'),
+                        onTap: () => Navigator.of(dialogContext).pop('ar'),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+              if (selection == null) return;
+              await controller.setLanguage(selection);
+              if (!mounted) return;
+              setState(() {
+                _selectedLanguage = controller.isArabic
+                    ? AppLanguage.arabic
+                    : AppLanguage.english;
+              });
+              _persist();
+            },
           ),
           const Divider(),
           ListTile(
