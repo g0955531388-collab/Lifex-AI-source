@@ -15,7 +15,8 @@ class FakeSource implements BatterySource {
   bool charging = false;
   Object? levelError;
   Object? chargingError;
-  final StreamController<bool> controller = StreamController<bool>();
+  // Broadcast permits deterministic teardown even when a direct-read test never subscribes.
+  final StreamController<bool> controller = StreamController<bool>.broadcast();
 
   @override
   Future<int> level() => levelError == null
