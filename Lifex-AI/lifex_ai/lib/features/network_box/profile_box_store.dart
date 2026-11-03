@@ -151,10 +151,15 @@ class ProfileBoxStore {
     return true;
   }
 
+  /// Legacy compatibility: removal now archives instead of erasing data.
+  /// Permanent deletion must go through an explicit confirmation workflow.
+  @Deprecated('Use archiveById; records are no longer physically removed here.')
   void removeAt(String key, int index) {
     final items = list(key);
     if (index < 0 || index >= items.length) return;
-    items.removeAt(index);
+    final record = Map<String, dynamic>.from(items[index]);
+    record['archivedAt'] ??= DateTime.now().toIso8601String();
+    items[index] = record;
     setList(key, items);
   }
 
