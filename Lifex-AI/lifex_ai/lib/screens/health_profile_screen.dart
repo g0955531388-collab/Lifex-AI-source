@@ -15,6 +15,7 @@ import '../features/network_box/unit_branch_catalog.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/determination_credential_policy.dart';
 import '../features/profile/health_profile.dart';
+import '../widgets/record_management_actions.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'unit_branch_navigator.dart';
 
@@ -28,6 +29,139 @@ class HealthProfileScreen extends StatelessWidget {
   /// إن [preferThisProfile] يُعرض هذا الملف دون تبديل الملف النشط للحساب.
   final HealthProfile? profile;
   final bool preferThisProfile;
+
+  Future<void> _editProfile(
+    BuildContext context,
+    ActiveProfileController controller,
+    HealthProfile profile,
+  ) async {
+    final name = TextEditingController(text: profile.fullName);
+    final height = TextEditingController(text: profile.heightCm?.toString() ?? '');
+    final weight = TextEditingController(text: profile.weightKg?.toString() ?? '');
+    var birthDate = profile.dateOfBirth;
+    var bloodType = profile.bloodType;
+    var sex = profile.biologicalSex;
+
+    try {
+      final saved = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: const Text('تعديل بيانات الملف الصحي'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: name,
+                    decoration: const InputDecoration(labelText: 'الاسم'),
+                  ),
+                  TextFormField(
+                    initialValue: birthDate.toIso8601String().split('T').first,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: 'تاريخ الميلاد',
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    onTap: () async {
+                      final selected = await showDatePicker(
+                        context: context,
+                        initialDate: birthDate,
+                        firstDate: DateTime(1900),
+                        lastDate: DateTime.now(),
+                      );
+                      if (selected != null) {
+                        setDialogState(() => birthDate = selected);
+                      }
+                    },
+                  ),
+                  DropdownButtonFormField<BloodType>(
+                    value: bloodType,
+                    decoration: const InputDecoration(labelText: 'فصيلة الدم'),
+                    items: BloodType.values
+                        .map((value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(value.name),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) setDialogState(() => bloodType = value);
+                    },
+                  ),
+                  DropdownButtonFormField<BiologicalSex>(
+                    value: sex,
+                    decoration: const InputDecoration(labelText: 'الجنس البيولوجي'),
+                    items: BiologicalSex.values
+                        .map((value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(value.name),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) setDialogState(() => sex = value);
+                    },
+                  ),
+                  TextField(
+                    controller: height,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'الطول (سم)'),
+                  ),
+                  TextField(
+                    controller: weight,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'الوزن (كغ)'),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('إلغاء'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('حفظ التعديلات'),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (saved != true) return;
+
+      final parsedHeight = height.text.trim().isEmpty
+          ? null
+          : double.tryParse(height.text.trim().replaceAll(',', '.'));
+      final parsedWeight = weight.text.trim().isEmpty
+          ? null
+          : double.tryParse(weight.text.trim().replaceAll(',', '.'));
+      if ((height.text.trim().isNotEmpty && parsedHeight == null) ||
+          (weight.text.trim().isNotEmpty && parsedWeight == null) ||
+          (parsedHeight != null && parsedHeight <= 0) ||
+          (parsedWeight != null && parsedWeight <= 0) ||
+          name.text.trim().isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('تحقق من الاسم والطول والوزن قبل الحفظ.')),
+          );
+        }
+        return;
+      }
+
+      profile.fullName = name.text.trim();
+      profile.dateOfBirth = birthDate;
+      profile.bloodType = bloodType;
+      profile.biologicalSex = sex;
+      profile.heightCm = parsedHeight;
+      profile.weightKg = parsedWeight;
+      profile.lastUpdatedAt = DateTime.now();
+      controller.saveActiveProfileChanges();
+    } finally {
+      name.dispose();
+      height.dispose();
+      weight.dispose();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +179,16 @@ class HealthProfileScreen extends StatelessWidget {
                   ? 'ملف مرتبط بالحصة'
                   : (l10n?.homeMyHealthProfile ?? 'ملفي الصحي'),
             ),
+            actions: [
+              if (!preferThisProfile &&
+                  live != null &&
+                  live.profileId == controller.activeProfileId)
+                RecordManagementActions(
+                  onEdit: () => _editProfile(context, controller, live),
+                  onDelete: null,
+                  editLabel: 'تعديل الملف',
+                ),
+            ],
           ),
           body: live == null
               ? Center(
