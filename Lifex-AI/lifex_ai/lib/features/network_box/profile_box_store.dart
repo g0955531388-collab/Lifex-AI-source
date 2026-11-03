@@ -102,6 +102,55 @@ class ProfileBoxStore {
     return stored;
   }
 
+  /// Update a stored record without changing its stable ID or creation time.
+  bool updateById(
+    String key,
+    String recordId,
+    Map<String, dynamic> changes,
+  ) {
+    final items = list(key);
+    final index = items.indexWhere((item) => item['id']?.toString() == recordId);
+    if (index < 0) return false;
+    final updated = Map<String, dynamic>.from(items[index]);
+    final safeChanges = Map<String, dynamic>.from(changes)
+      ..remove('id')
+      ..remove('createdAt');
+    updated.addAll(safeChanges);
+    updated['updatedAt'] = DateTime.now().toIso8601String();
+    items[index] = updated;
+    setList(key, items);
+    return true;
+  }
+
+  /// Soft-archive a record so it can be restored later.
+  bool archiveById(String key, String recordId) =>
+      _setArchiveState(key, recordId, true);
+
+  bool restoreArchivedById(String key, String recordId) =>
+      _setArchiveState(key, recordId, false);
+
+  List<Map<String, dynamic>> archivedRecords(String key) =>
+      list(key).where((item) => item['archivedAt'] != null).toList();
+
+  List<Map<String, dynamic>> activeRecords(String key) =>
+      list(key).where((item) => item['archivedAt'] == null).toList();
+
+  bool _setArchiveState(String key, String recordId, bool archived) {
+    final items = list(key);
+    final index = items.indexWhere((item) => item['id']?.toString() == recordId);
+    if (index < 0) return false;
+    final updated = Map<String, dynamic>.from(items[index]);
+    if (archived) {
+      updated['archivedAt'] ??= DateTime.now().toIso8601String();
+    } else {
+      updated.remove('archivedAt');
+      updated['reopenedAt'] = DateTime.now().toIso8601String();
+    }
+    items[index] = updated;
+    setList(key, items);
+    return true;
+  }
+
   void removeAt(String key, int index) {
     final items = list(key);
     if (index < 0 || index >= items.length) return;
