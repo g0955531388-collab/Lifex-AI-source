@@ -14,6 +14,7 @@ import 'package:provider/provider.dart';
 import '../core/admin/admin_manager.dart';
 import '../core/admin/admin_permissions.dart';
 import '../core/app_config.dart';
+import '../core/app_locale_controller.dart';
 import '../core/app_constants.dart';
 import '../core/lasting_search_index.dart';
 import '../core/local_knowledge.dart';
@@ -168,11 +169,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           Semantics(
-            label: 'اللغة، القيمة الحالية: '
-                '${_selectedLanguage == AppLanguage.arabic ? "العربية" : "الإنجليزية"}',
-            hint: 'اضغط لاختيار لغة مختلفة',
+            label: 'language: '
+                '${_selectedLanguage == AppLanguage.arabic ? "العربية" : "English"}',
+            hint: 'Select Arabic or English',
             child: ListTile(
-              title: const Text('اللغة'),
+              title: const Text('language'),
               trailing: ExcludeSemantics(
                 child: DropdownButton<AppLanguage>(
                   value: _selectedLanguage,
@@ -186,8 +187,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Text('English'),
                     ),
                   ],
-                  onChanged: (value) {
+                  onChanged: (value) async {
                     if (value == null) return;
+                    await AppLocaleController.instance.setLanguage(
+                      value == AppLanguage.arabic ? 'ar' : 'en',
+                    );
+                    if (!mounted) return;
                     setState(() => _selectedLanguage = value);
                     _persist();
                   },
