@@ -71,8 +71,8 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
 
       await _speech.listen(
         localeId: localeId,
-        listenFor: const Duration(seconds: 12),
-        pauseFor: const Duration(seconds: 3),
+        listenFor: const Duration(seconds: 45),
+        pauseFor: const Duration(seconds: 4),
         listenOptions: SpeechListenOptions(
           partialResults: true,
           cancelOnError: true,
@@ -88,7 +88,7 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
       );
 
       return completer.future.timeout(
-        const Duration(seconds: 14),
+        const Duration(seconds: 47),
         onTimeout: () {
           unawaited(_speech.stop());
           return _fromWords(lastWords, lastConfidence);
