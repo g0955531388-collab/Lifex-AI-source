@@ -47,6 +47,10 @@ import 'features/emergency/emergency_phone_contacts_registry.dart';
 import 'features/emergency/risk_level_engine.dart';
 import 'features/emergency/silent_emergency_signal_controller.dart';
 import 'features/energy/battery_monitor.dart';
+import 'features/energy/platform_battery_reader.dart';
+import 'features/energy/platform_vibration_executor.dart';
+import 'features/energy/platform_visual_flash_executor.dart';
+import 'core/lio/lifex_production_composition.dart';
 import 'features/energy/energy_manager.dart';
 import 'features/energy/survival_energy_mode.dart';
 import 'features/finance/billing_exemption_policy.dart';
@@ -273,8 +277,8 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   // 4-ب) التنبيهات متعددة الحواس (اهتزاز + ومضة) لضمان وصول تنبيهات
   // الطوارئ لمستخدمين صم أو ضعاف سمع، وليس صوتاً فقط.
   final multiSensoryAlertManager = MultiSensoryAlertManager(
-    vibrationExecutor: _NoopVibrationExecutor(), // ⚠️ راجع التحذير أعلاه
-    visualFlashExecutor: _NoopVisualFlashExecutor(),
+    vibrationExecutor: PlatformVibrationExecutor(),
+    visualFlashExecutor: PlatformVisualFlashExecutor(),
   );
 
   // 4-ج) طبقة قرار "الطوارئ الصامتة" — ضوء فقط بدل صوت/اهتزاز، إلا إذا
@@ -308,7 +312,7 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
   final medicalOcrReader = MedicalOcrReader(ocrExtractor: ocrTextExtractor);
   medicalOcrReader.registerWithVisionEngine(smartVisionEngine);
 
-  final agentCoreBundle = AgentCore.initialize(
+  final productionBundle = LifexProductionComposition.assemble(
     medicalDatabaseManager: medicalDatabaseManager,
     aiModuleBundle: aiModuleBundle,
     aiServiceRouter: aiServiceRouter,
@@ -317,9 +321,10 @@ Future<LifexAppContext> _bootstrapLifexAi() async {
     visionEngine: smartVisionEngine,
     riskLevelEngine: riskLevelEngine,
   );
+  final agentCoreBundle = productionBundle.agentCore;
 
   // 5) الطاقة — يربط مراقب البطارية بوضع البقاء.
-  final batteryMonitor = BatteryMonitor();
+  final batteryMonitor = BatteryMonitor(reader: PlatformBatteryReader());
   final survivalEnergyMode = SurvivalEnergyMode();
   final energyManager = EnergyManager(
     batteryMonitor: batteryMonitor,
