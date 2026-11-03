@@ -31,6 +31,7 @@ import 'blood_request_screen.dart';
 import 'box_unit_screen.dart';
 import 'camera_notes_screen.dart';
 import 'doctor_directory_screen.dart';
+import 'deaf_assistant_screen.dart';
 import 'emergency_contacts_screen.dart';
 import 'global_health_dashboard_screen.dart';
 import 'health_chat_screen.dart';
@@ -255,6 +256,19 @@ class HomeScreen extends StatelessWidget {
                                     const VoiceControlScreen(),
                                   );
                                 },
+                        ),
+                        AccessibleActionButton(
+                          icon: Icons.closed_caption_outlined,
+                          label: 'مساعد الصم',
+                          semanticHint:
+                              'يحوّل الكلام المسموع إلى كتابة مباشرة على الشاشة',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const DeafAssistantScreen(),
+                              ),
+                            );
+                          },
                         ),
                         AccessibleActionButton(
                           icon: Icons.visibility_outlined,
