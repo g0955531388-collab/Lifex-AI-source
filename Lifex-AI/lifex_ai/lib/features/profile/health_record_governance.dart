@@ -3,7 +3,7 @@
 /// Real OTP verification, immutable cloud backup, and accredited-unit
 /// notification are mandatory backend ports. No local-only implementation
 /// is presented as a cloud security control.
-import '../../../core/health_event_manager.dart';
+import '../../core/health_event_manager.dart';
 
 enum HealthRecordLifecycle { active, archived, deleted }
 enum HealthDeletionChannel { email, phone }
