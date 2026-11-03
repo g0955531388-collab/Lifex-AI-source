@@ -23,6 +23,10 @@ dependencies:
   permission_handler: ^11.3.1
   speech_to_text: ^6.6.2
   flutter_tts: ^4.0.2
+  battery_plus: ^1.11.0
+  geolocator: ^9.0.2
+  vibration: ^1.8.4
+  flutter_local_notifications: ^15.1.0
 
 dev_dependencies:
   flutter_test:
