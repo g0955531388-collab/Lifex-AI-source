@@ -181,9 +181,7 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   _VisualAssistantCameraPanel(
                     onOpen: (direction, labelAr) {
-                      unawaited(
-                        _openVisualCamera(context, direction, labelAr),
-                      );
+                      _openVisualCamera(context, direction, labelAr);
                     },
                   ),
                   const SizedBox(height: 14),
