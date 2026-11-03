@@ -1,7 +1,7 @@
 /// =============================================================
 /// Lifex-AI — وحدة الصوت
 /// الملف: device_speech_to_text_provider.dart
-/// استماع وتسجيل حقيقي عبر محرّك الجهاز. بلا نتيجة وهمية.
+/// استماع متكرر عبر جلسة تعرّف واحدة مُهيّأة، بلا نتائج وهمية.
 /// =============================================================
 library lifex_ai.features.voice.device_speech_to_text_provider;
 
@@ -25,6 +25,12 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
   final SpeechToText _speech;
   final VoiceLocalePolicy _localePolicy;
 
+  bool _initialized = false;
+  Future<bool>? _initializing;
+  Completer<SpeechRecognitionResult>? _activeSession;
+  String _lastWords = '';
+  double _lastConfidence = 0.0;
+
   @override
   Future<bool> requestMicrophonePermission() async {
     try {
@@ -35,27 +41,53 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
     }
   }
 
+  Future<bool> _ensureInitialized() async {
+    if (_initialized) return true;
+    final pending = _initializing;
+    if (pending != null) return pending;
+
+    final initialization = _speech.initialize(
+      onError: (_) => _finishActiveSession(),
+      onStatus: (status) {
+        if (status == 'done' || status == 'notListening') {
+          _finishActiveSession();
+        }
+      },
+    );
+    _initializing = initialization;
+    try {
+      final ready = await initialization;
+      _initialized = ready;
+      return ready;
+    } finally {
+      _initializing = null;
+    }
+  }
+
+  void _finishActiveSession() {
+    final session = _activeSession;
+    if (session == null) return;
+    _activeSession = null;
+    if (!session.isCompleted) {
+      session.complete(_fromWords(_lastWords, _lastConfidence));
+    }
+  }
+
   @override
   Future<SpeechRecognitionResult> listenOnce({String localeCode = 'ar'}) async {
+    if (_activeSession != null) {
+      await stop();
+    }
+
     final completer = Completer<SpeechRecognitionResult>();
-    var lastWords = '';
-    var lastConfidence = 0.0;
+    _activeSession = completer;
+    _lastWords = '';
+    _lastConfidence = 0.0;
 
     try {
-      final ready = await _speech.initialize(
-        onError: (_) {
-          if (!completer.isCompleted) {
-            completer.complete(_fromWords(lastWords, lastConfidence));
-          }
-        },
-        onStatus: (status) {
-          if ((status == 'done' || status == 'notListening') &&
-              !completer.isCompleted) {
-            completer.complete(_fromWords(lastWords, lastConfidence));
-          }
-        },
-      );
+      final ready = await _ensureInitialized();
       if (!ready) {
+        if (identical(_activeSession, completer)) _activeSession = null;
         return const SpeechRecognitionResult(
           status: SpeechRecognitionStatus.error,
         );
@@ -78,30 +110,34 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
           cancelOnError: true,
         ),
         onResult: (result) {
-          lastWords = result.recognizedWords;
-          lastConfidence = result.confidence;
-          VoiceEngine.instance.reportPartial(lastWords);
-          if (result.finalResult && !completer.isCompleted) {
-            completer.complete(_fromWords(lastWords, lastConfidence));
-          }
+          _lastWords = result.recognizedWords;
+          _lastConfidence = result.confidence;
+          VoiceEngine.instance.reportPartial(_lastWords);
+          if (result.finalResult) _finishActiveSession();
         },
       );
 
-      return completer.future.timeout(
+      return await completer.future.timeout(
         const Duration(seconds: 47),
-        onTimeout: () {
-          unawaited(_speech.stop());
-          return _fromWords(lastWords, lastConfidence);
+        onTimeout: () async {
+          await _speech.stop();
+          final result = _fromWords(_lastWords, _lastConfidence);
+          _finishActiveSession();
+          return result;
         },
       );
     } on MissingPluginException {
+      if (identical(_activeSession, completer)) _activeSession = null;
       return const SpeechRecognitionResult(
         status: SpeechRecognitionStatus.error,
       );
     } catch (_) {
+      if (identical(_activeSession, completer)) _activeSession = null;
       return const SpeechRecognitionResult(
         status: SpeechRecognitionStatus.error,
       );
+    } finally {
+      if (identical(_activeSession, completer)) _activeSession = null;
     }
   }
 
@@ -120,5 +156,8 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
   }
 
   @override
-  Future<void> stop() => _speech.stop();
+  Future<void> stop() async {
+    await _speech.stop();
+    _finishActiveSession();
+  }
 }
