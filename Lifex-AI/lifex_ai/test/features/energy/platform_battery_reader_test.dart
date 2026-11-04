@@ -41,7 +41,10 @@ void main() {
     reader = PlatformBatteryReader(source: source);
   });
 
-  tearDown(() => source.controller.close());
+  // A broadcast controller's close future may remain pending when no listener
+  // ever subscribed (as in the direct-read tests). Close it without making
+  // teardown wait forever and time out the test.
+  tearDown(() => unawaited(source.controller.close()));
 
   group('currentLevel', () {
     test('returns the real level', () async {
