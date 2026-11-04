@@ -8,7 +8,10 @@
 /// =============================================================
 library lifex_ai.screens.home_screen;
 
+import 'dart:async';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
@@ -21,6 +24,7 @@ import '../features/finance/billing_exemption_policy.dart';
 import '../features/location/gps_priority_monitor.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_identity_manager.dart';
+import '../features/voice/voice_engine.dart';
 import '../widgets/accessible_widgets.dart';
 import '../widgets/encyclopedia_share_bar.dart';
 import 'accessibility_assistant_screen.dart';
@@ -31,11 +35,13 @@ import 'blood_request_screen.dart';
 import 'box_unit_screen.dart';
 import 'camera_notes_screen.dart';
 import 'doctor_directory_screen.dart';
+import 'deaf_assistant_screen.dart';
 import 'emergency_contacts_screen.dart';
 import 'global_health_dashboard_screen.dart';
 import 'health_chat_screen.dart';
 import 'health_modules_screen.dart';
 import 'health_profile_screen.dart';
+import 'live_sight_screen.dart';
 import 'medications_screen.dart';
 import 'pharmacy_stock_screen.dart';
 import 'project_box_hub_screen.dart';
@@ -47,6 +53,28 @@ import 'wallet_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  void _openVisualCamera(
+    BuildContext context,
+    CameraLensDirection direction,
+    String labelAr,
+  ) {
+    unawaited(HapticFeedback.mediumImpact());
+    unawaited(_announceCameraLaunch(labelAr));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LiveSightScreen(lensDirection: direction),
+      ),
+    );
+  }
+
+  Future<void> _announceCameraLaunch(String labelAr) async {
+    try {
+      await VoiceEngine.instance.speak('أفتح $labelAr');
+    } catch (_) {
+      // لا نمنع فتح الكاميرا إذا تعذّر النطق على الجهاز.
+    }
+  }
 
   bool _allowed(BuildContext context, String unitId) {
     final trial = context.read<TrialManager>();
@@ -151,6 +179,12 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
+                  _VisualAssistantCameraPanel(
+                    onOpen: (direction, labelAr) {
+                      _openVisualCamera(context, direction, labelAr);
+                    },
+                  ),
+                  const SizedBox(height: 14),
                   FutureBuilder<PermissionStatus>(
                     future: Permission.location.status,
                     builder: (context, snapshot) {
@@ -255,6 +289,19 @@ class HomeScreen extends StatelessWidget {
                                     const VoiceControlScreen(),
                                   );
                                 },
+                        ),
+                        AccessibleActionButton(
+                          icon: Icons.closed_caption_outlined,
+                          label: 'مساعد الصم',
+                          semanticHint:
+                              'يحوّل الكلام المسموع إلى كتابة مباشرة على الشاشة',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const DeafAssistantScreen(),
+                              ),
+                            );
+                          },
                         ),
                         AccessibleActionButton(
                           icon: Icons.visibility_outlined,
@@ -552,3 +599,134 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+class _VisualAssistantCameraPanel extends StatelessWidget {
+  const _VisualAssistantCameraPanel({required this.onOpen});
+
+  final void Function(CameraLensDirection direction, String labelAr) onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'المساعد البصري المباشر',
+          textAlign: TextAlign.start,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'اختر الكاميرا لبدء الوصف الحي للمشهد بعد موافقتك.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 10),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: _VisualCameraLaunchButton(
+                label: 'الكاميرا الأمامية',
+                subtitle: 'كاميرا السيلفي',
+                icon: Icons.camera_front,
+                color: colors.primaryContainer,
+                foreground: colors.onPrimaryContainer,
+                semanticHint: 'يفتح المساعد البصري بالكاميرا الأمامية',
+                onTap: () => onOpen(CameraLensDirection.front, 'الكاميرا الأمامية للمساعد البصري'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _VisualCameraLaunchButton(
+                label: 'الكاميرا الخلفية',
+                subtitle: 'كاميرا المشهد',
+                icon: Icons.camera_rear,
+                color: colors.secondaryContainer,
+                foreground: colors.onSecondaryContainer,
+                semanticHint: 'يفتح المساعد البصري بالكاميرا الخلفية',
+                onTap: () => onOpen(CameraLensDirection.back, 'الكاميرا الخلفية للمساعد البصري'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _VisualCameraLaunchButton extends StatelessWidget {
+  const _VisualCameraLaunchButton({
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.foreground,
+    required this.semanticHint,
+    required this.onTap,
+  });
+
+  final String label;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final Color foreground;
+  final String semanticHint;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      hint: semanticHint,
+      child: ExcludeSemantics(
+        child: Material(
+          color: color,
+          borderRadius: BorderRadius.circular(20),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: SizedBox(
+              height: 176,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 12,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, size: 42, color: foreground),
+                    const SizedBox(height: 10),
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: foreground,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: foreground,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+

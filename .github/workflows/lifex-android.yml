@@ -2,7 +2,7 @@ name: Lifex-AI
 
 on:
   push:
-    branches: [main]
+    branches: [main, agent/lifex-full-gap-repair-2026-11, integration/lifex-unified-search-camera-voice-2026-11]
   pull_request:
   workflow_dispatch:
 

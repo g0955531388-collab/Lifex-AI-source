@@ -1,43 +1,63 @@
-/// =============================================================
-/// Lifex-AI — واجهات التطبيق
-/// الملف: live_sight_screen.dart
-/// بث عدسة على الشاشة المفتوحة. يصف إن وُجد محرك، وإلا يصرّح بالنقص.
-/// =============================================================
+/// Lifex-AI live assistive camera screen.
+/// Frames are analyzed on-device while this screen is visible and consented.
 library lifex_ai.screens.live_sight_screen;
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+
 import '../core/permission_transparency.dart';
-import '../features/accessibility/assistive_vision_engine.dart';
-import '../features/accessibility/live_sight_conductor.dart';
+import '../features/accessibility/live_camera_vision_engine.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
 
 class LiveSightScreen extends StatefulWidget {
-  const LiveSightScreen({super.key, required this.profileId});
+  const LiveSightScreen({
+    super.key,
+    this.profileId = '',
+    this.lensDirection = CameraLensDirection.back,
+  });
 
   final String profileId;
+  final CameraLensDirection lensDirection;
 
   @override
   State<LiveSightScreen> createState() => _LiveSightScreenState();
 }
 
 class _LiveSightScreenState extends State<LiveSightScreen> {
-  final LiveSightConductor _conductor = LiveSightConductor();
+  final LiveCameraVisionEngine _vision = LiveCameraVisionEngine();
   CameraController? _lens;
-  Timer? _pulseTimer;
+  CameraDescription? _activeCamera;
   bool _consented = false;
-  bool _busyPulse = false;
+  bool _processingFrame = false;
+  DateTime _lastFrameAt = DateTime.fromMillisecondsSinceEpoch(0);
+  DateTime _lastSpokenAt = DateTime.fromMillisecondsSinceEpoch(0);
+  String? _lastSpoken;
   String _spokenAr =
-      'هذه أذن رقمية على الشاشة فقط. ليست تجسساً في الخلفية وليست تشخيصاً.';
+      'الكاميرا مغلقة. بعد موافقتك سأحلل إطارات الكاميرا محلياً على الجهاز.';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _askConsentThenOpen();
+    });
+  }
 
   @override
   void dispose() {
-    _pulseTimer?.cancel();
-    unawaited(_lens?.dispose());
+    final lens = _lens;
+    if (lens != null) {
+      if (lens.value.isStreamingImages) {
+        unawaited(lens.stopImageStream());
+      }
+      unawaited(lens.dispose());
+    }
+    unawaited(_vision.close());
     super.dispose();
   }
 
@@ -45,10 +65,11 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     final agreed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('بث حي على هذه الشاشة'),
+        title: const Text('بث وتحليل حي على الجهاز'),
         content: const Text(
-          'سأفتح العدسة أمامك ما دامت هذه الصفحة مفتوحة. '
-          'أغلق الصفحة فيتوقف البث. لا أرسل الصورة لخادم، ولا أصف جداراً إن لم يعمل محرك رؤية معتمد.',
+          'بعد موافقتك ستبقى الكاميرا تعمل ما دامت هذه الصفحة مفتوحة. '
+          'سيحلل التطبيق الإطارات محلياً باستخدام ML Kit، ولن يرسل الصور إلى خادم. '
+          'التعرف تصنيف عام للمشهد وليس قياس مسافة أو ضماناً لاكتشاف العوائق.',
         ),
         actions: [
           TextButton(
@@ -57,12 +78,13 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('أوافق على البث هنا'),
+            child: const Text('أوافق على البث والتحليل'),
           ),
         ],
       ),
     );
     if (agreed != true || !mounted) return;
+
     PermissionTransparencyManager.instance.decide(
       permission: LifexSensitivePermission.camera,
       granted: true,
@@ -70,10 +92,8 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
     final status = await Permission.camera.request();
     if (!mounted) return;
     if (!status.isGranted) {
-      setState(() {
-        _spokenAr = 'رفض النظام إذن الكاميرا. البث الحي متوقف.';
-      });
-      await VoiceEngine.instance.speak(_spokenAr);
+      setState(() => _spokenAr = 'رفض النظام إذن الكاميرا. البث والتحليل متوقفان.');
+      await _speakSafely(_spokenAr);
       return;
     }
     setState(() => _consented = true);
@@ -82,100 +102,126 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
 
   Future<void> _attachLens() async {
     try {
-      final found = await availableCameras();
-      if (found.isEmpty) {
-        setState(() => _spokenAr = 'لا توجد عدسة ظاهرة لهذا الجهاز.');
-        await VoiceEngine.instance.speak(_spokenAr);
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        if (mounted) setState(() => _consented = false);
+        await _announce('لا توجد كاميرا متاحة على هذا الجهاز.');
         return;
       }
-      final rear = found.where(
-        (item) => item.lensDirection == CameraLensDirection.back,
+      final matchingCameras = cameras.where(
+        (item) => item.lensDirection == widget.lensDirection,
       );
-      final chosen = rear.isNotEmpty ? rear.first : found.first;
+      if (matchingCameras.isEmpty) {
+        if (mounted) setState(() => _consented = false);
+        await _announce(
+          widget.lensDirection == CameraLensDirection.front
+              ? 'لا توجد كاميرا أمامية متاحة على هذا الجهاز.'
+              : 'لا توجد كاميرا خلفية متاحة على هذا الجهاز.',
+        );
+        return;
+      }
+      final chosen = matchingCameras.first;
       final controller = CameraController(
         chosen,
         ResolutionPreset.medium,
         enableAudio: false,
+        imageFormatGroup: Platform.isAndroid
+            ? ImageFormatGroup.nv21
+            : ImageFormatGroup.bgra8888,
       );
       await controller.initialize();
       if (!mounted) {
         await controller.dispose();
         return;
       }
-      setState(() => _lens = controller);
-      _pulseTimer?.cancel();
-      _pulseTimer = Timer.periodic(const Duration(seconds: 7), (_) {
-        unawaited(_onePulse());
-      });
-      await _announce(
-        'العدسة مفتوحة على هذه الشاشة. سأحاول قراءة إطار كل بضع ثوان.',
-      );
-      await _onePulse();
-    } catch (error) {
+      _activeCamera = chosen;
       setState(() {
-        _spokenAr =
-            'تعذّر تشغيل العدسة الحية على هذا الجهاز. $error';
+        _lens = controller;
+        _spokenAr = 'الكاميرا جاهزة. أبدأ تحليل الإطارات محلياً الآن.';
       });
-      await VoiceEngine.instance.speak(_spokenAr);
+      await controller.startImageStream(_onCameraFrame);
+      await _speakSafely(_spokenAr);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _consented = false;
+        _spokenAr = 'تعذّر بدء تحليل الكاميرا الحي. تحقق من دعم صيغة الإطارات وإذن الكاميرا. $error';
+      });
+      await _speakSafely(_spokenAr);
     }
   }
 
-  Future<void> _onePulse() async {
-    if (_busyPulse || !mounted) return;
-    _busyPulse = true;
+  void _onCameraFrame(CameraImage frame) {
+    if (!mounted || _processingFrame) return;
+    final now = DateTime.now();
+    if (now.difference(_lastFrameAt) < const Duration(milliseconds: 850)) {
+      return;
+    }
+    _lastFrameAt = now;
+    unawaited(_analyzeFrame(frame));
+  }
+
+  Future<void> _analyzeFrame(CameraImage frame) async {
+    if (_processingFrame) return;
+    _processingFrame = true;
     try {
       final lens = _lens;
-      List<int>? bytes;
-      if (lens != null && lens.value.isInitialized) {
-        final shot = await lens.takePicture();
-        bytes = await shot.readAsBytes();
-      }
-      AssistiveVisionResult? vision;
-      if (bytes != null && bytes.isNotEmpty && mounted) {
-        final engine = AssistiveVisionEngine.instance;
-        vision = await engine.process(
-          imageOrFrameInput: bytes,
-          type: AssistiveFeatureType.sceneDescription,
-          context: {'profileId': widget.profileId, 'live': true},
-        );
-      }
-      if (!mounted) return;
-      final pulse = _conductor.pulse(
-        cameraReady: lens != null && lens.value.isInitialized,
-        userConsentedOnThisScreen: _consented,
-        frameBytes: bytes,
-        vision: vision,
+      final camera = _activeCamera;
+      if (lens == null || camera == null || !lens.value.isInitialized) return;
+      final description = await _vision.analyzeFrame(
+        frame: frame,
+        camera: camera,
+        orientation: lens.value.deviceOrientation,
       );
-      setState(() => _spokenAr = pulse.spokenAr);
-      if (pulse.speakNow) {
-        await VoiceEngine.instance.speak(pulse.spokenAr);
+      if (!mounted || description == null || description.isEmpty) return;
+      setState(() => _spokenAr = description);
+
+      final now = DateTime.now();
+      final changed = description != _lastSpoken;
+      final intervalElapsed =
+          now.difference(_lastSpokenAt) >= const Duration(seconds: 3);
+      if (changed && intervalElapsed) {
+        _lastSpoken = description;
+        _lastSpokenAt = now;
+        await _speakSafely(description);
       }
     } catch (error) {
       if (!mounted) return;
-      setState(() {
-        _spokenAr = 'انقطع نبض الإطار. البث يتوقف إن أغلقت الصفحة. $error';
-      });
+      setState(() => _spokenAr = 'تعذّر تحليل إطار الكاميرا. $error');
     } finally {
-      _busyPulse = false;
+      _processingFrame = false;
     }
   }
 
-  Future<void> _announce(String text) async {
-    setState(() => _spokenAr = text);
-    await VoiceEngine.instance.speak(text);
+  Future<void> _announce(String message) async {
+    if (!mounted) return;
+    setState(() => _spokenAr = message);
+    await _speakSafely(message);
+  }
+
+  Future<void> _speakSafely(String message) async {
+    try {
+      await VoiceEngine.instance.speak(message);
+    } catch (_) {
+      // إبقاء الكاميرا والواجهة عاملتين حتى عند تعذّر محرّك النطق.
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final lens = _lens;
     return Scaffold(
-      appBar: AppBar(title: const Text('البث الحي للعدسة')),
+      appBar: AppBar(
+        title: Text(widget.lensDirection == CameraLensDirection.front
+            ? 'المساعد البصري — الكاميرا الأمامية'
+            : 'المساعد البصري — الكاميرا الخلفية'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const HonestyBanner(
             messageAr:
-                'مساعدة إضافية فقط. ليست بديلاً عن العصا البيضاء أو كلب الإرشاد، وليست تشخيصاً طبياً.',
+                'التعرف البصري مساعد إضافي فقط. لا يحدد المسافات ولا يضمن كشف العوائق، ولا يغني عن العصا البيضاء أو وسائل السلامة المعتادة.',
           ),
           const SizedBox(height: 12),
           if (lens != null && lens.value.isInitialized)
@@ -189,7 +235,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
               alignment: Alignment.center,
               color: Colors.black12,
               child: Text(
-                _consented ? 'العدسة لم تُهيأ بعد' : 'البث مغلق حتى الموافقة',
+                _spokenAr,
                 textAlign: TextAlign.center,
               ),
             ),
@@ -197,7 +243,7 @@ class _LiveSightScreenState extends State<LiveSightScreen> {
           FilledButton.icon(
             onPressed: _consented ? null : _askConsentThenOpen,
             icon: const Icon(Icons.videocam_outlined),
-            label: Text(_consented ? 'البث يعمل على هذه الصفحة' : 'ابدأ البث الحي'),
+            label: Text(_consented ? 'التحليل الحي يعمل' : 'ابدأ البث والتحليل الحي'),
           ),
           const SizedBox(height: 12),
           Semantics(

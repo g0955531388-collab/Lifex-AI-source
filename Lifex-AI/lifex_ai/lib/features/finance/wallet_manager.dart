@@ -42,6 +42,10 @@ class WalletManager {
     required int amountInSmallestUnit,
     required String currencyCode,
   }) async {
+    if (profileId.trim().isEmpty || amountInSmallestUnit <= 0 ||
+        currencyCode.trim().isEmpty) {
+      return const WalletOperationResult.failure('بيانات الشحن غير صالحة.');
+    }
     final result = await gatewayClient.chargeAmount(
       amountInSmallestUnit: amountInSmallestUnit,
       currencyCode: currencyCode,
@@ -64,7 +68,10 @@ class WalletManager {
 
     return WalletOperationResult.success(
       messageAr: 'تم شحن محفظتك بنجاح.',
-      newBalance: ledger.currentBalanceFor(profileId),
+      newBalance: ledger.currentBalanceFor(
+        profileId,
+        currencyCode: currencyCode,
+      ),
     );
   }
 
@@ -83,7 +90,14 @@ class WalletManager {
       );
     }
 
-    final currentBalance = ledger.currentBalanceFor(profileId);
+    if (profileId.trim().isEmpty || amountInSmallestUnit <= 0 ||
+        currencyCode.trim().isEmpty) {
+      return const WalletOperationResult.failure('بيانات الدفع غير صالحة.');
+    }
+    final currentBalance = ledger.currentBalanceFor(
+      profileId,
+      currencyCode: currencyCode,
+    );
     if (currentBalance < amountInSmallestUnit) {
       return const WalletOperationResult.failure(
         'الرصيد الحالي في محفظتك غير كافٍ لإتمام هذه العملية. يُرجى '
@@ -101,9 +115,13 @@ class WalletManager {
 
     return WalletOperationResult.success(
       messageAr: 'تمت عملية الدفع بنجاح.',
-      newBalance: ledger.currentBalanceFor(profileId),
+      newBalance: ledger.currentBalanceFor(
+        profileId,
+        currencyCode: currencyCode,
+      ),
     );
   }
 
-  int balanceFor(String profileId) => ledger.currentBalanceFor(profileId);
+  int balanceFor(String profileId, {String currencyCode = 'USD'}) =>
+      ledger.currentBalanceFor(profileId, currencyCode: currencyCode);
 }

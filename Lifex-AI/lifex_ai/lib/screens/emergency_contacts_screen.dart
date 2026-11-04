@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 
 import '../features/emergency/emergency_phone_contacts_registry.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../widgets/record_management_actions.dart';
 
 enum _ContactLevel { notifyOnly, monitoring, delegate }
 
@@ -96,6 +97,16 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     _persist();
   }
 
+  Future<void> _edit(int index) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => _ContactDialog(initial: _contacts[index]),
+    );
+    if (result == null || !mounted) return;
+    setState(() => _contacts[index] = result);
+    _persist();
+  }
+
   String _levelLabel(String? value) {
     switch (value) {
       case 'monitoring':
@@ -130,10 +141,9 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                     title: Text(contact['name']?.toString() ?? ''),
                     subtitle: Text(
                         '${contact['phone'] ?? contact['lifexId']} — ${_levelLabel(contact['level']?.toString())}'),
-                    trailing: IconButton(
-                      tooltip: 'حذف جهة الثقة',
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () {
+                    trailing: RecordManagementActions(
+                      onEdit: () => _edit(index),
+                      onDelete: () async {
                         setState(() => _contacts.removeAt(index));
                         _persist();
                       },
@@ -147,7 +157,9 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
 }
 
 class _ContactDialog extends StatefulWidget {
-  const _ContactDialog();
+  const _ContactDialog({this.initial});
+
+  final Map<String, dynamic>? initial;
 
   @override
   State<_ContactDialog> createState() => _ContactDialogState();
@@ -160,6 +172,20 @@ class _ContactDialogState extends State<_ContactDialog> {
   _ContactLevel _level = _ContactLevel.notifyOnly;
 
   @override
+  void initState() {
+    super.initState();
+    final record = widget.initial;
+    if (record == null) return;
+    _name.text = record['name']?.toString() ?? '';
+    _lifexId.text = record['lifexId']?.toString() ?? '';
+    _phone.text = record['phone']?.toString() ?? '';
+    _level = _ContactLevel.values.firstWhere(
+      (level) => level.name == record['level'],
+      orElse: () => _ContactLevel.notifyOnly,
+    );
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _lifexId.dispose();
@@ -170,7 +196,7 @@ class _ContactDialogState extends State<_ContactDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('إضافة جهة ثقة'),
+      title: Text(widget.initial == null ? 'إضافة جهة ثقة' : 'تعديل جهة الثقة'),
       content: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(

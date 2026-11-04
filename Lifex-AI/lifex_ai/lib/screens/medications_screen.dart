@@ -94,40 +94,94 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
 
   Future<void> _addMedication(HealthProfile profile) async {
     final controller = TextEditingController();
-    final added = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('إضافة دواء إلى السجل الشخصي'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'اسم الدواء كما وصفه الطبيب',
-            border: OutlineInputBorder(),
+    try {
+      final added = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('إضافة دواء إلى السجل الشخصي'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'اسم الدواء كما وصفه الطبيب',
+              border: OutlineInputBorder(),
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('إضافة'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('إلغاء'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('إضافة'),
-          ),
-        ],
-      ),
-    );
-    if (added != true) return;
-    final name = controller.text.trim();
-    if (name.isEmpty) return;
-    if (!profile.currentMedicationNames.contains(name)) {
+      );
+      final name = controller.text.trim();
+      if (added != true || name.isEmpty ||
+          profile.currentMedicationNames.contains(name)) return;
       profile.currentMedicationNames.add(name);
       profile.lastUpdatedAt = DateTime.now();
+      if (!mounted) return;
+      Provider.of<ActiveProfileController>(context, listen: false)
+          .notifyProfileChanged();
+      setState(() {});
+    } finally {
+      controller.dispose();
     }
-    if (!mounted) return;
-    setState(() {});
-    Provider.of<ActiveProfileController>(context, listen: false)
-        .notifyProfileChanged();
+  }
+
+  Future<void> _editMedication(
+    HealthProfile profile,
+    String currentName,
+  ) async {
+    final controller = TextEditingController(text: currentName);
+    try {
+      final saved = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('تعديل اسم الدواء في السجل'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'اسم الدواء كما وصفه الطبيب',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('حفظ'),
+            ),
+          ],
+        ),
+      );
+      final updatedName = controller.text.trim();
+      if (saved != true || updatedName.isEmpty || updatedName == currentName) return;
+      final index = profile.currentMedicationNames.indexOf(currentName);
+      if (index < 0) return;
+      if (profile.currentMedicationNames.contains(updatedName)) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('هذا الدواء موجود بالفعل في السجل.')),
+        );
+        return;
+      }
+      profile.currentMedicationNames[index] = updatedName;
+      profile.lastUpdatedAt = DateTime.now();
+      if (!mounted) return;
+      final profiles = Provider.of<ActiveProfileController>(context, listen: false);
+      profiles.notifyProfileChanged();
+      setState(() {});
+    } finally {
+      controller.dispose();
+    }
   }
 
   @override
@@ -209,15 +263,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                                       'غير موجود في المرجع العام؛ يبقى في سجلك كما كتبته.',
                                 ),
                                 trailing: IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  onPressed: () {
-                                    profile.currentMedicationNames.remove(name);
-                                    Provider.of<ActiveProfileController>(
-                                      context,
-                                      listen: false,
-                                    ).notifyProfileChanged();
-                                    setState(() {});
-                                  },
+                                  tooltip: 'تعديل بيانات الدواء',
+                                  icon: const Icon(Icons.edit_outlined),
+                                  onPressed: () => _editMedication(profile, name),
                                 ),
                               ),
                             ),

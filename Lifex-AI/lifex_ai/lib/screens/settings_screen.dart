@@ -14,6 +14,7 @@ import 'package:provider/provider.dart';
 import '../core/admin/admin_manager.dart';
 import '../core/admin/admin_permissions.dart';
 import '../core/app_config.dart';
+import '../core/app_locale_controller.dart';
 import '../core/app_constants.dart';
 import '../core/lasting_search_index.dart';
 import '../core/local_knowledge.dart';
@@ -167,33 +168,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _persist();
             },
           ),
-          Semantics(
-            label: 'اللغة، القيمة الحالية: '
-                '${_selectedLanguage == AppLanguage.arabic ? "العربية" : "الإنجليزية"}',
-            hint: 'اضغط لاختيار لغة مختلفة',
-            child: ListTile(
-              title: const Text('اللغة'),
-              trailing: ExcludeSemantics(
-                child: DropdownButton<AppLanguage>(
-                  value: _selectedLanguage,
-                  items: const [
-                    DropdownMenuItem(
-                      value: AppLanguage.arabic,
-                      child: Text('العربية'),
-                    ),
-                    DropdownMenuItem(
-                      value: AppLanguage.english,
-                      child: Text('English'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _selectedLanguage = value);
-                    _persist();
-                  },
+          ListTile(
+            title: const Text('language'),
+            trailing: const Icon(Icons.arrow_drop_down),
+            onTap: () async {
+              final controller = AppLocaleController.instance;
+              final selection = await showDialog<String>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Text('language'),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        dense: true,
+                        leading: Icon(
+                          controller.selection == 'system'
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                        ),
+                        title: const Text('لغة الهاتف'),
+                        onTap: () => Navigator.of(dialogContext).pop('system'),
+                      ),
+                      ListTile(
+                        dense: true,
+                        leading: Icon(
+                          controller.selection == 'en'
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                        ),
+                        title: const Text('لغة إنكليزية'),
+                        onTap: () => Navigator.of(dialogContext).pop('en'),
+                      ),
+                      ListTile(
+                        dense: true,
+                        leading: Icon(
+                          controller.selection == 'ar'
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                        ),
+                        title: const Text('لغة عربية'),
+                        onTap: () => Navigator.of(dialogContext).pop('ar'),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+              if (selection == null) return;
+              await controller.setLanguage(selection);
+              if (!mounted) return;
+              setState(() {
+                _selectedLanguage = controller.isArabic
+                    ? AppLanguage.arabic
+                    : AppLanguage.english;
+              });
+              _persist();
+            },
           ),
           const Divider(),
           ListTile(

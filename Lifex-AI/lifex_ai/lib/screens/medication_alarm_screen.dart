@@ -16,6 +16,7 @@ import '../features/medications/medication_alarm_ledger.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/record_management_actions.dart';
 import '../widgets/voice_fill_button.dart';
 
 class MedicationAlarmScreen extends StatefulWidget {
@@ -32,6 +33,8 @@ class _MedicationAlarmScreenState extends State<MedicationAlarmScreen> {
   TimeOfDay _clock = const TimeOfDay(hour: 8, minute: 0);
   String? _forProfileId;
   Timer? _tick;
+  String? _editingAlarmId;
+  String? _editingProfileId;
   String? _lastSpokenId;
   DateTime? _lastSpokenAt;
 
@@ -164,17 +167,46 @@ class _MedicationAlarmScreenState extends State<MedicationAlarmScreen> {
                   final id = _forProfileId;
                   final person = id == null ? null : controller.profileById(id);
                   if (person == null || _medicine.text.trim().isEmpty) return;
-                  _ledger.add(
-                    profile: person,
-                    medicine: _medicine.text,
-                    hour: _clock.hour,
-                    minute: _clock.minute,
-                  );
+                  final medicine = _medicine.text.trim();
+                  if (_editingAlarmId != null && _editingProfileId != null) {
+                    final oldProfile = controller.profileById(_editingProfileId!);
+                    if (oldProfile != null && oldProfile.profileId != person.profileId) {
+                      _ledger.remove(oldProfile, _editingAlarmId!);
+                      _ledger.add(
+                        profile: person,
+                        medicine: medicine,
+                        hour: _clock.hour,
+                        minute: _clock.minute,
+                      );
+                    } else {
+                      _ledger.replace(
+                        person,
+                        MedicationAlarm(
+                          id: _editingAlarmId!,
+                          profileId: person.profileId,
+                          personName: person.fullName,
+                          medicine: medicine,
+                          hour: _clock.hour,
+                          minute: _clock.minute,
+                        ),
+                      );
+                    }
+                  } else {
+                    _ledger.add(
+                      profile: person,
+                      medicine: medicine,
+                      hour: _clock.hour,
+                      minute: _clock.minute,
+                    );
+                  }
                   controller.saveActiveProfileChanges();
                   _medicine.clear();
-                  setState(() {});
+                  setState(() {
+                    _editingAlarmId = null;
+                    _editingProfileId = null;
+                  });
                 },
-                child: const Text('حفظ المنبّه لهذا الشخص'),
+                child: Text(_editingAlarmId == null ? 'حفظ المنبّه لهذا الشخص' : 'حفظ تعديل المنبّه'),
               ),
               const SizedBox(height: 16),
               Text('مستحق الآن', style: Theme.of(context).textTheme.titleMedium),
@@ -207,14 +239,34 @@ class _MedicationAlarmScreenState extends State<MedicationAlarmScreen> {
                 ListTile(
                   title: Text('${alarm.personName} — ${alarm.medicine}'),
                   subtitle: Text(alarm.clock),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () {
+                  trailing: RecordManagementActions(
+                    onEdit: () {
+                      final time = alarm.clock.split(':');
+                      setState(() {
+                        _medicine.text = alarm.medicine;
+                        _forProfileId = alarm.profileId;
+                        _editingAlarmId = alarm.id;
+                        _editingProfileId = alarm.profileId;
+                        if (time.length == 2) {
+                          _clock = TimeOfDay(
+                            hour: int.tryParse(time[0]) ?? 8,
+                            minute: int.tryParse(time[1]) ?? 0,
+                          );
+                        }
+                      });
+                    },
+                    onDelete: () async {
                       final person = controller.profileById(alarm.profileId);
                       if (person == null) return;
                       _ledger.remove(person, alarm.id);
                       controller.saveActiveProfileChanges();
-                      setState(() {});
+                      setState(() {
+                        if (_editingAlarmId == alarm.id) {
+                          _editingAlarmId = null;
+                          _editingProfileId = null;
+                          _medicine.clear();
+                        }
+                      });
                     },
                   ),
                 ),

@@ -14,6 +14,7 @@ import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/cv_document_vault.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/record_management_actions.dart';
 import 'layered_lens_studio_screen.dart';
 import 'live_sight_screen.dart';
 import 'medical_reference_screen.dart';
@@ -35,6 +36,49 @@ class _CameraNotesScreenState extends State<CameraNotesScreen> {
   void dispose() {
     _note.dispose();
     super.dispose();
+  }
+
+  Future<void> _editNote(
+    BuildContext context,
+    ActiveProfileController controller,
+    ProfileBoxStore store,
+    Map<String, dynamic> note,
+  ) async {
+    final title = TextEditingController(text: note['title']?.toString() ?? '');
+    final detail = TextEditingController(text: note['detail']?.toString() ?? '');
+    try {
+      final saved = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('تعديل بيانات الملف'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: title, decoration: const InputDecoration(labelText: 'العنوان')),
+                TextField(controller: detail, maxLines: 3, decoration: const InputDecoration(labelText: 'التفاصيل')),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('حفظ')),
+          ],
+        ),
+      );
+      if (saved != true || title.text.trim().isEmpty) return;
+      final id = note['id']?.toString();
+      if (id == null) return;
+      store.updateById(BoxKeys.cameraNotes, id, {
+        'title': title.text.trim(),
+        'detail': detail.text.trim(),
+      });
+      controller.saveActiveProfileChanges();
+      if (mounted) setState(() {});
+    } finally {
+      title.dispose();
+      detail.dispose();
+    }
   }
 
   Future<void> _capture() async {
@@ -88,9 +132,10 @@ class _CameraNotesScreenState extends State<CameraNotesScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<ActiveProfileController>().activeProfile;
-    final notes = profile == null
-        ? const <Map<String, dynamic>>[]
-        : ProfileBoxStore(profile).list(BoxKeys.cameraNotes);
+    final controller = context.watch<ActiveProfileController>();
+    final store = profile == null ? null : ProfileBoxStore(profile);
+    final notes = store?.activeRecords(BoxKeys.cameraNotes) ?? const <Map<String, dynamic>>[];
+    final archivedNotes = store?.archivedRecords(BoxKeys.cameraNotes) ?? const <Map<String, dynamic>>[];
     return Scaffold(
       appBar: AppBar(title: const Text('الكاميرا الذكية')),
       body: ListView(
@@ -173,7 +218,39 @@ class _CameraNotesScreenState extends State<CameraNotesScreen> {
             ListTile(
               title: Text(note['title']?.toString() ?? ''),
               subtitle: Text(note['detail']?.toString() ?? ''),
+              trailing: store == null
+                  ? null
+                  : RecordManagementActions(
+                      onEdit: () => _editNote(context, controller, store, note),
+                      onDelete: () async {
+                        final id = note['id']?.toString();
+                        if (id == null) return;
+                        store.archiveById(BoxKeys.cameraNotes, id);
+                        controller.saveActiveProfileChanges();
+                        if (mounted) setState(() {});
+                      },
+                    ),
             ),
+          if (archivedNotes.isNotEmpty) ...[
+            const Divider(),
+            const Text('الأرشيف — ملفات محفوظة لإعادة الفتح'),
+            for (final note in archivedNotes)
+              ListTile(
+                leading: const Icon(Icons.archive_outlined),
+                title: Text(note['title']?.toString() ?? ''),
+                subtitle: Text(note['detail']?.toString() ?? ''),
+                trailing: TextButton(
+                  onPressed: () {
+                    final id = note['id']?.toString();
+                    if (id == null || store == null) return;
+                    store.restoreArchivedById(BoxKeys.cameraNotes, id);
+                    controller.saveActiveProfileChanges();
+                    setState(() {});
+                  },
+                  child: const Text('إعادة فتح'),
+                ),
+              ),
+          ],
           ListTile(
             title: const Text('مرجع العلامات البصرية'),
             onTap: () => Navigator.push(

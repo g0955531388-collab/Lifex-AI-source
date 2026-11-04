@@ -1,7 +1,7 @@
 /// =============================================================
 /// Lifex-AI — وحدة الصوت
 /// الملف: device_speech_to_text_provider.dart
-/// استماع وتسجيل حقيقي عبر محرّك الجهاز. بلا نتيجة وهمية.
+/// استماع متكرر عبر جلسة تعرّف واحدة مُهيّأة، بلا نتائج وهمية.
 /// =============================================================
 library lifex_ai.features.voice.device_speech_to_text_provider;
 
@@ -25,6 +25,12 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
   final SpeechToText _speech;
   final VoiceLocalePolicy _localePolicy;
 
+  bool _initialized = false;
+  Future<bool>? _initializing;
+  Completer<SpeechRecognitionResult>? _activeSession;
+  String _lastWords = '';
+  double _lastConfidence = 0.0;
+
   @override
   Future<bool> requestMicrophonePermission() async {
     try {
@@ -35,27 +41,61 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
     }
   }
 
+  Future<bool> _ensureInitialized() async {
+    if (_initialized) return true;
+    final pending = _initializing;
+    if (pending != null) return pending;
+
+    final initialization = _speech.initialize(
+      onError: (_) => unawaited(_stopAndFinishActiveSession()),
+      onStatus: (status) {
+        if (status == 'done' || status == 'notListening') {
+          _finishActiveSession();
+        }
+      },
+    );
+    _initializing = initialization;
+    try {
+      final ready = await initialization;
+      _initialized = ready;
+      return ready;
+    } finally {
+      _initializing = null;
+    }
+  }
+
+  Future<void> _stopAndFinishActiveSession() async {
+    try {
+      await _speech.stop();
+    } finally {
+      _finishActiveSession();
+    }
+  }
+
+  void _finishActiveSession() {
+    final session = _activeSession;
+    if (session == null) return;
+    _activeSession = null;
+    if (!session.isCompleted) {
+      session.complete(_fromWords(_lastWords, _lastConfidence));
+    }
+  }
+
   @override
   Future<SpeechRecognitionResult> listenOnce({String localeCode = 'ar'}) async {
+    if (_activeSession != null) {
+      await stop();
+    }
+
     final completer = Completer<SpeechRecognitionResult>();
-    var lastWords = '';
-    var lastConfidence = 0.0;
+    _activeSession = completer;
+    _lastWords = '';
+    _lastConfidence = 0.0;
 
     try {
-      final ready = await _speech.initialize(
-        onError: (_) {
-          if (!completer.isCompleted) {
-            completer.complete(_fromWords(lastWords, lastConfidence));
-          }
-        },
-        onStatus: (status) {
-          if ((status == 'done' || status == 'notListening') &&
-              !completer.isCompleted) {
-            completer.complete(_fromWords(lastWords, lastConfidence));
-          }
-        },
-      );
+      final ready = await _ensureInitialized();
       if (!ready) {
+        if (identical(_activeSession, completer)) _activeSession = null;
         return const SpeechRecognitionResult(
           status: SpeechRecognitionStatus.error,
         );
@@ -71,37 +111,43 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
 
       await _speech.listen(
         localeId: localeId,
-        listenFor: const Duration(seconds: 12),
-        pauseFor: const Duration(seconds: 3),
+        listenFor: const Duration(seconds: 45),
+        pauseFor: const Duration(seconds: 4),
         listenOptions: SpeechListenOptions(
           partialResults: true,
           cancelOnError: true,
         ),
         onResult: (result) {
-          lastWords = result.recognizedWords;
-          lastConfidence = result.confidence;
-          VoiceEngine.instance.reportPartial(lastWords);
-          if (result.finalResult && !completer.isCompleted) {
-            completer.complete(_fromWords(lastWords, lastConfidence));
-          }
+          _lastWords = result.recognizedWords;
+          _lastConfidence = result.confidence;
+          VoiceEngine.instance.reportPartial(_lastWords);
+          // Wait for the recognizer's done/notListening status before allowing
+          // another session, so a late status from this session cannot close
+          // the next one.
         },
       );
 
-      return completer.future.timeout(
-        const Duration(seconds: 14),
-        onTimeout: () {
-          unawaited(_speech.stop());
-          return _fromWords(lastWords, lastConfidence);
+      return await completer.future.timeout(
+        const Duration(seconds: 47),
+        onTimeout: () async {
+          await _speech.stop();
+          final result = _fromWords(_lastWords, _lastConfidence);
+          _finishActiveSession();
+          return result;
         },
       );
     } on MissingPluginException {
+      if (identical(_activeSession, completer)) _activeSession = null;
       return const SpeechRecognitionResult(
         status: SpeechRecognitionStatus.error,
       );
     } catch (_) {
+      if (identical(_activeSession, completer)) _activeSession = null;
       return const SpeechRecognitionResult(
         status: SpeechRecognitionStatus.error,
       );
+    } finally {
+      if (identical(_activeSession, completer)) _activeSession = null;
     }
   }
 
@@ -120,5 +166,8 @@ class DeviceSpeechToTextProvider implements SpeechToTextProvider {
   }
 
   @override
-  Future<void> stop() => _speech.stop();
+  Future<void> stop() async {
+    await _speech.stop();
+    _finishActiveSession();
+  }
 }

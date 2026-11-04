@@ -7,6 +7,8 @@ library lifex_ai.features.voice.voice_locale_policy;
 
 import 'package:flutter/widgets.dart';
 
+import '../../core/app_locale_controller.dart';
+
 class VoiceLocalePolicy {
   const VoiceLocalePolicy();
 
@@ -26,7 +28,12 @@ class VoiceLocalePolicy {
     return locale.languageCode;
   }
 
-  String preferredListenCode() => engineIdFor(deviceLocale());
+  /// Voice recognition follows the app's explicit language choice; that
+  /// choice is initialized from the phone locale on first launch.
+  String preferredListenCode() =>
+      AppLocaleController.instance.languageCode.isNotEmpty
+          ? AppLocaleController.instance.languageCode
+          : engineIdFor(deviceLocale());
 
   /// يختار أقرب لغة متاحة على محرّك الجهاز دون ادّعاء لغة غير مثبتة.
   String matchAvailable({

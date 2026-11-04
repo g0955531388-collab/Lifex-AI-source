@@ -12,7 +12,7 @@ import 'medication_alarm_engine.dart';
 class MedicationAlarmLedger {
   List<MedicationAlarm> forProfile(HealthProfile profile) =>
       ProfileBoxStore(profile)
-          .list(BoxKeys.medicationAlarms)
+          .activeRecords(BoxKeys.medicationAlarms)
           .map(MedicationAlarm.fromJson)
           .where((item) => item.id.isNotEmpty)
           .toList();
@@ -50,11 +50,6 @@ class MedicationAlarmLedger {
   }
 
   void remove(HealthProfile profile, String id) {
-    final store = ProfileBoxStore(profile);
-    final items = store
-        .list(BoxKeys.medicationAlarms)
-        .where((item) => item['id'] != id)
-        .toList();
-    store.setList(BoxKeys.medicationAlarms, items);
+    ProfileBoxStore(profile).archiveById(BoxKeys.medicationAlarms, id);
   }
 }

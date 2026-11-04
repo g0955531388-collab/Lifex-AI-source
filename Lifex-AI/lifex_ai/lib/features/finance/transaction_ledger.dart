@@ -1,30 +1,19 @@
-/// =============================================================
-/// Lifex-AI — المعاملات المالية
-/// الملف: transaction_ledger.dart
-/// المسار: lib/features/finance/transaction_ledger.dart
-/// الوصف: سجل شفاف لكل حركة داخل المحفظة الرقمية — شحن، دفع فاتورة
-/// مستشفى، تبرع، استرجاع. سجل للقراءة فقط بعد التسجيل (Append-only)
-/// حفاظاً على الشفافية المالية الكاملة للمستخدم.
-/// =============================================================
+/// Append-only wallet ledger with optional durable local persistence.
+library lifex_ai.features.finance.transaction_ledger;
+
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum TransactionType {
   topUp,
   hospitalPayment,
   donationPayment,
   refund,
-
-  /// دفعة اشتراك دوري في المنصة (وليس فاتورة خدمة صحية) — تخضع لسياسة
-  /// الإعفاء في billing_exemption_policy.dart قبل الوصول لهذه النقطة
-  /// أصلاً، فأي معاملة من هذا النوع مسجَّلة هنا كانت مستحقة فعلاً.
   subscriptionPayment,
-
-  /// عائدات بيع عبر متاجر التطبيقات — للشفافية إن مرّ التحصيل من المتجر.
   appStoreSale,
-
-  /// رسوم المنصة على تحويل أموال أو خدمة إضافية، لصالح Lifex-AI.
   platformFee,
-
-  /// خدمة غير مشمولة بالاشتراك (دورة، إعلان متفق، خاص) بعد تفاوض.
   extraService,
 }
 
@@ -35,7 +24,7 @@ class WalletTransaction {
   final int amountInSmallestUnit;
   final String currencyCode;
   final String? relatedGatewayTransactionId;
-  final String? relatedEntityId; // مثلاً معرّف فاتورة مستشفى أو تبرع
+  final String? relatedEntityId;
   final DateTime recordedAt;
 
   const WalletTransaction({
@@ -48,15 +37,85 @@ class WalletTransaction {
     this.relatedEntityId,
     required this.recordedAt,
   });
+
+  Map<String, dynamic> toJson() => {
+        'transactionId': transactionId,
+        'profileId': profileId,
+        'type': type.name,
+        'amountInSmallestUnit': amountInSmallestUnit,
+        'currencyCode': currencyCode,
+        'relatedGatewayTransactionId': relatedGatewayTransactionId,
+        'relatedEntityId': relatedEntityId,
+        'recordedAt': recordedAt.toIso8601String(),
+      };
+
+  factory WalletTransaction.fromJson(Map<String, dynamic> json) {
+    final typeName = json['type'] as String?;
+    final type = TransactionType.values.firstWhere(
+      (value) => value.name == typeName,
+      orElse: () => throw const FormatException('Unknown transaction type'),
+    );
+    final amount = json['amountInSmallestUnit'];
+    if (amount is! int || amount <= 0) {
+      throw const FormatException('Invalid transaction amount');
+    }
+    final profileId = json['profileId'] as String?;
+    final currency = json['currencyCode'] as String?;
+    final id = json['transactionId'] as String?;
+    if (profileId == null || profileId.isEmpty ||
+        currency == null || currency.isEmpty || id == null || id.isEmpty) {
+      throw const FormatException('Invalid transaction identity');
+    }
+    return WalletTransaction(
+      transactionId: id,
+      profileId: profileId,
+      type: type,
+      amountInSmallestUnit: amount,
+      currencyCode: currency.toUpperCase(),
+      relatedGatewayTransactionId:
+          json['relatedGatewayTransactionId'] as String?,
+      relatedEntityId: json['relatedEntityId'] as String?,
+      recordedAt: DateTime.parse(json['recordedAt'] as String),
+    );
+  }
 }
 
-/// سجل المعاملات — لا يُعدَّل أو يُحذَف منه أي سجل بعد إضافته، فقط
-/// يُضاف له (Append-only Ledger).
+/// Append-only ledger. Persistence is local durability only; it is not a
+/// payment processor, bank balance, or server-authoritative account ledger.
 class TransactionLedger {
-  TransactionLedger();
+  TransactionLedger({SharedPreferences? preferences})
+      : _preferences = preferences;
 
+  static const String storageKey = 'lifex_wallet_ledger_v1';
+  final SharedPreferences? _preferences;
   final List<WalletTransaction> _transactions = [];
   int _counter = 0;
+  Future<void> _writeQueue = Future<void>.value();
+
+  Future<void> load() async {
+    final prefs = _preferences;
+    if (prefs == null) return;
+    final raw = prefs.getString(storageKey);
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) throw const FormatException('Ledger is not a list');
+      final restored = decoded
+          .whereType<Map<String, dynamic>>()
+          .map(WalletTransaction.fromJson)
+          .toList(growable: false);
+      _transactions
+        ..clear()
+        ..addAll(restored);
+      _counter = restored.length;
+    } catch (_) {
+      // Never silently overwrite an unreadable ledger. Keep the app usable,
+      // but surface a clear warning and leave the stored value untouched.
+      rethrow;
+    }
+  }
+
+  Future<void> flush() => _writeQueue;
 
   WalletTransaction record({
     required String profileId,
@@ -66,41 +125,54 @@ class TransactionLedger {
     String? relatedGatewayTransactionId,
     String? relatedEntityId,
   }) {
+    if (profileId.trim().isEmpty || amountInSmallestUnit <= 0 ||
+        currencyCode.trim().isEmpty) {
+      throw ArgumentError('Invalid wallet transaction');
+    }
     _counter++;
     final transaction = WalletTransaction(
-      transactionId: 'TXN-$_counter',
+      transactionId: 'TXN-${DateTime.now().microsecondsSinceEpoch}-$_counter',
       profileId: profileId,
       type: type,
       amountInSmallestUnit: amountInSmallestUnit,
-      currencyCode: currencyCode,
+      currencyCode: currencyCode.trim().toUpperCase(),
       relatedGatewayTransactionId: relatedGatewayTransactionId,
       relatedEntityId: relatedEntityId,
       recordedAt: DateTime.now(),
     );
     _transactions.add(transaction);
+    _queuePersist();
     return transaction;
   }
 
-  List<WalletTransaction> historyFor(String profileId) {
-    return _transactions.where((t) => t.profileId == profileId).toList();
+  void _queuePersist() {
+    final prefs = _preferences;
+    if (prefs == null) return;
+    final snapshot = jsonEncode(
+      _transactions.map((transaction) => transaction.toJson()).toList(),
+    );
+    _writeQueue = _writeQueue.then((_) async {
+      final saved = await prefs.setString(storageKey, snapshot);
+      if (!saved) throw StateError('Wallet ledger could not be persisted');
+    });
   }
 
-  /// كل المعاملات المسجَّلة عبر كل المستخدمين (للقراءة فقط) — تُستخدم
-  /// من خدمات التقارير التي تحتاج البحث بمعرّف كيان مرتبط بدلاً من
-  /// معرّف مستخدم معيّن.
+  List<WalletTransaction> historyFor(String profileId) =>
+      List.unmodifiable(_transactions.where((t) => t.profileId == profileId));
+
   List<WalletTransaction> get allTransactions =>
       List.unmodifiable(_transactions);
 
-  /// الرصيد الحالي المحسوب من السجل الكامل — لا يُخزَّن كرقم منفصل قابل
-  /// للتلاعب، بل يُشتق دائماً من مجموع الحركات (شحن/استرجاع موجب،
-  /// دفع سالب).
-  int currentBalanceFor(String profileId) {
-    int balance = 0;
-    for (final t in historyFor(profileId)) {
-      switch (t.type) {
+  int currentBalanceFor(String profileId, {String? currencyCode}) {
+    var balance = 0;
+    for (final transaction in _transactions.where((t) =>
+        t.profileId == profileId &&
+        (currencyCode == null ||
+            t.currencyCode == currencyCode.toUpperCase()))) {
+      switch (transaction.type) {
         case TransactionType.topUp:
         case TransactionType.refund:
-          balance += t.amountInSmallestUnit;
+          balance += transaction.amountInSmallestUnit;
           break;
         case TransactionType.hospitalPayment:
         case TransactionType.donationPayment:
@@ -108,7 +180,7 @@ class TransactionLedger {
         case TransactionType.appStoreSale:
         case TransactionType.platformFee:
         case TransactionType.extraService:
-          balance -= t.amountInSmallestUnit;
+          balance -= transaction.amountInSmallestUnit;
           break;
       }
     }

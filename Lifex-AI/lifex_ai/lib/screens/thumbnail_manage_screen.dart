@@ -18,6 +18,7 @@ import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../widgets/honesty_banner.dart';
 import '../widgets/lifex_thumbnail.dart';
+import '../widgets/record_management_actions.dart';
 
 class ThumbnailManageScreen extends StatefulWidget {
   const ThumbnailManageScreen({super.key});
@@ -94,7 +95,7 @@ class _ThumbnailManageScreenState extends State<ThumbnailManageScreen> {
         }
         final store = ProfileBoxStore(profile);
         final ledger = ThumbnailLedger(store);
-        final notes = store.list(BoxKeys.cameraNotes);
+        final notes = store.activeRecords(BoxKeys.cameraNotes);
         return Scaffold(
           appBar: AppBar(
             title: const Text('Manage the thumbnail'),
@@ -156,10 +157,17 @@ class _ThumbnailManageScreenState extends State<ThumbnailManageScreen> {
                       leading: _noteThumb(notes[i]['path']?.toString()),
                       title: Text(notes[i]['title']?.toString() ?? 'ورقة'),
                       subtitle: Text(notes[i]['detail']?.toString() ?? ''),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () {
-                          store.removeAt(BoxKeys.cameraNotes, i);
+                      trailing: RecordManagementActions(
+                        onEdit: () => _editNote(
+                          context,
+                          controller,
+                          store,
+                          notes[i],
+                        ),
+                        onDelete: () async {
+                          final id = notes[i]['id']?.toString();
+                          if (id == null) return;
+                          store.archiveById(BoxKeys.cameraNotes, id);
                           controller.saveActiveProfileChanges();
                         },
                       ),
@@ -170,6 +178,59 @@ class _ThumbnailManageScreenState extends State<ThumbnailManageScreen> {
         );
       },
     );
+  }
+
+  Future<void> _editNote(
+    BuildContext context,
+    ActiveProfileController controller,
+    ProfileBoxStore store,
+    Map<String, dynamic> note,
+  ) async {
+    final title = TextEditingController(text: note['title']?.toString() ?? '');
+    final detail = TextEditingController(text: note['detail']?.toString() ?? '');
+    try {
+      final saved = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('تعديل بيانات الورقة'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: title,
+                decoration: const InputDecoration(labelText: 'العنوان'),
+              ),
+              TextField(
+                controller: detail,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'التفاصيل'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('حفظ'),
+            ),
+          ],
+        ),
+      );
+      if (saved != true || title.text.trim().isEmpty) return;
+      final id = note['id']?.toString();
+      if (id == null) return;
+      store.updateById(BoxKeys.cameraNotes, id, {
+        'title': title.text.trim(),
+        'detail': detail.text.trim(),
+      });
+      controller.saveActiveProfileChanges();
+    } finally {
+      title.dispose();
+      detail.dispose();
+    }
   }
 
   Widget _noteThumb(String? path) {

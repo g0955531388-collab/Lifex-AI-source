@@ -14,6 +14,7 @@ import '../features/network_box/unified_booking_service.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../services/cloud/cloud_sync_manager.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/record_management_actions.dart';
 
 class BookingWorkspaceScreen extends StatelessWidget {
   const BookingWorkspaceScreen({super.key});
@@ -60,11 +61,15 @@ class BookingWorkspaceScreen extends StatelessWidget {
                         'رمز: ${items[i].accessCode} — ${items[i].status}',
                       ),
                       isThreeLine: true,
-                      trailing: IconButton(
-                        tooltip: 'حذف الحجز',
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () {
-                          bookings.removeAt(i);
+                      trailing: RecordManagementActions(
+                        onEdit: () => _add(
+                          context,
+                          controller,
+                          bookings,
+                          existing: items[i],
+                        ),
+                        onDelete: () async {
+                          bookings.archiveById(items[i].id);
                           controller.saveActiveProfileChanges();
                         },
                       ),
@@ -80,17 +85,18 @@ class BookingWorkspaceScreen extends StatelessWidget {
   Future<void> _add(
     BuildContext context,
     ActiveProfileController controller,
-    UnifiedBookingService bookings,
-  ) async {
-    final title = TextEditingController();
-    final place = TextEditingController();
-    var unitId = BoxUnitCatalog.hospital.id;
-    var date = DateTime.now().add(const Duration(days: 1));
+    UnifiedBookingService bookings, {
+    UnifiedBooking? existing,
+  }) async {
+    final title = TextEditingController(text: existing?.title ?? '');
+    final place = TextEditingController(text: existing?.place ?? '');
+    var unitId = existing?.unitId ?? BoxUnitCatalog.hospital.id;
+    var date = existing?.scheduledAt ?? DateTime.now().add(const Duration(days: 1));
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('حجز موحّد'),
+          title: Text(existing == null ? 'حجز موحّد' : 'تعديل الحجز'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -152,12 +158,25 @@ class BookingWorkspaceScreen extends StatelessWidget {
     title.dispose();
     place.dispose();
     if (saved != true || heading.isEmpty) return;
-    final booking = bookings.add(
-      unitId: unitId,
-      title: heading,
-      place: location.isEmpty ? 'غير محدد' : location,
-      scheduledAt: date,
-    );
+    late UnifiedBooking booking;
+    if (existing == null) {
+      booking = bookings.add(
+        unitId: unitId,
+        title: heading,
+        place: location.isEmpty ? 'غير محدد' : location,
+        scheduledAt: date,
+      );
+    } else {
+      final updated = bookings.updateById(
+        existing.id,
+        unitId: unitId,
+        title: heading,
+        place: location.isEmpty ? 'غير محدد' : location,
+        scheduledAt: date,
+      );
+      if (!updated) return;
+      booking = bookings.all().firstWhere((item) => item.id == existing.id);
+    }
     controller.saveActiveProfileChanges();
     if (!context.mounted) return;
     context.read<CloudSyncManager>().enqueue(

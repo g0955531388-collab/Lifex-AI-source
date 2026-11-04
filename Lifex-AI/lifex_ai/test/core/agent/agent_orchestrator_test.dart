@@ -17,11 +17,9 @@ import 'package:lifex_ai/core/agent/agent_permissions.dart';
 import 'package:lifex_ai/core/agent/agent_planner.dart';
 import 'package:lifex_ai/core/agent/agent_state.dart';
 import 'package:lifex_ai/core/agent/agent_validator.dart';
-import 'package:lifex_ai/core/agent/knowledge/knowledge_context.dart';
-import 'package:lifex_ai/core/agent/knowledge/knowledge_document.dart';
-import 'package:lifex_ai/core/agent/knowledge/knowledge_retriever.dart';
 import 'package:lifex_ai/core/agent/tools/agent_tool.dart';
 import 'package:lifex_ai/core/agent/tools/agent_tool_registry.dart';
+import '../../support/knowledge_retriever_test_doubles.dart';
 
 /// أداة بحث معرفة وهمية — تُرجع دائماً نتيجة نجاح بسيطة كافية لبناء
 /// تقرير، دون الاعتماد على قاعدة بيانات JSON فعلية.
@@ -60,20 +58,6 @@ class _FakeKnowledgeSearchTool implements AgentTool {
   }
 }
 
-/// KnowledgeRetriever وهمي — يتجاوز أي قراءة JSON فعلية بالكامل، حتى لا
-/// يعتمد اختبار الوحدة هذا على ملفات الأصول (assets) أو IO فعلي.
-class _StubKnowledgeRetriever implements KnowledgeRetriever {
-  const _StubKnowledgeRetriever();
-
-  @override
-  Future<KnowledgeContext> retrieve(String query, {int maxResults = 8}) async {
-    return const KnowledgeContext(query: '', matches: <KnowledgeDocument>[]);
-  }
-
-  @override
-  void invalidateCache() {}
-}
-
 void main() {
   late AgentOrchestrator orchestrator;
 
@@ -93,7 +77,7 @@ void main() {
       planner: const AgentPlanner(),
       executor: executor,
       memory: memory,
-      knowledgeRetriever: const _StubKnowledgeRetriever(),
+      knowledgeRetriever: const StubKnowledgeRetriever(),
     );
   });
 
