@@ -50,16 +50,18 @@ class LastingSearchIndex {
     }
   }
 
-  List<KnowledgeHit> search(String query) {
+  List<KnowledgeHit> search(String query, {bool near = false}) {
     final q = MedicalRecordCanon.normalize(query);
     if (q.isEmpty) return const [];
+    final matches =
+        near ? MedicalRecordCanon.queryMatchesNear : MedicalRecordCanon.queryMatches;
     final hits = <KnowledgeHit>[];
     for (final row in _rows) {
       final blob = MedicalRecordCanon.normalize(
         '${row['nameAr'] ?? ''} ${row['name'] ?? ''} ${row['sign'] ?? ''} '
         '${row['description'] ?? ''} ${row['meaning'] ?? ''} ${row['nameEn'] ?? ''}',
       );
-      if (!MedicalRecordCanon.queryMatches(blob, q)) continue;
+      if (!matches(blob, q)) continue;
       hits.add(
         KnowledgeHit(
           kindAr: 'قاعدة داخلية دائمة',
@@ -87,6 +89,19 @@ class InternalSearchEngine {
 
   List<KnowledgeHit> search(String query) {
     final merged = [...knowledge.search(query), ...lasting.search(query)];
+    final seen = <String>{};
+    return [
+      for (final hit in merged)
+        if (seen.add('${hit.kindAr}:${hit.titleAr}')) hit,
+    ];
+  }
+
+  /// تُستدعى فقط حين لا تجد [search] شيئاً، ونتيجتها تُعرض تقريبية.
+  List<KnowledgeHit> searchNear(String query) {
+    final merged = [
+      ...knowledge.search(query, near: true),
+      ...lasting.search(query, near: true),
+    ];
     final seen = <String>{};
     return [
       for (final hit in merged)

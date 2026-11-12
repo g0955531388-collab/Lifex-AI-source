@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/app_config.dart';
 import '../core/lasting_search_index.dart';
 import '../core/local_knowledge.dart';
 import '../core/medical_record_canon.dart';
@@ -21,6 +22,7 @@ import '../widgets/accessible_widgets.dart';
 import '../features/ai/public_search_desk.dart';
 import '../features/search/external_link_desk.dart';
 import '../features/search/external_search_catalog.dart';
+import '../features/search/search_readout.dart';
 import 'blood_request_screen.dart';
 import 'book_library_screen.dart';
 import 'box_unit_screen.dart';
@@ -54,6 +56,7 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
   String? _linkNote;
   String? _engineFormNote;
   String? _outsideAr;
+  String _outsideSummary = '';
   bool _outsideBusy = false;
   String? _offerSpokenFor;
 
@@ -196,10 +199,27 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
     if (!mounted) return;
     setState(() {
       _outsideBusy = false;
+      _outsideSummary = answer.textAr.trim();
       _outsideAr = answer.textAr.trim().isEmpty
           ? 'المحرك العام بلا مفتاح لم يعد خلاصة. لم يُخترع نص.'
           : answer.textAr;
     });
+  }
+
+  Future<void> _readResults(
+    String query,
+    List<KnowledgeHit> hits, {
+    required bool approximate,
+  }) async {
+    await VoiceEngine.instance.speak(
+      SearchReadout.compose(
+        query: query,
+        hits: hits,
+        approximate: approximate,
+        english: AppConfig.instance.defaultLanguage == AppLanguage.english,
+        publicSummary: _outsideSummary,
+      ),
+    );
   }
 
   Future<void> _openWeb() async {
@@ -225,10 +245,15 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
       lasting = LastingSearchIndex();
     }
     List<KnowledgeHit> hits = const [];
+    List<KnowledgeHit> nearHits = const [];
     var lookupFailed = false;
     try {
-      hits = InternalSearchEngine(knowledge: knowledge, lasting: lasting)
-          .search(query);
+      final internal =
+          InternalSearchEngine(knowledge: knowledge, lasting: lasting);
+      hits = internal.search(query);
+      if (hits.isEmpty && query.isNotEmpty && knowledge.sourcesReady) {
+        nearHits = internal.searchNear(query);
+      }
     } catch (_) {
       lookupFailed = true;
     }
@@ -321,6 +346,34 @@ class _SystemSearchScreenState extends State<SystemSearchScreen> {
                 subtitle: LifexText('المصدر: ${hit.kindAr}\n${hit.detailAr}'),
                 isThreeLine: true,
               ),
+          ],
+          if (nearHits.isNotEmpty) ...[
+            LifexText(
+              lifexUi(
+                'أقرب نتائج لعبارتك — تطابق تقريبي، تحقّق من الاسم قبل الاعتماد عليه.',
+                'Closest results — approximate match. Check the name before relying on it.',
+              ),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            LifexText(knowledge.disclaimerAr),
+            for (final hit in nearHits)
+              ListTile(
+                leading: const Icon(Icons.manage_search),
+                title: LifexText(hit.titleAr),
+                subtitle: LifexText('المصدر: ${hit.kindAr}\n${hit.detailAr}'),
+                isThreeLine: true,
+              ),
+          ],
+          if (query.isNotEmpty && !lookupFailed && !unloaded) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => unawaited(
+                _readResults(query, hits.isNotEmpty ? hits : nearHits,
+                    approximate: hits.isEmpty && nearHits.isNotEmpty),
+              ),
+              icon: const Icon(Icons.record_voice_over_outlined),
+              label: LifexText(lifexUi('اقرأ النتائج', 'Read the results')),
+            ),
           ],
           for (final unit in units)
             ListTile(

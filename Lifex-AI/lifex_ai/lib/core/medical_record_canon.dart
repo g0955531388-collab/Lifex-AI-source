@@ -87,6 +87,52 @@ class MedicalRecordCanon {
     return tokens.every(hay.contains);
   }
 
+  /// مطابقة تقريبية للبحث فقط: حرف خاطئ في الكلمة القصيرة وحرفان في الطويلة.
+  /// لا تُستخدم لربط السجلات أو كشف التعارض، ونتيجتها تُعرض على أنها تقريبية.
+  static bool queryMatchesNear(String blob, String query) {
+    final hayTokens = {
+      for (final token in searchFold(blob).split(' '))
+        if (token.length >= 3) _withoutArticle(token),
+    };
+    final tokens = [
+      for (final token in searchFold(query).split(' '))
+        if (token.length >= 3) _withoutArticle(token),
+    ];
+    if (tokens.isEmpty || hayTokens.isEmpty) return false;
+    return tokens.every((token) {
+      final allowed = token.length >= 7 ? 2 : (token.length >= 4 ? 1 : 0);
+      return hayTokens.any(
+        (candidate) => _withinEdits(token, candidate, allowed),
+      );
+    });
+  }
+
+  static String _withoutArticle(String token) =>
+      token.length > 4 && token.startsWith('ال') ? token.substring(2) : token;
+
+  static bool _withinEdits(String a, String b, int max) {
+    if (a == b) return true;
+    if (max == 0 || (a.length - b.length).abs() > max) return false;
+    var previous = List<int>.generate(b.length + 1, (i) => i);
+    for (var i = 1; i <= a.length; i++) {
+      final current = List<int>.filled(b.length + 1, 0);
+      current[0] = i;
+      var rowBest = current[0];
+      for (var j = 1; j <= b.length; j++) {
+        final cost = a.codeUnitAt(i - 1) == b.codeUnitAt(j - 1) ? 0 : 1;
+        current[j] = [
+          previous[j] + 1,
+          current[j - 1] + 1,
+          previous[j - 1] + cost,
+        ].reduce((x, y) => x < y ? x : y);
+        if (current[j] < rowBest) rowBest = current[j];
+      }
+      if (rowBest > max) return false;
+      previous = current;
+    }
+    return previous[b.length] <= max;
+  }
+
   static String foldKey({
     required String nameEn,
     required String nameAr,

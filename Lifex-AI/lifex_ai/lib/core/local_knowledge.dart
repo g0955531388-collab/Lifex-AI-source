@@ -127,9 +127,12 @@ class LocalKnowledge {
     );
   }
 
-  List<KnowledgeHit> search(String query) {
+  /// [near] للمطابقة التقريبية حين لا تجد المطابقة الحرفية شيئاً؛ لا تشمل تعارض المراجع.
+  List<KnowledgeHit> search(String query, {bool near = false}) {
     final q = MedicalRecordCanon.normalize(query);
     if (q.isEmpty) return const [];
+    final matches =
+        near ? MedicalRecordCanon.queryMatchesNear : MedicalRecordCanon.queryMatches;
     final hits = <KnowledgeHit>[];
     void scan(
       List<Map<String, dynamic>> rows,
@@ -142,7 +145,7 @@ class LocalKnowledge {
         final blob = MedicalRecordCanon.normalize(
           keys.map((k) => '${row[k] ?? ''}').join(' '),
         );
-        if (!MedicalRecordCanon.queryMatches(blob, q)) continue;
+        if (!matches(blob, q)) continue;
         hits.add(
           KnowledgeHit(
             kindAr: kind,
@@ -180,7 +183,7 @@ class LocalKnowledge {
       'معيار نمو',
       ['age_group', 'name'],
     );
-    hits.addAll(_referenceHits(q));
+    if (!near) hits.addAll(_referenceHits(q));
     final seen = <String>{};
     return [
       for (final hit in hits)
