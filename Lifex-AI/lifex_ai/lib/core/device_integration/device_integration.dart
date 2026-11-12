@@ -16,6 +16,7 @@ import '../device_drivers/universal_driver.dart';
 export '../connectivity/bridge/bridge_tcp_transport.dart';
 export '../connectivity/connectivity_manager.dart';
 export '../connectivity/lan/lan_transport.dart';
+export '../connectivity/mqtt/mqtt_transport.dart';
 export '../connectivity/transport.dart';
 export '../connectivity/transport_streams.dart';
 export '../device_drivers/local_screen_sync_driver.dart';
