@@ -7,6 +7,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/app_constants.dart';
 import 'package:lifex_ai/core/local_knowledge.dart';
+import 'package:lifex_ai/core/security/memory_secure_secret_store.dart';
 import 'package:lifex_ai/core/trial_manager.dart';
 import 'package:lifex_ai/features/doctors/pharmacy_locator.dart';
 import 'package:lifex_ai/features/profile/health_profile.dart';
@@ -23,7 +24,7 @@ void main() {
     test('يحفظ ويستعيد الملف النشط والاستبيان', () async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
-      final vault = ProfileVault(prefs);
+      final vault = ProfileVault(prefs, secrets: MemorySecureSecretStore());
       final engine = MultiProfileEngine(maxProfiles: 4);
       final profile = HealthProfile(
         profileId: 'p-persist',
