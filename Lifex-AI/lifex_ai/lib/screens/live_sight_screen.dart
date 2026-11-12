@@ -42,6 +42,7 @@ import '../features/accessibility/local_object_detector.dart';
 import '../features/accessibility/vision_provider_state.dart';
 import '../features/accessibility/blind_box_speech.dart';
 import '../features/accessibility/scan_mode.dart';
+import '../features/accessibility/spatial_cue.dart';
 import '../features/accessibility/visual_assist_floor.dart';
 import '../features/accessibility/vision_engine_app.dart';
 import '../features/spot/spot_speech.dart';
@@ -175,6 +176,7 @@ class _LiveSightScreenState extends State<LiveSightScreen>
   String _sceneLine = '';
   String _heardHazardKey = '';
   bool _scanMode = true;
+  bool _spatialCue = true;
   List<String> _scanSpoken = const [];
   String _spoken =
       'هذه عدسة على الشاشة فقط. ليست تجسساً في الخلفية وليست تشخيصاً.';
@@ -201,6 +203,9 @@ class _LiveSightScreenState extends State<LiveSightScreen>
     LiveSightScreen._openSessions++;
     _useUserLanguage();
     unawaited(_loadCloudConsent());
+    unawaited(SpatialCueSettings.load().then((enabled) {
+      if (mounted) setState(() => _spatialCue = enabled);
+    }));
     AssistantSession.instance.bindSight(
       repeat: _repeatLast,
       pause: _pauseNarration,
@@ -281,6 +286,7 @@ class _LiveSightScreenState extends State<LiveSightScreen>
     unawaited(_reader.close());
     unawaited(_detector.close());
     unawaited(_geminiLive.close());
+    unawaited(SpatialCuePlayer.instance.stop());
     unawaited(VoiceEngine.instance.interruptIfSpeaking());
     final ear = VoiceEngine.instance.state;
     if (ear == VoiceEngineState.listening ||
@@ -831,6 +837,7 @@ class _LiveSightScreenState extends State<LiveSightScreen>
         ? 'الرموز: ${codes.join('، ')}.'
         : 'Codes: ${codes.join(', ')}.';
     var sceneSpeech = codes.isEmpty ? spoken : '$spoken\n$codeLine';
+    var cueObjects = _includeScene ? _lastObjects : const <DetectedObject>[];
     if (_scanMode && _includeScene) {
       final delta = scanSpeechDelta(previous: _scanSpoken, next: _lastLabels);
       _scanSpoken = List<String>.of(_lastLabels);
@@ -840,6 +847,7 @@ class _LiveSightScreenState extends State<LiveSightScreen>
           for (final object in _lastObjects)
             if (delta.contains(BlindBoxSpeech.keyOf(object))) object,
         ];
+        cueObjects = fresh;
         sceneSpeech = fresh.isNotEmpty
             ? BlindBoxSpeech.line(fresh, _nameLanguage)
             : BlindWalkSpeech.line(
@@ -893,6 +901,13 @@ class _LiveSightScreenState extends State<LiveSightScreen>
     setState(() => _spoken = voicedText);
     debugPrint('BlindCamera ${_trace.reachedSpeech(sequence, DateTime.now())}');
     if (!mounted || _closed || sequence != _generation) return;
+    final cuePlace = spatialCuePlace(cueObjects);
+    final quiet = !SpeechDesk.instance.queue.isSpeaking &&
+        VoiceEngine.instance.state != VoiceEngineState.speaking;
+    if (_spatialCue && cuePlace != null && quiet) {
+      await SpatialCuePlayer.instance.play(cuePlace);
+      if (!mounted || _closed || sequence != _generation) return;
+    }
     VoiceEngine.instance.nameSpeakLocale = _nameLanguage;
     final bool accepted;
     try {
@@ -1843,6 +1858,17 @@ class _LiveSightScreenState extends State<LiveSightScreen>
                   }
                 }),
                 child: LifexText(context.nav(_scanMode ? 'nav.scanOn' : 'nav.scanOff')),
+              ),
+              OutlinedButton(
+                onPressed: () {
+                  final next = !_spatialCue;
+                  setState(() => _spatialCue = next);
+                  unawaited(SpatialCueSettings.save(next));
+                  if (!next) unawaited(SpatialCuePlayer.instance.stop());
+                },
+                child: LifexText(_spatialCue
+                    ? lifexUi('صوت الاتجاه يعمل', 'Direction sound is on')
+                    : lifexUi('صوت الاتجاه متوقف', 'Direction sound is off')),
               ),
               OutlinedButton(
                 onPressed: () => setState(() {
