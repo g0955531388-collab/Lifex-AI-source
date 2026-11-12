@@ -16,10 +16,14 @@ class DeviceRouter {
   DeviceRouter({
     required this.transport,
     required this.permissions,
+    this.transportFor,
   });
 
   final DeviceTransport transport;
   final PermissionManager permissions;
+
+  /// اختيار النقل لكل جهاز؛ بدونه يبقى النقل الافتراضي كما كان.
+  final DeviceTransport Function(ConnectionDevice device)? transportFor;
   final _sessions = <String, ConnectionDevice>{};
 
   void register(ConnectionDevice device) {
@@ -38,7 +42,7 @@ class DeviceRouter {
         !permissions.allows(device, requiredCapability)) {
       return const RouteResult(ok: false, reason: 'permission_denied');
     }
-    final sent = await transport.send(
+    final sent = await (transportFor?.call(device) ?? transport).send(
       device,
       packet.toJson().toString().codeUnits,
     );

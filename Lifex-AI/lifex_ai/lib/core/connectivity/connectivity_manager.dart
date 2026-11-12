@@ -22,13 +22,16 @@ class ConnectivityManager {
     PermissionManager? permissions,
     ConnectionSecurity? security,
     DeviceTransport? virtualTransport,
+    Map<ConnectionType, DeviceTransport> transports = const {},
   })  : discovery = discovery ?? DeviceDiscovery(),
         permissions = permissions ?? PermissionManager(),
         security = security ?? const ConnectionSecurity(),
-        virtualTransport = virtualTransport ?? VirtualLoopbackTransport() {
+        virtualTransport = virtualTransport ?? VirtualLoopbackTransport(),
+        transports = Map.unmodifiable(transports) {
     router = DeviceRouter(
       transport: this.virtualTransport,
       permissions: this.permissions,
+      transportFor: transportFor,
     );
   }
 
@@ -36,16 +39,23 @@ class ConnectivityManager {
   final PermissionManager permissions;
   final ConnectionSecurity security;
   final DeviceTransport virtualTransport;
+
+  /// النقل الحقيقي المربوط لكل نوع. ما لم يُربط يبقى UnboundTransport.
+  final Map<ConnectionType, DeviceTransport> transports;
   late final DeviceRouter router;
   final sessions = <String, ConnectionSession>{};
 
+  DeviceTransport transportFor(ConnectionDevice device) {
+    if (device.virtual) return virtualTransport;
+    return transports[device.connectionType] ??
+        UnboundTransport(device.connectionType);
+  }
+
   Future<ConnectionState> connect(ConnectionDevice device) async {
-    final transport = device.virtual
-        ? virtualTransport
-        : UnboundTransport(device.connectionType);
+    final transport = transportFor(device);
     final state = await transport.connect(device);
     if (state != ConnectionState.connected) return state;
-    final auth = await security.authenticate(device);
+    final auth = await security.authenticate(device, via: transport);
     if (!auth.ok) {
       await transport.disconnect(device);
       device.state = ConnectionState.error;
@@ -60,10 +70,7 @@ class ConnectivityManager {
   Future<void> disconnect(ConnectionDevice device) async {
     await sessions[device.id]?.close();
     sessions.remove(device.id);
-    final transport = device.virtual
-        ? virtualTransport
-        : UnboundTransport(device.connectionType);
-    await transport.disconnect(device);
+    await transportFor(device).disconnect(device);
   }
 
   Future<RouteResult> send(ConnectionDevice device, MessagePacket packet) {
@@ -72,6 +79,6 @@ class ConnectivityManager {
 
   bool transportBound(ConnectionType type) {
     if (type == ConnectionType.virtual) return true;
-    return false;
+    return transports[type]?.hardwareBound ?? false;
   }
 }
