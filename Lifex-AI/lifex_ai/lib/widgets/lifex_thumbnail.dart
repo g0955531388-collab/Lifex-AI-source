@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/app_constants.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class LifexThumbnail extends StatelessWidget {
   const LifexThumbnail({
@@ -26,7 +27,7 @@ class LifexThumbnail extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       image: true,
-      label: 'الصورة المصغّرة للملف أو ختم Lifex-AI الرسمي',
+      label: tr('الصورة المصغّرة للملف أو ختم Lifex-AI الرسمي'),
       child: ClipOval(
         child: SizedBox(
           width: size,

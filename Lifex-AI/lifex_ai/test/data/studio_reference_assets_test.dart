@@ -26,6 +26,12 @@ void main() {
     expect((drugs as List).first['name'], isNotNull);
     expect((skin as List).length, greaterThan(200));
     expect((face as List).length, greaterThan(10));
+    final incoming = jsonDecode(
+      await rootBundle.loadString('lib/data/reference/incoming_reference.json'),
+    );
+    expect(incoming, isA<List>());
+    expect((incoming as List).length, greaterThan(100));
+    expect(incoming.first['source'], isNotNull);
   });
 
   test('تطابق الأعراض مرجع توعية وليس تشخيصاً', () {

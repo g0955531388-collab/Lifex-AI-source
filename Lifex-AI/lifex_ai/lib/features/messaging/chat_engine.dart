@@ -6,6 +6,7 @@
 /// منطق الصلاحيات (messaging_permissions_manager.dart) ونوع المحادثة
 /// (conversation_type_router.dart).
 /// =============================================================
+library;
 
 enum MessageContentType { text, medicalAttachment, systemNotice }
 

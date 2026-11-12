@@ -6,6 +6,7 @@
 /// health_profile.dart أن هذا يتعامل مع معرّفات الهوية (Lifex-ID)،
 /// التحقق من الهوية الحقيقية، وربطها بالحساب، وليس البيانات الطبية نفسها.
 /// =============================================================
+library;
 
 import 'dart:math';
 
@@ -30,9 +31,7 @@ class HealthIdentity {
   final String linkedProfileId;
   String? phoneNumber;
 
-  /// البريد الإلكتروني المرتبط بالهوية، إن وُجد. اختياري تماماً مثل رقم
-  /// الهاتف — يُستخدم حالياً في مطابقة حساب المالك التلقائي
-  /// (GlobalAdminManager) إضافة إلى أي استخدام مستقبلي لتسجيل الدخول.
+  /// بريد اختياري على الجهاز. وجوده لا يمنح دور المالك.
   String? email;
   IdentityVerificationLevel verificationLevel;
   DateTime createdAt;
@@ -101,11 +100,7 @@ class HealthIdentityManager {
       final existing = _identitiesByLifexId[existingId]!;
       if (email != null) existing.email = email;
       if (phoneNumber != null) existing.phoneNumber = phoneNumber;
-      GlobalAdminManager.instance.autoActivateOwnerIfMatches(
-        lifexId: existingId,
-        email: email ?? existing.email,
-        phoneNumber: phoneNumber ?? existing.phoneNumber,
-      );
+      _considerOwner(existing);
       return existing;
     }
 
@@ -120,23 +115,22 @@ class HealthIdentityManager {
       linkedProfileId: profileId,
       phoneNumber: phoneNumber,
       email: email,
-      verificationLevel: phoneNumber != null
-          ? IdentityVerificationLevel.phoneVerified
-          : IdentityVerificationLevel.unverified,
+      verificationLevel: IdentityVerificationLevel.unverified,
     );
 
     _identitiesByLifexId[lifexId] = identity;
     _lifexIdByProfileId[profileId] = lifexId;
-
-    // فحص تلقائي لمرة واحدة: هل البريد/الهاتف يطابق حساب المالك الثابت؟
-    // انظر GlobalAdminManager.autoActivateOwnerIfMatches للتفاصيل الكاملة.
-    GlobalAdminManager.instance.autoActivateOwnerIfMatches(
-      lifexId: lifexId,
-      email: email,
-      phoneNumber: phoneNumber,
-    );
-
+    _considerOwner(identity);
     return identity;
+  }
+
+  void _considerOwner(HealthIdentity identity) {
+    GlobalAdminManager.instance.activateOwnerForBoundIdentity(
+      lifexId: identity.lifexId,
+      linkedProfileId: identity.linkedProfileId,
+      email: identity.email,
+      phoneNumber: identity.phoneNumber,
+    );
   }
 
   /// توليد معرّف Lifex-ID فريد بصيغة LFX-XXXXXX.
@@ -149,8 +143,14 @@ class HealthIdentityManager {
     return candidate;
   }
 
+  /// كل الهويات المحلية المعروفة على الجهاز — للبحث في دليل Lifex فقط.
+  /// لا يمنح أي وصول لبيانات صحية.
+  List<HealthIdentity> get allIdentities =>
+      List.unmodifiable(_identitiesByLifexId.values);
+
   /// استرجاع الهوية عبر معرّف Lifex-ID.
-  HealthIdentity? getByLifexId(String lifexId) => _identitiesByLifexId[lifexId];
+  HealthIdentity? getByLifexId(String lifexId) =>
+      _identitiesByLifexId[lifexId];
 
   /// استرجاع الهوية عبر معرّف الملف الصحي المرتبط.
   HealthIdentity? getByProfileId(String profileId) {
@@ -187,14 +187,51 @@ class HealthIdentityManager {
     return true;
   }
 
-  /// هل الهوية موثوقة بما يكفي لعمليات حساسة (مثل التبرع بالدم أو
-  /// الوصول لبيانات طبية مشتركة)؟
-  bool isTrustedForSensitiveActions(String lifexId) {
+  /// تحديث بريد/هاتف الهوية وإعادة محاولة تفعيل دور المخترع/المالك.
+  /// الاسم وحده لا يكفي — يجب تطابق بريد أو هاتف المالك المسجَّلين.
+  HealthIdentity? updateContactAndReactivateOwner({
+    required String lifexId,
+    String? email,
+    String? phoneNumber,
+  }) {
     final identity = _identitiesByLifexId[lifexId];
+    if (identity == null) return null;
+    if (email != null) identity.email = email.trim().isEmpty ? null : email.trim();
+    if (phoneNumber != null) {
+      identity.phoneNumber =
+          phoneNumber.trim().isEmpty ? null : phoneNumber.trim();
+    }
+    _considerOwner(identity);
+    return identity;
+  }
+
+  /// إنشاء هوية إن لزم، ثم تفعيل المالك إن طابق البريد/الهاتف.
+  HealthIdentity ensureIdentityAndMaybeActivateOwner({
+    required String profileId,
+    String? phoneNumber,
+    String? email,
+  }) {
+    final existing = getByProfileId(profileId);
+    if (existing != null) {
+      return updateContactAndReactivateOwner(
+            lifexId: existing.lifexId,
+            email: email ?? existing.email,
+            phoneNumber: phoneNumber ?? existing.phoneNumber,
+          ) ??
+          existing;
+    }
+    return createIdentity(
+      profileId: profileId,
+      phoneNumber: phoneNumber,
+      email: email,
+    );
+  }
+
+  /// معرّف Lifex التشغيلي مختلف عن معرّف الملف.
+  bool actorIsOperationalLifexId(String actorId) {
+    final identity = getByLifexId(actorId);
     if (identity == null) return false;
-    return identity.verificationLevel ==
-            IdentityVerificationLevel.documentVerified ||
-        identity.verificationLevel == IdentityVerificationLevel.fullyVerified;
+    return identity.lifexId == actorId && identity.linkedProfileId != actorId;
   }
 
   /// إعادة كل الهويات لحالته الأولية — للاختبارات فقط.

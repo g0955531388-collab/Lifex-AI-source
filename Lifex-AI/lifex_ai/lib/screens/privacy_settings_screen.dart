@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/profile_privacy_manager.dart';
+import '../widgets/lifex_text.dart';
 
 class PrivacySettingsScreen extends StatefulWidget {
   const PrivacySettingsScreen({super.key});
@@ -53,7 +54,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
       setState(() => _dropdownResetToken++);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
+          content: LifexText(
             'لا يمكن تخفيض صلاحية فرق الطوارئ عن الملخص الطبي، '
             'حمايةً لسلامتك.',
           ),
@@ -71,9 +72,9 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
 
     if (profileId == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('إعدادات الخصوصية')),
+        appBar: AppBar(title: const LifexText('إعدادات الخصوصية')),
         body: const Center(
-          child: Text('لا يوجد ملف صحي نشط لتعديل خصوصيته.'),
+          child: LifexText('لا يوجد ملف صحي نشط لتعديل خصوصيته.'),
         ),
       );
     }
@@ -84,13 +85,13 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('إعدادات الخصوصية')),
+      appBar: AppBar(title: const LifexText('إعدادات الخصوصية')),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
+            child: LifexText(
               'الوضع الافتراضي آمن: لا يرى أحد بياناتك الحساسة إلا بموافقة '
               'صريحة. فرق الطوارئ تحتفظ بملخص طبي أساسي لإنقاذ الحياة.',
               style: TextStyle(fontSize: 13, color: Colors.grey),
@@ -98,8 +99,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.lock_person_outlined),
-            title: Text(_categoryLabelsAr[ViewerCategory.self]!),
-            subtitle: Text(_levelLabelsAr[DataVisibilityLevel.fullAccess]!),
+            title: LifexText(_categoryLabelsAr[ViewerCategory.self]!),
+            subtitle: LifexText(_levelLabelsAr[DataVisibilityLevel.fullAccess]!),
           ),
           const Divider(),
           for (final category in editableCategories)
@@ -108,7 +109,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  LifexText(
                     _categoryLabelsAr[category]!,
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
@@ -127,7 +128,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                         .map(
                           (level) => DropdownMenuItem(
                             value: level,
-                            child: Text(_levelLabelsAr[level]!),
+                            child: LifexText(_levelLabelsAr[level]!),
                           ),
                         )
                         .toList(),
@@ -139,7 +140,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   if (category == ViewerCategory.emergencyResponder)
                     const Padding(
                       padding: EdgeInsets.only(top: 4),
-                      child: Text(
+                      child: LifexText(
                         'لا يمكن تخفيضها عن الملخص الطبي',
                         style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),

@@ -5,6 +5,7 @@
 /// الوصف: ملف المدرب — قد يكون طبيباً أو أخصائياً معتمداً من مؤسسة
 /// شريكة (institution_program_manager.dart).
 /// =============================================================
+library;
 
 class TrainerProfile {
   final String trainerId;

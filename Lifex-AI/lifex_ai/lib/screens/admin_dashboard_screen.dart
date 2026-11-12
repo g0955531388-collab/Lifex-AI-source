@@ -1,12 +1,6 @@
 /// =============================================================
-/// Lifex-AI — واجهات التطبيق
-/// الملف: admin_dashboard_screen.dart
-/// المسار: lib/screens/admin_dashboard_screen.dart
-/// الوصف: لوحة تحكم الأدمن العالمية — منح/سحب أدوار (أدمن/مشرف)، والتحكم
-/// بمفاتيح الأحداث الدقيقة على مستوى النظام. لا تظهر هذه الشاشة أصلاً في
-/// أي تنقل إلا لمستخدم يملك دوراً إدارياً فعلياً (انظر شرط الدخول في
-/// settings_screen.dart)، وحتى داخلها كل إجراء يمر عبر GlobalAdminManager
-/// الذي يرفض أي عملية تتجاوز صلاحية المستخدم الحالي.
+/// Lifex-AI — لوحة تحكم الأدمن العالمية
+/// المخترع/المالك التشغيلي يمنح أدمن ومشرف. الإسناد في ProjectAttribution.
 /// =============================================================
 library lifex_ai.screens.admin_dashboard_screen;
 
@@ -14,12 +8,14 @@ import 'package:flutter/material.dart';
 
 import '../core/admin/admin_manager.dart';
 import '../core/admin/admin_permissions.dart';
+import '../core/admin/owner_identity_policy.dart';
+import '../core/attribution/project_attribution.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key, required this.currentUserLifexId});
 
-  /// معرّف Lifex-ID للمستخدم الحالي — يُستخدم لتحديد ما يُعرض وما يُسمح
-  /// بفعله في هذه الشاشة تحديداً.
   final String currentUserLifexId;
 
   @override
@@ -30,6 +26,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final _admin = GlobalAdminManager.instance;
   final _targetIdController = TextEditingController();
   String? _statusMessageAr;
+  StaffEngagement _engagement = StaffEngagement.volunteer;
 
   @override
   void dispose() {
@@ -39,7 +36,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   void _showStatus(String messageAr) {
     setState(() => _statusMessageAr = messageAr);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(messageAr)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: LifexText(messageAr)));
   }
 
   void _grant(GlobalAdminRole role) {
@@ -52,8 +49,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       granterLifexId: widget.currentUserLifexId,
       targetLifexId: targetId,
       role: role,
+      engagement: _engagement,
     );
     _showStatus(result.messageAr);
+    setState(() {});
   }
 
   void _revoke() {
@@ -67,6 +66,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       targetLifexId: targetId,
     );
     _showStatus(result.messageAr);
+    setState(() {});
   }
 
   void _toggleEvent(String key, bool value) {
@@ -76,43 +76,125 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       enabled: value,
     );
     _showStatus(result.messageAr);
-    setState(() {}); // لإعادة قراءة القيمة الفعلية من المدير بعد الرفض/القبول
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final myRole = _admin.roleOf(widget.currentUserLifexId);
-    final canGrantAdmin =
-        _admin.hasPermission(widget.currentUserLifexId, GlobalAdminPermission.grantAdminRole);
-    final canGrantModerator =
-        _admin.hasPermission(widget.currentUserLifexId, GlobalAdminPermission.grantModeratorRole);
+    final myPerms = _admin.permissionsOf(widget.currentUserLifexId);
+    final canGrantAdmin = _admin.hasPermission(
+      widget.currentUserLifexId,
+      GlobalAdminPermission.grantAdminRole,
+    );
+    final canGrantModerator = _admin.hasPermission(
+      widget.currentUserLifexId,
+      GlobalAdminPermission.grantModeratorRole,
+    );
+    final canGrantEmployee = _admin.hasPermission(
+      widget.currentUserLifexId,
+      GlobalAdminPermission.grantStaffRole,
+    );
     final canManageToggles = _admin.hasPermission(
       widget.currentUserLifexId,
       GlobalAdminPermission.manageSystemEventToggles,
     );
+    final staff = _admin.listStaffRoles();
+    const policy = OwnerIdentityPolicy();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('لوحة تحكم الأدمن')),
+      appBar: AppBar(title: const LifexText('لوحة تحكم الأدمن')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
-            child: ListTile(
-              leading: const Icon(Icons.verified_user_outlined),
-              title: const Text('دورك الحالي'),
-              subtitle: Text(_roleLabelAr(myRole)),
+            color: Theme.of(context).colorScheme.primaryContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const LifexText(
+                    ProjectAttribution.officialStatementShortAr,
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
+                  LifexText(
+                    myRole == GlobalAdminRole.owner
+                        ? 'أنت المالك التشغيلي. الصيانة ومفاتيح التشغيل وتعيين '
+                            'مدير وموظف ومشرف، مأجورين أو متطوعين. '
+                            'هذا لا يفتح ملفات المرضى.'
+                        : 'دورك: ${_roleLabelAr(myRole)}',
+                  ),
+                  LifexText(
+                    'Lifex-ID: ${widget.currentUserLifexId}',
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ],
+              ),
             ),
           ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.verified_user_outlined),
+              title: const LifexText('دورك الحالي'),
+              subtitle: LifexText(_roleLabelAr(myRole)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          LifexText('صلاحياتك (${myPerms.length})',
+              style: Theme.of(context).textTheme.titleMedium),
+          ...myPerms.map(
+            (p) => ListTile(
+              dense: true,
+              leading: const Icon(Icons.check_circle_outline, size: 20),
+              title: LifexText(_permissionLabelAr(p)),
+            ),
+          ),
+          if (myRole != GlobalAdminRole.owner) ...[
+            const SizedBox(height: 8),
+            LifexText(
+              policy.activationHintAr(),
+              style: const TextStyle(fontSize: 12, color: Colors.orange),
+            ),
+          ],
           const SizedBox(height: 16),
-          if (canGrantAdmin || canGrantModerator) ...[
-            Text('إدارة أدوار المستخدمين', style: Theme.of(context).textTheme.titleMedium),
+          if (canGrantAdmin || canGrantModerator || canGrantEmployee) ...[
+            LifexText('تعيين الطاقم',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            LifexText(
+              canGrantAdmin
+                  ? 'كمالك: تعيّن مديراً أو موظفاً أو مشرفاً، مأجوراً أو متطوعاً، '
+                      'وتسحب أدوارهم. دور المالك لا يُمنح يدوياً.'
+                  : 'كمدير: يمكنك تعيين مشرفين فقط. المدير والموظف للمالك.',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            SegmentedButton<StaffEngagement>(
+              segments: const [
+                ButtonSegment(
+                  value: StaffEngagement.paid,
+                  label: LifexText('مأجور'),
+                ),
+                ButtonSegment(
+                  value: StaffEngagement.volunteer,
+                  label: LifexText('متطوع'),
+                ),
+              ],
+              selected: {_engagement},
+              onSelectionChanged: (selected) {
+                setState(() => _engagement = selected.first);
+              },
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: _targetIdController,
-              decoration: const InputDecoration(
-                labelText: 'معرّف Lifex-ID للمستخدم المستهدف',
+              decoration: InputDecoration(
+                labelText: tr('معرّف Lifex-ID للمستخدم المستهدف'),
                 border: OutlineInputBorder(),
-                hintText: 'مثال: LFX-482913',
+                hintText: tr('مثال: LFX-482913'),
               ),
             ),
             const SizedBox(height: 12),
@@ -123,36 +205,69 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 if (canGrantAdmin)
                   FilledButton.icon(
                     icon: const Icon(Icons.admin_panel_settings_outlined),
-                    label: const Text('منح دور أدمن'),
+                    label: const LifexText('تعيين مدير'),
                     onPressed: () => _grant(GlobalAdminRole.admin),
+                  ),
+                if (canGrantEmployee)
+                  FilledButton.icon(
+                    icon: const Icon(Icons.badge_outlined),
+                    label: const LifexText('تعيين موظف'),
+                    onPressed: () => _grant(GlobalAdminRole.employee),
                   ),
                 if (canGrantModerator)
                   OutlinedButton.icon(
                     icon: const Icon(Icons.shield_outlined),
-                    label: const Text('منح دور مشرف'),
+                    label: const LifexText('تعيين مشرف'),
                     onPressed: () => _grant(GlobalAdminRole.moderator),
                   ),
                 OutlinedButton.icon(
                   icon: const Icon(Icons.remove_moderator_outlined),
-                  label: const Text('سحب الدور'),
+                  label: const LifexText('سحب الدور'),
                   onPressed: _revoke,
                 ),
               ],
             ),
             const Divider(height: 32),
           ],
+          LifexText('الطاقم الإداري الحالي',
+              style: Theme.of(context).textTheme.titleMedium),
+          if (staff.isEmpty)
+            const ListTile(
+              title: LifexText('لا أدوار إدارية أخرى على هذا الجهاز بعد.'),
+            )
+          else
+            ...staff.entries.map(
+              (e) => ListTile(
+                leading: Icon(
+                  e.value == GlobalAdminRole.owner
+                      ? Icons.star
+                      : Icons.person_outline,
+                ),
+                title: LifexText(e.key),
+                subtitle: LifexText(_staffLine(e.key, e.value)),
+              ),
+            ),
+          const Divider(height: 32),
           if (canManageToggles) ...[
-            Text('مفاتيح الأحداث الدقيقة', style: Theme.of(context).textTheme.titleMedium),
+            LifexText('مفاتيح الأحداث الدقيقة',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
-            const Text(
-              'تفعيل أو تعطيل ميزات على مستوى النظام كاملاً دون الحاجة '
-              'لتحديث التطبيق.',
+            const LifexText(
+              'تفعيل أو تعطيل ميزات على مستوى النظام كاملاً دون تحديث التطبيق.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 8),
-            ..._admin.allEventToggles.entries.map(
+            ..._admin.allEventToggles.entries.where((entry) {
+              if (entry.key != GlobalAdminManager.remoteCameraEventKey) {
+                return true;
+              }
+              return _admin.hasPermission(
+                widget.currentUserLifexId,
+                GlobalAdminPermission.manageRemoteCameraMonitoring,
+              );
+            }).map(
               (entry) => SwitchListTile(
-                title: Text(_eventLabelAr(entry.key)),
+                title: LifexText(_eventLabelAr(entry.key)),
                 value: entry.value,
                 onChanged: (value) => _toggleEvent(entry.key, value),
               ),
@@ -160,7 +275,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ],
           if (_statusMessageAr != null) ...[
             const SizedBox(height: 16),
-            Text(_statusMessageAr!, style: const TextStyle(fontSize: 13)),
+            LifexText(_statusMessageAr!, style: const TextStyle(fontSize: 13)),
           ],
         ],
       ),
@@ -170,13 +285,48 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   String _roleLabelAr(GlobalAdminRole role) {
     switch (role) {
       case GlobalAdminRole.owner:
-        return 'المالك المؤسس';
+        return 'مالك تشغيلي / مخترع مفعَّل';
       case GlobalAdminRole.admin:
-        return 'أدمن';
+        return 'مدير';
+      case GlobalAdminRole.employee:
+        return 'موظف';
       case GlobalAdminRole.moderator:
         return 'مشرف';
       case GlobalAdminRole.none:
         return 'مستخدم عادي';
+    }
+  }
+
+  String _staffLine(String lifexId, GlobalAdminRole role) {
+    final engagement = _admin.engagementOf(lifexId);
+    final roleAr = _roleLabelAr(role);
+    if (engagement == null) return roleAr;
+    final pay = engagement == StaffEngagement.paid ? 'مأجور' : 'متطوع';
+    return '$roleAr · $pay';
+  }
+
+  String _permissionLabelAr(GlobalAdminPermission p) {
+    switch (p) {
+      case GlobalAdminPermission.grantModeratorRole:
+        return 'تعيين / سحب مشرفين';
+      case GlobalAdminPermission.grantAdminRole:
+        return 'تعيين / سحب المدراء';
+      case GlobalAdminPermission.grantStaffRole:
+        return 'تعيين / سحب الموظفين';
+      case GlobalAdminPermission.manageSystemEventToggles:
+        return 'مفاتيح أحداث النظام';
+      case GlobalAdminPermission.manageUsers:
+        return 'إدارة المستخدمين';
+      case GlobalAdminPermission.moderateContent:
+        return 'إشراف المحتوى';
+      case GlobalAdminPermission.viewSectorStatistics:
+        return 'إحصاءات القطاع';
+      case GlobalAdminPermission.manageBilling:
+        return 'إدارة الفوترة على مستوى المنصة';
+      case GlobalAdminPermission.manageEmergencyPolicy:
+        return 'سياسات الطوارئ العامة';
+      case GlobalAdminPermission.manageRemoteCameraMonitoring:
+        return 'مراقبة الكاميرا عن بُعد';
     }
   }
 

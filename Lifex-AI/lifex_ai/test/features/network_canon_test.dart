@@ -6,6 +6,7 @@ import 'package:lifex_ai/core/medical_record_canon.dart';
 import 'package:lifex_ai/core/network_canon.dart';
 import 'package:lifex_ai/features/energy/intermittent_sense_policy.dart';
 import 'package:lifex_ai/features/network_box/unit_branch_catalog.dart';
+import 'package:lifex_ai/features/profile/determination_credential_policy.dart';
 import 'package:lifex_ai/features/voice/command_parser.dart';
 
 void main() {
@@ -55,6 +56,26 @@ void main() {
     expect(keys, containsAll(['hypertension', 'diabetes_t2', 'diabetes_t1']));
     expect(folded.where((row) => row['id'] == 't2b'), hasLength(1));
     expect(folded.where((row) => row['id'] == 't1'), hasLength(1));
+    expect(
+      MedicalRecordCanon.foldKey(
+        nameEn: 'Nephrolithiasis',
+        nameAr: 'حصى الكلى',
+      ),
+      MedicalRecordCanon.foldKey(
+        nameEn: 'Kidney Stones',
+        nameAr: 'حصى الكلى',
+      ),
+    );
+    expect(
+      MedicalRecordCanon.foldKey(
+        nameEn: 'Systemic Lupus Erythematosus - SLE',
+        nameAr: 'الذئبة الحمامية الجهازية',
+      ),
+      MedicalRecordCanon.foldKey(
+        nameEn: 'Systemic Lupus Erythematosus',
+        nameAr: 'الذئبة الحمراء',
+      ),
+    );
   });
 
   test('مراجع اليدين بأرقام فريدة وعلامات الكاميرا الجديدة موجودة', () async {
@@ -77,7 +98,25 @@ void main() {
     ];
     expect(signs, contains('White Mouth Coating'));
     expect(signs, contains('Perioral Cyanosis'));
+    expect(signs, contains('Nasal Cracking'));
     expect(signs, contains('Thinning Eyebrows'));
+    expect(signs, contains('Facial Droop'));
+    final folded = MedicalRecordCanon.uniqueNamedRows(
+      [
+        ...camera.cast<Map>(),
+        ...extras.cast<Map>(),
+      ].map((row) => Map<String, dynamic>.from(row)).toList(),
+      nameKeys: const ['sign', 'name'],
+    );
+    final droop = folded.firstWhere((row) => row['sign'] == 'Facial Droop');
+    expect(droop['meaning'], contains('ليس تشخيصاً'));
+    expect('${droop['meaning']}'.contains('شلل وجهي'), isFalse);
+    final irregular = folded.firstWhere((row) => row['sign'] == 'Irregular Mole');
+    expect(irregular['meaning'], contains('ليس تشخيصاً'));
+    expect('${irregular['meaning']}'.contains('علامة إنذار سرطاني'), isFalse);
+    final bleeding = folded.firstWhere((row) => row['sign'] == 'Bleeding Mole');
+    expect(bleeding['meaning'], contains('ليس تشخيصاً'));
+    expect('${bleeding['meaning']}'.contains('خطر سرطان'), isFalse);
     expect(
       camera.where((row) => (row as Map)['name'] == 'جفاف الكفين (Dry Hands)'),
       isEmpty,
@@ -183,6 +222,36 @@ void main() {
       'doctors',
     );
     expect(
+      NetworkCanon.seatForDesktopFile(
+        r'c:\Users\sdsds\Desktop\كوتلن\DiagnosisLicenseSuite.kt.txt',
+      ),
+      'cv',
+    );
+    expect(
+      NetworkCanon.seatForDesktopFile(
+        r'c:\Users\sdsds\Desktop\كوتلن\HealthRecordManager.kt(1).txt',
+      ),
+      'cv',
+    );
+    expect(
+      NetworkCanon.seatForDesktopFile(
+        r'c:\Users\sdsds\Desktop\كوتلن\ CameraActivity.kt.txt',
+      ),
+      'radiology',
+    );
+    expect(
+      NetworkCanon.seatForDesktopFile('SpecialNeedsSubModule.kt.txt'),
+      'chronic',
+    );
+    expect(
+      NetworkCanon.seatForDesktopFile('MedicalMIDIEngineAdvanced.kt.txt'),
+      'biometrics',
+    );
+    expect(
+      NetworkCanon.seatForInboxFile('FindMyPhoneService.kt.txt'),
+      isNull,
+    );
+    expect(
       NetworkCanon.seatForInboxFile('zzzzzzzzzzzz.html'),
       'doctors',
     );
@@ -216,9 +285,19 @@ void main() {
     expect(labs.parameters['boxUnitId'], 'labs');
   });
 
-  test('فرع الهمم يحفظ نوع الإعاقة والنسبة محلياً', () {
-    final ids = UnitBranchCatalog.forUnit('chronicPlans').map((b) => b.id);
-    expect(ids, contains('disability'));
+  test('فرع المعاقين يثبّت ببطاقة إعاقة أو مريض دائم', () {
+    final branch = UnitBranchCatalog.forUnit('chronicPlans')
+        .singleWhere((item) => item.id == 'disability');
+    expect(branch.shortcut, UnitShortcut.disabilityFixation);
+    expect(
+      DeterminationCardKind.disabilityCard.fixesInDisabilityUnit,
+      isTrue,
+    );
+    expect(
+      DeterminationCardKind.chronicIllnessCard.fixesInDisabilityUnit,
+      isTrue,
+    );
+    expect(DeterminationCardKind.nationalId.fixesInDisabilityUnit, isFalse);
   });
 
   test('نبض الحسّاس تشغيل ثم سكون بلا قراءة مزيفة', () {

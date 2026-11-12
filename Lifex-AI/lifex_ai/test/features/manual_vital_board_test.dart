@@ -42,6 +42,21 @@ void main() {
   test('لون البول ملاحظة وليست تحليلاً من بكسل', () {
     expect(UrineColorNote.honestyAr, contains('بكسل'));
     expect(UrineColorNote.lineAr('داكن'), contains('ليست نتيجة تحليل'));
+    const policy = ManualVitalPolicy();
+    final noteOnly = policy.score(
+      const ManualVitalDraft(urineColorNote: 'داكن', urineFoamNote: 'قليلة'),
+    );
+    expect(noteOnly.statusAr, 'ملاحظة');
+    expect(noteOnly.points, 0);
+    expect(noteOnly.messageAr, contains('ملاحظة لون البول'));
+    expect(noteOnly.messageAr, contains('ملاحظة الرغوة'));
+    expect(noteOnly.messageAr, contains('ليست نتيجة'));
+    expect(noteOnly.messageAr, isNot(contains('العداد المحلي')));
+    final blank = policy.score(
+      const ManualVitalDraft(urineFoamNote: '   ', urineClarityNote: ''),
+    );
+    expect(blank.completeEnough, isFalse);
+    expect(blank.messageAr, isNot(contains('صاف')));
   });
 
   test('مفتاح GHAZI-2026 لا يفعّل ترخيصاً', () {

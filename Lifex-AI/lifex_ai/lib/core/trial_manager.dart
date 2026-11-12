@@ -8,6 +8,7 @@ library lifex_ai.core.trial_manager;
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'app_config.dart';
 import 'app_constants.dart';
 
 enum TrialPhase {
@@ -129,11 +130,17 @@ class TrialManager {
   bool get asksForSubscription =>
       phase() == TrialPhase.reducedMonth || phase() == TrialPhase.residual;
 
+  String statusLine({bool feeExempt = false, bool adminAccess = false}) =>
+      lifexUi(
+        statusLineAr(feeExempt: feeExempt, adminAccess: adminAccess),
+        statusLineEn(feeExempt: feeExempt, adminAccess: adminAccess),
+      );
+
   String statusLineAr({bool feeExempt = false, bool adminAccess = false}) {
     if (adminAccess) {
       return 'وصول المالك/الأدمن الكامل مفعّل على هذا الحساب؛ لا تنطبق عليه مدة التجربة.';
     }
-    switch (phase(feeExempt: feeExempt)) {
+    switch (phase(feeExempt: feeExempt, adminAccess: adminAccess)) {
       case TrialPhase.subscribed:
         return feeExempt
             ? 'نسخة كاملة بإعفاء إنساني مسجّل على هذا الجهاز.'
@@ -151,6 +158,31 @@ class TrialManager {
         return 'شهر مجاني بخدمات أقل من الكاملة. متبقٍ تقريباً $left يوماً ثم يُطلب الاشتراك.';
       case TrialPhase.residual:
         return 'بلا اشتراك أو انتهى. تبقى الإشعارات والتبرعات ونداء الإسعاف وطلب الدم. الباقي يتوقف.';
+    }
+  }
+
+  String statusLineEn({bool feeExempt = false, bool adminAccess = false}) {
+    if (adminAccess) {
+      return 'Full owner or admin access is on for this account. The trial length does not apply.';
+    }
+    switch (phase(feeExempt: feeExempt, adminAccess: adminAccess)) {
+      case TrialPhase.subscribed:
+        return feeExempt
+            ? 'A full copy with a humanitarian exemption recorded on this device.'
+            : 'A yearly subscription recorded on this device until ${subscriptionUntil?.toIso8601String().split('T').first ?? ''}.';
+      case TrialPhase.giftWorking:
+        final left = AppConstants.giftCopyDays -
+            DateTime.now().difference(giftStartedAt ?? installedAt).inDays;
+        return 'A gift copy from a regular subscriber. It runs for about $left days, then it stops until it is assigned.';
+      case TrialPhase.giftFrozen:
+        return 'The gift copy stopped after ${AppConstants.giftCopyDays} days. Assign it as a new subscriber to enter the reduced free month.';
+      case TrialPhase.reducedMonth:
+        final start = claimedAt ?? installedAt;
+        final left = AppConstants.trialPeriodDays -
+            DateTime.now().difference(start).inDays;
+        return 'A free month with fewer services than the full copy. About $left days remain, then a subscription is required.';
+      case TrialPhase.residual:
+        return 'No subscription, or it has ended. Notifications, donations, the ambulance request, and the blood request remain. The rest stops.';
     }
   }
 
@@ -239,43 +271,87 @@ class TrialManager {
   }
 }
 
+/// فصل صارم: فتح الوحدة ≠ استحقاق تجاري ≠ صلاحية بيانات.
+///
+/// - [canOpenUnit]: اكتشاف/تنقل/فتح الوحدة الأساسية — لا يُحجب بـ Trial.
+/// - [canUsePaidFeature]: عمليات مدفوعة داخل الوحدة (حجز مميز، شحن مزوّد…).
 class SessionAccessPolicy {
   const SessionAccessPolicy();
 
-  static const residualUnits = {
+  /// وحدات أساسية قابلة للاكتشاف دائماً (Module Access).
+  static const coreDiscoverableUnits = {
     'emergency',
     'blood',
     'donations',
     'notifications',
     'settings',
     'wallet',
-  };
-
-  static const reducedExtraUnits = {
     'profile',
     'medications',
     'appointments',
+    'doctors',
+    'hospitals',
+    'labs',
+    'pharmacy',
+    'imaging',
+    'dentistry',
+    'devices',
+    'location',
+    'documents',
+    'messages',
+    'ai',
+    'education',
+    'accessibility',
+    'power',
+    'camera',
+    'voice',
+    'family',
+    'search',
+    'admin',
   };
 
+  /// عمليات تجارية/مدفوعة — تُفحص منفصلة عن فتح الوحدة.
+  static const paidFeatureIds = {
+    'premium_booking',
+    'paid_topup_provider',
+    'marketplace_purchase',
+    'paid_advertising',
+  };
+
+  /// فتح الوحدة/التنقل — لا يُرفض بسبب انتهاء Trial أو غياب الاشتراك.
+  /// الاشتراك يقيّد [canUsePaidFeature] فقط.
   bool canOpenUnit(
     String unitId, {
     required TrialPhase phase,
     required bool feeExempt,
     bool adminAccess = false,
   }) {
-    if (adminAccess ||
-        feeExempt ||
+    if (adminAccess) return true;
+    // giftFrozen: نسخة إهداء غير مخصّصة — الإعدادات فقط حتى التخصيص
+    // (REQUIRES_EXTERNAL_SETUP وليس LOCKED بسبب Premium).
+    if (phase == TrialPhase.giftFrozen) {
+      return unitId == 'settings';
+    }
+    // residual / reducedMonth / giftWorking / subscribed: كل الوحدات الأساسية.
+    return true;
+  }
+
+  /// هل الوحدة الأساسية ضمن قائمة الاكتشاف؟
+  bool isCoreDiscoverable(String unitId) =>
+      coreDiscoverableUnits.contains(unitId);
+
+  /// استحقاق ميزة مدفوعة داخل وحدة مفتوحة مسبقاً.
+  bool canUsePaidFeature(
+    String featureId, {
+    required TrialPhase phase,
+    required bool feeExempt,
+  }) {
+    if (feeExempt ||
         phase == TrialPhase.subscribed ||
         phase == TrialPhase.giftWorking) {
       return true;
     }
-    if (phase == TrialPhase.giftFrozen) {
-      return unitId == 'settings';
-    }
-    if (phase == TrialPhase.reducedMonth) {
-      return residualUnits.contains(unitId) ||
-          reducedExtraUnits.contains(unitId);
-    }
-    return residualUnits.contains(unitId);
+    // خارج الاشتراك: الميزات المدفوعة مقيدة؛ الوحدات نفسها تبقى مفتوحة.
+    return !paidFeatureIds.contains(featureId);
   }
 }

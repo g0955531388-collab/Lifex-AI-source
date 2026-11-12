@@ -82,5 +82,7 @@ void main() {
       parser.parse('افتح الكاميرا الحية').intent,
       VoiceCommandIntent.openLiveSight,
     );
+    expect(parser.parse('لايف').intent, VoiceCommandIntent.openLiveSight);
+    expect(parser.parse('live').intent, VoiceCommandIntent.openLiveSight);
   });
 }

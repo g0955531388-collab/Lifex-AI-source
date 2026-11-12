@@ -1,10 +1,16 @@
 package com.lifex_ai
 
+import android.app.Activity
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.Ringtone
+import android.media.RingtoneManager
 import android.media.ToneGenerator
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.provider.ContactsContract
 import android.view.KeyEvent
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -14,7 +20,13 @@ class MainActivity : FlutterActivity() {
     private val cueChannel = "lifex_ai/hardware_cue"
     private val watchChannel = "lifex_ai/clinical_watch"
     private val shareChannel = "lifex_ai/share"
+    private val contactPickerChannel = "lifex_ai/contact_picker"
+    private val shortcutChannel = "lifex_ai/assistant_shortcut"
+    private val visionAppChannel = "lifex_ai/vision_app"
+    private val ringtoneChannel = "lifex_ai/user_ringtone"
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val pickContactRequest = 9911
+    private val pickRingtoneRequest = 9912
 
     private var cueKind: String = "volumeUpDouble"
     private var tapCount: Int = 2
@@ -22,9 +34,49 @@ class MainActivity : FlutterActivity() {
     private var hits: Int = 0
     private var lastHitAt: Long = 0
     private var lastCode: Int = 0
+    private var pendingContactResult: MethodChannel.Result? = null
+    private var pendingRingtoneResult: MethodChannel.Result? = null
+    private var playingRingtone: Ringtone? = null
+    private var pendingAssistantShortcut: String? = null
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        captureAssistantShortcut(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        captureAssistantShortcut(intent)
+        deliverAssistantShortcut()
+    }
+
+    private fun captureAssistantShortcut(intent: Intent?) {
+        if (intent?.data?.host == "assistant") {
+            pendingAssistantShortcut = "visual_assistant"
+        }
+    }
+
+    private fun deliverAssistantShortcut() {
+        val messenger = flutterEngine?.dartExecutor?.binaryMessenger ?: return
+        val value = pendingAssistantShortcut ?: return
+        pendingAssistantShortcut = null
+        MethodChannel(messenger, shortcutChannel).invokeMethod("open", value)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, shortcutChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "consume" -> {
+                        val value = pendingAssistantShortcut
+                        pendingAssistantShortcut = null
+                        result.success(value)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, cueChannel)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -73,6 +125,241 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, contactPickerChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "pickContact" -> {
+                        if (pendingContactResult != null) {
+                            result.error("BUSY", "منتقي جهات الاتصال قيد الاستخدام.", null)
+                            return@setMethodCallHandler
+                        }
+                        pendingContactResult = result
+                        // Pick a phone row directly — minimum data, no full address book.
+                        val intent = Intent(
+                            Intent.ACTION_PICK,
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                        )
+                        try {
+                            startActivityForResult(intent, pickContactRequest)
+                        } catch (e: Exception) {
+                            pendingContactResult = null
+                            result.error("UNAVAILABLE", e.message, null)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ringtoneChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "pick" -> {
+                        if (pendingRingtoneResult != null) {
+                            result.error("BUSY", "منتقي النغمة قيد الاستخدام.", null)
+                            return@setMethodCallHandler
+                        }
+                        pendingRingtoneResult = result
+                        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                        }
+                        try {
+                            startActivityForResult(intent, pickRingtoneRequest)
+                        } catch (e: Exception) {
+                            pendingRingtoneResult = null
+                            result.success(null)
+                        }
+                    }
+                    "play" -> {
+                        val uri = call.argument<String>("uri") ?: ""
+                        result.success(playUserRingtone(uri))
+                    }
+                    "stop" -> {
+                        stopUserRingtone()
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, visionAppChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "installed" -> {
+                        val args = call.arguments as? Map<*, *>
+                        val packages = (args?.get("packages") as? List<*>)
+                            ?.map { it.toString() }
+                            ?: emptyList()
+                        result.success(visionPackageInstalled(packages))
+                    }
+                    "open" -> {
+                        val args = call.arguments as? Map<*, *>
+                        val packages = (args?.get("packages") as? List<*>)
+                            ?.map { it.toString() }
+                            ?: emptyList()
+                        val viewUrl = args?.get("viewUrl") as? String
+                        result.success(openVisionApp(packages, viewUrl))
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "lifex_ai/emergency_sms")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "openSmsDraft" -> {
+                        val args = call.arguments as? Map<*, *>
+                        val phone = args?.get("phone") as? String ?: ""
+                        val body = args?.get("body") as? String ?: ""
+                        if (phone.isBlank()) {
+                            result.success(false)
+                            return@setMethodCallHandler
+                        }
+                        try {
+                            val uri = Uri.parse("smsto:$phone")
+                            val intent = Intent(Intent.ACTION_SENDTO, uri).apply {
+                                putExtra("sms_body", body)
+                            }
+                            startActivity(intent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.success(false)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == pickRingtoneRequest) {
+            deliverPickedRingtone(resultCode, data)
+            return
+        }
+        if (requestCode != pickContactRequest) return
+        val reply = pendingContactResult
+        pendingContactResult = null
+        if (reply == null) return
+        if (resultCode != Activity.RESULT_OK || data?.data == null) {
+            reply.success(null)
+            return
+        }
+        try {
+            reply.success(readPickedContactMinimum(data.data!!))
+        } catch (e: Exception) {
+            reply.error("READ_FAILED", e.message, null)
+        }
+    }
+
+    private fun deliverPickedRingtone(resultCode: Int, data: Intent?) {
+        val reply = pendingRingtoneResult
+        pendingRingtoneResult = null
+        if (reply == null) return
+        if (resultCode != Activity.RESULT_OK || data == null) {
+            reply.success(null)
+            return
+        }
+        val uri = data.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+        if (uri == null) {
+            reply.success(null)
+            return
+        }
+        val title = try {
+            RingtoneManager.getRingtone(this, uri)?.getTitle(this) ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+        reply.success(mapOf("uri" to uri.toString(), "title" to title))
+    }
+
+    private fun stopUserRingtone() {
+        try {
+            playingRingtone?.stop()
+        } catch (_: Exception) {
+        }
+        playingRingtone = null
+    }
+
+    private fun playUserRingtone(raw: String): Boolean {
+        if (raw.isBlank()) return false
+        return try {
+            stopUserRingtone()
+            val ringtone = RingtoneManager.getRingtone(this, Uri.parse(raw)) ?: return false
+            ringtone.audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            playingRingtone = ringtone
+            ringtone.play()
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Reads ONLY the selected contact URI (system picker grant).
+     * Does not dump the address book. No READ_CALL_LOG / READ_SMS.
+     */
+    private fun readPickedContactMinimum(contactUri: Uri): Map<String, String?> {
+        var displayName: String? = null
+        var lookupKey: String? = null
+        var contactId: String? = null
+        contentResolver.query(
+            contactUri,
+            arrayOf(
+                ContactsContract.Contacts._ID,
+                ContactsContract.Contacts.DISPLAY_NAME,
+                ContactsContract.Contacts.LOOKUP_KEY,
+            ),
+            null,
+            null,
+            null,
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                contactId = cursor.getString(0)
+                displayName = cursor.getString(1)
+                lookupKey = cursor.getString(2)
+            }
+        }
+
+        var phoneNumber: String? = null
+        if (contactId != null) {
+            contentResolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER),
+                "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID}=?",
+                arrayOf(contactId),
+                null,
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    phoneNumber = cursor.getString(0)
+                }
+            }
+        }
+
+        var email: String? = null
+        if (contactId != null) {
+            contentResolver.query(
+                ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                arrayOf(ContactsContract.CommonDataKinds.Email.ADDRESS),
+                "${ContactsContract.CommonDataKinds.Email.CONTACT_ID}=?",
+                arrayOf(contactId),
+                null,
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    email = cursor.getString(0)
+                }
+            }
+        }
+
+        return mapOf(
+            "displayName" to displayName,
+            "phoneNumber" to phoneNumber,
+            "email" to email,
+            "lookupKey" to lookupKey,
+            "contactId" to contactId,
+        )
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -102,6 +389,53 @@ class MainActivity : FlutterActivity() {
             }
         }
         return super.dispatchKeyEvent(event)
+    }
+
+    /**
+     * Opens the installed engine app. The view intent is locked to that package,
+     * so a browser never receives it. Missing apps are not replaced by a website.
+     */
+    private fun openVisionApp(packages: List<String>, viewUrl: String?): String {
+        for (pkg in packages) {
+            val installed = try {
+                packageManager.getPackageInfo(pkg, 0)
+                true
+            } catch (_: Exception) {
+                false
+            }
+            if (!installed) continue
+            if (!viewUrl.isNullOrBlank()) {
+                try {
+                    val view = Intent(Intent.ACTION_VIEW, Uri.parse(viewUrl)).apply {
+                        setPackage(pkg)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    if (view.resolveActivity(packageManager) != null) {
+                        startActivity(view)
+                        return "view:$pkg"
+                    }
+                } catch (_: Exception) {
+                }
+            }
+            val launch = packageManager.getLaunchIntentForPackage(pkg)
+            if (launch != null) {
+                launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launch)
+                return "app:$pkg"
+            }
+        }
+        return "missing"
+    }
+
+    private fun visionPackageInstalled(packages: List<String>): Boolean {
+        for (pkg in packages) {
+            try {
+                packageManager.getPackageInfo(pkg, 0)
+                return true
+            } catch (_: Exception) {
+            }
+        }
+        return false
     }
 
     private fun playStartTone() {

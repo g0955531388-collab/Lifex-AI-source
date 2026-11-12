@@ -8,6 +8,7 @@
 /// الحقيقية الموجودة (MedicalOcrReader، AiServiceRouter، إلخ) ويحوّل
 /// نتيجتها إلى شكل موحّد يفهمه AgentExecutor.
 /// =============================================================
+library;
 
 import '../agent_context.dart';
 import '../agent_permissions.dart';

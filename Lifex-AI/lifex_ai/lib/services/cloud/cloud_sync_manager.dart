@@ -70,8 +70,13 @@ class CloudSyncManager {
 
   /// محاولة مزامنة كل العمليات المعلَّقة الآن (تُستدعى دورياً أو عند
   /// استعادة الاتصال بالإنترنت).
+  Future<String?> requestServerProfileId({String? displayName}) {
+    return backendClient.requestServerProfileId(displayName: displayName);
+  }
+
   Future<void> syncPendingOperations() async {
     if (_isSyncing || _pendingQueue.isEmpty) return;
+    if (!backendClient.isEndpointConfigured) return;
     _isSyncing = true;
 
     final stillPending = <PendingSyncOperation>[];

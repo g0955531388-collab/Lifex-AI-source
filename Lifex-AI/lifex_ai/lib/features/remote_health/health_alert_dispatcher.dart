@@ -5,6 +5,7 @@
 /// الوصف: يستمع لأحداث النظام الحرجة (عبر health_event_manager.dart)
 /// ويوزّع تنبيهات فعلية على جهات الثقة المناسبة حسب صلاحياتهم.
 /// =============================================================
+library;
 
 import '../../core/health_event_manager.dart';
 import 'trusted_contacts_manager.dart';
@@ -84,7 +85,7 @@ class HealthAlertDispatcher {
     final manager = trustedContactsProvider(event.profileId!);
     final recipients = manager.emergencyNotificationList();
 
-    final message = 'تنبيه: تم رصد مؤشر طوارئ صحي محتمل. '
+    const message = 'تنبيه: تم رصد مؤشر طوارئ صحي محتمل. '
         'يُرجى التواصل مع الشخص أو مراجعة التطبيق فوراً.';
 
     for (final contact in recipients) {

@@ -29,7 +29,7 @@ void main() {
       email: AppConstants.ownerEmail,
     );
     final lifexId = profile.questionnaireData['accountLifexId'] as String;
-    expect(GlobalAdminManager.instance.roleOf(lifexId), GlobalAdminRole.owner);
+    expect(GlobalAdminManager.instance.roleOf(lifexId), GlobalAdminRole.none);
 
     HealthIdentityManager.instance.resetForTesting();
     GlobalAdminManager.instance.resetForTesting();
@@ -42,10 +42,10 @@ void main() {
       HealthIdentityManager.instance.getByProfileId('persisted-owner')?.lifexId,
       lifexId,
     );
-    expect(GlobalAdminManager.instance.roleOf(lifexId), GlobalAdminRole.owner);
+    expect(GlobalAdminManager.instance.roleOf(lifexId), GlobalAdminRole.none);
   });
 
-  test('تحديث بيانات الاتصال بعد إنشاء الملف يفعّل وصول المالك فوراً', () {
+  test('تحديث بيانات الاتصال بعد إنشاء الملف لا يمنح المالك', () {
     final engine = MultiProfileEngine(maxProfiles: 4);
     final controller = ActiveProfileController(engine: engine);
     final profile = HealthProfile(
@@ -59,13 +59,13 @@ void main() {
 
     controller.updateAccountIdentity(phoneNumber: '٠٩٥٥٥٣١٣٨٨');
 
-    expect(GlobalAdminManager.instance.roleOf(lifexId), GlobalAdminRole.owner);
+    expect(GlobalAdminManager.instance.roleOf(lifexId), GlobalAdminRole.none);
     expect(
       const SessionAccessPolicy().canOpenUnit(
         'box',
         phase: TrialPhase.residual,
         feeExempt: false,
-        adminAccess: true,
+        adminAccess: false,
       ),
       isTrue,
     );

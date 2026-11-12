@@ -4,6 +4,7 @@
 /// المسار: lib/features/hospital/hospital_profile.dart
 /// الوصف: الملف العام (الخارجي) للمستشفى — ما يراه المريض عند البحث.
 /// =============================================================
+library;
 
 class HospitalProfile {
   final String hospitalId;

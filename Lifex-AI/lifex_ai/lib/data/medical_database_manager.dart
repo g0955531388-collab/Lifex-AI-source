@@ -17,6 +17,7 @@
 /// 3) لو فشل التحقق أو انقطع التحميل، يبقى التطبيق يعمل بالنسخة
 ///    المحلية القديمة (أو نسخة الأصول) دون أي انقطاع للمستخدم.
 /// =============================================================
+library;
 
 import 'dart:convert';
 import 'dart:io';
@@ -35,6 +36,13 @@ class MedicalBundleFiles {
   static const String tests = 'tests_database.json';
   static const String medications = 'medications_database.json';
   static const String knowledge = 'medical_knowledge.json';
+
+  /// قاموس قياسات منفصل عن الحزمة الخماسية. غيابه لا يلغي تحديث الأمراض.
+  static const String biometrics =
+      'Lifex_AI_Human_Biometric_Measurements_v1.json';
+
+  /// مرجع جلد وشعر منفصل عن جدول الأمراض. غيابه لا يلغي الحزمة الخماسية.
+  static const String skinHair = 'Lifex_AI_Skin_Hair_Reference_v1.json';
 
   static const List<String> all = [
     diseases,
@@ -72,6 +80,10 @@ class MedicalDatabaseManager {
   /// رابط "بيان" الحزمة على الخادم — يُرجع رقم إصدار وروابط تحميل كل
   /// ملف من الملفات الخمسة، وليس ملفاً واحداً مباشرة.
   final String remoteManifestUrl;
+
+  bool get _remoteCatalogConfigured =>
+      remoteManifestUrl.isNotEmpty &&
+      !remoteManifestUrl.contains('example.com');
   final http.Client _httpClient;
 
   static const String _assetBasePath = 'lib/data/medical/';
@@ -126,6 +138,7 @@ class MedicalDatabaseManager {
 
   /// التحقق من وجود إصدار أحدث على الخادم دون تحميل الحزمة كاملة.
   Future<String?> checkForNewerVersion() async {
+    if (!_remoteCatalogConfigured) return null;
     try {
       final response = await _httpClient.get(Uri.parse(remoteManifestUrl));
       if (response.statusCode != 200) return null;
@@ -167,6 +180,11 @@ class MedicalDatabaseManager {
   /// حفظها محلياً فقط إذا نجح التحقق بالكامل. لا يُستبدل أي ملف قديم
   /// إلا بعد التأكد من صحة كل الملفات الخمسة الجديدة معاً.
   Future<MedicalUpdateResult> downloadAndUpdateBundle() async {
+    if (!_remoteCatalogConfigured) {
+      return const MedicalUpdateResult.failure(
+        'خادم الحزمة الطبية غير موصول. تبقى نسخة الأصول على الجهاز.',
+      );
+    }
     try {
       final manifestResponse =
           await _httpClient.get(Uri.parse(remoteManifestUrl));
@@ -221,7 +239,7 @@ class MedicalDatabaseManager {
           sourceModule: 'medical_database_manager',
           severity: ErrorSeverity.error,
         );
-        return MedicalUpdateResult.failure(
+        return const MedicalUpdateResult.failure(
           'البيانات المُحمَّلة غير متوافقة داخلياً. تم إلغاء التحديث '
           'للحفاظ على استقرار قاعدة بياناتك الحالية.',
         );

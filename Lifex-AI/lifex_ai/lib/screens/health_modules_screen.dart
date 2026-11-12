@@ -9,6 +9,7 @@ library lifex_ai.screens.health_modules_screen;
 
 import 'package:flutter/material.dart';
 
+import '../core/app_config.dart';
 import '../features/network_box/box_unit_catalog.dart';
 import 'blood_request_screen.dart';
 import 'box_unit_screen.dart';
@@ -19,6 +20,7 @@ import 'layered_lens_studio_screen.dart';
 import 'medical_reference_screen.dart';
 import 'pharmacy_stock_screen.dart';
 import 'thumbnail_manage_screen.dart';
+import '../widgets/lifex_text.dart';
 
 class HealthModulesScreen extends StatelessWidget {
   const HealthModulesScreen({super.key});
@@ -34,21 +36,21 @@ class HealthModulesScreen extends StatelessWidget {
       BoxUnitCatalog.chronicPlans,
     ];
     return Scaffold(
-      appBar: AppBar(title: const Text('الوحدات الصحية')),
+      appBar: AppBar(title: const LifexText('الوحدات الصحية')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('مركز الوحدات المرتبطة بالملف الصحي',
+          const LifexText('مركز الوحدات المرتبطة بالملف الصحي',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text(
+          const LifexText(
               'كل وحدة تفتح أقسامها الفرعية من السيناريو: ملف عام، علاقة، حجز، سجلات. الربط المؤسسي يحتاج خادماً.'),
           const SizedBox(height: 16),
           Card(
             child: ListTile(
               leading: const CircleAvatar(child: Icon(Icons.bloodtype_outlined)),
-              title: const Text('شبكة الدم'),
-              subtitle: const Text('طلبات للموافقين على هذا الجهاز'),
+              title: const LifexText('شبكة الدم'),
+              subtitle: const LifexText('طلبات للموافقين على هذا الجهاز'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const BloodRequestScreen(),
@@ -60,8 +62,8 @@ class HealthModulesScreen extends StatelessWidget {
             child: ListTile(
               leading:
                   const CircleAvatar(child: Icon(Icons.medical_services_outlined)),
-              title: const Text('الأطباء'),
-              subtitle: const Text('اختصاص ثم الأقرب بمسافة تدخلها أنت'),
+              title: const LifexText('الأطباء'),
+              subtitle: const LifexText('اختصاص ثم الأقرب بمسافة تدخلها أنت'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const DoctorDirectoryScreen(),
@@ -73,8 +75,8 @@ class HealthModulesScreen extends StatelessWidget {
             child: ListTile(
               leading:
                   const CircleAvatar(child: Icon(Icons.local_pharmacy_outlined)),
-              title: const Text('الصيدلية'),
-              subtitle: const Text('مخزون محلي ثم أقرب صنف. لا بيع دم'),
+              title: const LifexText('الصيدلية'),
+              subtitle: const LifexText('مخزون محلي ثم أقرب صنف. لا بيع دم'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const PharmacyStockScreen(),
@@ -85,8 +87,8 @@ class HealthModulesScreen extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const CircleAvatar(child: Icon(Icons.science_outlined)),
-              title: const Text('طلبات المخبر'),
-              subtitle: const Text('طلب ثم نتيجة للطبيب. ليست قراءة آلية'),
+              title: const LifexText('طلبات المخبر'),
+              subtitle: const LifexText('طلب ثم نتيجة للطبيب. ليست قراءة آلية'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => CareOrderScreen.lab()),
               ),
@@ -95,8 +97,8 @@ class HealthModulesScreen extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const CircleAvatar(child: Icon(Icons.radar_outlined)),
-              title: const Text('طلبات الأشعة'),
-              subtitle: const Text('أرشيف على نفس الخيط. التفسير للطبيب'),
+              title: const LifexText('طلبات الأشعة'),
+              subtitle: const LifexText('أرشيف على نفس الخيط. التفسير للطبيب'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => CareOrderScreen.imaging()),
               ),
@@ -106,8 +108,8 @@ class HealthModulesScreen extends StatelessWidget {
             child: ListTile(
               leading:
                   const CircleAvatar(child: Icon(Icons.camera_alt_outlined)),
-              title: const Text('الكاميرا الذكية'),
-              subtitle: const Text('أوراق بموافقة. OCR فارغ حتى محرك معتمد'),
+              title: const LifexText('الكاميرا الذكية'),
+              subtitle: const LifexText('أوراق بموافقة. OCR فارغ حتى محرك معتمد'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const CameraNotesScreen(),
@@ -119,8 +121,8 @@ class HealthModulesScreen extends StatelessWidget {
             child: ListTile(
               leading:
                   const CircleAvatar(child: Icon(Icons.filter_none_outlined)),
-              title: const Text('عدسة الشرائح المتراكبة'),
-              subtitle: const Text('تكبير جلدي وعدستان. ليست تشخيصاً جلدياً'),
+              title: const LifexText('تقريب العدسة'),
+              subtitle: const LifexText('معاينة حية وزوم العتاد. ليست تشخيص جلد'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const LayeredLensStudioScreen(),
@@ -131,8 +133,8 @@ class HealthModulesScreen extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const CircleAvatar(child: Icon(Icons.image_outlined)),
-              title: const Text('Manage the thumbnail'),
-              subtitle: const Text('إدارة الصورة المصغّرة'),
+              title: LifexText(lifexUi('إدارة الصورة المصغّرة', 'Profile thumbnail')),
+              subtitle: const LifexText('إدارة الصورة المصغّرة'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const ThumbnailManageScreen(),
@@ -143,8 +145,8 @@ class HealthModulesScreen extends StatelessWidget {
           ...modules.map((unit) => Card(
                 child: ListTile(
                   leading: CircleAvatar(child: Icon(unit.icon)),
-                  title: Text(unit.titleAr),
-                  subtitle: Text(unit.subtitleAr),
+                  title: LifexText(unit.titleAr),
+                  subtitle: LifexText(unit.subtitleAr),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
@@ -154,14 +156,14 @@ class HealthModulesScreen extends StatelessWidget {
                 ),
               )),
           const SizedBox(height: 8),
-          const Text('مراجع من نسخة Android Studio',
+          const LifexText('مراجع من نسخة Android Studio',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Card(
             child: ListTile(
               leading: const CircleAvatar(child: Icon(Icons.visibility_outlined)),
-              title: const Text('مرجع العلامات البصرية'),
-              subtitle: const Text('SmartCameraSigns — معاني علامات الوجه والجلد'),
+              title: const LifexText('مرجع العلامات البصرية'),
+              subtitle: const LifexText('SmartCameraSigns — معاني علامات الوجه والجلد'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const MedicalReferenceScreen(
@@ -174,8 +176,8 @@ class HealthModulesScreen extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const CircleAvatar(child: Icon(Icons.menu_book_outlined)),
-              title: const Text('موسوعة الحالات'),
-              subtitle: const Text('حالات وأعراض مرجعية للبحث والتنظيم'),
+              title: const LifexText('موسوعة الحالات'),
+              subtitle: const LifexText('حالات وأعراض مرجعية للبحث والتنظيم'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const MedicalReferenceScreen(
@@ -188,8 +190,8 @@ class HealthModulesScreen extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const CircleAvatar(child: Icon(Icons.straighten_outlined)),
-              title: const Text('معايير الطول والوزن'),
-              subtitle: const Text('مرجع عمري عام وليس تشخيص نمو'),
+              title: const LifexText('معايير الطول والوزن'),
+              subtitle: const LifexText('مرجع عمري عام وليس تشخيص نمو'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const MedicalReferenceScreen(
@@ -202,8 +204,8 @@ class HealthModulesScreen extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const CircleAvatar(child: Icon(Icons.local_pharmacy_outlined)),
-              title: const Text('دليل الأدوية المرجعي'),
-              subtitle: const Text('أسماء وتصنيفات من أرشيف الاستوديو'),
+              title: const LifexText('دليل الأدوية المرجعي'),
+              subtitle: const LifexText('أسماء وتصنيفات من أرشيف الاستوديو'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const MedicalReferenceScreen(
@@ -217,7 +219,7 @@ class HealthModulesScreen extends StatelessWidget {
           const Card(
             child: Padding(
               padding: EdgeInsets.all(14),
-              child: Text(
+              child: LifexText(
                   'تنبيه: السجلات هنا لتنظيم معلوماتك ولا تشخّص المرض ولا تستبدل الطبيب. الربط مع مؤسسات خارجية يتطلب حسابات وصلاحيات وخادمًا فعليًا.'),
             ),
           ),

@@ -1,0 +1,4851 @@
+{
+  "_meta": {
+    "fileName": "Lifex_AI_Skin_Hair_Reference_v1.json",
+    "description_ar": "مرجع جلدي وشعري مأخوذ من jeldia.josn وhear.josn. السجل معلومة عامة وليس مرضاً مؤكداً في الملف الصحي.",
+    "disclaimer_ar": "هذه النصوص مرجع عام. ليست تشخيصاً ولا وصفة. عبارة الدلالة في المصدر تبقى ملاحظة مصدر، ولا تتحول إلى مرض مؤكد.",
+    "schemaVersion": "1.0.0",
+    "source_status": "schema_seed_needs_clinical_review",
+    "automatic_diagnosis_allowed": false,
+    "automatic_prescribing_allowed": false,
+    "sources": [
+      "jeldia.josn",
+      "hear.josn"
+    ],
+    "import_notes_ar": "أُسقط الرأس المكسور، والتكرار، والسجل المقطوع في نهاية jeldia، وذيل المحادثة في نهاية hear. المطابقة مع قاعدة الأمراض بالاسم فقط."
+  },
+  "records": [
+    {
+      "reference_id": "LX-DERM-H-0261",
+      "source_file": "hear.josn",
+      "source_id": "261",
+      "name_ar": "الثعلبة البقعية",
+      "name_en": "Alopecia Areata",
+      "description_ar": "فقدان الشعر على شكل بقع مستديرة ناعمة.",
+      "mentioned_signs_ar": [
+        "بقع صلعاء مستديرة على فروة الرأس",
+        "حكة خفيفة أو شعور بوخز في البداية",
+        "تساقط شعر الحواجب والرموش أحياناً",
+        "الجلد في البقع المصابة ناعم وخالٍ من القشور",
+        "بقع صلعاء دائرية على الرأس",
+        "الشعر في بقية الرأس طبيعي",
+        "قد يظهر تساقط شعر الحواجب والرموش",
+        "لا وجود التهاب أو قشور"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "364"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-H-0265",
+      "source_file": "hear.josn",
+      "source_id": "265",
+      "name_ar": "الاكزيما",
+      "name_en": "Eczema / Atopic Dermatitis",
+      "description_ar": "التهاب مزمن يسبب حكة وجفاف الجلد.",
+      "mentioned_signs_ar": [
+        "حكة شديدة مستمرة",
+        "جفاف وتقشر الجلد",
+        "بقع حمراء متورمة",
+        "تقشر أو تشقق الجلد عند الاستمرار في الخدش"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0266",
+      "source_file": "hear.josn",
+      "source_id": "266",
+      "name_ar": "التهاب الجلد التماسي المزمن",
+      "description_ar": "تهيج الجلد طويل الأمد بسبب التعرض المتكرر لمهيجات.",
+      "mentioned_signs_ar": [
+        "جلد سميك أو متقشر",
+        "حكة متوسطة إلى شديدة",
+        "احمرار مستمر",
+        "تشققات أو بثور صغيرة في بعض المناطق"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0267",
+      "source_file": "hear.josn",
+      "source_id": "267",
+      "name_ar": "التهاب الجلد الدائري الفطري",
+      "name_en": "Tinea Corporis",
+      "description_ar": "عدوى فطرية تصيب الجسم على شكل حلقات حمراء.",
+      "mentioned_signs_ar": [
+        "بقع حمراء دائرية على الجسم",
+        "حكة شديدة",
+        "قشور حول الحواف",
+        "تساقط شعر بسيط في المنطقة المصابة إذا الشعر موجود"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0268",
+      "source_file": "hear.josn",
+      "source_id": "268",
+      "name_ar": "تغير لون الأظافر",
+      "name_en": "Nail Discoloration",
+      "description_ar": "تغير غير طبيعي في لون الأظافر يدل على مشكلة صحية.",
+      "mentioned_signs_ar": [
+        "اصفرار الأظافر أو زرقتها",
+        "بقع بيضاء أو داكنة على الأظافر",
+        "تغير ملمس الأظافر (خشن أو هش)",
+        "قد يشير إلى فقر دم، فطريات، أو أمراض مزمنة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0269",
+      "source_file": "hear.josn",
+      "source_id": "269",
+      "name_ar": "الهالات تحت الأظافر",
+      "name_en": "Subungual Hematoma",
+      "description_ar": "تجمع دموي تحت الظفر نتيجة رض أو إصابة.",
+      "mentioned_signs_ar": [
+        "ألم حاد في الظفر",
+        "لون داكن (أزرق، أسود) تحت الظفر",
+        "تورم في أطراف الأصابع أحياناً",
+        "ظفر قد ينفصل إذا الإصابة شديدة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0270",
+      "source_file": "hear.josn",
+      "source_id": "270",
+      "name_ar": "التهاب الأظافر البكتيري",
+      "name_en": "Paronychia",
+      "description_ar": "عدوى تصيب جلد حول الظفر.",
+      "mentioned_signs_ar": [
+        "احمرار وتورم حول الظفر",
+        "ألم وحساسية عند اللمس",
+        "تجمع صديد تحت الجلد أو الظفر",
+        "قد ينفصل جزء من الظفر في الحالات الشديدة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0311",
+      "source_file": "hear.josn",
+      "source_id": "311",
+      "name_ar": "السعفة الشعرية",
+      "name_en": "Tinea Capitis",
+      "description_ar": "عدوى فطرية تصيب فروة الرأس والشعر.",
+      "mentioned_signs_ar": [
+        "بقع صلعاء دائرية على فروة الرأس",
+        "قشور في المنطقة المصابة",
+        "حكة أو ألم خفيف",
+        "شعر هش ينكسر بسهولة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "311"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-H-0315",
+      "source_file": "hear.josn",
+      "source_id": "315",
+      "name_ar": "الحصف الفقاعي",
+      "name_en": "Pemphigus Vulgaris",
+      "description_ar": "مرض مناعي ذاتي يسبب فقاعات على الجلد والأغشية المخاطية.",
+      "mentioned_signs_ar": [
+        "فقاعات مؤلمة وسهلة الانفجار",
+        "قرح جلدية متكررة",
+        "حكة وألم شديد",
+        "تأثر الأغشية المخاطية للفم أو الأنف"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "315"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "315"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-H-0316",
+      "source_file": "hear.josn",
+      "source_id": "316",
+      "name_ar": "الصلع الوراثي",
+      "name_en": "Androgenic Alopecia",
+      "description_ar": "تساقط الشعر التدريجي نتيجة عوامل وراثية وهرمونية.",
+      "mentioned_signs_ar": [
+        "تراجع خط الشعر الأمامي",
+        "ترقق الشعر تدريجياً في الرأس",
+        "فقدان كثافة الشعر",
+        "بقع صلعاء في الرجال أحياناً"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "316"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "316"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-H-0318",
+      "source_file": "hear.josn",
+      "source_id": "318",
+      "name_ar": "الصدفية الشعرية",
+      "name_en": "Scalp Psoriasis",
+      "description_ar": "تأثير الصدفية على فروة الرأس.",
+      "mentioned_signs_ar": [
+        "قشور سميكة وفضية على فروة الرأس",
+        "حكة شديدة في فروة الرأس",
+        "تساقط الشعر مؤقتاً في المناطق المصابة",
+        "احمرار الجلد أسفل القشور"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "318"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "318"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-H-0319",
+      "source_file": "hear.josn",
+      "source_id": "319",
+      "name_ar": "الأظافر الهشة",
+      "name_en": "Brittle Nails",
+      "description_ar": "ضعف الأظافر وسهولة تكسرها.",
+      "mentioned_signs_ar": [
+        "تكسر الأظافر بسهولة",
+        "تقشر أو شرائح على طول الظفر",
+        "خدوش أو حفر صغيرة على سطح الظفر",
+        "بطء نمو الأظافر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "319"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "319"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-H-0320",
+      "source_file": "hear.josn",
+      "source_id": "320",
+      "name_ar": "العدوى الفطرية للأظافر",
+      "name_en": "Onychomycosis",
+      "description_ar": "عدوى فطرية تصيب أظافر اليدين أو القدمين.",
+      "mentioned_signs_ar": [
+        "اصفرار أو تلون الظفر",
+        "سماكة أو تشقق الظفر",
+        "رائحة كريهة أحياناً",
+        "فصل الظفر عن الفراش في الحالات المتقدمة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "320"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "320"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-H-0361",
+      "source_file": "hear.josn",
+      "source_id": "361",
+      "name_ar": "التهاب الجلد التأتبي",
+      "name_en": "Atopic Dermatitis",
+      "description_ar": "حالة جلدية مزمنة تسبب حكة وجفاف الجلد.",
+      "mentioned_signs_ar": [
+        "جلد جاف ومتقشر",
+        "حكة شديدة مستمرة",
+        "احمرار وتهيّج الجلد",
+        "بقع سميكة مع الخدش المتكرر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0365",
+      "source_file": "hear.josn",
+      "source_id": "365",
+      "name_ar": "الأظافر المقعرة",
+      "name_en": "Koilonychia / Spoon Nails",
+      "description_ar": "تشوه في شكل الأظافر يجعلها مقعرة أو على شكل ملعقة.",
+      "mentioned_signs_ar": [
+        "أظافر رقيقة ومقعرة",
+        "سهولة كسر أو تشقق الظفر",
+        "تغير اللون إلى باهت أو شاحب",
+        "قد يدل على فقر الدم أو نقص الحديد"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0368",
+      "source_file": "hear.josn",
+      "source_id": "368",
+      "name_ar": "الثعلبة الكاملة للجسم",
+      "name_en": "Alopecia Universalis",
+      "description_ar": "فقدان كامل لجميع شعر الجسم.",
+      "mentioned_signs_ar": [
+        "غياب كامل للشعر على الرأس والجسم",
+        "لا وجود لأي قشور أو احمرار",
+        "قد يظهر فجأة أو تدريجياً",
+        "تأثير نفسي شديد"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0370",
+      "source_file": "hear.josn",
+      "source_id": "370",
+      "name_ar": "الطفح الجلدي التأتبي للأطفال",
+      "description_ar": "شكل شائع لحساسية الجلد عند الأطفال.",
+      "mentioned_signs_ar": [
+        "حكة شديدة وتهيج الجلد",
+        "بقع جافة واحمرار",
+        "ظهور فقاعات صغيرة أحياناً",
+        "تفاقم في فصل الشتاء"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0411",
+      "source_file": "hear.josn",
+      "source_id": "411",
+      "name_ar": "التهاب الجلد المثي",
+      "name_en": "Seborrheic Dermatitis",
+      "description_ar": "التهاب مزمن في مناطق الغدد الدهنية.",
+      "mentioned_signs_ar": [
+        "قشور دهنية",
+        "احمرار",
+        "حكة",
+        "قشور صفراء بفروة الرأس"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0412",
+      "source_file": "hear.josn",
+      "source_id": "412",
+      "name_ar": "التهاب الجلد حول الفم",
+      "name_en": "Perioral Dermatitis",
+      "description_ar": "طفح حول الفم غالباً بسبب الستيرويدات.",
+      "mentioned_signs_ar": [
+        "احمرار حول الفم",
+        "نتوءات صغيرة",
+        "حرقان",
+        "جفاف"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0414",
+      "source_file": "hear.josn",
+      "source_id": "414",
+      "name_ar": "الشري",
+      "name_en": "Urticaria",
+      "description_ar": "تحسس جلدي ينتج عنه بثور مرتفعة.",
+      "mentioned_signs_ar": [
+        "بثور حمراء",
+        "حكة",
+        "تورم",
+        "ظهور واختفاء متكرر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0415",
+      "source_file": "hear.josn",
+      "source_id": "415",
+      "name_ar": "الوذمة الوعائية",
+      "name_en": "Angioedema",
+      "description_ar": "تورم عميق بالجلد مرتبط بالشري.",
+      "mentioned_signs_ar": [
+        "تورم الشفتين",
+        "تورم الجفون",
+        "ألم",
+        "حكة أو بدون"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0416",
+      "source_file": "hear.josn",
+      "source_id": "416",
+      "name_ar": "الفقاع الشائع",
+      "name_en": "Pemphigus Vulgaris",
+      "description_ar": "مرض مناعي يسبب فقاعات جلدية.",
+      "mentioned_signs_ar": [
+        "فقاعات رقيقة",
+        "تقرحات الفم",
+        "ألم شديد",
+        "انفصال الجلد"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0417",
+      "source_file": "hear.josn",
+      "source_id": "417",
+      "name_ar": "الفقاع الفقاعي",
+      "name_en": "Bullous Pemphigoid",
+      "description_ar": "مرض مناعي بفقاعات سميكة.",
+      "mentioned_signs_ar": [
+        "فقاعات كبيرة",
+        "حكة",
+        "احمرار",
+        "آفات متقشرة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0418",
+      "source_file": "hear.josn",
+      "source_id": "418",
+      "name_ar": "الذئبة الجلدية",
+      "name_en": "Cutaneous Lupus",
+      "description_ar": "مرض مناعي يصيب الجلد.",
+      "mentioned_signs_ar": [
+        "طفح فراشي",
+        "حساسية للشمس",
+        "بقع حمراء",
+        "ندبات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0419",
+      "source_file": "hear.josn",
+      "source_id": "419",
+      "name_ar": "حب الشباب العقدي الكيسي",
+      "name_en": "Nodulocystic Acne",
+      "description_ar": "حب شباب شديد الالتهاب.",
+      "mentioned_signs_ar": [
+        "عقيدات مؤلمة",
+        "أكياس عميقة",
+        "ندبات",
+        "التهابات شديدة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0420",
+      "source_file": "hear.josn",
+      "source_id": "420",
+      "name_ar": "التهاب الجريبات",
+      "name_en": "Folliculitis",
+      "description_ar": "التهاب بصيلات الشعر.",
+      "mentioned_signs_ar": [
+        "بثور صغيرة",
+        "ألم",
+        "حكة",
+        "احمرار"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0421",
+      "source_file": "hear.josn",
+      "source_id": "421",
+      "name_ar": "تساقط الشعر الكربي",
+      "name_en": "Telogen Effluvium",
+      "description_ar": "تساقط شعر مفاجئ بعد إجهاد.",
+      "mentioned_signs_ar": [
+        "تساقط منتشر",
+        "شعر ضعيف",
+        "فراغات خفيفة",
+        "لا التهابات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0422",
+      "source_file": "hear.josn",
+      "source_id": "422",
+      "name_ar": "الثعلبة الندبية",
+      "name_en": "Scarring Alopecia",
+      "description_ar": "فقدان شعر دائم مع تليف.",
+      "mentioned_signs_ar": [
+        "بقع صلع",
+        "احمرار",
+        "قشور",
+        "ألم فروة الرأس"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0423",
+      "source_file": "hear.josn",
+      "source_id": "423",
+      "name_ar": "قمل الرأس",
+      "name_en": "Pediculosis Capitis",
+      "description_ar": "حشرة طفيلية تعيش على فروة الرأس.",
+      "mentioned_signs_ar": [
+        "حكة",
+        "نقاط بيضاء (بيض)",
+        "التهاب",
+        "خدوش"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0424",
+      "source_file": "hear.josn",
+      "source_id": "424",
+      "name_ar": "النخالية المبرقشة",
+      "name_en": "Tinea Versicolor",
+      "description_ar": "عدوى فطرية تسبب بقع جلدية.",
+      "mentioned_signs_ar": [
+        "بقع فاتحة أو داكنة",
+        "قشور خفيفة",
+        "حكة قليلة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0425",
+      "source_file": "hear.josn",
+      "source_id": "425",
+      "name_ar": "سعفة الرأس",
+      "name_en": "Tinea Capitis",
+      "description_ar": "عدوى فطرية بفروة الرأس.",
+      "mentioned_signs_ar": [
+        "قشور",
+        "تساقط الشعر",
+        "بقع صلع",
+        "التهاب"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0426",
+      "source_file": "hear.josn",
+      "source_id": "426",
+      "name_ar": "سعفة الجسم",
+      "name_en": "Tinea Corporis",
+      "description_ar": "عدوى فطرية بشكل حلقي.",
+      "mentioned_signs_ar": [
+        "طفح حلقي",
+        "حواف بارزة",
+        "حكة",
+        "قشور"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0427",
+      "source_file": "hear.josn",
+      "source_id": "427",
+      "name_ar": "سعفة القدم",
+      "name_en": "Athlete’s Foot",
+      "description_ar": "عدوى فطرية بين أصابع القدم.",
+      "mentioned_signs_ar": [
+        "تشقق",
+        "حكة",
+        "رائحة",
+        "قشور"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0429",
+      "source_file": "hear.josn",
+      "source_id": "429",
+      "name_ar": "الأظافر المخططة طولياً",
+      "description_ar": "خطوط طولية تظهر مع العمر.",
+      "mentioned_signs_ar": [
+        "خطوط طولية",
+        "خشونة بسيطة",
+        "عدم انتظام سطح الظفر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0430",
+      "source_file": "hear.josn",
+      "source_id": "430",
+      "name_ar": "الأظافر المخططة عرضياً",
+      "name_en": "Beau’s Lines",
+      "description_ar": "خطوط عرضية بسبب مرض أو نقص غذائي.",
+      "mentioned_signs_ar": [
+        "خنادق عرضية",
+        "تباطؤ نمو الظفر",
+        "هشاشة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0431",
+      "source_file": "hear.josn",
+      "source_id": "431",
+      "name_ar": "متلازمة الظفر المنفصل",
+      "name_en": "Onycholysis",
+      "description_ar": "انفصال الظفر عن القاعدة.",
+      "mentioned_signs_ar": [
+        "فراغ تحت الظفر",
+        "تغير اللون",
+        "ألم أحياناً"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0432",
+      "source_file": "hear.josn",
+      "source_id": "432",
+      "name_ar": "الأظافر المزرقة",
+      "name_en": "Cyanotic Nails",
+      "description_ar": "زرقة بسبب نقص الأكسجة.",
+      "mentioned_signs_ar": [
+        "لون أزرق",
+        "برودة",
+        "هشاشة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0433",
+      "source_file": "hear.josn",
+      "source_id": "433",
+      "name_ar": "الأظافر السوداء",
+      "name_en": "Subungual Hematoma",
+      "description_ar": "نزيف تحت الظفر.",
+      "mentioned_signs_ar": [
+        "لون أسود أو بنفسجي",
+        "ألم",
+        "ضغط تحت الظفر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0434",
+      "source_file": "hear.josn",
+      "source_id": "434",
+      "name_ar": "الأظافر البيضاء",
+      "name_en": "Leukonychia",
+      "description_ar": "بقع بيضاء على الظفر.",
+      "mentioned_signs_ar": [
+        "بقع بيضاء",
+        "لا ألم",
+        "سطح طبيعي"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0435",
+      "source_file": "hear.josn",
+      "source_id": "435",
+      "name_ar": "سرطان الجلد الميلانيني",
+      "description_ar": "سرطان خطير ينشأ من الخلايا الصباغية.",
+      "mentioned_signs_ar": [
+        "شامة غير طبيعية",
+        "تغير اللون",
+        "نزيف",
+        "عدم تماثل"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0436",
+      "source_file": "hear.josn",
+      "source_id": "436",
+      "name_ar": "التقران الدهني",
+      "name_en": "Seborrheic Keratosis",
+      "description_ar": "آفات جلدية حميدة شائعة.",
+      "mentioned_signs_ar": [
+        "لويحات بنية",
+        "سطح شمعي",
+        "حكة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0437",
+      "source_file": "hear.josn",
+      "source_id": "437",
+      "name_ar": "التقران الشعاعي",
+      "name_en": "Actinic Keratosis",
+      "description_ar": "آفات ناتجة عن الشمس قد تتحول لسرطان.",
+      "mentioned_signs_ar": [
+        "قشور خشنة",
+        "بقع وردية",
+        "ألم مع اللمس"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0438",
+      "source_file": "hear.josn",
+      "source_id": "438",
+      "name_ar": "سرطان الخلايا القاعدية",
+      "description_ar": "سرطان جلدي بطيء النمو.",
+      "mentioned_signs_ar": [
+        "نمو لؤلؤي",
+        "نزيف",
+        "قشور"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0439",
+      "source_file": "hear.josn",
+      "source_id": "439",
+      "name_ar": "سرطان الخلايا الحرشفية",
+      "description_ar": "سرطان جلدي شائع.",
+      "mentioned_signs_ar": [
+        "بقعة خشنة",
+        "نزيف",
+        "تقرحات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0440",
+      "source_file": "hear.josn",
+      "source_id": "440",
+      "name_ar": "مرض دارير",
+      "name_en": "Darier Disease",
+      "description_ar": "مرض وراثي جلدي.",
+      "mentioned_signs_ar": [
+        "قشور دهنية",
+        "رائحة غير طبيعية",
+        "حكة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0441",
+      "source_file": "hear.josn",
+      "source_id": "441",
+      "name_ar": "التهاب الجلد الضوئي",
+      "name_en": "Photosensitive Dermatitis",
+      "description_ar": "تحسس شديد لأشعة الشمس.",
+      "mentioned_signs_ar": [
+        "احمرار",
+        "فقاعات",
+        "حكة",
+        "بقع داكنة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0442",
+      "source_file": "hear.josn",
+      "source_id": "442",
+      "name_ar": "الشعرانية",
+      "name_en": "Hirsutism",
+      "description_ar": "زيادة نمو الشعر لدى النساء.",
+      "mentioned_signs_ar": [
+        "شعر خشن زائد",
+        "اضطرابات هرمونية",
+        "ظهور في الوجه والجسم"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0443",
+      "source_file": "hear.josn",
+      "source_id": "443",
+      "name_ar": "الثعلبة الأمامية الليفية",
+      "description_ar": "تراجع خط الشعر تدريجياً.",
+      "mentioned_signs_ar": [
+        "تراجع مقدمة الشعر",
+        "التهاب خفيف",
+        "تندب"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0444",
+      "source_file": "hear.josn",
+      "source_id": "444",
+      "name_ar": "ترقق الشعر الوراثي",
+      "name_en": "Androgenetic Alopecia",
+      "description_ar": "أشيع أسباب تساقط الشعر.",
+      "mentioned_signs_ar": [
+        "ترقق تدريجي",
+        "فراغات",
+        "شعر ناعم"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0445",
+      "source_file": "hear.josn",
+      "source_id": "445",
+      "name_ar": "التهاب الجلد حول الأظافر",
+      "name_en": "Paronychia",
+      "description_ar": "التهاب حاد أو مزمن حول الظفر.",
+      "mentioned_signs_ar": [
+        "تورم",
+        "احمرار",
+        "قيح",
+        "ألم شديد"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0447",
+      "source_file": "hear.josn",
+      "source_id": "447",
+      "name_ar": "الأكزيما المزمنة لليدين",
+      "description_ar": "التهاب مزمن لجلد اليدين.",
+      "mentioned_signs_ar": [
+        "تشقق",
+        "جفاف",
+        "حكة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0449",
+      "source_file": "hear.josn",
+      "source_id": "449",
+      "name_ar": "التهاب النسيج الخلوي",
+      "name_en": "Cellulitis",
+      "description_ar": "عدوى عميقة بالجلد.",
+      "mentioned_signs_ar": [
+        "تورم",
+        "ألم",
+        "احمرار",
+        "حرارة موضعية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0450",
+      "source_file": "hear.josn",
+      "source_id": "450",
+      "name_ar": "القرحة الجلدية",
+      "description_ar": "تلف عميق في الجلد.",
+      "mentioned_signs_ar": [
+        "جرح مفتوح",
+        "تصريف",
+        "ألم"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0451",
+      "source_file": "hear.josn",
+      "source_id": "451",
+      "name_ar": "الثآليل العادية",
+      "description_ar": "عدوى فيروس HPV.",
+      "mentioned_signs_ar": [
+        "نتوءات خشنة",
+        "بقع مرتفعة",
+        "تقشر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0455",
+      "source_file": "hear.josn",
+      "source_id": "455",
+      "name_ar": "الشرى المزمن",
+      "description_ar": "فقاعات يومية لأكثر من 6 أسابيع.",
+      "mentioned_signs_ar": [
+        "حكة",
+        "تورم",
+        "آفات متغيرة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0456",
+      "source_file": "hear.josn",
+      "source_id": "456",
+      "name_ar": "التصبغات الجلدية",
+      "description_ar": "فرط أو نقص صباغ.",
+      "mentioned_signs_ar": [
+        "بقع داكنة",
+        "بقع فاتحة",
+        "عدم تجانس اللون"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0457",
+      "source_file": "hear.josn",
+      "source_id": "457",
+      "name_ar": "السمية الجلدية للأدوية",
+      "name_en": "Drug Eruptions",
+      "description_ar": "تفاعل جلدي دوائي.",
+      "mentioned_signs_ar": [
+        "طفح منتشر",
+        "حكة",
+        "حمى"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0458",
+      "source_file": "hear.josn",
+      "source_id": "458",
+      "name_ar": "متلازمة ستيفنز جونسون",
+      "description_ar": "تفاعل دوائي خطير.",
+      "mentioned_signs_ar": [
+        "تقرحات",
+        "انفصال الجلد",
+        "حمى"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0459",
+      "source_file": "hear.josn",
+      "source_id": "459",
+      "name_ar": "التحسس من الشمس",
+      "name_en": "Sun Allergy",
+      "description_ar": "رد فعل جلدي ضوئي.",
+      "mentioned_signs_ar": [
+        "حكة",
+        "بثور",
+        "احمرار"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-H-0460",
+      "source_file": "hear.josn",
+      "source_id": "460",
+      "name_ar": "جفاف الجلد الشديد",
+      "name_en": "Xerosis",
+      "description_ar": "جفاف قاسٍ للجلد.",
+      "mentioned_signs_ar": [
+        "تشقق",
+        "قشور",
+        "حكة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0021",
+      "source_file": "jeldia.josn",
+      "source_id": "21",
+      "name_ar": "البهاق الثانوي",
+      "name_en": "Secondary Vitiligo",
+      "description_ar": "فقدان صبغة الجلد نتيجة أمراض جلدية أو إصابات.",
+      "mentioned_signs_ar": [
+        "بقع بيضاء على الجلد بعد إصابة أو التهاب",
+        "تغير لون الشعر في المنطقة المصابة",
+        "حساسية للضوء",
+        "توسع البقع مع الوقت"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0022",
+      "source_file": "jeldia.josn",
+      "source_id": "22",
+      "name_ar": "الثآليل الأخمصية",
+      "name_en": "Plantar Warts",
+      "description_ar": "ثآليل تظهر على باطن القدم وتسبب ألمًا عند المشي.",
+      "mentioned_signs_ar": [
+        "نتوءات صلبة على باطن القدم",
+        "ألم عند المشي أو الضغط",
+        "تغير لون الجلد المحيط",
+        "تكتل أحيانًا على شكل مجموعات",
+        "نمو صلب على باطن القدم",
+        "ألم عند الضغط أو المشي",
+        "نقاط سوداء صغيرة في الوسط",
+        "سطح خشن أو سميك",
+        "ألم أثناء المشي",
+        "بقع سوداء صغيرة",
+        "خشونة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "146"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "452"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0023",
+      "source_file": "jeldia.josn",
+      "source_id": "23",
+      "name_ar": "الثآليل اليدوية",
+      "name_en": "Hand Warts",
+      "description_ar": "ثآليل تظهر على اليدين نتيجة فيروس HPV.",
+      "mentioned_signs_ar": [
+        "نتوءات خشنة على اليدين",
+        "تغير لون الجلد المحيط",
+        "حكة أو ألم خفيف",
+        "انتشار الثآليل إلى أصابع أخرى"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0024",
+      "source_file": "jeldia.josn",
+      "source_id": "24",
+      "name_ar": "الصدفية المعكوسة",
+      "name_en": "Inverse Psoriasis",
+      "description_ar": "صدفية تظهر في الطيات الجلدية مثل الإبط والفخذين.",
+      "mentioned_signs_ar": [
+        "بقع حمراء لامعة في طيات الجلد",
+        "حكة أو حرقة",
+        "تفاقم مع الاحتكاك أو التعرق",
+        "تشققات في بعض الحالات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0025",
+      "source_file": "jeldia.josn",
+      "source_id": "25",
+      "name_ar": "التهاب الجلد العصبي",
+      "name_en": "Neurodermatitis",
+      "description_ar": "حكة مزمنة تؤدي إلى التهاب الجلد نتيجة الحكة المستمرة.",
+      "mentioned_signs_ar": [
+        "جلد سميك ومتقشر في مناطق محددة",
+        "حكة شديدة مستمرة",
+        "تقرحات نتيجة الحكة",
+        "التهاب وتصبغ الجلد مع الوقت",
+        "بقع سميكة",
+        "حكة ليلية",
+        "جلد داكن",
+        "خدوش"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "413"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0026",
+      "source_file": "jeldia.josn",
+      "source_id": "26",
+      "name_ar": "الوردية",
+      "name_en": "Rosacea",
+      "description_ar": "احمرار وتورم في الوجه مع ظهور حبوب صغيرة.",
+      "mentioned_signs_ar": [
+        "احمرار مزمن في الوجه",
+        "بثور حمراء صغيرة",
+        "تورم أو سماكة في الجلد",
+        "قد تصيب الأنف وتسبب تضخمًا خفيفًا",
+        "احمرار موضعي أو منتشر",
+        "حساسية وحكة خفيفة",
+        "أحيانًا تورم بسيط",
+        "يزداد مع الحرارة أو التعرض للشمس",
+        "احمرار",
+        "حرارة",
+        "أوردة سطحية",
+        "حب شباب ملتهب"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "87"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "454"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0027",
+      "source_file": "jeldia.josn",
+      "source_id": "27",
+      "name_ar": "التهاب الجلد التحسسي",
+      "name_en": "Allergic Dermatitis",
+      "description_ar": "طفح جلدي ناتج عن ملامسة مادة مهيجة أو مسببة للحساسية.",
+      "mentioned_signs_ar": [
+        "احمرار وتورم الجلد",
+        "حكة شديدة",
+        "ظهور فقاعات صغيرة",
+        "تقشر الجلد بعد الشفاء",
+        "احمرار الجلد",
+        "تورم وبثور صغيرة",
+        "قشور أو تقرحات في الحالات الشديدة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "362"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0028",
+      "source_file": "jeldia.josn",
+      "source_id": "28",
+      "name_ar": "القوباء الحلقية",
+      "name_en": "Ringworm Tinea Corporis",
+      "description_ar": "عدوى فطرية على الجلد تظهر على شكل حلقات حمراء.",
+      "mentioned_signs_ar": [
+        "حلقة حمراء متقشرة على الجلد",
+        "حكة مستمرة",
+        "توسع البقعة تدريجياً",
+        "تقشير الجلد حول الحواف"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0029",
+      "source_file": "jeldia.josn",
+      "source_id": "29",
+      "name_ar": "التينيا الملونة",
+      "name_en": "Tinea Versicolor",
+      "description_ar": "عدوى فطرية تسبب بقع ملونة على الجلد.",
+      "mentioned_signs_ar": [
+        "بقع فاتحة أو داكنة على الجلد",
+        "حكة خفيفة أو معدومة",
+        "تغيير لون البشرة بعد التعرض للشمس",
+        "انتشار البقع على الصدر والظهر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0030",
+      "source_file": "jeldia.josn",
+      "source_id": "30",
+      "name_ar": "التهاب الجلد البكتيري",
+      "name_en": "Bacterial Dermatitis",
+      "description_ar": "عدوى بكتيرية سطحية تسبب احمرارًا وألمًا.",
+      "mentioned_signs_ar": [
+        "بقع حمراء متورمة",
+        "حكة أو ألم",
+        "قيح أو قشور صفراء",
+        "توسع البقع بسرعة أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0031",
+      "source_file": "jeldia.josn",
+      "source_id": "31",
+      "name_ar": "الهربس الفموي",
+      "name_en": "Oral Herpes",
+      "description_ar": "عدوى فيروسية تسبب بثور حول الفم.",
+      "mentioned_signs_ar": [
+        "بثور صغيرة ومؤلمة حول الفم",
+        "حكة أو حرقة قبل ظهور البثور",
+        "تقرحات بعد انفجار البثور",
+        "تكرار العدوى بشكل متقطع"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0032",
+      "source_file": "jeldia.josn",
+      "source_id": "32",
+      "name_ar": "الهربس التناسلي",
+      "name_en": "Genital Herpes",
+      "description_ar": "عدوى فيروسية تصيب الأعضاء التناسلية تسبب بثور مؤلمة.",
+      "mentioned_signs_ar": [
+        "بثور حمراء على الأعضاء التناسلية",
+        "ألم أو حرقة عند التبول",
+        "حكة وخز شديد",
+        "تكرار العدوى بشكل دوري"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0033",
+      "source_file": "jeldia.josn",
+      "source_id": "33",
+      "name_ar": "الصدفية البثرية",
+      "name_en": "Pustular Psoriasis",
+      "description_ar": "نوع نادر من الصدفية يظهر بثور مملوءة بالصديد.",
+      "mentioned_signs_ar": [
+        "بقع حمراء مع بثور صفراء",
+        "حكة أو ألم",
+        "تقشر الجلد بعد انفجار البثور",
+        "حمى وأعراض عامة في بعض الحالات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0034",
+      "source_file": "jeldia.josn",
+      "source_id": "34",
+      "name_ar": "التهاب الجلد المزمن",
+      "name_en": "Chronic Dermatitis",
+      "description_ar": "التهاب مستمر للجلد مع حكة وتقشر.",
+      "mentioned_signs_ar": [
+        "جلد سميك ومتقشر",
+        "حكة شديدة مستمرة",
+        "تصبغ الجلد أو لونه داكن",
+        "تقرحات أو عدوى ثانوية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0035",
+      "source_file": "jeldia.josn",
+      "source_id": "35",
+      "name_ar": "الثآليل التناسلية",
+      "name_en": "Genital Warts",
+      "description_ar": "نمو جلدي ناتج عن فيروس HPV على الأعضاء التناسلية.",
+      "mentioned_signs_ar": [
+        "نتوءات صغيرة على الأعضاء التناسلية",
+        "حكة أو تهيج",
+        "تكتل على شكل مجموعات أحيانًا",
+        "تغير لون الجلد حولها",
+        "نتوءات طرية",
+        "احمرار",
+        "حكة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "453"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0036",
+      "source_file": "jeldia.josn",
+      "source_id": "36",
+      "name_ar": "حب الشباب",
+      "name_en": "Acne Vulgaris",
+      "description_ar": "انسداد بصيلات الشعر والزيوت يؤدي إلى ظهور بثور وحبوب.",
+      "mentioned_signs_ar": [
+        "بثور سوداء أو بيضاء",
+        "حكة أو ألم خفيف",
+        "احمرار حول الحبوب",
+        "ندوب بعد الالتهاب في بعض الحالات",
+        "بثور حمراء أو صديدية",
+        "رؤوس سوداء أو بيضاء",
+        "احمرار الجلد المحيط",
+        "ندوب بعد الشفاء في الحالات الشديدة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "85"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0037",
+      "source_file": "jeldia.josn",
+      "source_id": "37",
+      "name_ar": "الدمامل",
+      "name_en": "Boils / Furuncles",
+      "description_ar": "عدوى بكتيرية في بصيلات الشعر تسبب حبوب مؤلمة مليئة بالصديد.",
+      "mentioned_signs_ar": [
+        "نتوء أحمر مؤلم على الجلد",
+        "تجمع صديد في مركز النتوء",
+        "حكة أو حرقة خفيفة",
+        "احمرار وتورم حول النتوء",
+        "نتوء أحمر مؤلم",
+        "تجمع صديد في المركز",
+        "احمرار الجلد المحيط",
+        "قد يترافق مع حمى في الحالات الشديدة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "94"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0038",
+      "source_file": "jeldia.josn",
+      "source_id": "38",
+      "name_ar": "الدمامل المتعددة",
+      "name_en": "Carbuncles",
+      "description_ar": "تجمع عدة دمامل معًا، عادة بسبب عدوى بكتيرية قوية.",
+      "mentioned_signs_ar": [
+        "تورم أحمر كبير ومؤلم",
+        "تجمع صديد متعدد",
+        "حمى وإرهاق أحيانًا",
+        "انتشار العدوى إلى الجلد المجاور",
+        "نتوءات حمراء متعددة",
+        "ألم شديد وتورم واسع",
+        "تجمع صديدي كبير",
+        "حمى عامة أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "95"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0039",
+      "source_file": "jeldia.josn",
+      "source_id": "39",
+      "name_ar": "الطفح الجلدي الحراري",
+      "name_en": "Heat Rash / Miliaria",
+      "description_ar": "طفح ناتج عن انسداد الغدد العرقية في الطقس الحار.",
+      "mentioned_signs_ar": [
+        "حبوب صغيرة حمراء أو شفافة",
+        "حكة وخز خفيف",
+        "انتشار الطفح في مناطق ثنايا الجلد",
+        "تحسن عند تبريد الجسم"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0040",
+      "source_file": "jeldia.josn",
+      "source_id": "40",
+      "name_ar": "البثور الدهنية",
+      "name_en": "Sebaceous Cysts",
+      "description_ar": "انسداد بصيلات الشعر بالدهون والخلايا الميتة يسبب بثورًا وحبوبًا.",
+      "mentioned_signs_ar": [
+        "كتلة صغيرة تحت الجلد",
+        "قد تكون مؤلمة أو غير مؤلمة",
+        "تغير لون الجلد فوق الكتلة",
+        "يمكن أن تلتهب وتصبح حمراء",
+        "حبوب بيضاء أو سوداء",
+        "التهاب وحكة حول الحبوب",
+        "ظهور على الوجه، الظهر، والصدر",
+        "ندبات محتملة بعد الشفاء"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "156"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0041",
+      "source_file": "jeldia.josn",
+      "source_id": "41",
+      "name_ar": "الحزاز",
+      "name_en": "Lichen Planus",
+      "description_ar": "مرض جلدي يسبب بقع حمراء أو بنفسجية على الجلد والأغشية المخاطية.",
+      "mentioned_signs_ar": [
+        "بقع حمراء أو بنفسجية مسطحة",
+        "حكة شديدة",
+        "تقرحات على الأغشية المخاطية أحيانًا",
+        "تغيرات في الأظافر في بعض الحالات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0042",
+      "source_file": "jeldia.josn",
+      "source_id": "42",
+      "name_ar": "الحزاز المسطح الظفري",
+      "name_en": "Nail Lichen Planus",
+      "description_ar": "تغيرات في الأظافر بسبب مرض الحزاز المسطح.",
+      "mentioned_signs_ar": [
+        "تشققات أو تجاعيد في الأظافر",
+        "سماكة أو ترقق الأظافر",
+        "تساقط الأظافر في الحالات المتقدمة",
+        "تغير اللون إلى أصفر أو بني"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0043",
+      "source_file": "jeldia.josn",
+      "source_id": "43",
+      "name_ar": "الثعلبة الكاملة",
+      "name_en": "Alopecia Totalis",
+      "description_ar": "فقدان كامل للشعر في فروة الرأس نتيجة مناعة الجسم.",
+      "mentioned_signs_ar": [
+        "صلع كامل في فروة الرأس",
+        "تغيرات في الأظافر أحيانًا",
+        "حكة أو شعور بالحرق الخفيف قبل التساقط",
+        "يمكن أن يكون مفاجئًا",
+        "فقدان جميع الشعر في فروة الرأس",
+        "بقاء بعض الشعر الخفيف في البداية",
+        "قد يصاحبها حكة أو وخز خفيف",
+        "أحياناً فقدان الحواجب والرموش",
+        "فقدان كامل للشعر في الرأس",
+        "قد يمتد لتساقط الحواجب والرموش",
+        "بقع صلعاء ناعمة بدون التهاب",
+        "تأثر نفسي واضح أحياناً"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "251"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "251"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "367"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0044",
+      "source_file": "jeldia.josn",
+      "source_id": "44",
+      "name_ar": "الثعلبة الشاملة للجسم",
+      "name_en": "Alopecia Universalis",
+      "description_ar": "فقدان الشعر في كامل الجسم بسبب استجابة مناعية.",
+      "mentioned_signs_ar": [
+        "صلع كامل للجسم والشعر والحواجب والرموش",
+        "تغيرات أظافر نادرة",
+        "حكة أو شعور بالحرقة قبل التساقط",
+        "قد تتكرر بعد توقف العلاج"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0045",
+      "source_file": "jeldia.josn",
+      "source_id": "45",
+      "name_ar": "الحزاز المائي",
+      "name_en": "Lichen Nitidus",
+      "description_ar": "نمط نادر من الحزاز يسبب حبوب صغيرة على الجلد.",
+      "mentioned_signs_ar": [
+        "حبوب صغيرة لامعة على الجلد",
+        "عادة بدون حكة شديدة",
+        "توزع على الذراعين والجذع",
+        "تبقى ثابتة لفترة طويلة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0046",
+      "source_file": "jeldia.josn",
+      "source_id": "46",
+      "name_ar": "الحزاز الشائع",
+      "name_en": "Lichen Simplex Chronicus",
+      "description_ar": "جلد متقرن وسميك نتيجة الحكة المزمنة.",
+      "mentioned_signs_ar": [
+        "جلد سميك متقشر في مناطق محددة",
+        "حكة مستمرة",
+        "تغير لون الجلد إلى داكن",
+        "تقرحات ثانوية عند الحك المفرط"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0047",
+      "source_file": "jeldia.josn",
+      "source_id": "47",
+      "name_ar": "الثعلبة الجزئية",
+      "name_en": "Alopecia Areata Patchy",
+      "description_ar": "فقدان الشعر على بقع محددة في فروة الرأس أو الجسم.",
+      "mentioned_signs_ar": [
+        "بقع صلعاء مستديرة",
+        "تساقط الشعر المفاجئ",
+        "حكة خفيفة أحيانًا",
+        "تغيرات في الأظافر أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0048",
+      "source_file": "jeldia.josn",
+      "source_id": "48",
+      "name_ar": "التينيا الملونة الخفيفة",
+      "name_en": "Tinea Versicolor Minor",
+      "description_ar": "بقع فطرية صغيرة على الجلد غالبًا على الصدر والظهر.",
+      "mentioned_signs_ar": [
+        "بقع فاتحة أو داكنة صغيرة",
+        "حكة خفيفة أو معدومة",
+        "تغيير لون الجلد بعد الشمس",
+        "انتشار تدريجي للبقع"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0049",
+      "source_file": "jeldia.josn",
+      "source_id": "49",
+      "name_ar": "التينيا الملونة الشديدة",
+      "name_en": "Tinea Versicolor Major",
+      "description_ar": "بقع واسعة على الجلد بسبب عدوى فطرية نشطة.",
+      "mentioned_signs_ar": [
+        "بقع واسعة فاتحة أو داكنة",
+        "حكة خفيفة أو معدومة",
+        "تغيير لون الجلد بعد الشمس",
+        "انتشار سريع أحيانًا إلى الجسم كله"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0050",
+      "source_file": "jeldia.josn",
+      "source_id": "50",
+      "name_ar": "الدمامل الصغيرة",
+      "name_en": "Small Furuncles",
+      "description_ar": "دمامل سطحية صغيرة بسبب عدوى بكتيرية خفيفة.",
+      "mentioned_signs_ar": [
+        "نتوء أحمر صغير مؤلم",
+        "تجمع صديد في المركز",
+        "حكة أو حرقة خفيفة",
+        "احمرار وتورم حول النتوء"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0051",
+      "source_file": "jeldia.josn",
+      "source_id": "51",
+      "name_ar": "الأكزيما الدهنية",
+      "name_en": "Seborrheic Dermatitis",
+      "description_ar": "التهاب مزمن يصيب فروة الرأس والوجه بسبب إفراز دهون مفرط.",
+      "mentioned_signs_ar": [
+        "قشور صفراء أو بيضاء على فروة الرأس",
+        "حكة مستمرة",
+        "احمرار الجلد",
+        "تساقط شعر مؤقت في المناطق المصابة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0052",
+      "source_file": "jeldia.josn",
+      "source_id": "52",
+      "name_ar": "الأكزيما التأتبية",
+      "name_en": "Atopic Dermatitis",
+      "description_ar": "حالة جلدية مزمنة تسبب حكة وجفاف للجلد.",
+      "mentioned_signs_ar": [
+        "حكة شديدة مستمرة",
+        "جلد جاف ومتقشر",
+        "تقرحات وخدوش نتيجة الحك",
+        "احمرار وتورم في مناطق الطفح",
+        "حكة شديدة",
+        "جفاف وتقشر الجلد",
+        "احمرار وانتفاخ الجلد",
+        "ظهور فقاعات صغيرة أحياناً"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "202"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0053",
+      "source_file": "jeldia.josn",
+      "source_id": "53",
+      "name_ar": "الفطريات بين الأصابع",
+      "name_en": "Interdigital Fungal Infection",
+      "description_ar": "عدوى فطرية تصيب ما بين أصابع اليدين أو القدمين.",
+      "mentioned_signs_ar": [
+        "حكة وحرقة بين الأصابع",
+        "تقشير الجلد وتشقق",
+        "رائحة كريهة أحيانًا",
+        "احمرار أو تورم الجلد"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0054",
+      "source_file": "jeldia.josn",
+      "source_id": "54",
+      "name_ar": "التهاب الأظافر الفطري",
+      "name_en": "Onychomycosis",
+      "description_ar": "عدوى فطرية تصيب الأظافر وتغير مظهرها.",
+      "mentioned_signs_ar": [
+        "تغير لون الظفر إلى أصفر أو بني",
+        "سماكة الظفر أو تكسّره",
+        "رائحة غير طبيعية أحيانًا",
+        "انفصال الظفر عن سريره في الحالات المتقدمة",
+        "سماكة الظفر",
+        "اصفرار",
+        "تكسر الظفر",
+        "رائحة سيئة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "428"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0055",
+      "source_file": "jeldia.josn",
+      "source_id": "55",
+      "name_ar": "الظفر المنغرز",
+      "name_en": "Ingrown Nail / Onychocryptosis",
+      "description_ar": "حافة الظفر تنمو داخل الجلد مسببة ألمًا وعدوى.",
+      "mentioned_signs_ar": [
+        "ألم شديد حول الظفر",
+        "تورم واحمرار الجلد المحيط",
+        "إفراز قيح في حالة العدوى",
+        "صعوبة في المشي عند إصابة القدم"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0056",
+      "source_file": "jeldia.josn",
+      "source_id": "56",
+      "name_ar": "التهاب قاعدة الظفر",
+      "name_en": "Paronychia",
+      "description_ar": "عدوى جلدية حول قاعدة الظفر غالبًا بسبب بكتيريا أو فطر.",
+      "mentioned_signs_ar": [
+        "احمرار وتورم حول الظفر",
+        "ألم عند لمس الظفر",
+        "تجمع صديد أحيانًا",
+        "تغير لون الجلد المحيط"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0057",
+      "source_file": "jeldia.josn",
+      "source_id": "57",
+      "name_ar": "الظفر الهش",
+      "name_en": "Brittle Nails",
+      "description_ar": "تكسير وانقسام الأظافر بسهولة نتيجة نقص المعادن أو الأمراض المزمنة.",
+      "mentioned_signs_ar": [
+        "تشقق الظفر أو تقصفه",
+        "تقعر أو تموج في سطح الظفر",
+        "ضعف النمو",
+        "جفاف الأظافر وظهور حواف خشنة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0058",
+      "source_file": "jeldia.josn",
+      "source_id": "58",
+      "name_ar": "الظفر المتقشر",
+      "name_en": "Onychoschizia",
+      "description_ar": "تقشر طبقات الظفر بسبب إجهاد ميكانيكي أو نقص تغذية.",
+      "mentioned_signs_ar": [
+        "تقشر الظفر من الأعلى إلى الأسفل",
+        "ضعف الظفر وهشاشته",
+        "مناطق بيضاء على الظفر",
+        "تفاقم مع التعرض للماء أو المواد الكيميائية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0059",
+      "source_file": "jeldia.josn",
+      "source_id": "59",
+      "name_ar": "الظفر المنحني",
+      "name_en": "Koilonychia / Spoon Nails",
+      "description_ar": "تغير شكل الظفر ليصبح مقعرًا بسبب نقص الحديد أو أمراض مزمنة.",
+      "mentioned_signs_ar": [
+        "سطح الظفر مقعر كملعقة",
+        "رقة وظفر هش",
+        "تغير لون الظفر أحيانًا",
+        "تأثر غالبًا بأظافر اليدين"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0060",
+      "source_file": "jeldia.josn",
+      "source_id": "60",
+      "name_ar": "بقع بيضاء على الظفر",
+      "name_en": "Leukonychia",
+      "description_ar": "ظهور بقع بيضاء صغيرة على الظفر غالبًا نتيجة إصابة أو نقص معدن.",
+      "mentioned_signs_ar": [
+        "بقع بيضاء صغيرة على الظفر",
+        "عدم تأثير على وظيفة الظفر",
+        "تلاشي البقع مع نمو الظفر",
+        "قد تشير إلى نقص الزنك أو الكالسيوم"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0061",
+      "source_file": "jeldia.josn",
+      "source_id": "61",
+      "name_ar": "الظفر البني الداكن",
+      "name_en": "Melanonychia",
+      "description_ar": "تصبغ الظفر باللون البني أو الأسود أحيانًا يشير إلى ورم أو فطر.",
+      "mentioned_signs_ar": [
+        "شريط بني أو أسود على طول الظفر",
+        "تغير تدريجي في اللون",
+        "توسع البقعة مع الوقت",
+        "مراقبة مستمرة مهمة لاستبعاد الأورام"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0062",
+      "source_file": "jeldia.josn",
+      "source_id": "62",
+      "name_ar": "الظفر الأحمر",
+      "name_en": "Red Nail Syndrome",
+      "description_ar": "احمرار الظفر نتيجة التهاب أو اضطراب في الأوعية الدموية.",
+      "mentioned_signs_ar": [
+        "احمرار الظفر بالكامل أو جزء منه",
+        "ألم وحساسية حول الظفر",
+        "تورم أحيانًا",
+        "قد يكون مرتبطًا بمرض مزمن أو عدوى"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0063",
+      "source_file": "jeldia.josn",
+      "source_id": "63",
+      "name_ar": "الظفر الأزرق",
+      "name_en": "Blue Nails / Cyanosis",
+      "description_ar": "لون أزرق للظفر يشير إلى نقص أكسجين الدم.",
+      "mentioned_signs_ar": [
+        "لون أزرق أو أرجواني للظفر",
+        "برودة الأصابع",
+        "خفقان أو ضيق نفس أحيانًا",
+        "تغير اللون مع التحرك أو الضغط"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0064",
+      "source_file": "jeldia.josn",
+      "source_id": "64",
+      "name_ar": "الظفر المنحني للأعلى",
+      "name_en": "Clubbing",
+      "description_ar": "تغير شكل نهاية الأصابع لتصبح مفلطحة ومنحنية لأعلى، غالبًا بسبب أمراض الرئة أو القلب.",
+      "mentioned_signs_ar": [
+        "توسّع أطراف الأصابع",
+        "انحناء الظفر لأعلى",
+        "لمس أطراف الأصابع يختلف عن الطبيعي",
+        "تطور تدريجي مع المرض المزمن"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0065",
+      "source_file": "jeldia.josn",
+      "source_id": "65",
+      "name_ar": "التصبغ الفسفوري للظفر",
+      "name_en": "Chromonychia",
+      "description_ar": "تغير لون الظفر إلى ألوان غير طبيعية نتيجة فطريات أو أدوية.",
+      "mentioned_signs_ar": [
+        "تغير لون الظفر (أخضر، أسود، بني)",
+        "سماكة أو هشاشة الظفر",
+        "قد تكون مصحوبة برائحة كريهة",
+        "انتشار تدريجي في الظفر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0066",
+      "source_file": "jeldia.josn",
+      "source_id": "66",
+      "name_ar": "الخطوط الأفقية على الظفر",
+      "name_en": "Beau's Lines",
+      "description_ar": "خطوط أفقية تظهر على الظفر نتيجة إصابة أو مرض شديد.",
+      "mentioned_signs_ar": [
+        "خطوط أفقية واضحة على الظفر",
+        "تأخر نمو الظفر بعد المرض",
+        "ترافق مع ضعف الظفر وهشاشته",
+        "قد يظهر على عدة أظافر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0067",
+      "source_file": "jeldia.josn",
+      "source_id": "67",
+      "name_ar": "الخطوط العمودية على الظفر",
+      "name_en": "Longitudinal Ridges",
+      "description_ar": "نتوءات أو خطوط عمودية على الظفر مع تقدم العمر أو نقص التغذية.",
+      "mentioned_signs_ar": [
+        "خطوط طولية على سطح الظفر",
+        "قد تكون مؤلمة في بعض الحالات",
+        "تغير ملمس الظفر وخشونته",
+        "غالبًا لا تؤثر على وظيفة الظفر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0068",
+      "source_file": "jeldia.josn",
+      "source_id": "68",
+      "name_ar": "تثخن الأظافر",
+      "name_en": "Onychauxis",
+      "description_ar": "زيادة سماكة الظفر نتيجة إصابة أو فطريات أو أمراض جلدية.",
+      "mentioned_signs_ar": [
+        "سماكة الظفر بشكل ملحوظ",
+        "تغير لون الظفر إلى أصفر أو بني",
+        "صعوبة في تقليم الظفر",
+        "ألم عند الضغط أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0069",
+      "source_file": "jeldia.josn",
+      "source_id": "69",
+      "name_ar": "تشققات الأظافر",
+      "name_en": "Onychorrhexis",
+      "description_ar": "تشقق الأظافر عموديًا نتيجة نقص رطوبة أو أمراض مزمنة.",
+      "mentioned_signs_ar": [
+        "تشقق طول الأظافر",
+        "هشاشة وضعف الظفر",
+        "تساقط الأجزاء التالفة أحيانًا",
+        "تفاقم مع التعرض للماء أو المواد الكيميائية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0070",
+      "source_file": "jeldia.josn",
+      "source_id": "70",
+      "name_ar": "الظفر المغروس داخل اللحم",
+      "name_en": "Pincer Nail",
+      "description_ar": "انحناء الظفر بشكل مفرط يؤدي إلى ضغط على الجلد.",
+      "mentioned_signs_ar": [
+        "انحناء الظفر بشكل مفرط للأعلى أو الجانبين",
+        "ألم شديد حول الظفر",
+        "احمرار وتورم الجلد المحيط",
+        "صعوبة المشي أو استخدام اليدين حسب الموقع"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0071",
+      "source_file": "jeldia.josn",
+      "source_id": "71",
+      "name_ar": "الظفر المطروق",
+      "name_en": "Trachyonychia / Sandpaper Nails",
+      "description_ar": "سطح الظفر خشن ومتعرج نتيجة أمراض جلدية أو مناعية.",
+      "mentioned_signs_ar": [
+        "سطح الظفر خشن كالمسنور",
+        "ضعف وهشاشة الظفر",
+        "تغير لون الظفر أحيانًا",
+        "تأثر عدة أظافر في نفس الوقت"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0072",
+      "source_file": "jeldia.josn",
+      "source_id": "72",
+      "name_ar": "الظفر الشبيه بالسكين",
+      "name_en": "Koilonychia Severe",
+      "description_ar": "شكل مقعر شديد للظفر نتيجة فقر الدم المزمن أو نقص الحديد.",
+      "mentioned_signs_ar": [
+        "سطح مقعر شديد للظفر",
+        "ضعف وهشاشة واضحة",
+        "تغير لون الظفر إلى شاحب أو مصفر",
+        "ألم خفيف أحيانًا عند الضغط"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0073",
+      "source_file": "jeldia.josn",
+      "source_id": "73",
+      "name_ar": "تثخن قاعدة الظفر",
+      "name_en": "Hypertrophic Nail Base",
+      "description_ar": "تثخن قاعدة الظفر بسبب أمراض مزمنة أو التهابات متكررة.",
+      "mentioned_signs_ar": [
+        "زيادة سماكة قاعدة الظفر",
+        "تورم واحمرار حول قاعدة الظفر",
+        "ألم عند الضغط",
+        "تغيير مظهر الظفر تدريجيًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0074",
+      "source_file": "jeldia.josn",
+      "source_id": "74",
+      "name_ar": "الظفر المقسم",
+      "name_en": "Onychomadesis",
+      "description_ar": "فصل جزء من الظفر عن سريره نتيجة صدمة أو مرض شديد.",
+      "mentioned_signs_ar": [
+        "انقسام الظفر أو سقوطه جزئيًا",
+        "ألم أو عدم راحة مؤقتة",
+        "ظهور خطوط أفقية قبل الانقسام",
+        "تأثر عدة أظافر أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0075",
+      "source_file": "jeldia.josn",
+      "source_id": "75",
+      "name_ar": "الظفر المنحني للخارج",
+      "name_en": "Koilonychia Mild",
+      "description_ar": "انحناء طفيف للأظافر نتيجة نقص الحديد أو الوراثة.",
+      "mentioned_signs_ar": [
+        "سطح الظفر مقعر طفيف",
+        "هشاشة خفيفة",
+        "تغير لون الظفر أحيانًا",
+        "قد يتطور إذا استمر النقص الغذائي"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0076",
+      "source_file": "jeldia.josn",
+      "source_id": "76",
+      "name_ar": "الصدفية",
+      "name_en": "Psoriasis",
+      "description_ar": "مرض مزمن يسبب تراكم خلايا الجلد مكوّنة بقع حمراء متقشرة.",
+      "mentioned_signs_ar": [
+        "بقع حمراء مغطاة بقشور فضية",
+        "حكة أو ألم موضعي",
+        "تشقق الجلد أحيانًا",
+        "تأثر الأظافر بتغير اللون أو التجاويف",
+        "حكة أو ألم في بعض الحالات",
+        "تقرحات صغيرة عند خدش الجلد",
+        "تغير شكل أو سمك الأظافر أحياناً (نقاط أو حفر)"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "263"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0077",
+      "source_file": "jeldia.josn",
+      "source_id": "77",
+      "name_ar": "الإكزيما الجلدية التلامسية",
+      "name_en": "Contact Dermatitis",
+      "description_ar": "طفح جلدي ناتج عن ملامسة مادة مهيجة أو مسببة للحساسية.",
+      "mentioned_signs_ar": [
+        "احمرار الجلد",
+        "حكة شديدة",
+        "بقع مائية أو فقاعات صغيرة",
+        "تقشر أو تشقق الجلد بعد الالتهاب"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0078",
+      "source_file": "jeldia.josn",
+      "source_id": "78",
+      "name_ar": "العد الوردي",
+      "name_en": "Rosacea",
+      "description_ar": "حالة مزمنة تسبب احمرار الوجه وظهور حبوب صغيرة.",
+      "mentioned_signs_ar": [
+        "احمرار على الخدين والأنف والجبهة",
+        "حبوب حمراء صغيرة",
+        "أوعية دموية ظاهرة على الوجه",
+        "تهيج الجلد وحساسية للحرارة أو الشمس"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0079",
+      "source_file": "jeldia.josn",
+      "source_id": "79",
+      "name_ar": "الهربس البسيط",
+      "name_en": "Herpes Simplex",
+      "description_ar": "عدوى فيروسية تسبب فقاعات مؤلمة على الجلد أو الشفاه.",
+      "mentioned_signs_ar": [
+        "فقاعات حمراء ممتلئة بسائل",
+        "ألم أو حرقة قبل ظهور الفقاعات",
+        "تقرحات بعد انفجار الفقاعات",
+        "حكة أو وخز في المنطقة المصابة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0080",
+      "source_file": "jeldia.josn",
+      "source_id": "80",
+      "name_ar": "الحزام الناري",
+      "name_en": "Shingles / Herpes Zoster",
+      "description_ar": "فيروس يستهدف الأعصاب ويؤدي لظهور طفح مؤلم على الجلد.",
+      "mentioned_signs_ar": [
+        "طفح جلدي أحمر على جانب واحد من الجسم",
+        "ألم شديد ووخز",
+        "فقاعات مملوءة بسائل",
+        "حكة وحساسية في المنطقة المصابة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0081",
+      "source_file": "jeldia.josn",
+      "source_id": "81",
+      "name_ar": "الجدري المائي",
+      "name_en": "Chickenpox",
+      "description_ar": "عدوى فيروسية شديدة العدوى تسبب طفحًا حويصليًا.",
+      "mentioned_signs_ar": [
+        "طفح أحمر يبدأ بالوجه والصدر",
+        "فقاعات صغيرة مملوءة بسائل",
+        "حكة شديدة",
+        "حمى وتعب عام",
+        "بقع حمراء تتحول إلى فقاعات",
+        "حمى وصداع خفيف",
+        "ظهور البثور على الجلد والشعر أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "137"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0082",
+      "source_file": "jeldia.josn",
+      "source_id": "82",
+      "name_ar": "الحكة",
+      "name_en": "Pruritus",
+      "description_ar": "إحساس مزعج بالحكة في الجلد دون طفح واضح غالباً.",
+      "mentioned_signs_ar": [
+        "حكة شديدة متواصلة",
+        "خدوش تؤدي لتقرحات الجلد",
+        "تفاقم الليل أو عند الحرارة",
+        "جفاف الجلد مصاحب أحيانًا",
+        "حكة مستمرة أو متقطعة",
+        "خدش يسبب تهيج الجلد",
+        "احمرار أو جفاف الجلد",
+        "قشور أو تهيج من الخدش المستمر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "256"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "256"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0083",
+      "source_file": "jeldia.josn",
+      "source_id": "83",
+      "name_ar": "الجرب",
+      "name_en": "Scabies",
+      "description_ar": "عدوى طفيلية تسبب حكة شديدة وطفحًا على الجلد.",
+      "mentioned_signs_ar": [
+        "حكة شديدة خاصة في الليل",
+        "نتوءات صغيرة وخطوط على الجلد",
+        "طفح أحمر متفرّق",
+        "تقشّر الجلد أحيانًا",
+        "حكة شديدة خصوصًا في الليل",
+        "خطوط صغيرة على الجلد نتيجة العث",
+        "بقع حمراء أو فقاعات صغيرة",
+        "قد تتأثر اليدين، المعصمين، والأصابع"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "141"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0084",
+      "source_file": "jeldia.josn",
+      "source_id": "84",
+      "name_ar": "الثعلبة",
+      "name_en": "Alopecia Areata",
+      "description_ar": "فقدان الشعر في بقع محددة نتيجة هجوم مناعي على بصيلات الشعر.",
+      "mentioned_signs_ar": [
+        "بقع صلعاء دائرية على فروة الرأس",
+        "تساقط الشعر بسرعة",
+        "أحيانًا تغيرات في الأظافر",
+        "حكة خفيفة أو شعور بالحرقة أحيانًا",
+        "شعر خفيف أو غائب في البقع المصابة",
+        "قد يترافق مع أظافر متغيرة",
+        "قد تظهر تدريجيًا أو فجأة",
+        "بقع صلعاء دائرية أو بيضاوية",
+        "حكة أو شعور بوخز في المنطقة المصابة أحياناً",
+        "تساقط الشعر في الرموش أو الحواجب أحياناً",
+        "نمو شعر قصير ضعيف في البداية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "134"
+        },
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "204"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0086",
+      "source_file": "jeldia.josn",
+      "source_id": "86",
+      "name_ar": "البهاق",
+      "name_en": "Vitiligo",
+      "description_ar": "فقدان تصبغ الجلد بسبب موت الخلايا الصباغية.",
+      "mentioned_signs_ar": [
+        "بقع بيضاء على الجلد",
+        "زيادة حساسية الجلد للشمس",
+        "تغير لون الشعر في المناطق المصابة",
+        "توسع البقع تدريجيًا",
+        "حواف واضحة بين الجلد المصاب والسليم",
+        "قد تصيب جميع مناطق الجسم",
+        "قد تؤثر على الشعر والأغشية المخاطية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "144"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0088",
+      "source_file": "jeldia.josn",
+      "source_id": "88",
+      "name_ar": "الذئبة الحمراء الجلدية",
+      "name_en": "Cutaneous Lupus Erythematosus",
+      "description_ar": "مرض مناعي ذاتي يؤثر على الجلد ويشكل طفحًا مميزًا.",
+      "mentioned_signs_ar": [
+        "طفح أحمر على الوجه والأنف والخدين",
+        "بقع متقشرة",
+        "حساسية للضوء",
+        "قد يترافق مع ألم أو حكة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0089",
+      "source_file": "jeldia.josn",
+      "source_id": "89",
+      "name_ar": "الحزاز المسطح",
+      "name_en": "Lichen Planus",
+      "description_ar": "مرض التهابي يسبب طفحًا وحكة على الجلد والأغشية المخاطية.",
+      "mentioned_signs_ar": [
+        "بقع أرجوانية مسطحة على الجلد",
+        "حكة شديدة",
+        "ظهور خطوط بيضاء على الأغشية المخاطية",
+        "تقرحات أحيانًا في الفم أو الأعضاء التناسلية",
+        "بقع أرجوانية لامعة على الجلد",
+        "قد يصيب الفم والأظافر",
+        "ظهور خطوط بيضاء دقيقة أحيانًا",
+        "تقشر الجلد أو ظهور خطوط بيضاء على الأغشية المخاطية",
+        "تقرحات صغيرة في الفم",
+        "تقرحات في الفم أو الأعضاء التناسلية",
+        "خطوط بيضاء في الأغشية المخاطية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "132"
+        },
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "203"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "363"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0090",
+      "source_file": "jeldia.josn",
+      "source_id": "90",
+      "name_ar": "العد الوردي الحملي",
+      "name_en": "PUPPP",
+      "description_ar": "طفح جلدي يظهر أثناء الحمل، غالبًا في البطن والأرداف.",
+      "mentioned_signs_ar": [
+        "طفح أحمر مرتفع ومثير للحكة",
+        "تفاقم ليلي للحكة",
+        "بقع منتشرة على البطن والفخذين",
+        "أحيانًا فقاعات صغيرة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0091",
+      "source_file": "jeldia.josn",
+      "source_id": "91",
+      "name_ar": "الطفح الحراري",
+      "name_en": "Heat Rash / Miliaria",
+      "description_ar": "طفح يظهر بسبب انسداد الغدد العرقية في الحر الشديد.",
+      "mentioned_signs_ar": [
+        "بقع حمراء صغيرة أو حبوب",
+        "حكة أو حرقة خفيفة",
+        "تظهر في مناطق العرق",
+        "تختفي عند التبريد وتجفيف الجلد",
+        "بقع حمراء صغيرة على الجلد",
+        "تظهر في الطقس الحار والرطب",
+        "غالبًا في الرقبة والصدر والظهر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "159"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0092",
+      "source_file": "jeldia.josn",
+      "source_id": "92",
+      "name_ar": "السعفة",
+      "name_en": "Tinea / Ringworm",
+      "description_ar": "عدوى فطرية تصيب الجلد وتسبب حلقة حمراء متقشرة.",
+      "mentioned_signs_ar": [
+        "حلقة حمراء مرتفعة حدودها واضحة",
+        "قشور على الحلقة",
+        "حكة شديدة",
+        "توسع تدريجي للطفح إذا لم يعالج"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0093",
+      "source_file": "jeldia.josn",
+      "source_id": "93",
+      "name_ar": "حبوب تحت الجلد",
+      "name_en": "Cysts",
+      "description_ar": "تجمعات دهنية أو صديدية تحت الجلد تشكل كتلًا صغيرة.",
+      "mentioned_signs_ar": [
+        "كتلة تحت الجلد ثابتة",
+        "قد تكون مؤلمة عند الضغط",
+        "تغير في حجم الكيس أحيانًا",
+        "احمرار الجلد حول الكيس إذا أصيب بالعدوى"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0096",
+      "source_file": "jeldia.josn",
+      "source_id": "96",
+      "name_ar": "الحصف",
+      "name_en": "Milia",
+      "description_ar": "حويصلات صغيرة بيضاء على الجلد نتيجة انسداد الغدد الدهنية.",
+      "mentioned_signs_ar": [
+        "نقاط بيضاء صغيرة صلبة على الوجه",
+        "عدم وجود ألم أو حكة",
+        "تستمر لأسابيع أو أشهر",
+        "تظهر غالبًا حول العينين والخدين",
+        "نتوءات صغيرة خشنة على الجلد",
+        "غالبًا على الذراعين والفخذين",
+        "جلد جاف وخشن",
+        "غير مؤلم وعادة مزمن",
+        "قشور عسلية",
+        "بثور",
+        "انتشار سريع"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "143"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "448"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0097",
+      "source_file": "jeldia.josn",
+      "source_id": "97",
+      "name_ar": "الحمو النطاقي",
+      "name_en": "Shingles",
+      "description_ar": "ظهور طفح مؤلم على مسار عصب معين بسبب فيروس الحماق النطاقي.",
+      "mentioned_signs_ar": [
+        "طفح أحمر مع فقاعات",
+        "ألم شديد وحرقان",
+        "حساسية في المنطقة المصابة",
+        "تترك أحيانًا ندوب بعد الشفاء"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0098",
+      "source_file": "jeldia.josn",
+      "source_id": "98",
+      "name_ar": "الحمى القلاعية",
+      "name_en": "Hand, Foot, and Mouth Disease",
+      "description_ar": "عدوى فيروسية تسبب بثورًا وحكة على اليدين والقدمين والفم.",
+      "mentioned_signs_ar": [
+        "فقاعات حمراء صغيرة على اليدين والقدمين",
+        "تقرحات في الفم",
+        "حمى خفيفة",
+        "تعب وتهيج عند الأطفال"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0099",
+      "source_file": "jeldia.josn",
+      "source_id": "99",
+      "name_ar": "الطفح التحسسي",
+      "name_en": "Allergic Rash",
+      "description_ar": "طفح يظهر نتيجة رد فعل تحسسي لمادة معينة.",
+      "mentioned_signs_ar": [
+        "بقع حمراء أو متورمة",
+        "حكة شديدة",
+        "فقاعات صغيرة أحيانًا",
+        "تختفي عند إزالة المسبب"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0100",
+      "source_file": "jeldia.josn",
+      "source_id": "100",
+      "name_ar": "الطفح الفيروسي",
+      "name_en": "Viral Exanthem",
+      "description_ar": "طفح جلدي يظهر نتيجة عدوى فيروسية شاملة للجسم.",
+      "mentioned_signs_ar": [
+        "بقع حمراء منتشرة على الجسم",
+        "حمى واعراض شبيهة بالبرد",
+        "تعب عام",
+        "حكة أو تقشر الجلد بعد التعافي"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0101",
+      "source_file": "jeldia.josn",
+      "source_id": "101",
+      "name_ar": "الطفح الفطري تحت الإبط والفخذ",
+      "name_en": "Intertrigo",
+      "description_ar": "التهاب جلدي يحدث في طيات الجلد بسبب الرطوبة والفطريات.",
+      "mentioned_signs_ar": [
+        "احمرار الجلد في الطيات",
+        "حكة وحرقة",
+        "رطوبة وتقشر الجلد",
+        "روائح كريهة أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0102",
+      "source_file": "jeldia.josn",
+      "source_id": "102",
+      "name_ar": "السعفة القرنية",
+      "name_en": "Tinea Corporis",
+      "description_ar": "عدوى فطرية تصيب الجلد وتسبب طفحًا دائريًا متقشرًا.",
+      "mentioned_signs_ar": [
+        "حلقة حمراء متقشرة",
+        "حكة شديدة",
+        "توسع تدريجي للطفح",
+        "حدود مرتفعة واضحة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0103",
+      "source_file": "jeldia.josn",
+      "source_id": "103",
+      "name_ar": "السعفة المبرقشة",
+      "name_en": "Tinea Versicolor",
+      "description_ar": "عدوى فطرية تسبب بقعًا فاتحة أو داكنة على الجلد.",
+      "mentioned_signs_ar": [
+        "بقع متغيرة اللون على الجذع والرقبة",
+        "حكة خفيفة",
+        "جفاف الجلد حول البقع",
+        "تزداد في الطقس الحار والرطب"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0104",
+      "source_file": "jeldia.josn",
+      "source_id": "104",
+      "name_ar": "الصدفية الأظافرية",
+      "name_en": "Nail Psoriasis",
+      "description_ar": "تأثر الأظافر بمرض الصدفية مع تغييرات عميقة في المظهر.",
+      "mentioned_signs_ar": [
+        "حفر أو تجاويف على سطح الظفر",
+        "تغير لون الظفر (اصفرار أو تلون)",
+        "انفصال الظفر عن سريره",
+        "سميك أو هش"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0105",
+      "source_file": "jeldia.josn",
+      "source_id": "105",
+      "name_ar": "الفطريات الجلدية للأظافر",
+      "name_en": "Onychomycosis",
+      "description_ar": "عدوى فطرية تسبب سماكة وتشوه الأظافر.",
+      "mentioned_signs_ar": [
+        "سماكة الظفر وتشقق",
+        "اصفرار أو تلون الظفر",
+        "رائحة كريهة أحيانًا",
+        "ضعف الظفر وسهولة تكسره"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0106",
+      "source_file": "jeldia.josn",
+      "source_id": "106",
+      "name_ar": "انغراس الظفر",
+      "name_en": "Ingrown Toenail",
+      "description_ar": "حافة الظفر تنمو داخل الجلد مسببة ألمًا وعدوى.",
+      "mentioned_signs_ar": [
+        "ألم عند طرف الظفر",
+        "احمرار وتورم الجلد المحيط",
+        "صديد عند العدوى",
+        "تقرحات صغيرة حول الظفر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0107",
+      "source_file": "jeldia.josn",
+      "source_id": "107",
+      "name_ar": "تغيرات بيضاء في الأظافر",
+      "name_en": "Leukonychia",
+      "description_ar": "ظهور بقع بيضاء على الظفر نتيجة إصابة أو نقص في التغذية.",
+      "mentioned_signs_ar": [
+        "بقع أو خطوط بيضاء على الظفر",
+        "غير مؤلمة عادة",
+        "قد تنتشر عبر الظفر بأكمله",
+        "تدل على إصابة سابقة أو نقص معدن"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0108",
+      "source_file": "jeldia.josn",
+      "source_id": "108",
+      "name_ar": "تقصير أو هشاشة الأظافر",
+      "name_en": "Brittle Nails",
+      "description_ar": "ضعف الظفر وسهولة تكسره أو تقشيره.",
+      "mentioned_signs_ar": [
+        "تشقق أو تقشر الظفر بسهولة",
+        "ضعف سماكة الظفر",
+        "تأثر نمو الظفر الطبيعي",
+        "زيادة الحساسية للضغط أو الصدمات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0109",
+      "source_file": "jeldia.josn",
+      "source_id": "109",
+      "name_ar": "أظافر على شكل ملعقة",
+      "name_en": "Koilonychia",
+      "description_ar": "تشوه في شكل الظفر يجعله غائرًا مثل الملعقة.",
+      "mentioned_signs_ar": [
+        "غوص مركز الظفر للأعلى",
+        "هشاشة الظفر",
+        "تغير اللون أحيانًا",
+        "ارتباط بنقص الحديد أو بعض الأمراض الوراثية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0110",
+      "source_file": "jeldia.josn",
+      "source_id": "110",
+      "name_ar": "أظافر بارزة أو سميكة",
+      "name_en": "Clubbing",
+      "description_ar": "انتفاخ نهايات الأصابع مع زيادة سمك الظفر.",
+      "mentioned_signs_ar": [
+        "انحناء الظفر للأمام",
+        "تضخم أطراف الأصابع",
+        "تغير اللمعان واللون",
+        "قد يدل على أمراض الرئة أو القلب المزمنة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0111",
+      "source_file": "jeldia.josn",
+      "source_id": "111",
+      "name_ar": "الأظافر المصابة بالتهاب",
+      "name_en": "Paronychia",
+      "description_ar": "عدوى حول حافة الظفر تسبب تورم وألم.",
+      "mentioned_signs_ar": [
+        "تورم واحمرار حول الظفر",
+        "ألم عند لمس المنطقة",
+        "صديد أو قيح عند العدوى",
+        "تغير شكل الظفر أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0112",
+      "source_file": "jeldia.josn",
+      "source_id": "112",
+      "name_ar": "الأظافر المخفوقة",
+      "name_en": "Onychogryphosis",
+      "description_ar": "سماكة وتشوه الظفر ليأخذ شكلًا منحنياً.",
+      "mentioned_signs_ar": [
+        "سماكة الظفر بشكل كبير",
+        "انحناء الظفر للأسفل أو للأعلى",
+        "صعوبة في قص الظفر",
+        "تغير اللون والملمس"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0113",
+      "source_file": "jeldia.josn",
+      "source_id": "113",
+      "name_ar": "بقع زرقاء أو سوداء على الأظافر",
+      "name_en": "Subungual Hematoma",
+      "description_ar": "تجمع دموي تحت الظفر بعد إصابة.",
+      "mentioned_signs_ar": [
+        "بقعة داكنة تحت الظفر",
+        "ألم عند الضغط",
+        "تورم خفيف أحيانًا",
+        "تختفي تدريجيًا مع نمو الظفر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0114",
+      "source_file": "jeldia.josn",
+      "source_id": "114",
+      "name_ar": "الأظافر المنقسمة",
+      "name_en": "Split Nails / Onychoschizia",
+      "description_ar": "تشقق الظفر من الأمام أو الوسط نتيجة ضعف أو إصابة.",
+      "mentioned_signs_ar": [
+        "تشقق أو انقسام الظفر",
+        "هشاشة الظفر وزيادة التكسر",
+        "تغير سماكة الظفر",
+        "ألم خفيف أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0115",
+      "source_file": "jeldia.josn",
+      "source_id": "115",
+      "name_ar": "الأظافر المصفرة",
+      "name_en": "Yellow Nail Syndrome",
+      "description_ar": "حالة نادرة تصيب الأظافر وتسبب تغير لونها ونموها.",
+      "mentioned_signs_ar": [
+        "اصفرار الظفر",
+        "نمو بطئ للظفر",
+        "سماكة أو هشاشة",
+        "قد يرافقه تورم الأصابع أو مشاكل تنفسية",
+        "أظافر صفراء أو خضراء",
+        "بطء نمو الأظافر",
+        "سمك غير طبيعي للأظافر",
+        "قد يرتبط بانتفاخ الأطراف أو مشاكل الرئة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "366"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0116",
+      "source_file": "jeldia.josn",
+      "source_id": "116",
+      "name_ar": "أظافر صفراء بسبب فطريات",
+      "name_en": "Fungal Yellow Nails",
+      "description_ar": "عدوى فطرية تسبب تغير لون الظفر وسمكه.",
+      "mentioned_signs_ar": [
+        "اصفرار أو تلون الظفر",
+        "سماكة وتقصف الظفر",
+        "رائحة خفيفة كريهة أحيانًا",
+        "نمو بطيء للظفر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0117",
+      "source_file": "jeldia.josn",
+      "source_id": "117",
+      "name_ar": "الأظافر المحززة",
+      "name_en": "Beau's Lines",
+      "description_ar": "خطوط أفقية على الظفر تشير لاضطراب نمو الظفر.",
+      "mentioned_signs_ar": [
+        "خطوط أفقية واضحة على الظفر",
+        "تأخر نمو الظفر بعد المرض أو نقص التغذية",
+        "تأثر عدة أظافر في نفس الوقت",
+        "غير مؤلمة عادة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0118",
+      "source_file": "jeldia.josn",
+      "source_id": "118",
+      "name_ar": "الأظافر الشفافة",
+      "name_en": "Translucent Nails",
+      "description_ar": "ظهور ظل الظفر الوراثي أو نتيجة نقص التغذية.",
+      "mentioned_signs_ar": [
+        "ظل شفاف أو شبه شفاف للظفر",
+        "رؤية الأوعية الدموية تحت الظفر",
+        "غير مؤلمة",
+        "تغير المظهر مع تقدم العمر أو نقص الفيتامينات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0119",
+      "source_file": "jeldia.josn",
+      "source_id": "119",
+      "name_ar": "الأظافر المغطاة بالصدأ",
+      "name_en": "Rust Nails",
+      "description_ar": "تغير لون الظفر إلى بني أو برتقالي نتيجة التعرض للمواد الكيميائية أو العدوى.",
+      "mentioned_signs_ar": [
+        "تغير لون الظفر للبرتقالي أو البني",
+        "تأثير على ملمس الظفر",
+        "هشاشة أحيانًا",
+        "قد يصاحبه رائحة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0120",
+      "source_file": "jeldia.josn",
+      "source_id": "120",
+      "name_ar": "الأظافر المعكوفة",
+      "name_en": "Pincer Nails",
+      "description_ar": "انحناء الظفر بشكل حاد من الأطراف.",
+      "mentioned_signs_ar": [
+        "انحناء الظفر للأمام أو الجانبين",
+        "ألم عند الضغط على الحواف",
+        "صعوبة في قص الظفر",
+        "تغير شكل الظفر تدريجيًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0121",
+      "source_file": "jeldia.josn",
+      "source_id": "121",
+      "name_ar": "أظافر متقوسة أو ملعقة",
+      "name_en": "Spoon Nails / Koilonychia",
+      "description_ar": "تشوه يظهر فيه الظفر غائرًا، غالبًا بسبب نقص الحديد.",
+      "mentioned_signs_ar": [
+        "غوص مركز الظفر للأعلى",
+        "هشاشة وسهولة التكسر",
+        "تغير لون الظفر أحيانًا",
+        "قد يدل على أمراض مزمنة أو نقص الحديد"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0122",
+      "source_file": "jeldia.josn",
+      "source_id": "122",
+      "name_ar": "الأظافر المخدوشة",
+      "name_en": "Trachyonychia",
+      "description_ar": "سطح الظفر خشن ومتعرج نتيجة التهاب مزمن.",
+      "mentioned_signs_ar": [
+        "سطح الظفر خشن ومتعرج",
+        "اصفرار أو تغيّر لون الظفر",
+        "ضعف نمو الظفر",
+        "قد يصيب جميع الأظافر معًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0123",
+      "source_file": "jeldia.josn",
+      "source_id": "123",
+      "name_ar": "أظافر مغطاة بطبقة سميكة",
+      "name_en": "Onychauxis",
+      "description_ar": "زيادة سماكة الظفر نتيجة التقدم بالعمر أو الإصابة الفطرية.",
+      "mentioned_signs_ar": [
+        "سماكة غير طبيعية للظفر",
+        "تغير اللون أحيانًا",
+        "صعوبة في القص أو العناية بالظفر",
+        "قد يصاحبها ألم بسيط عند الضغط"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0124",
+      "source_file": "jeldia.josn",
+      "source_id": "124",
+      "name_ar": "الأظافر المتشققة الطولية",
+      "name_en": "Longitudinal Ridging",
+      "description_ar": "خطوط طولية على الظفر غالبًا مع التقدم بالعمر أو نقص الفيتامينات.",
+      "mentioned_signs_ar": [
+        "خطوط طولية واضحة على الظفر",
+        "سطح الظفر خشن قليلًا",
+        "غير مؤلم عادة",
+        "قد يظهر على جميع الأظافر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0125",
+      "source_file": "jeldia.josn",
+      "source_id": "125",
+      "name_ar": "أظافر شاحبة أو بيضاء",
+      "name_en": "Terry’s Nails",
+      "description_ar": "تحول معظم الظفر إلى اللون الأبيض مع حافة حمراء، غالبًا عند أمراض الكبد أو القلب.",
+      "mentioned_signs_ar": [
+        "أغلب الظفر أبيض شاحب",
+        "حافة حمراء رقيقة",
+        "تغير في ملمس الظفر قليلًا",
+        "يشير لأمراض مزمنة داخلية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0126",
+      "source_file": "jeldia.josn",
+      "source_id": "126",
+      "name_ar": "أظافر مائلة للون الأزرق",
+      "name_en": "Blue Nails / Cyanotic Nails",
+      "description_ar": "ظهور اللون الأزرق على الأظافر نتيجة نقص الأكسجين في الدم.",
+      "mentioned_signs_ar": [
+        "لون أزرق أو أرجواني للأظافر",
+        "بارد عند اللمس",
+        "قد يصاحبه ضيق نفس أو أمراض قلبية",
+        "تغير تدريجي أو مفاجئ"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0127",
+      "source_file": "jeldia.josn",
+      "source_id": "127",
+      "name_ar": "أظافر باهتة أو متغيرة اللون",
+      "name_en": "Muehrcke’s Lines",
+      "description_ar": "خطوط أفقية بيضاء تظهر على الظفر غالبًا مع نقص البروتين أو أمراض الكبد.",
+      "mentioned_signs_ar": [
+        "خطوط بيضاء مزدوجة أو أفقية على الظفر",
+        "سطح الظفر لامع قليلًا",
+        "غير مؤلم عادة",
+        "قد تظهر على جميع الأظافر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0128",
+      "source_file": "jeldia.josn",
+      "source_id": "128",
+      "name_ar": "أظافر على شكل رمح",
+      "name_en": "Pachyonychia Congenita",
+      "description_ar": "مرض وراثي نادر يؤدي لسماكة الظفر وتشوهه.",
+      "mentioned_signs_ar": [
+        "سماكة الظفر بشكل غير طبيعي",
+        "تشوه الأطراف وحواف الظفر",
+        "ألم أحيانًا عند الضغط",
+        "تأثر نمو الظفر الطبيعي"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0129",
+      "source_file": "jeldia.josn",
+      "source_id": "129",
+      "name_ar": "التهاب جلدي تحسسي",
+      "name_en": "Allergic Contact Dermatitis",
+      "description_ar": "طفح جلدي ناتج عن تفاعل تحسسي مع مادة معينة.",
+      "mentioned_signs_ar": [
+        "احمرار وحكة شديدة",
+        "تورم أو بثور صغيرة",
+        "جفاف وتقشر الجلد",
+        "تظهر بسرعة بعد التعرض للمسبب"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0130",
+      "source_file": "jeldia.josn",
+      "source_id": "130",
+      "name_ar": "الاكزيما الجلدية",
+      "name_en": "Eczema / Atopic Dermatitis",
+      "description_ar": "التهاب مزمن للجلد يسبب جفاف وحكة.",
+      "mentioned_signs_ar": [
+        "جلد جاف وخشن",
+        "حكة مستمرة",
+        "بقع حمراء أو متقشرة",
+        "تظهر غالبًا على الوجه والأطراف"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0131",
+      "source_file": "jeldia.josn",
+      "source_id": "131",
+      "name_ar": "الصدفية الجلدية",
+      "name_en": "Psoriasis",
+      "description_ar": "مرض مزمن يسبب تراكم خلايا الجلد مكونًا قشور سميكة.",
+      "mentioned_signs_ar": [
+        "بقع حمراء مغطاة بقشور فضية",
+        "حكة أو حرقة أحيانًا",
+        "تظهر على فروة الرأس والمرفقين والركبتين",
+        "يمكن أن تصيب الأظافر أيضًا",
+        "بقع حمراء على الجلد مغطاة بقشور فضية",
+        "حكة وتهيج الجلد",
+        "تساقط الشعر مؤقت في فروة الرأس",
+        "ألم أو تصلب في المفاصل في بعض الحالات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "369"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0133",
+      "source_file": "jeldia.josn",
+      "source_id": "133",
+      "name_ar": "الحزاز الجلدي الثعلبي",
+      "name_en": "Lichen Simplex Chronicus",
+      "description_ar": "جلد سميك وخشن نتيجة خدش مزمن.",
+      "mentioned_signs_ar": [
+        "جلد سميك وخشن",
+        "حكة مستمرة",
+        "تغير لون الجلد (غامق أو فاتح)",
+        "قد تتشكل خطوط واضحة على الجلد"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0135",
+      "source_file": "jeldia.josn",
+      "source_id": "135",
+      "name_ar": "التينيا المبرقشة",
+      "name_en": "Tinea Versicolor",
+      "description_ar": "عدوى فطرية تسبب بقع فاتحة أو داكنة على الجلد.",
+      "mentioned_signs_ar": [
+        "بقع بيضاء أو بنية على الجلد",
+        "حكة خفيفة أحيانًا",
+        "تزداد في الطقس الحار والرطب",
+        "تغير اللون بعد التعرض للشمس",
+        "بقع فاتحة أو داكنة على الجلد",
+        "قشور خفيفة عند حك البقع",
+        "حكة خفيفة أحياناً",
+        "تغير لون الجلد بعد التعرض للشمس"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "312"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "312"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "312"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0136",
+      "source_file": "jeldia.josn",
+      "source_id": "136",
+      "name_ar": "الهربس الجلدي",
+      "name_en": "Herpes Simplex Skin Infection",
+      "description_ar": "عدوى فيروسية تسبب بثوراً مؤلمة على الجلد.",
+      "mentioned_signs_ar": [
+        "حبوب أو بثور مملوءة بسائل",
+        "حكة أو حرقة قبل ظهور البثور",
+        "تقرحات بعد انفجار البثور",
+        "تظهر عادة حول الفم أو الأعضاء التناسلية",
+        "بقع حمراء مملوءة بسائل",
+        "تشققات مؤلمة عند انفجار البثور",
+        "تكرر الإصابة في نفس المنطقة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "313"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "313"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "313"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0138",
+      "source_file": "jeldia.josn",
+      "source_id": "138",
+      "name_ar": "الحصبة",
+      "name_en": "Measles",
+      "description_ar": "عدوى فيروسية تسبب طفحًا واسع الانتشار وحمى.",
+      "mentioned_signs_ar": [
+        "حمى وسعال وسيلان الأنف",
+        "بقع حمراء على الوجه والجسم",
+        "بقع بيضاء صغيرة داخل الفم (بقع كوبليك)",
+        "حكة خفيفة أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0139",
+      "source_file": "jeldia.josn",
+      "source_id": "139",
+      "name_ar": "الجدري",
+      "name_en": "Smallpox",
+      "description_ar": "عدوى فيروسية خطيرة تسبب طفحًا مؤلمًا وثقوبًا في الجلد.",
+      "mentioned_signs_ar": [
+        "حمى شديدة",
+        "طفح أحمر يبدأ على الوجه والذراعين",
+        "فقاعات مملوءة بالصديد تتحول إلى قشور",
+        "تغير دائم في الجلد بعد الشفاء"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0140",
+      "source_file": "jeldia.josn",
+      "source_id": "140",
+      "name_ar": "الحزاز النمشي",
+      "name_en": "Lichen Nitidus",
+      "description_ar": "طفح جلدي نادر يظهر كنقط صغيرة لامعة على الجلد.",
+      "mentioned_signs_ar": [
+        "نقط صغيرة بيضاء أو وردية",
+        "سطح أملس للجلد",
+        "غير مؤلم عادة",
+        "تظهر على الصدر والظهر والأطراف"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0142",
+      "source_file": "jeldia.josn",
+      "source_id": "142",
+      "name_ar": "القوباء",
+      "name_en": "Impetigo",
+      "description_ar": "عدوى بكتيرية سطحية تسبب بثور متقرحة.",
+      "mentioned_signs_ar": [
+        "فقاعات أو بثور صفراء تتحول إلى قشور",
+        "حكة أو ألم خفيف",
+        "ظهور على الوجه أو الأطراف",
+        "انتشار سريع في الأطفال",
+        "قشور صفراء أو بنية على سطح الجلد",
+        "فقاعات صغيرة مليئة بالصديد",
+        "انتشار سريع في الجلد المكشوف"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "314"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "314"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "314"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0145",
+      "source_file": "jeldia.josn",
+      "source_id": "145",
+      "name_ar": "الورم الحليمي الجلدي",
+      "name_en": "Skin Warts",
+      "description_ar": "نمو جلدي حميد ناتج عن فيروس الورم الحليمي البشري.",
+      "mentioned_signs_ar": [
+        "نتوءات صغيرة وخشنة على الجلد",
+        "تختلف في اللون والحجم",
+        "قد تكون مؤلمة عند الضغط",
+        "تظهر غالبًا على اليدين والأصابع"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0147",
+      "source_file": "jeldia.josn",
+      "source_id": "147",
+      "name_ar": "القلاع الجلدي",
+      "name_en": "Cutaneous Candidiasis",
+      "description_ar": "عدوى فطرية تسبب طفحًا أحمر في طيات الجلد.",
+      "mentioned_signs_ar": [
+        "احمرار الجلد وحكة",
+        "تشققات أو تقشر",
+        "تواجد فطريات في الطيات الرطبة",
+        "روائح كريهة أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0148",
+      "source_file": "jeldia.josn",
+      "source_id": "148",
+      "name_ar": "الحكة الشديدة المزمنة",
+      "name_en": "Chronic Pruritus",
+      "description_ar": "حكة مزمنة لا تختفي مع العلاجات المعتادة.",
+      "mentioned_signs_ar": [
+        "حكة مستمرة ومتكررة",
+        "خدش يؤدي لتقرحات أو ندبات",
+        "تغير لون الجلد",
+        "تأثر جودة النوم والنشاط اليومي"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0149",
+      "source_file": "jeldia.josn",
+      "source_id": "149",
+      "name_ar": "الحروق الجلدية",
+      "name_en": "Burns",
+      "description_ar": "ضرر في الجلد ناتج عن حرارة أو مواد كيميائية أو كهرباء.",
+      "mentioned_signs_ar": [
+        "احمرار أو فقاعات",
+        "ألم شديد أو فقدان الإحساس",
+        "تورم وتقشير الجلد",
+        "ندبات أو تغيّر دائم في لون الجلد"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0150",
+      "source_file": "jeldia.josn",
+      "source_id": "150",
+      "name_ar": "القروح الجلدية المزمنة",
+      "name_en": "Chronic Ulcers",
+      "description_ar": "قرحات غير ملتئمة تظهر غالبًا عند ضعف الدورة الدموية أو السكري.",
+      "mentioned_signs_ar": [
+        "فتح في الجلد لا يلتئم",
+        "احمرار أو التهاب حول القرحة",
+        "ألم مزمن أو حرقان",
+        "إفرازات أو رائحة أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0151",
+      "source_file": "jeldia.josn",
+      "source_id": "151",
+      "name_ar": "التهاب الجلد الدهني",
+      "name_en": "Seborrheic Dermatitis",
+      "description_ar": "حالة التهابية مزمنة تسبب قشورًا دهنية على فروة الرأس أو الوجه.",
+      "mentioned_signs_ar": [
+        "قشور صفراء أو بيضاء دهنية",
+        "حكة وخشونة الجلد",
+        "احمرار حول فروة الرأس والحواجب",
+        "تساقط شعر خفيف أحيانًا",
+        "حكة في فروة الرأس",
+        "احمرار الجلد",
+        "تساقط الشعر خفيف في بعض الحالات",
+        "بقع حمراء دهنية على الجلد",
+        "قشور صفراء أو بيضاء على الشعر أو الحاجبين",
+        "حكة متوسطة إلى شديدة",
+        "تفاقم الأعراض مع التوتر أو الطقس البارد"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "206"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "262"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0152",
+      "source_file": "jeldia.josn",
+      "source_id": "152",
+      "name_ar": "الهربس النطاقي",
+      "name_en": "Shingles / Herpes Zoster",
+      "description_ar": "إعادة تنشيط فيروس جدري الماء يسبب طفحًا مؤلمًا على الجلد.",
+      "mentioned_signs_ar": [
+        "آلام حرقة أو وخز قبل الطفح",
+        "فقاعات حمراء على الجلد",
+        "حكة شديدة وأحيانًا حمى",
+        "توزع الطفح عادة على جانب واحد من الجسم"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0153",
+      "source_file": "jeldia.josn",
+      "source_id": "153",
+      "name_ar": "الحروق الشمسية",
+      "name_en": "Sunburn",
+      "description_ar": "تلف الجلد الناتج عن التعرض المفرط لأشعة الشمس.",
+      "mentioned_signs_ar": [
+        "احمرار وألم الجلد",
+        "تورم أو فقاعات في الحالات الشديدة",
+        "حكة أو تقشر الجلد بعد أيام",
+        "حساسية للضوء"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0154",
+      "source_file": "jeldia.josn",
+      "source_id": "154",
+      "name_ar": "التهاب الجلد الجرثومي",
+      "name_en": "Bacterial Skin Infection",
+      "description_ar": "عدوى جلدية ناتجة عن البكتيريا مثل المكورات الذهبية.",
+      "mentioned_signs_ar": [
+        "احمرار وتورم",
+        "ألم أو حرقان في المنطقة المصابة",
+        "قيح أو فقاعات صفراء",
+        "انتشار سريع إذا لم يعالج"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0155",
+      "source_file": "jeldia.josn",
+      "source_id": "155",
+      "name_ar": "الورم الميلانيني",
+      "name_en": "Melanoma",
+      "description_ar": "نوع خطير من سرطان الجلد يظهر على شكل بقعة أو شامة متغيرة.",
+      "mentioned_signs_ar": [
+        "شامة أو بقعة داكنة غير منتظمة",
+        "تغير حجم أو شكل الشامة",
+        "حكة أو نزيف أحيانًا",
+        "ظهور على الجلد المكشوف عادة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0157",
+      "source_file": "jeldia.josn",
+      "source_id": "157",
+      "name_ar": "التهاب الجلد التماسي الكيميائي",
+      "name_en": "Chemical Burns / Contact Dermatitis",
+      "description_ar": "تفاعل الجلد مع مواد كيميائية يسبب حروقًا أو طفحًا.",
+      "mentioned_signs_ar": [
+        "احمرار وألم فور التعرض",
+        "فقاعات أو تقرحات في الجلد",
+        "تورم وحكة شديدة",
+        "قد يؤدي لتغيير لون الجلد بعد الشفاء"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0158",
+      "source_file": "jeldia.josn",
+      "source_id": "158",
+      "name_ar": "حب الشباب العقدي",
+      "name_en": "Nodulocystic Acne",
+      "description_ar": "نوع شديد من حب الشباب يسبب عقيدات كيسية تحت الجلد.",
+      "mentioned_signs_ar": [
+        "عقيدات صلبة تحت الجلد",
+        "ألم وحكة محتملة",
+        "تترك ندبات بعد الشفاء",
+        "تنتشر عادة على الوجه والظهر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0160",
+      "source_file": "jeldia.josn",
+      "source_id": "160",
+      "name_ar": "الصدفية الظفرية",
+      "name_en": "Nail Psoriasis",
+      "description_ar": "تأثير الصدفية على الأظافر، يسبب تغيرات واضحة.",
+      "mentioned_signs_ar": [
+        "تشققات وخشونة الظفر",
+        "بقع صفراء أو بيضاء تحت الظفر",
+        "فصل الظفر أحيانًا عن اللحم",
+        "تغير سُمك وشكل الظفر",
+        "نقر أو حفر في سطح الأظافر",
+        "اصفرار أو تلون الأظافر",
+        "انفصال الأظافر عن فراش الظفر",
+        "سماكة وتشوه الأظافر",
+        "حفر صغيرة أو تجويفات على سطح الظفر",
+        "تغير لون الظفر إلى أصفر أو بني",
+        "انفصال الظفر عن فراشه (Onycholysis)",
+        "تساقط الظفر أحياناً",
+        "حفر",
+        "سماكة",
+        "اصفرار",
+        "انفصال الظفر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "jeldia.josn",
+          "source_id": "210"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "264"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "446"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0161",
+      "source_file": "jeldia.josn",
+      "source_id": "161",
+      "name_ar": "أظافر غارقة أو منغرسة",
+      "name_en": "Ingrown Nails / Onychocryptosis",
+      "description_ar": "نمو حافة الظفر داخل الجلد يسبب ألمًا وعدوى.",
+      "mentioned_signs_ar": [
+        "ألم شديد حول حافة الظفر",
+        "احمرار وتورم الجلد المحيط",
+        "إفراز صديد أحيانًا",
+        "صعوبة في المشي إذا كان الإصبع القدمية مصابة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0162",
+      "source_file": "jeldia.josn",
+      "source_id": "162",
+      "name_ar": "فطار الأظافر",
+      "name_en": "Onychomycosis / Nail Fungus",
+      "description_ar": "عدوى فطرية تصيب الظفر وتغير لونه وسمكه.",
+      "mentioned_signs_ar": [
+        "اصفرار أو سواد الظفر",
+        "سُمك الظفر وتشوهه",
+        "تفتت أو تقشر الظفر",
+        "رائحة كريهة أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0163",
+      "source_file": "jeldia.josn",
+      "source_id": "163",
+      "name_ar": "أظافر مصقولة أو بيضاء",
+      "name_en": "Leukonychia",
+      "description_ar": "ظهور بقع بيضاء على الأظافر نتيجة إصابة أو نقص عناصر.",
+      "mentioned_signs_ar": [
+        "بقع بيضاء صغيرة أو خطوط على الظفر",
+        "غير مؤلم عادة",
+        "قد تنتشر على جميع الأظافر",
+        "تترافق أحيانًا مع نقص الزنك أو البروتين"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0164",
+      "source_file": "jeldia.josn",
+      "source_id": "164",
+      "name_ar": "تسوس الأظافر",
+      "name_en": "Onycholysis",
+      "description_ar": "انفصال الظفر عن اللحم الأساسي غالبًا بسبب إصابة أو عدوى.",
+      "mentioned_signs_ar": [
+        "فصل حافة الظفر عن الجلد",
+        "تغير لون الظفر إلى أصفر أو أخضر",
+        "ألم خفيف أو حكة",
+        "تزايد الانفصال مع الوقت إذا لم يعالج"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0165",
+      "source_file": "jeldia.josn",
+      "source_id": "165",
+      "name_ar": "أظافر مخروطية أو مقعرة",
+      "name_en": "Koilonychia / Spoon Nails",
+      "description_ar": "تغير شكل الظفر ليصبح مقعرًا غالبًا بسبب فقر الدم.",
+      "mentioned_signs_ar": [
+        "تكون الظفر على شكل ملعقة",
+        "ضعف وهشاشة الظفر",
+        "شحوب الجلد مصاحب أحيانًا",
+        "تتأثر معظم الأظافر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0166",
+      "source_file": "jeldia.josn",
+      "source_id": "166",
+      "name_ar": "أظافر سميكة ومصقولة",
+      "name_en": "Onychogryphosis",
+      "description_ar": "زيادة سماكة الظفر وتشوهه غالبًا في كبار السن أو بعد إصابة.",
+      "mentioned_signs_ar": [
+        "سماكة كبيرة للظفر",
+        "تشوه في الشكل والانحناء",
+        "ألم عند الضغط أو المشي",
+        "تغير لون الظفر إلى أصفر أو بني"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0167",
+      "source_file": "jeldia.josn",
+      "source_id": "167",
+      "name_ar": "أظافر متشققة",
+      "name_en": "Brittle Nails / Onychorrhexis",
+      "description_ar": "هشاشة الظفر وتكوّن شقوق بسبب نقص رطوبة أو عناصر.",
+      "mentioned_signs_ar": [
+        "تشققات وخطوط طولية على الظفر",
+        "سهولة تكسر الظفر",
+        "تغير ملمس الظفر وخشونته",
+        "جفاف الجلد المحيط أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0168",
+      "source_file": "jeldia.josn",
+      "source_id": "168",
+      "name_ar": "أظافر مصفرة",
+      "name_en": "Yellow Nail Syndrome",
+      "description_ar": "اصفرار الأظافر نتيجة مشاكل جهازية أو فطرية.",
+      "mentioned_signs_ar": [
+        "اصفرار تدريجي للأظافر",
+        "بطء نمو الظفر",
+        "تكون أظافر سميكة ومتماسكة",
+        "قد يصاحبها تورم القدمين أو أمراض تنفسية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0169",
+      "source_file": "jeldia.josn",
+      "source_id": "169",
+      "name_ar": "تقرحات الجلد الضاغطة",
+      "name_en": "Pressure Ulcers / Bedsores",
+      "description_ar": "قرحات جلدية ناتجة عن ضغط طويل على الجلد عند المرضى المقعدين.",
+      "mentioned_signs_ar": [
+        "احمرار أو تغير لون الجلد",
+        "قرحات مفتوحة أحيانًا",
+        "ألم أو حساسية عند اللمس",
+        "تتطور بسرعة إذا لم تُخفف الضغط"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0170",
+      "source_file": "jeldia.josn",
+      "source_id": "170",
+      "name_ar": "الطفح الناتج عن الحساسية",
+      "name_en": "Allergic Rash",
+      "description_ar": "رد فعل جلدي سريع على مسببات حساسية متنوعة.",
+      "mentioned_signs_ar": [
+        "بقع حمراء أو نتوءات",
+        "حكة شديدة",
+        "تورم أو تقشر الجلد",
+        "تظهر بسرعة بعد التعرض للمسبب"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0171",
+      "source_file": "jeldia.josn",
+      "source_id": "171",
+      "name_ar": "التهاب الجلد الفطري",
+      "name_en": "Dermatophytosis / Ringworm",
+      "description_ar": "عدوى فطرية تصيب الجلد وتسبب حلقة حمراء.",
+      "mentioned_signs_ar": [
+        "حلقة حمراء مرتفعة مع مركز أفتح",
+        "حكة شديدة",
+        "انتشار العدوى لأجزاء أخرى من الجسم",
+        "قد يصاحبها تساقط الشعر في المنطقة المصابة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0172",
+      "source_file": "jeldia.josn",
+      "source_id": "172",
+      "name_ar": "الأكزيما التماسية المزمنة",
+      "name_en": "Chronic Contact Dermatitis",
+      "description_ar": "حالة جلدية مزمنة نتيجة تعرض مستمر لمهيجات.",
+      "mentioned_signs_ar": [
+        "احمرار وجفاف الجلد",
+        "تشقق وتقشر مستمر",
+        "حكة متكررة",
+        "زيادة سماكة الجلد مع الزمن"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0173",
+      "source_file": "jeldia.josn",
+      "source_id": "173",
+      "name_ar": "الحزاز الحليمي",
+      "name_en": "Lichen Planus Papulosus",
+      "description_ar": "طفح جلدي مزمن على شكل نتوءات صغيرة ملونة.",
+      "mentioned_signs_ar": [
+        "نتوءات أرجوانية أو حمراء",
+        "حكة خفيفة أو شديدة",
+        "سطح أملس أو لامع",
+        "قد تتأثر الأظافر والفم أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0174",
+      "source_file": "jeldia.josn",
+      "source_id": "174",
+      "name_ar": "أمراض الأظافر التقرحية",
+      "name_en": "Nail Ulcers / Onycholytic Ulcers",
+      "description_ar": "تقرحات في الأظافر غالبًا نتيجة عدوى أو إصابة.",
+      "mentioned_signs_ar": [
+        "تقرحات أو نزيف تحت الظفر",
+        "ألم شديد عند الضغط",
+        "تغير لون الظفر إلى داكن أو أصفر",
+        "صعوبة في نمو الظفر الطبيعي"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0175",
+      "source_file": "jeldia.josn",
+      "source_id": "175",
+      "name_ar": "أظافر متشققة وحمراء",
+      "name_en": "Inflammatory Nail Disease",
+      "description_ar": "التهاب الأظافر يؤدي لتشققات واحمرار.",
+      "mentioned_signs_ar": [
+        "احمرار حول حواف الظفر",
+        "تشقق أو تقشر الظفر",
+        "حكة وألم عند الضغط",
+        "تغير شكل وسُمك الظفر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0176",
+      "source_file": "jeldia.josn",
+      "source_id": "176",
+      "name_ar": "أظافر بيضاء بالكامل",
+      "name_en": "Terry's Nails",
+      "description_ar": "تغير لون الظفر ليصبح أبيض مع حافة وردية صغيرة، غالباً بسبب أمراض الكبد أو القلب.",
+      "mentioned_signs_ar": [
+        "بياض الظفر تقريبًا بالكامل",
+        "حافة وردية رقيقة في نهاية الظفر",
+        "ضعف ونمو بطيء للظفر",
+        "قد يصاحبها تورم القدمين أو مشاكل كبدية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0177",
+      "source_file": "jeldia.josn",
+      "source_id": "177",
+      "name_ar": "أظافر مطلية باللون الأزرق",
+      "name_en": "Blue Nails / Cyanotic Nails",
+      "description_ar": "اصطباغ الظفر باللون الأزرق بسبب نقص الأكسجين أو أمراض الرئة والقلب.",
+      "mentioned_signs_ar": [
+        "زرقة أو أزرق داكن على الظفر",
+        "تباطؤ النمو أحيانًا",
+        "قد يصاحبها ضيق تنفس أو خفقان",
+        "ظهور على الأصابع أو أظافر اليدين بالكامل"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0178",
+      "source_file": "jeldia.josn",
+      "source_id": "178",
+      "name_ar": "أظافر بنية أو سوداء",
+      "name_en": "Subungual Hematoma",
+      "description_ar": "تجمع دموي تحت الظفر غالباً بسبب إصابة مباشرة.",
+      "mentioned_signs_ar": [
+        "لون داكن أو أسود تحت الظفر",
+        "ألم عند الضغط على الظفر",
+        "تورم خفيف أحيانًا",
+        "تغير لون الظفر مع نموه"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0179",
+      "source_file": "jeldia.josn",
+      "source_id": "179",
+      "name_ar": "أظافر مصفرة مع خطوط سوداء",
+      "name_en": "Melanonychia",
+      "description_ar": "ظهور خطوط داكنة على الظفر، قد تكون حميدة أو مؤشر لسرطان الظفر.",
+      "mentioned_signs_ar": [
+        "خطوط داكنة طولية على الظفر",
+        "تغير عرض أو لون الخط مع الوقت",
+        "قد يصاحبها سماكة أو هشاشة الظفر",
+        "قد يظهر على ظفر واحد أو عدة أظافر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0180",
+      "source_file": "jeldia.josn",
+      "source_id": "180",
+      "name_ar": "أظافر مشقوقة مع خطوط طولية",
+      "name_en": "Longitudinal Ridging",
+      "description_ar": "خطوط طولية واضحة على الظفر نتيجة تقدم العمر أو نقص عناصر غذائية.",
+      "mentioned_signs_ar": [
+        "خطوط بارزة على طول الظفر",
+        "هشاشة أو ضعف الظفر أحيانًا",
+        "تغيير بسيط في اللون أو الملمس",
+        "قد يصاحبها جفاف الجلد حول الظفر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0181",
+      "source_file": "jeldia.josn",
+      "source_id": "181",
+      "name_ar": "أظافر مصقولة ومتحجرة",
+      "name_en": "Onychauxis",
+      "description_ar": "زيادة سماكة الظفر تدريجيًا بسبب أمراض الأظافر أو الشيخوخة.",
+      "mentioned_signs_ar": [
+        "سماكة الظفر بشكل ملحوظ",
+        "تشوه طفيف في شكل الظفر",
+        "ألم عند الضغط أو المشي إذا كانت أصابع القدم مصابة",
+        "تغيير اللون أحيانًا إلى أصفر أو بني"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0182",
+      "source_file": "jeldia.josn",
+      "source_id": "182",
+      "name_ar": "أظافر مفصصة",
+      "name_en": "Beau’s Lines",
+      "description_ar": "خطوط أفقية على الظفر تظهر بعد إصابة أو مرض شديد.",
+      "mentioned_signs_ar": [
+        "خطوط عرضية على الظفر",
+        "تباعد الخطوط حسب شدة المرض",
+        "تغيير مؤقت في مظهر الظفر",
+        "قد تظهر على عدة أظافر في الوقت نفسه"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0183",
+      "source_file": "jeldia.josn",
+      "source_id": "183",
+      "name_ar": "أظافر ناعمة وهشة",
+      "name_en": "Soft Nails / Onychomalacia",
+      "description_ar": "ضعف ونعومة الظفر بسبب نقص في الكالسيوم أو التعرض للرطوبة الطويلة.",
+      "mentioned_signs_ar": [
+        "هشاشة الظفر وسهولة الانكسار",
+        "سطح ناعم أحيانًا متموج",
+        "تغير لون طفيف أحيانًا",
+        "تأثر أكثر في أظافر اليدين"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0184",
+      "source_file": "jeldia.josn",
+      "source_id": "184",
+      "name_ar": "أظافر مصابة بفطر الجلد",
+      "name_en": "Tinea Unguium",
+      "description_ar": "عدوى فطرية تصيب الظفر وتسبب تغير لونه وتكسره.",
+      "mentioned_signs_ar": [
+        "اصفرار أو أبيضاض الظفر",
+        "سُمك وتشوه الظفر",
+        "تفتت حافة الظفر",
+        "رائحة كريهة أحيانًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0185",
+      "source_file": "jeldia.josn",
+      "source_id": "185",
+      "name_ar": "أظافر ذات فجوات",
+      "name_en": "Pitting / Nail Pits",
+      "description_ar": "حفر صغيرة على سطح الظفر غالبًا مع الصدفية.",
+      "mentioned_signs_ar": [
+        "ثقوب صغيرة على سطح الظفر",
+        "تغير في ملمس الظفر",
+        "ضعف الظفر في المنطقة المصابة",
+        "قد تصاحبها أعراض جلدية أخرى"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0186",
+      "source_file": "jeldia.josn",
+      "source_id": "186",
+      "name_ar": "أظافر مقعرة وشاحبة",
+      "name_en": "Spoon Nails / Koilonychia",
+      "description_ar": "تغير شكل الظفر ليصبح مقعرًا غالبًا بسبب نقص الحديد.",
+      "mentioned_signs_ar": [
+        "ظفر مقعر يشبه الملعقة",
+        "هشاشة وضعف الظفر",
+        "شحوب الجلد أحيانًا",
+        "تأثر غالبية الأظافر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0187",
+      "source_file": "jeldia.josn",
+      "source_id": "187",
+      "name_ar": "أظافر مشققة بشكل عميق",
+      "name_en": "Onychoschizia",
+      "description_ar": "تقصف الظفر إلى طبقات بسبب التعرض المتكرر للماء أو الكيماويات.",
+      "mentioned_signs_ar": [
+        "تقشر الظفر أفقياً أو طولياً",
+        "هشاشة وضعف في الطرف الحر للظفر",
+        "تغير ملمس السطح",
+        "ألم خفيف إذا كان التشقق عميقًا"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0188",
+      "source_file": "jeldia.josn",
+      "source_id": "188",
+      "name_ar": "أظافر صفراء سميكة",
+      "name_en": "Yellow Nail Syndrome",
+      "description_ar": "تغير اللون والسُمك نتيجة مشاكل جهازية أو فطرية.",
+      "mentioned_signs_ar": [
+        "اصفرار تدريجي للظفر",
+        "سُمك الظفر وبطء نموه",
+        "ضعف أو هشاشة الظفر أحيانًا",
+        "قد يصاحبها تورم القدمين أو أمراض تنفسية"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0189",
+      "source_file": "jeldia.josn",
+      "source_id": "189",
+      "name_ar": "أظافر مصابة بعدوى بكتيرية",
+      "name_en": "Paronychia",
+      "description_ar": "عدوى حول حافة الظفر تسبب تورمًا وألمًا.",
+      "mentioned_signs_ar": [
+        "احمرار وتورم حول الظفر",
+        "ألم وحساسية عند اللمس",
+        "تجمع صديد أحيانًا",
+        "قد تتضرر الأظافر مع تقدم العدوى"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0190",
+      "source_file": "jeldia.josn",
+      "source_id": "190",
+      "name_ar": "أظافر مصابة بحساسية",
+      "name_en": "Allergic Nail Reaction",
+      "description_ar": "تفاعل جلدي حول الظفر نتيجة مواد مثل طلاء الأظافر أو اللصق.",
+      "mentioned_signs_ar": [
+        "احمرار وحكة حول الظفر",
+        "تورم خفيف أو فقاعات صغيرة",
+        "تغيير طفيف في شكل الظفر",
+        "ألم عند الضغط على المنطقة المصابة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0191",
+      "source_file": "jeldia.josn",
+      "source_id": "191",
+      "name_ar": "أظافر متقوسة",
+      "name_en": "Clubbing",
+      "description_ar": "تغير شكل الظفر ليصبح محدبًا ومتشابكًا غالبًا بسبب أمراض الرئة أو القلب.",
+      "mentioned_signs_ar": [
+        "id",
+        "name",
+        "صدفية الجلد (Psoriasis)",
+        "description",
+        "اضطراب جلدي مزمن يتسبب بظهور بقع حمراء متقشرة على الجلد.",
+        "symptoms",
+        "بقع حمراء مغطاة بقشور فضية",
+        "حكة شديدة",
+        "جفاف وتشقق الجلد",
+        "أحياناً ألم في المفاصل (Psoriatic Arthritis)"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0205",
+      "source_file": "jeldia.josn",
+      "source_id": "205",
+      "name_ar": "داء الثعلبة الوراثي",
+      "name_en": "Androgenic Alopecia",
+      "description_ar": "تساقط الشعر الوراثي الذي يظهر تدريجياً.",
+      "mentioned_signs_ar": [
+        "ترقق تدريجي للشعر في فروة الرأس",
+        "تراجع خط الشعر الأمامي أو التاجي",
+        "الشعر يصبح ضعيفاً وأرق",
+        "زيادة فقدان الشعر عند تسريح أو غسل الشعر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0207",
+      "source_file": "jeldia.josn",
+      "source_id": "207",
+      "name_ar": "عدوى فطرية في الأظافر",
+      "name_en": "Onychomycosis",
+      "description_ar": "عدوى فطرية تؤثر على أظافر اليدين أو القدمين.",
+      "mentioned_signs_ar": [
+        "اصفرار أو تلون الأظافر",
+        "سماكة الأظافر وتشققات",
+        "تفتت حواف الأظافر",
+        "رائحة كريهة في بعض الحالات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0208",
+      "source_file": "jeldia.josn",
+      "source_id": "208",
+      "name_ar": "التهاب الأظافر حول الظفر",
+      "name_en": "Paronychia",
+      "description_ar": "التهاب الأنسجة المحيطة بالظفر.",
+      "mentioned_signs_ar": [
+        "احمرار وتورم حول الظفر",
+        "ألم وحساسية عند الضغط",
+        "تجمع صديد أحياناً",
+        "تغير في شكل وحجم الظفر"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "nail",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0209",
+      "source_file": "jeldia.josn",
+      "source_id": "209",
+      "name_ar": "الثآليل الجلدية",
+      "name_en": "Warts",
+      "description_ar": "نمو جلدي ناتج عن فيروس الورم الحليمي البشري.",
+      "mentioned_signs_ar": [
+        "نتوءات صلبة على الجلد",
+        "خشن أو متصلب السطح",
+        "قد تتجمع لتشكل مجموعات",
+        "ألم عند الضغط عليها أحياناً"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-J-0252",
+      "source_file": "jeldia.josn",
+      "source_id": "252",
+      "name_ar": "الثعلبة الشاملة",
+      "name_en": "Alopecia Universalis",
+      "description_ar": "فقدان كامل للشعر في فروة الرأس.",
+      "mentioned_signs_ar": [
+        "فقدان جميع شعر الجسم بما في ذلك الرموش والحواجب",
+        "جلد الرأس قد يبدو ناعماً جداً",
+        "حكة خفيفة أو شعور بوخز في البداية",
+        "زيادة حساسية الجلد للشمس أحياناً",
+        "فقدان كامل للشعر في الرأس",
+        "قد يمتد لتساقط الحواجب والرموش",
+        "لا وجود لأي التهاب أو قشور",
+        "ظهور بقع صلعاء ناعمة"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "317"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "317"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "252"
+        },
+        {
+          "source_file": "hear.josn",
+          "source_id": "317"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0253",
+      "source_file": "jeldia.josn",
+      "source_id": "253",
+      "name_ar": "التهاب الجلد التماسي التحسسي",
+      "name_en": "Allergic Contact Dermatitis",
+      "description_ar": "طفح جلدي يحدث بعد ملامسة مادة مثيرة للحساسية.",
+      "mentioned_signs_ar": [
+        "احمرار الجلد",
+        "حكة شديدة",
+        "ظهور فقاعات صغيرة أو بثور",
+        "تقشر أو جفاف الجلد بعد التئام الفقاعات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "253"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0254",
+      "source_file": "jeldia.josn",
+      "source_id": "254",
+      "name_ar": "التهاب الجلد التماسي المهيج",
+      "name_en": "Irritant Contact Dermatitis",
+      "description_ar": "تهيج الجلد نتيجة ملامسة مواد كيميائية أو ميكانيكية.",
+      "mentioned_signs_ar": [
+        "احمرار الجلد",
+        "حرقان أو وخز",
+        "جفاف وتشقق الجلد",
+        "تقرحات سطحية في بعض الحالات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "254"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0255",
+      "source_file": "jeldia.josn",
+      "source_id": "255",
+      "name_ar": "التينيا",
+      "name_en": "Ringworm / Tinea",
+      "description_ar": "عدوى فطرية تصيب الجلد وفروة الرأس والأظافر.",
+      "mentioned_signs_ar": [
+        "بقع حمراء دائرية أو متقشرة",
+        "حكة شديدة",
+        "تساقط الشعر في منطقة المصابة (إذا الرأس)",
+        "تغير لون أو سمك الأظافر (إذا الأظافر)"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "255"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-J-0257",
+      "source_file": "jeldia.josn",
+      "source_id": "257",
+      "name_ar": "التهاب الجريبات الشعرية",
+      "name_en": "Folliculitis",
+      "description_ar": "التهاب بصيلات الشعر نتيجة عدوى بكتيرية أو فطرية.",
+      "mentioned_signs_ar": [
+        "نتوءات صغيرة حمراء أو صديدية حول بصيلات الشعر",
+        "حكة أو ألم خفيف",
+        "تساقط الشعر في المنطقة المصابة أحياناً",
+        "قشور أو جفاف حول البصيلات"
+      ],
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "listed_condition",
+      "also_seen": [
+        {
+          "source_file": "hear.josn",
+          "source_id": "257"
+        }
+      ]
+    },
+    {
+      "reference_id": "LX-DERM-N-0156",
+      "source_file": "hear.josn",
+      "source_id": "156",
+      "name_ar": "الشعر الملتوي",
+      "name_en": "Pili Torti",
+      "description_ar": "شعر ملتوي 180 درجة متكرر.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "قد يدل على متلازمات وراثية (Menkes).",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0157",
+      "source_file": "hear.josn",
+      "source_id": "157",
+      "name_ar": "Bubble Hair",
+      "description_ar": "فقاعات داخل الشعرة نتيجة حرارة مبالغ بها.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "ضرر شديد من السشوار/المكواة.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0158",
+      "source_file": "hear.josn",
+      "source_id": "158",
+      "name_ar": "Woolly Hair",
+      "description_ar": "شعر شديد التجعد كالوبر.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "حالات وراثية – يترافق مع اضطرابات قلبية أحيانًا.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0159",
+      "source_file": "hear.josn",
+      "source_id": "159",
+      "name_ar": "عقد ذاتية",
+      "name_en": "Trichonodosis",
+      "description_ar": "عقد عفوية من لفّ الشعرة على نفسها.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "احتكاك زائد، عادة سلوك شخصي.",
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0160",
+      "source_file": "hear.josn",
+      "source_id": "160",
+      "name_ar": "Scarring Alopecia",
+      "description_ar": "فقد شعر مع ندبات.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "أمراض مناعية – الذئبة – ليكن بلانوس.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0161",
+      "source_file": "hear.josn",
+      "source_id": "161",
+      "name_ar": "Folliculitis Decalvans",
+      "description_ar": "التهاب بصيلات + قيح + ندبات.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "عدوى عنيفة بالبصيلات تسبب صلع دائم.",
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0162",
+      "source_file": "hear.josn",
+      "source_id": "162",
+      "name_ar": "Dissecting Cellulitis",
+      "description_ar": "خراجات عميقة بفروة الرأس + تساقط شديد.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "مرض مزمن مؤلم — يحتاج علاج قوي.",
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0163",
+      "source_file": "hear.josn",
+      "source_id": "163",
+      "name_ar": "Traction Alopecia",
+      "description_ar": "فقد شعر بسبب الشد (ضفائر، ربط قوي).",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "شد الشعر المزمن.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0164",
+      "source_file": "hear.josn",
+      "source_id": "164",
+      "name_ar": "Anagen Effluvium",
+      "description_ar": "تساقط سريع جدًا.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "كيماوي – سموم – إشعاع.",
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0165",
+      "source_file": "hear.josn",
+      "source_id": "165",
+      "name_ar": "حاد/مزمن",
+      "name_en": "Telogen Effluvium",
+      "description_ar": "تساقط منتشر يبدأ بعد 2–3 أشهر من الضغط.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "فقر دم، توتر، حمى، ولادة، نقص بروتين.",
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0166",
+      "source_file": "hear.josn",
+      "source_id": "166",
+      "name_ar": "Alopecia from Medications",
+      "description_ar": "سقوط بسبب دواء.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "فيتامين A، أدوية الغدة، مميّعات الدم… إلخ.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0167",
+      "source_file": "hear.josn",
+      "source_id": "167",
+      "name_ar": "Heavy Metal Hair Changes",
+      "description_ar": "هشاشة + تساقط.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "تسمم الرصاص، الزئبق.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0168",
+      "source_file": "hear.josn",
+      "source_id": "168",
+      "name_ar": "Hair Shaft Green Discoloration",
+      "description_ar": "شعر أخضر.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "نحاس في الماء (المسابح).",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0169",
+      "source_file": "hear.josn",
+      "source_id": "169",
+      "name_ar": "Black Dot Alopecia",
+      "description_ar": "نقاط سوداء مكان الشعر المكسور.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "فطريات – ثعلبة – تكسر الشعر.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0170",
+      "source_file": "hear.josn",
+      "source_id": "170",
+      "name_ar": "Trichostasis Spinulosa",
+      "description_ar": "نقاط سوداء دقيقة من تجمع شعرات عديدة داخل مسام واحدة.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "اضطراب شائع غير خطير.",
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0171",
+      "source_file": "hear.josn",
+      "source_id": "171",
+      "name_ar": "Hypertrichosis Lanuginosa",
+      "description_ar": "شعر ناعم يغطي الجسم فجأة.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "قد يدل على أورام داخلية (علامة تحذيرية).",
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0172",
+      "source_file": "hear.josn",
+      "source_id": "172",
+      "name_ar": "Congenital Atrichia / Hypotrichosis",
+      "description_ar": "قلة شعر منذ الولادة.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "أمراض وراثية.",
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0173",
+      "source_file": "hear.josn",
+      "source_id": "173",
+      "name_ar": "Androgen Excess Hair Changes",
+      "description_ar": "شعر سميك مزعج (Hirsutism).",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "تكيس مبايض – اضطرابات هرمونية.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0174",
+      "source_file": "hear.josn",
+      "source_id": "174",
+      "name_ar": "مؤشر صلع وراثي",
+      "name_en": "Hair Miniaturization",
+      "description_ar": "الشعرة تصبح أنعم وأقصر مع الوقت.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "بداية AGA عند الرجال والنساء.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0175",
+      "source_file": "hear.josn",
+      "source_id": "175",
+      "name_ar": "Rough Hair from Hypothyroidism",
+      "description_ar": "شعر خشن وجاف.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "قصور غدة درقية.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0176",
+      "source_file": "hear.josn",
+      "source_id": "176",
+      "name_ar": "Silky Thin Hair from Hyperthyroidism",
+      "description_ar": "شعر ناعم جدًا وضعيف.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "فرط نشاط الغدة.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0177",
+      "source_file": "hear.josn",
+      "source_id": "177",
+      "name_ar": "Hair Whitening Streak",
+      "name_en": "Poliosis",
+      "description_ar": "خصلة بيضاء كاملة.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "فيتيلغو، أمراض جلدية، وراثية.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0178",
+      "source_file": "hear.josn",
+      "source_id": "178",
+      "name_ar": "Premature Graying",
+      "description_ar": "شيب مبكر.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "وراثة – نقص B12 – أمراض مناعية.",
+      "hint_is_diagnosis": false,
+      "region": "skin",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0179",
+      "source_file": "hear.josn",
+      "source_id": "179",
+      "name_ar": "Hair Loss with Scalp Pain",
+      "name_en": "Trichodynia",
+      "description_ar": "ألم في فروة الرأس مع سقوط.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "توتر – التهاب أعصاب – حالات نفسية.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    },
+    {
+      "reference_id": "LX-DERM-N-0180",
+      "source_file": "hear.josn",
+      "source_id": "180",
+      "name_ar": "Hair Loss After COVID",
+      "description_ar": "سقوط غزير بعد أشهر من الإصابة.",
+      "mentioned_signs_ar": [],
+      "source_hint_ar": "Telogen effluvium.",
+      "hint_is_diagnosis": false,
+      "region": "hair",
+      "kind": "hair_sign_note",
+      "also_seen": []
+    }
+  ]
+}

@@ -9,6 +9,7 @@
 /// عبر NotificationTool، ويطلب دائماً تأكيداً بشرياً للإجراءات الفعلية
 /// (اتصال بالإسعاف، إرسال بيانات لطرف ثالث، إلخ).
 /// =============================================================
+library;
 
 import '../../../core/app_constants.dart';
 import '../../../features/emergency/risk_level_engine.dart';

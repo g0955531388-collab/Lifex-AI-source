@@ -31,6 +31,7 @@ import 'system_search_screen.dart';
 import 'wallet_screen.dart';
 import 'women_cycle_screen.dart';
 import 'world_workspace_screen.dart';
+import '../widgets/lifex_text.dart';
 
 class ProjectBoxHubScreen extends StatelessWidget {
   const ProjectBoxHubScreen({super.key});
@@ -39,14 +40,14 @@ class ProjectBoxHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final profile = context.watch<ActiveProfileController>().activeProfile;
     return Scaffold(
-      appBar: AppBar(title: const Text('صندوق المشروع أ')),
+      appBar: AppBar(title: const LifexText('صندوق المشروع أ')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('من الصفر حتى آخر يوم',
+          LifexText('من الصفر حتى آخر يوم',
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
-          const Text(
+          const LifexText(
               'كل مقعد يفتح أقسامه: ملف عام، علاقة، حجز، سجلات. ليست صفحة واحدة.'),
           const SizedBox(height: 8),
           HonestyBanner.localAndServer(),
@@ -215,12 +216,12 @@ class ProjectBoxHubScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: Theme.of(context).textTheme.titleLarge),
+        LifexText(title, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
         ...tiles.map((tile) => Card(
               child: ListTile(
                 leading: CircleAvatar(child: Icon(tile.icon)),
-                title: Text(tile.title),
+                title: LifexText(tile.title),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: tile.onTap,
               ),

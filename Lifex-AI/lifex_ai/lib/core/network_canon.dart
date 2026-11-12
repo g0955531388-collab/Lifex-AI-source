@@ -6,6 +6,8 @@
 /// =============================================================
 library lifex_ai.core.network_canon;
 
+import 'attribution/project_attribution.dart';
+
 class NetworkSeat {
   const NetworkSeat({
     required this.id,
@@ -32,7 +34,7 @@ class NetworkSeat {
 class NetworkCanon {
   NetworkCanon._();
 
-  static const nameAr = 'Lifex-AI Global Health Network';
+  static const nameAr = ProjectAttribution.systemName;
 
   static const seats = <NetworkSeat>[
     NetworkSeat(
@@ -252,6 +254,7 @@ class NetworkCanon {
     'HospitalsModule.kt': 'hospital',
     'DentalDoctorsAndLabsModule.kt': 'dental',
     'SpecialNeedsModule.kt': 'chronic',
+    'SpecialNeedsSubModule.kt': 'chronic',
     'CameraActivity.kt': 'radiology',
     'InspectionCameraActivity.kt': 'radiology',
     'ChatActivity.kt': 'chat',
@@ -301,7 +304,17 @@ class NetworkCanon {
     'EmergencyVoiceService.kt': 'hospital',
     'VoiceEmergencyService.kt': 'hospital',
     'GhaziBakflawiGFRSManager.kt': 'chronic',
+    'OpticalDistanceEngine.kt': 'chronic',
     'FlashDistanceSensor.kt': 'chronic',
+    'FlashDistanceIntegration.kt': 'chronic',
+    'CoreSystemManager.kt': 'devices',
+    'GhaziBafalawiDevicesHubRemote.kt': 'devices',
+    'DiagnosisLicenseSuite.kt': 'cv',
+    'LicenseManager.kt': 'cv',
+    'UserProfileActivity.kt': 'cv',
+    'EmergencySystemUltimate.kt': 'hospital',
+    'MedicalMIDIEngineAdvanced.kt': 'biometrics',
+    'MusicComposerHubFull.kt': 'education',
   };
   static const inboxIgnoreHints = <String>[
     'lifex_health_network',
@@ -347,9 +360,13 @@ class NetworkCanon {
   }
 
   static String? seatForDesktopFile(String path) {
-    var name = path.replaceAll('\\', '/').split('/').last;
+    var name = path.replaceAll('\\', '/').split('/').last.trim();
+    if (name.toLowerCase().endsWith('.txt')) {
+      name = name.substring(0, name.length - 4);
+    }
     name = name.replaceAll(' - Copy.kt', '.kt');
     name = name.replaceAll(RegExp(r' \(\d+\)\.kt$'), '.kt');
+    name = name.replaceAll(RegExp(r'\.kt\(\d+\)$'), '.kt');
     return desktopKotlinToSeat[name];
   }
 }

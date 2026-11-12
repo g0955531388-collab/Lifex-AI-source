@@ -5,12 +5,14 @@
 /// الوصف: أرشيف صور الأشعة/الرنين/السونار الخاصة بمريض معيّن عبر الزمن،
 /// لتمكين مقارنة زمنية بين فحصين لنفس المنطقة.
 /// =============================================================
+library;
 
 import 'imaging_center_profile.dart';
 
 class PatientImagingRecord {
   final String imageId;
   final String patientProfileId;
+  final String? referringDoctorId;
   final ImagingModality modality;
   final String bodyRegionAr;
   final String storageReference;
@@ -22,6 +24,7 @@ class PatientImagingRecord {
     required this.modality,
     required this.bodyRegionAr,
     required this.storageReference,
+    this.referringDoctorId,
     DateTime? capturedAt,
   }) : capturedAt = capturedAt ?? DateTime.now();
 }
@@ -31,6 +34,7 @@ class PatientImagingArchive {
   PatientImagingArchive();
 
   final Map<String, List<PatientImagingRecord>> _archive = {};
+  final Map<String, List<String>> _doctorCopies = {};
   int _counter = 0;
 
   PatientImagingRecord addRecord({
@@ -38,6 +42,7 @@ class PatientImagingArchive {
     required ImagingModality modality,
     required String bodyRegionAr,
     required String storageReference,
+    String? referringDoctorId,
   }) {
     _counter++;
     final record = PatientImagingRecord(
@@ -46,10 +51,17 @@ class PatientImagingArchive {
       modality: modality,
       bodyRegionAr: bodyRegionAr,
       storageReference: storageReference,
+      referringDoctorId: referringDoctorId,
     );
     _archive.putIfAbsent(patientProfileId, () => []).add(record);
+    if (referringDoctorId != null && referringDoctorId.isNotEmpty) {
+      _doctorCopies.putIfAbsent(referringDoctorId, () => []).add(record.imageId);
+    }
     return record;
   }
+
+  List<String> copiesForReferringDoctor(String referringDoctorId) =>
+      List.unmodifiable(_doctorCopies[referringDoctorId] ?? const []);
 
   List<PatientImagingRecord> historyForRegion(
     String patientProfileId,

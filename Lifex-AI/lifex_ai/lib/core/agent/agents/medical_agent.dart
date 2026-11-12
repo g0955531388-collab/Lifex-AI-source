@@ -8,6 +8,7 @@
 /// يُعيد استخدام HealthAnalysisEngine/DoctorGuidanceEngine الموجودين
 /// فعلاً في features/ai/ عند توفر أعراض واضحة في النص.
 /// =============================================================
+library;
 
 import '../../../features/ai/doctor_guidance_engine.dart';
 import '../../../features/ai/health_analysis_engine.dart';

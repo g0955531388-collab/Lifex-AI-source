@@ -23,6 +23,7 @@
 ///   الخاص ببروتوكول كل مزوّد (راجع توثيق كل مزوّد)، ثم نفّذ
 ///   [NativeToolCallingModelClient] هنا بدل [PromptBasedModelClient].
 /// =============================================================
+library;
 
 import 'dart:convert';
 

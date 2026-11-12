@@ -32,6 +32,10 @@ android {
             // TODO: استبدال بتوقيع إنتاجي حقيقي (keystore) قبل النشر على Google Play.
             // مؤقتًا نستخدم مفتاح debug فقط ليتمكن flutter build apk --release من إنتاج APK قابل للتجربة.
             signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

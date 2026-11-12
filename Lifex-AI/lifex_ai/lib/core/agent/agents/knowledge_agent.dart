@@ -6,6 +6,7 @@
 /// KnowledgeRetriever وبناء Context جاهز للوكيل المطلوب. طبقة رقيقة
 /// جداً — كل المنطق الفعلي في knowledge/knowledge_retriever.dart.
 /// =============================================================
+library;
 
 import '../knowledge/knowledge_context.dart';
 import '../knowledge/knowledge_retriever.dart';

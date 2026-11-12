@@ -21,17 +21,29 @@ class AccreditedBondResult {
 class AccreditedDoctorBond {
   const AccreditedDoctorBond();
 
+  /// ما يصل إلى الطبيب حين يختار المريض الحد الأدنى: الاسم واسم الطبيب فقط.
+  static String minimumText({
+    required HealthProfile patient,
+    required String doctorName,
+  }) =>
+      'الحد الأدنى للرعاية: اختار المريض ${patient.fullName} الطبيب $doctorName. لم تُرسل السيرة الكاملة.';
+
+  /// المشاركة الكاملة اختيار صريح من المريض؛ الافتراضي هو الحد الأدنى.
   AccreditedBondResult accredit({
     required HealthProfile patient,
     required HealthProfile? doctor,
     required String doctorName,
     required String cvPlainText,
+    bool shareFullRecord = false,
   }) {
     ProfileBoxStore(patient).add(BoxKeys.doctorMyDoctors, {
       'title': doctorName,
-      'detail': 'طبيبي المعتمد — وافقت على إرسال اسمي الحقيقي والسي في',
+      'detail': shareFullRecord
+          ? 'طبيبي المعتمد — وافقت على إرسال اسمي الحقيقي والسي في'
+          : 'طبيبي المعتمد — وافقت على إرسال الحد الأدنى فقط',
       'doctorProfileId': doctor?.profileId ?? '',
-      'cvSent': doctor != null,
+      'cvSent': doctor != null && shareFullRecord,
+      'shareFullRecord': shareFullRecord,
     });
     if (doctor == null) {
       return const AccreditedBondResult(
@@ -49,17 +61,23 @@ class AccreditedDoctorBond {
     store.add(BoxKeys.accreditedPatientInbox, {
       'title': patient.fullName,
       'patientId': patient.profileId,
-      'nationalId':
-          ProfileBoxStore(patient).stringField(BoxKeys.ownerNationalId) ?? '',
+      'nationalId': shareFullRecord
+          ? (ProfileBoxStore(patient).stringField(BoxKeys.ownerNationalId) ??
+              '')
+          : '',
       'cv': cvPlainText,
-      'detail': patient.chronicConditions
-          .map((item) => item.conditionName)
-          .join('، '),
+      'detail': shareFullRecord
+          ? patient.chronicConditions
+              .map((item) => item.conditionName)
+              .join('، ')
+          : '',
+      'shareFullRecord': shareFullRecord,
     });
     return AccreditedBondResult(
       deliveredToDoctor: true,
-      messageAr:
-          'وصل إشعار إلى ملف الطبيب على هذا الجهاز، ومعه السي في الكامل لأنك اخترت ذلك.',
+      messageAr: shareFullRecord
+          ? 'وصل إشعار إلى ملف الطبيب على هذا الجهاز، ومعه السي في الكامل لأنك اخترت ذلك.'
+          : 'وصل إشعار إلى ملف الطبيب على هذا الجهاز، ومعه الحد الأدنى الذي وافقت على إرساله.',
     );
   }
 }

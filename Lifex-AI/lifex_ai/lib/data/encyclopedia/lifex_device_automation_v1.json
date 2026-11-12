@@ -1,0 +1,11 @@
+{
+  "schema_id": "LIFEX-DEVICE-AUTOMATION",
+  "version": "1.0",
+  "doesNotBypassPermissions": true,
+  "medicalReadNotControl": true,
+  "dryRunSendsNoCommands": true,
+  "compensationNotFakeRollback": true,
+  "physicalRetryNotAutomatic": true,
+  "emergencyNotGrantedToNormalRules": true,
+  "dedupAndLoopDetection": true
+}

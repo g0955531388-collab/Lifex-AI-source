@@ -4,6 +4,7 @@
 /// المسار: lib/features/medical_imaging/imaging_center_profile.dart
 /// الوصف: الملف العام (الخارجي) لمركز التصوير الطبي.
 /// =============================================================
+library;
 
 enum ImagingModality { xray, ctScan, mri, ultrasound, mammography }
 

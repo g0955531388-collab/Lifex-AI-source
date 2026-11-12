@@ -5,10 +5,12 @@
 /// الوصف: تحديد المتبرعين المؤهلين لطلب دم معيّن حسب فصيلة الدم،
 /// القرب الجغرافي، وأهلية التبرع (لم يتبرع مؤخراً، لا مانع صحي معروف).
 /// =============================================================
+library;
 
 import 'dart:math' as math;
 
 import '../hospital/hospital_blood_bank.dart';
+import 'blood_type_match.dart';
 import 'donor_history_registry.dart';
 
 class DonorLocation {
@@ -22,6 +24,10 @@ class DonorLocation {
   /// من يسجّل بياناته كمتبرع أصلاً في نظام Lifex Blood Network قد وافق
   /// على المبدأ؛ هذا الحقل هو تراجع صريح لاحق، وليس اشتراكاً إضافياً.
   final bool hasOptedOutOfDonationAlerts;
+  final String city;
+  final String profileId;
+  final bool hasReliableFix;
+  final double? preferredRadiusKm;
 
   const DonorLocation({
     required this.donorLifexId,
@@ -29,6 +35,10 @@ class DonorLocation {
     required this.latitude,
     required this.longitude,
     this.hasOptedOutOfDonationAlerts = false,
+    this.city = '',
+    this.profileId = '',
+    this.hasReliableFix = true,
+    this.preferredRadiusKm,
   });
 }
 
@@ -63,33 +73,67 @@ class DonorEligibilityFilter {
 
   double _degToRad(double deg) => deg * (math.pi / 180.0);
 
+  static bool coordinatesUsable(double latitude, double longitude) {
+    if (latitude == 0 && longitude == 0) return false;
+    if (latitude < -90 || latitude > 90) return false;
+    if (longitude < -180 || longitude > 180) return false;
+    return true;
+  }
+
   List<DonorLocation> findEligibleDonors({
     required BloodTypeSimple bloodType,
     required double centerLatitude,
     required double centerLongitude,
     required double radiusKm,
     bool ignoreDistance = false,
+    bool compatibleRedCells = false,
+    String targetCity = '',
   }) {
     final allDonors = donorDirectory();
+    final wantedCity = targetCity.trim().toLowerCase();
 
     return allDonors.where((donor) {
       // الشرط الأول دائماً: احترام رفض المستخدم الصريح لتلقي طلبات
       // التبرع، بصرف النظر عن مدى توافقه الطبي أو الجغرافي مع الطلب.
       if (donor.hasOptedOutOfDonationAlerts) return false;
 
-      if (donor.bloodType != bloodType) return false;
+      final typeMatches = compatibleRedCells
+          ? BloodTypeMatch.canDonateRedCells(donor.bloodType, bloodType)
+          : donor.bloodType == bloodType;
+      if (!typeMatches) return false;
 
-      if (!ignoreDistance) {
-        final distance = _distanceKm(
-          centerLatitude,
-          centerLongitude,
-          donor.latitude,
-          donor.longitude,
-        );
-        if (distance > radiusKm) return false;
+      final donorCity = donor.city.trim().toLowerCase();
+      if (wantedCity.isNotEmpty &&
+          donorCity.isNotEmpty &&
+          donorCity != wantedCity) {
+        return false;
       }
 
-      final lastDonation = historyRegistry.lastDonationDateFor(donor.donorLifexId);
+      if (!ignoreDistance) {
+        if (radiusKm <= 0) return false;
+        final centerOk = coordinatesUsable(centerLatitude, centerLongitude);
+        if (!donor.hasReliableFix || !centerOk) {
+          if (wantedCity.isEmpty ||
+              donorCity.isEmpty ||
+              donorCity != wantedCity) {
+            return false;
+          }
+        } else {
+          final distance = _distanceKm(
+            centerLatitude,
+            centerLongitude,
+            donor.latitude,
+            donor.longitude,
+          );
+          final preferred = donor.preferredRadiusKm;
+          final cap =
+              preferred == null || preferred > radiusKm ? radiusKm : preferred;
+          if (distance > cap) return false;
+        }
+      }
+
+      final lastDonation =
+          historyRegistry.lastDonationDateFor(donor.donorLifexId);
       if (lastDonation != null) {
         final daysSince = DateTime.now().difference(lastDonation).inDays;
         if (daysSince < minimumDaysBetweenDonations) return false;

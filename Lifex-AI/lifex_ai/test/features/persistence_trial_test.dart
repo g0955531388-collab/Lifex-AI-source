@@ -7,6 +7,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifex_ai/core/app_constants.dart';
 import 'package:lifex_ai/core/local_knowledge.dart';
+import 'package:lifex_ai/core/security/memory_secure_secret_store.dart';
 import 'package:lifex_ai/core/trial_manager.dart';
 import 'package:lifex_ai/features/doctors/pharmacy_locator.dart';
 import 'package:lifex_ai/features/profile/health_profile.dart';
@@ -23,7 +24,7 @@ void main() {
     test('يحفظ ويستعيد الملف النشط والاستبيان', () async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
-      final vault = ProfileVault(prefs);
+      final vault = ProfileVault(prefs, secrets: MemorySecureSecretStore());
       final engine = MultiProfileEngine(maxProfiles: 4);
       final profile = HealthProfile(
         profileId: 'p-persist',
@@ -63,9 +64,18 @@ void main() {
         ),
         isTrue,
       );
+      // Module Access ≠ Entitlement: فتح الوحدة متاح؛ القيد على الميزة المدفوعة.
       expect(
         policy.canOpenUnit(
           'box',
+          phase: TrialPhase.reducedMonth,
+          feeExempt: false,
+        ),
+        isTrue,
+      );
+      expect(
+        policy.canUsePaidFeature(
+          'premium_booking',
           phase: TrialPhase.reducedMonth,
           feeExempt: false,
         ),
@@ -73,7 +83,7 @@ void main() {
       );
     });
 
-    test('بعد الشهر المجاني تبقى الإشعارات والتبرعات والإسعاف والدم', () async {
+    test('بعد الشهر المجاني تبقى الوحدات مفتوحة والقيود على المدفوع فقط', () async {
       SharedPreferences.setMockInitialValues({
         'lifex_installed_at': DateTime.now()
             .subtract(const Duration(days: AppConstants.trialPeriodDays + 1))
@@ -139,11 +149,19 @@ void main() {
           phase: TrialPhase.residual,
           feeExempt: false,
         ),
+        isTrue,
+      );
+      expect(
+        policy.canUsePaidFeature(
+          'premium_booking',
+          phase: TrialPhase.residual,
+          feeExempt: false,
+        ),
         isFalse,
       );
       expect(
-        policy.canOpenUnit(
-          'box',
+        policy.canUsePaidFeature(
+          'premium_booking',
           phase: TrialPhase.residual,
           feeExempt: true,
         ),
@@ -237,6 +255,7 @@ void main() {
         ],
         medications: [
           {'nameAr': 'باراسيتامول', 'nameEn': 'paracetamol'},
+          {'nameAr': 'اسبرين', 'nameEn': 'aspirin'},
         ],
         symptoms: const [],
         tests: const [],
@@ -257,6 +276,11 @@ void main() {
       expect(knowledge.search('باراسيتامول').first.kindAr, 'دواء');
       expect(knowledge.search('الهربس').first.kindAr, 'حالة مرجعية');
       expect(knowledge.search('cyanotic').first.kindAr, 'علامة بصرية');
+      expect(knowledge.search('أسبرين').first.titleAr, contains('اسبرين'));
+      expect(
+        knowledge.search('ضغط شرياني').any((hit) => hit.titleAr.contains('ضغط')),
+        isTrue,
+      );
     });
   });
 
@@ -317,7 +341,7 @@ void main() {
         VoiceCommandIntent.openMedications,
       );
       expect(
-        parser.parse("Lifex, I cannot breathe").intent,
+        parser.parse('Lifex, I cannot breathe').intent,
         VoiceCommandIntent.callEmergency,
       );
       expect(

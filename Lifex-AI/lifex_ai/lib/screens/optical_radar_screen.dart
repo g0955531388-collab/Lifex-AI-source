@@ -12,6 +12,7 @@ import '../features/vision/optical_radar_engine.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/accessible_widgets.dart';
 import 'permission_transparency_screen.dart';
+import '../widgets/lifex_text.dart';
 
 class OpticalRadarScreen extends StatefulWidget {
   const OpticalRadarScreen({super.key});
@@ -33,12 +34,12 @@ class _OpticalRadarScreenState extends State<OpticalRadarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('الرادار الضوئي')),
+      appBar: AppBar(title: const LifexText('الرادار الضوئي')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const Text(
+            const LifexText(
               'وميض الفلاش هنا لمساعدة المكفوفين ضمن إطار موافقة الكاميرا. '
               'ليس بديلاً عن العصا البيضاء، ولا يشخص حالة طبية.',
               textAlign: TextAlign.center,
@@ -47,7 +48,7 @@ class _OpticalRadarScreenState extends State<OpticalRadarScreen> {
             FilledButton.icon(
               onPressed: _probe,
               icon: const Icon(Icons.flash_on_outlined),
-              label: const Text('وميض وقياس إن توفّر العتاد'),
+              label: const LifexText('وميض وقياس إن توفّر العتاد'),
             ),
             const SizedBox(height: 12),
             OutlinedButton(
@@ -58,10 +59,10 @@ class _OpticalRadarScreenState extends State<OpticalRadarScreen> {
                   ),
                 );
               },
-              child: const Text('إدارة موافقة الكاميرا'),
+              child: const LifexText('إدارة موافقة الكاميرا'),
             ),
             const SizedBox(height: 24),
-            Text(_statusAr, textAlign: TextAlign.center),
+            LifexText(_statusAr, textAlign: TextAlign.center),
           ],
         ),
       ),

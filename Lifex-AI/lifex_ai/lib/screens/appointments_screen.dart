@@ -1,15 +1,24 @@
 /// =============================================================
-/// Lifex-AI — واجهات التطبيق
+/// Lifex-AI — مواعيد محلية مع تقويم شهر/أسبوع/يوم
 /// الملف: appointments_screen.dart
-/// المسار: lib/screens/appointments_screen.dart
-/// الوصف: سجل مواعيد طبية محلي داخل الملف الصحي. ليس حجزاً مؤسسياً.
+/// Calendar-first. Appointment ≠ Encounter.
 /// =============================================================
 library lifex_ai.screens.appointments_screen;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/profile/active_profile_controller.dart';
+import '../features/scheduling/user_appointment_store.dart';
+import '../features/voice/voice_engine.dart';
+import '../widgets/accessible_widgets.dart';
+import '../widgets/lifex_record_edit.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
+
+enum _CalendarView { month, week, day }
 
 class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});
@@ -19,7 +28,15 @@ class AppointmentsScreen extends StatefulWidget {
 }
 
 class _AppointmentsScreenState extends State<AppointmentsScreen> {
-  List<Map<String, dynamic>> _appointments = [];
+  late UserAppointmentStore _store;
+  DateTime _visibleMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  DateTime _selectedDay = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
+  _CalendarView _view = _CalendarView.month;
+  String _lastSpoken = '';
 
   @override
   void initState() {
@@ -28,87 +45,435 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         .read<ActiveProfileController>()
         .activeProfile
         ?.questionnaireData['appointments'];
-    if (raw is List) {
-      _appointments = raw
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
-    }
+    _store = UserAppointmentStore.fromMaps(raw is List ? raw : null);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _announce(_store.spokenMonthSummaryAr(_visibleMonth));
+    });
   }
 
   void _persist() {
     final controller = context.read<ActiveProfileController>();
     final profile = controller.activeProfile;
     if (profile == null) return;
-    profile.questionnaireData['appointments'] = _appointments;
+    profile.questionnaireData['appointments'] = _store.toMaps();
     profile.lastUpdatedAt = DateTime.now();
     controller.saveActiveProfileChanges();
   }
 
-  Future<void> _addAppointment() async {
-    final result = await showDialog<Map<String, String>>(
+  Future<void> _announce(String message) async {
+    setState(() => _lastSpoken = message);
+    if (!mounted) return;
+    announceForScreenReader(context, message);
+    await VoiceEngine.instance.speak(message);
+  }
+
+  Future<void> _addOrEdit({UserAppointment? existing}) async {
+    final profile = context.read<ActiveProfileController>().activeProfile;
+    if (profile == null) {
+      await _announce(
+        'EMPTY — لا يوجد ملف صحي نشط. أنشئ ملفاً ثم أضف موعداً.',
+      );
+      return;
+    }
+    final result = await showDialog<UserAppointment>(
       context: context,
-      builder: (_) => const _AppointmentDialog(),
+      builder: (_) => _AppointmentWizard(
+        initial: existing,
+        initialDate: _selectedDay,
+      ),
     );
     if (result == null) return;
-    setState(() => _appointments.add(result));
+    setState(() {
+      if (existing != null) {
+        _store.update(existing.id, result);
+      } else {
+        _store.add(result);
+      }
+    });
     _persist();
+    await _announce(
+      existing == null
+          ? 'تم إنشاء الموعد. ${result.spokenSummaryAr()}'
+          : 'تم تعديل الموعد. ${result.spokenSummaryAr()}',
+    );
+  }
+
+  Future<void> _remove(UserAppointment a) async {
+    final profileId =
+        context.read<ActiveProfileController>().activeProfileId ?? 'local';
+    final entry = context.read<LioSensitiveActionEntry>();
+    final outcome = await entry.authorizeThenRun<String>(
+      request: LioGatewayRequest(
+        requestId: 'appt_del_${a.id}_${DateTime.now().millisecondsSinceEpoch}',
+        correlationId: 'appt_$profileId',
+        identityAccountId: profileId,
+        purpose: 'scheduling',
+        requestedAction: 'delete_local_appointment',
+        dataScope: 'profile_basic',
+        sensitivity: LioDataSensitivity.personal,
+        consent: const LioConsentContext(
+          consentGranted: true,
+          purposeAligned: true,
+        ),
+        riskLevel: LioActionRisk.medium,
+        timestamp: DateTime.now().toUtc(),
+        authenticated: true,
+        authorized: true,
+        minimumNecessarySatisfied: true,
+      ),
+      run: () async => _store.removeOrCancel(a.id),
+    );
+    if (!outcome.executed) {
+      await _announce(
+        'توقف حذف الموعد عند LIO (${outcome.decision.wireDecision}).',
+      );
+      return;
+    }
+    setState(() {});
+    _persist();
+    final action = outcome.value;
+    if (action == 'deleted') {
+      await _announce('تم حذف الموعد.');
+    } else if (action == 'cancelled_request') {
+      await _announce(
+        'هذا موعد جهة خارجية. سُجّل طلب إلغاء بدل الحذف المباشر.',
+      );
+    }
+  }
+
+  void _goToday() {
+    final now = DateTime.now();
+    setState(() {
+      _selectedDay = DateTime(now.year, now.month, now.day);
+      _visibleMonth = DateTime(now.year, now.month);
+    });
+    _announce(_store.spokenDayAr(_selectedDay));
   }
 
   @override
   Widget build(BuildContext context) {
+    final profile = context.watch<ActiveProfileController>().activeProfile;
+    final dayItems = _store.forDay(_selectedDay);
+    final dayLabel =
+        'مواعيد ${_selectedDay.year}/${_selectedDay.month}/${_selectedDay.day} — '
+        '${dayItems.isEmpty ? 'لا مواعيد' : '${dayItems.length} موعد'}';
+
     return Scaffold(
-      appBar: AppBar(title: const Text('مواعيدي')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addAppointment,
-        icon: const Icon(Icons.add),
-        label: const Text('إضافة موعد'),
+      appBar: AppBar(
+        title: const LifexText('مواعيدي'),
+        actions: [
+          IconButton(
+            tooltip: tr('اقرأ مواعيد اليوم'),
+            onPressed: () => _announce(_store.spokenDayAr(_selectedDay)),
+            icon: const Icon(Icons.record_voice_over_outlined),
+          ),
+          IconButton(
+            tooltip: tr('اليوم'),
+            onPressed: _goToday,
+            icon: const Icon(Icons.today_outlined),
+          ),
+          PopupMenuButton<_CalendarView>(
+            tooltip: tr('تغيير العرض'),
+            initialValue: _view,
+            onSelected: (v) => setState(() => _view = v),
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: _CalendarView.month, child: LifexText('شهر')),
+              PopupMenuItem(value: _CalendarView.week, child: LifexText('أسبوع')),
+              PopupMenuItem(value: _CalendarView.day, child: LifexText('يوم')),
+            ],
+            icon: const Icon(Icons.calendar_view_month),
+          ),
+        ],
       ),
-      body: _appointments.isEmpty
-          ? const Center(child: Text('لا توجد مواعيد مسجلة.'))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _appointments.length,
-              itemBuilder: (context, index) {
-                final appointment = _appointments[index];
-                return Card(
-                  child: ListTile(
-                    leading: const CircleAvatar(child: Icon(Icons.event)),
-                    title: Text(appointment['title']?.toString() ?? ''),
-                    subtitle: Text(
-                        '${appointment['date']} — ${appointment['place']}'),
-                    trailing: IconButton(
-                      tooltip: 'حذف الموعد',
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () {
-                        setState(() => _appointments.removeAt(index));
-                        _persist();
-                      },
-                    ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _addOrEdit(),
+        icon: const Icon(Icons.add),
+        label: const LifexText('إضافة موعد'),
+      ),
+      body: profile == null
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: LifexText(
+                  'EMPTY — وحدة المواعيد متاحة.\n'
+                  'لا يوجد ملف صحي نشط. أنشئ ملفاً من الشاشة الرئيسية لحفظ المواعيد.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          : Column(
+              children: [
+                if (_lastSpoken.isNotEmpty)
+                  LiveAnnouncingText(
+                    message: _lastSpoken,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
-                );
-              },
+                if (_view == _CalendarView.month) _buildMonthGrid(),
+                if (_view == _CalendarView.week) _buildWeekStrip(),
+                if (_view == _CalendarView.day)
+                  ListTile(
+                    title: LifexText(dayLabel),
+                    subtitle: const LifexText('عرض يومي'),
+                  ),
+                const Divider(height: 1),
+                Expanded(
+                  child: dayItems.isEmpty
+                      ? Center(
+                          child: Semantics(
+                            label: tr(dayLabel),
+                            child: const LifexText(
+                              'EMPTY — لا مواعيد في هذا اليوم.\n'
+                              'اضغط إضافة موعد أو اختر يوماً آخر.',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: dayItems.length,
+                          itemBuilder: (context, i) {
+                            final appointment = dayItems[i];
+                            return Card(
+                              child: ListTile(
+                                leading: const CircleAvatar(
+                                  child: Icon(Icons.event),
+                                ),
+                                title: LifexText(
+                                  '${appointment.timeHm} ${appointment.title}'
+                                      .trim(),
+                                ),
+                                subtitle: LifexText(
+                                  '${appointment.type} — ${appointment.place}\n'
+                                  'تذكير: ${appointment.reminderMinutes} د '
+                                  '· ${appointment.recurrence.name} '
+                                  '· ${appointment.source.name}',
+                                ),
+                                isThreeLine: true,
+                                onTap: appointment.canDirectEdit
+                                    ? () => _addOrEdit(existing: appointment)
+                                    : () => _announce(
+                                          'هذا الموعد غير قابل للتعديل المباشر. يمكن طلب تغيير حسب السياسة.',
+                                        ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    LifexRecordEditButton(
+                                      onPressed: appointment.canDirectEdit
+                                          ? () => _addOrEdit(
+                                              existing: appointment)
+                                          : () => _announce(
+                                                'هذا الموعد غير قابل للتعديل المباشر. يمكن طلب تغيير حسب السياسة.',
+                                              ),
+                                    ),
+                                    IconButton(
+                                      tooltip: tr(appointment.canDirectDelete
+                                          ? 'حذف الموعد المحلي'
+                                          : 'طلب إلغاء'),
+                                      icon: const Icon(Icons.delete_outline),
+                                      onPressed: () => _remove(appointment),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
     );
   }
+
+  Widget _buildMonthGrid() {
+    final first = DateTime(_visibleMonth.year, _visibleMonth.month, 1);
+    final daysInMonth =
+        DateTime(_visibleMonth.year, _visibleMonth.month + 1, 0).day;
+    final startWeekday = first.weekday % 7;
+    final cells = <Widget>[];
+    for (var i = 0; i < startWeekday; i++) {
+      cells.add(const SizedBox.shrink());
+    }
+    for (var d = 1; d <= daysInMonth; d++) {
+      final day = DateTime(_visibleMonth.year, _visibleMonth.month, d);
+      final count = _store.countOn(day);
+      final selected = day.year == _selectedDay.year &&
+          day.month == _selectedDay.month &&
+          day.day == _selectedDay.day;
+      cells.add(
+        Semantics(
+          button: true,
+          label:
+              tr('${day.day} ${_monthNameAr(day.month)}، ${count == 0 ? 'بلا مواعيد' : 'يحتوي على $count موعد'}'),
+          child: InkWell(
+            onTap: () {
+              setState(() => _selectedDay = day);
+              _announce(_store.spokenDayAr(day));
+            },
+            child: Container(
+              margin: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: selected
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : null,
+                borderRadius: BorderRadius.circular(8),
+                border: count > 0
+                    ? Border.all(color: Theme.of(context).colorScheme.primary)
+                    : null,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  LifexText('$d'),
+                  if (count > 0)
+                    LifexText('•$count', style: const TextStyle(fontSize: 10)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            IconButton(
+              tooltip: tr('الشهر السابق'),
+              onPressed: () {
+                setState(() {
+                  _visibleMonth =
+                      DateTime(_visibleMonth.year, _visibleMonth.month - 1);
+                });
+                _announce(_store.spokenMonthSummaryAr(_visibleMonth));
+              },
+              icon: const Icon(Icons.chevron_left),
+            ),
+            Expanded(
+              child: LifexText(
+                '${_monthNameAr(_visibleMonth.month)} ${_visibleMonth.year}',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            IconButton(
+              tooltip: tr('الشهر التالي'),
+              onPressed: () {
+                setState(() {
+                  _visibleMonth =
+                      DateTime(_visibleMonth.year, _visibleMonth.month + 1);
+                });
+                _announce(_store.spokenMonthSummaryAr(_visibleMonth));
+              },
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ],
+        ),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 7,
+          children: cells,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeekStrip() {
+    final start =
+        _selectedDay.subtract(Duration(days: _selectedDay.weekday % 7));
+    return SizedBox(
+      height: 72,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: 7,
+        itemBuilder: (context, i) {
+          final day = DateTime(start.year, start.month, start.day + i);
+          final selected = day.year == _selectedDay.year &&
+              day.month == _selectedDay.month &&
+              day.day == _selectedDay.day;
+          final count = _store.countOn(day);
+          return Padding(
+            padding: const EdgeInsets.all(4),
+            child: ChoiceChip(
+              selected: selected,
+              label: LifexText('${day.day}${count > 0 ? ' ($count)' : ''}'),
+              onSelected: (_) {
+                setState(() {
+                  _selectedDay = day;
+                  _visibleMonth = DateTime(day.year, day.month);
+                });
+                _announce(_store.spokenDayAr(day));
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  String _monthNameAr(int m) {
+    const names = [
+      '',
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
+    ];
+    return names[m];
+  }
 }
 
-class _AppointmentDialog extends StatefulWidget {
-  const _AppointmentDialog();
+class _AppointmentWizard extends StatefulWidget {
+  const _AppointmentWizard({this.initial, required this.initialDate});
+
+  final UserAppointment? initial;
+  final DateTime initialDate;
 
   @override
-  State<_AppointmentDialog> createState() => _AppointmentDialogState();
+  State<_AppointmentWizard> createState() => _AppointmentWizardState();
 }
 
-class _AppointmentDialogState extends State<_AppointmentDialog> {
-  final _title = TextEditingController();
-  final _place = TextEditingController();
-  DateTime _date = DateTime.now();
+class _AppointmentWizardState extends State<_AppointmentWizard> {
+  late final TextEditingController _title;
+  late final TextEditingController _place;
+  late final TextEditingController _time;
+  late final TextEditingController _notes;
+  late DateTime _date;
+  String _type = 'doctor';
+  String _timezone = 'local';
+  int _reminder = 30;
+  AppointmentRecurrence _recurrence = AppointmentRecurrence.none;
+
+  @override
+  void initState() {
+    super.initState();
+    final i = widget.initial;
+    _title = TextEditingController(text: i?.title ?? '');
+    _place = TextEditingController(text: i?.place ?? '');
+    _time = TextEditingController(text: i?.timeHm ?? '09:00');
+    _notes = TextEditingController(text: i?.notes ?? '');
+    _type = i?.type ?? 'doctor';
+    _timezone = i?.timezone ?? 'local';
+    _reminder = i?.reminderMinutes ?? 30;
+    _recurrence = i?.recurrence ?? AppointmentRecurrence.none;
+    _date = i?.date ?? widget.initialDate;
+  }
 
   @override
   void dispose() {
     _title.dispose();
     _place.dispose();
+    _time.dispose();
+    _notes.dispose();
     super.dispose();
   }
 
@@ -116,7 +481,7 @@ class _AppointmentDialogState extends State<_AppointmentDialog> {
     final picked = await showDatePicker(
       context: context,
       initialDate: _date,
-      firstDate: DateTime.now(),
+      firstDate: DateTime(2000),
       lastDate: DateTime.now().add(const Duration(days: 3650)),
     );
     if (picked != null) setState(() => _date = picked);
@@ -125,40 +490,130 @@ class _AppointmentDialogState extends State<_AppointmentDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('إضافة موعد'),
+      title: LifexText(widget.initial == null ? 'إضافة موعد' : 'تعديل موعد'),
       content: SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
               controller: _title,
-              decoration:
-                  const InputDecoration(labelText: 'نوع الموعد أو اسم الطبيب')),
-          TextField(
+              decoration: InputDecoration(labelText: tr('العنوان')),
+            ),
+            DropdownButtonFormField<String>(
+              value: _type,
+              decoration: InputDecoration(labelText: tr('النوع')),
+              items: const [
+                DropdownMenuItem(value: 'doctor', child: LifexText('طبيب')),
+                DropdownMenuItem(value: 'hospital', child: LifexText('مستشفى')),
+                DropdownMenuItem(value: 'laboratory', child: LifexText('مختبر')),
+                DropdownMenuItem(value: 'imaging', child: LifexText('تصوير')),
+                DropdownMenuItem(value: 'pharmacy', child: LifexText('صيدلية')),
+                DropdownMenuItem(value: 'dentistry', child: LifexText('أسنان')),
+                DropdownMenuItem(value: 'rehabilitation', child: LifexText('تأهيل')),
+                DropdownMenuItem(value: 'blood', child: LifexText('دم')),
+                DropdownMenuItem(value: 'telehealth', child: LifexText('عن بُعد')),
+                DropdownMenuItem(value: 'follow_up', child: LifexText('متابعة')),
+                DropdownMenuItem(value: 'device_service', child: LifexText('خدمة جهاز')),
+                DropdownMenuItem(value: 'other', child: LifexText('أخرى')),
+              ],
+              onChanged: (v) => setState(() => _type = v ?? 'other'),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: LifexText(
+                'التاريخ: ${_date.toIso8601String().split('T').first}',
+              ),
+              trailing: const Icon(Icons.calendar_today),
+              onTap: _pickDate,
+            ),
+            TextField(
+              controller: _time,
+              decoration: InputDecoration(
+                labelText: tr('الوقت (HH:mm)'),
+                hintText: '09:00',
+              ),
+            ),
+            TextField(
               controller: _place,
-              decoration: const InputDecoration(labelText: 'المكان')),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('التاريخ'),
-            subtitle: Text('${_date.year}/${_date.month}/${_date.day}'),
-            trailing: const Icon(Icons.calendar_month),
-            onTap: _pickDate,
-          ),
-        ]),
+              decoration: InputDecoration(labelText: tr('المكان / الجهة')),
+            ),
+            TextField(
+              controller: _notes,
+              decoration: InputDecoration(labelText: tr('ملاحظات')),
+            ),
+            DropdownButtonFormField<int>(
+              value: _reminder,
+              decoration: InputDecoration(labelText: tr('التذكير قبل')),
+              items: const [
+                DropdownMenuItem(value: 5, child: LifexText('5 دقائق')),
+                DropdownMenuItem(value: 15, child: LifexText('15 دقيقة')),
+                DropdownMenuItem(value: 30, child: LifexText('30 دقيقة')),
+                DropdownMenuItem(value: 60, child: LifexText('ساعة')),
+                DropdownMenuItem(value: 1440, child: LifexText('يوم')),
+              ],
+              onChanged: (v) => setState(() => _reminder = v ?? 30),
+            ),
+            DropdownButtonFormField<AppointmentRecurrence>(
+              value: _recurrence,
+              decoration: InputDecoration(labelText: tr('التكرار')),
+              items: AppointmentRecurrence.values
+                  .map(
+                    (r) => DropdownMenuItem(value: r, child: LifexText(r.name)),
+                  )
+                  .toList(),
+              onChanged: (v) =>
+                  setState(() => _recurrence = v ?? AppointmentRecurrence.none),
+            ),
+            DropdownButtonFormField<String>(
+              value: _timezone,
+              decoration: InputDecoration(labelText: tr('المنطقة الزمنية')),
+              items: const [
+                DropdownMenuItem(value: 'local', child: LifexText('توقيت الجهاز')),
+                DropdownMenuItem(value: 'UTC', child: LifexText('UTC')),
+                DropdownMenuItem(
+                  value: 'Asia/Damascus',
+                  child: LifexText('Asia/Damascus'),
+                ),
+              ],
+              onChanged: (v) => setState(() => _timezone = v ?? 'local'),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء')),
+          onPressed: () => Navigator.pop(context),
+          child: const LifexText('إلغاء'),
+        ),
         FilledButton(
           onPressed: () {
             if (_title.text.trim().isEmpty) return;
-            Navigator.pop(context, {
-              'title': _title.text.trim(),
-              'place':
-                  _place.text.trim().isEmpty ? 'غير محدد' : _place.text.trim(),
-              'date': '${_date.year}/${_date.month}/${_date.day}',
-            });
+            final id = widget.initial?.id ??
+                'apt_${DateTime.now().millisecondsSinceEpoch}';
+            Navigator.pop(
+              context,
+              UserAppointment(
+                id: id,
+                title: _title.text.trim(),
+                place: _place.text.trim(),
+                dateIso: DateTime(_date.year, _date.month, _date.day)
+                    .toIso8601String()
+                    .split('T')
+                    .first,
+                timeHm: _time.text.trim(),
+                type: _type,
+                timezone: _timezone,
+                notes: _notes.text.trim(),
+                reminderMinutes: _reminder,
+                recurrence: _recurrence,
+                status: AppointmentLifecycle.confirmed,
+                source: widget.initial?.source ??
+                    AppointmentSourceOwnership.userCreated,
+                providerId: widget.initial?.providerId,
+              ),
+            );
           },
-          child: const Text('حفظ'),
+          child: const LifexText('حفظ'),
         ),
       ],
     );

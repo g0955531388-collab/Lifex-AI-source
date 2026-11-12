@@ -10,10 +10,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/app_constants.dart';
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/education/personal_shelf.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class PersonalShelfScreen extends StatefulWidget {
   const PersonalShelfScreen({super.key});
@@ -24,6 +28,7 @@ class PersonalShelfScreen extends StatefulWidget {
 
 class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
   final _url = TextEditingController();
+  final _priceMinor = TextEditingController(text: '0');
   final _downloader = PersonalShelfDownloader();
   bool _busy = false;
   String? _statusAr;
@@ -31,6 +36,7 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
   @override
   void dispose() {
     _url.dispose();
+    _priceMinor.dispose();
     super.dispose();
   }
 
@@ -65,6 +71,55 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
         _statusAr = result.errorAr;
       });
       return;
+    }
+    final priceText = _priceMinor.text.trim();
+    final priceMinor = priceText.isEmpty ? 0 : int.tryParse(priceText);
+    if (priceMinor == null || priceMinor < 0) {
+      setState(() {
+        _busy = false;
+        _statusAr = 'السعر عدد صحيح بالوحدات الصغرى، أو 0 للمحتوى المفتوح.';
+      });
+      return;
+    }
+    if (priceMinor > 0) {
+      final profileId = controller.activeProfileId ?? 'local';
+      final entry = context.read<LioSensitiveActionEntry>();
+      final outcome = await entry.purchaseThroughWallet(
+        gatewayRequest: LioGatewayRequest(
+          requestId: 'shelf_buy_${DateTime.now().millisecondsSinceEpoch}',
+          correlationId: 'shelf_$profileId',
+          identityAccountId: profileId,
+          purpose: 'education',
+          requestedAction: 'purchase_shelf_volume',
+          dataScope: 'profile_basic',
+          sensitivity: LioDataSensitivity.personal,
+          consent: const LioConsentContext(
+            consentGranted: true,
+            purposeAligned: true,
+          ),
+          riskLevel: LioActionRisk.high,
+          timestamp: DateTime.now().toUtc(),
+          authenticated: true,
+          authorized: true,
+          minimumNecessarySatisfied: true,
+          humanConfirmed: true,
+        ),
+        profileId: profileId,
+        priceMinor: priceMinor,
+        currencyCode: 'USD',
+        itemId: uri.toString(),
+      );
+      if (!mounted) return;
+      if (!outcome.executed || !(outcome.value?.success ?? false)) {
+        setState(() {
+          _busy = false;
+          _statusAr = outcome.executed
+              ? (outcome.value?.messageAr ??
+                  'تعذّر الخصم من المحفظة. لم يُحفظ الكتاب.')
+              : 'توقف الشراء عند البوابة (${outcome.decision.wireDecision}). لم يُحفظ الكتاب.';
+        });
+        return;
+      }
     }
     try {
       await store.keep(
@@ -103,7 +158,33 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
     final store = _store();
     final controller = context.read<ActiveProfileController>();
     if (store == null) return;
-    await store.drop(record.id);
+    final profileId = controller.activeProfileId ?? 'local';
+    final entry = context.read<LioSensitiveActionEntry>();
+    final outcome = await entry.authorizeThenRun<void>(
+      request: LioGatewayRequest(
+        requestId:
+            'shelf_del_${record.id}_${DateTime.now().millisecondsSinceEpoch}',
+        correlationId: 'shelf_$profileId',
+        identityAccountId: profileId,
+        purpose: 'education',
+        requestedAction: 'delete_personal_shelf_item',
+        dataScope: 'profile_basic',
+        sensitivity: LioDataSensitivity.personal,
+        consent: const LioConsentContext(
+          consentGranted: true,
+          purposeAligned: true,
+        ),
+        riskLevel: LioActionRisk.medium,
+        timestamp: DateTime.now().toUtc(),
+        authenticated: true,
+        authorized: true,
+        minimumNecessarySatisfied: true,
+      ),
+      run: () async {
+        await store.drop(record.id);
+      },
+    );
+    if (!outcome.executed || !mounted) return;
     controller.saveActiveProfileChanges();
     setState(() => _statusAr = 'حُذف من الجهاز ومن الرف.');
   }
@@ -114,11 +195,11 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
     final kept =
         profile == null ? const <ShelfVolumeRecord>[] : PersonalShelfStore(profile).kept();
     return Scaffold(
-      appBar: AppBar(title: const Text('رفّ التحميل الشخصي')),
+      appBar: AppBar(title: const LifexText('رفّ التحميل الشخصي')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
+          LifexText(
             AppConstants.studioBannerCredit,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
@@ -126,7 +207,7 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
           const SizedBox(height: 8),
           const HonestyBanner(
             messageAr:
-                'التنزيل يحفظ نصاً بعد ردّ حقيقي من https. الكتب المدمجة في الرواق لا تُحذف لأنها جزء من التطبيق. ما تنزّله أنت يُحذف بطلبك. على الويب يُحفظ النص داخل الملف إن كان صغيراً.',
+                'التنزيل يحفظ نصاً أو HTML بعد ردّ حقيقي من https. السعر 0 يبقي المحتوى المفتوح مجاناً. السعر فوق صفر يخصم من المحفظة مع عمولة المنصة، والنقد لا يُتمم الشراء. ملفات PDF لا تُعرض هنا. الكتب المدمجة في الرواق لا تُحذف لأنها جزء من التطبيق.',
           ),
           if (kIsWeb)
             const HonestyBanner(
@@ -135,11 +216,19 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: _url,
-            decoration: const InputDecoration(
-              labelText: 'رابط https لصفحة نصية أو HTML',
+            decoration: InputDecoration(
+              labelText: tr('رابط https لصفحة نصية أو HTML'),
               hintText: 'https://…',
             ),
             keyboardType: TextInputType.url,
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _priceMinor,
+            decoration: InputDecoration(
+              labelText: tr('السعر بالوحدات الصغرى (0 = محتوى مفتوح)'),
+            ),
+            keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 8),
           FilledButton.icon(
@@ -151,20 +240,20 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.download_outlined),
-            label: Text(_busy ? 'ينزّل…' : 'تنزيل إلى الجهاز'),
+            label: LifexText(_busy ? 'ينزّل…' : 'تنزيل إلى الجهاز'),
           ),
           if (_statusAr != null) ...[
             const SizedBox(height: 8),
-            Text(_statusAr!),
+            LifexText(_statusAr!),
           ],
           const SizedBox(height: 16),
-          Text('مقترحات ملكية عامة للتجربة',
+          LifexText('مقترحات ملكية عامة للتجربة',
               style: Theme.of(context).textTheme.titleMedium),
           for (final hint in ShelfDownloadPolicy.hints)
             Card(
               child: ListTile(
-                title: Text(hint.titleAr),
-                subtitle: Text(hint.noteAr),
+                title: LifexText(hint.titleAr),
+                subtitle: LifexText(hint.noteAr),
                 trailing: const Icon(Icons.download_outlined),
                 onTap: _busy
                     ? null
@@ -175,21 +264,21 @@ class _PersonalShelfScreenState extends State<PersonalShelfScreen> {
               ),
             ),
           const SizedBox(height: 16),
-          Text('في مكتبتك (${kept.length})',
+          LifexText('في مكتبتك (${kept.length})',
               style: Theme.of(context).textTheme.titleMedium),
           if (kept.isEmpty)
-            const Text('لا كتب منزّلة بعد. الكتب المدمجة تُقرأ من رواق المعرفة.'),
+            const LifexText('لا كتب منزّلة بعد. الكتب المدمجة تُقرأ من رواق المعرفة.'),
           for (final record in kept)
             Card(
               child: ListTile(
-                title: Text(record.titleAr),
-                subtitle: Text(
+                title: LifexText(record.titleAr),
+                subtitle: LifexText(
                   '${record.bytes} بايت\n${record.sourceUrl}',
                 ),
                 isThreeLine: true,
                 onTap: () => _open(record),
                 trailing: IconButton(
-                  tooltip: 'حذف من الجهاز',
+                  tooltip: tr('حذف من الجهاز'),
                   onPressed: () => _drop(record),
                   icon: const Icon(Icons.delete_outline),
                 ),
@@ -215,17 +304,17 @@ class ShelfReaderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(titleAr),
+        title: LifexText(titleAr),
         actions: [
           IconButton(
-            tooltip: 'قراءة',
+            tooltip: tr('قراءة'),
             onPressed: () => VoiceEngine.instance.speak(
               body.length > 1200 ? body.substring(0, 1200) : body,
             ),
             icon: const Icon(Icons.volume_up_outlined),
           ),
           IconButton(
-            tooltip: 'إيقاف',
+            tooltip: tr('إيقاف'),
             onPressed: () => VoiceEngine.instance.stopListening(),
             icon: const Icon(Icons.stop),
           ),
@@ -239,7 +328,7 @@ class ShelfReaderScreen extends StatelessWidget {
                 'نص حفظته أنت على الجهاز. ليس محتوى طبياً لليفكس ما لم يكن كذلك أصلاً.',
           ),
           const SizedBox(height: 12),
-          Text(body),
+          LifexText(body),
         ],
       ),
     );

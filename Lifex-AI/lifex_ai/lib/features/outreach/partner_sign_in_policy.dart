@@ -18,6 +18,12 @@ class PartnerSignInDecision {
   final String messageAr;
 
   bool get mayProceed => kind == PartnerSignInKind.allowedPartner;
+
+  /// حساب لايفكس المحلي هو حساب التسجيل لأي موقع غير إباحي.
+  /// هذا ليس فتح جلسة على ذلك الموقع.
+  bool get offersLocalAccount =>
+      kind == PartnerSignInKind.allowedPartner ||
+      kind == PartnerSignInKind.notPartner;
 }
 
 class PartnerSignInPolicy {
@@ -67,7 +73,7 @@ class PartnerSignInPolicy {
       );
     }
     if (partnerHosts.contains(host)) {
-      return PartnerSignInDecision(
+      return const PartnerSignInDecision(
         kind: PartnerSignInKind.allowedPartner,
         messageAr:
             'هذا مضيف شريك. يمكن إبراز معرّف لايفكس المحلي له. لا يُرسل الملف الصحي تلقائياً.',
@@ -76,9 +82,9 @@ class PartnerSignInPolicy {
     return PartnerSignInDecision(
       kind: PartnerSignInKind.notPartner,
       messageAr:
-          'يحق لك طلب الدخول بحساب نظامنا إلى مواقع الذكاء الاصطناعي وغيرها ما عدا الإباحي. '
-          '«$host» ليس شريكاً بعد، فلا نفتح جلسة هناك ولا نخزّن كلمة سر ذلك الموقع. '
-          'حساب لايفكس يعمل داخل نظامنا حتى يوقع الموقع اتفاقاً معنا.',
+          'حساب لايفكس الذي كتبه صاحب الحساب هو حساب التسجيل في «$host». '
+          'لا تُفتح جلسة على الموقع، ولا تُخزَّن كلمة سره، ولا يُرسل الملف الصحي. '
+          'الموقع لم يوقّع اتفاقاً لاستقبال الحساب بعد.',
     );
   }
 

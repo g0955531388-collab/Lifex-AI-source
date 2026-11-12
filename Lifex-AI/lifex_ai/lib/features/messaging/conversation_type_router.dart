@@ -5,8 +5,9 @@
 /// الوصف: تصنيف كل محادثة حسب نوعها (فردية/عائلية/طبية/طوارئ)، لتطبيق
 /// سياسات مختلفة على كل نوع (مثلاً: محادثات الطوارئ لا تُحذف تلقائياً).
 /// =============================================================
+library;
 
-enum ConversationType { direct, family, medical, emergency }
+enum ConversationType { direct, family, medical, emergency, meeting }
 
 class ConversationMetadata {
   final String conversationId;
@@ -38,6 +39,25 @@ class ConversationTypeRouter {
       conversationId: 'CONV-$_counter',
       type: type,
       participantLifexIds: participantLifexIds,
+    );
+    _conversations[metadata.conversationId] = metadata;
+    return metadata;
+  }
+
+  /// غرفة اجتماع محلية. ليست مكالمة فيديو. الاسم المستعار يبقى في هوية العرض.
+  ConversationMetadata? openMeetingRoom({
+    required List<String> participantLifexIds,
+  }) {
+    final ids = participantLifexIds
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (ids.length < 2) return null;
+    final metadata = ConversationMetadata(
+      conversationId: 'MEET-${DateTime.now().microsecondsSinceEpoch}',
+      type: ConversationType.meeting,
+      participantLifexIds: ids,
     );
     _conversations[metadata.conversationId] = metadata;
     return metadata;

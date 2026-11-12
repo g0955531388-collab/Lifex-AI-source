@@ -9,7 +9,8 @@ import 'package:lifex_ai/features/hospital/hospital_blood_bank.dart';
 import 'package:lifex_ai/features/profile/health_profile.dart';
 
 void main() {
-  test('متبرع رافض للتبرع (opted-out) لا يظهر أبداً ضمن المؤهلين حتى لو '
+  test(
+      'متبرع رافض للتبرع (opted-out) لا يظهر أبداً ضمن المؤهلين حتى لو '
       'تطابقت فصيلته وموقعه تماماً', () {
     final filter = DonorEligibilityFilter(
       historyRegistry: DonorHistoryRegistry(),

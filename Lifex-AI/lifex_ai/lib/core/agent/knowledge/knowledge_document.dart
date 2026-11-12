@@ -7,6 +7,7 @@
 /// الشكل الموحّد يسمح لـ KnowledgeRetriever بالبحث عبر كل الملفات
 /// الخمسة بمنطق واحد بدل منطق مختلف لكل ملف.
 /// =============================================================
+library;
 
 class KnowledgeDocument {
   const KnowledgeDocument({

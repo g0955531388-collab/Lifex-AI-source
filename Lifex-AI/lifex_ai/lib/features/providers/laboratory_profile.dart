@@ -4,6 +4,7 @@
 /// المسار: lib/features/providers/laboratory_profile.dart
 /// الوصف: الملف العام (الخارجي) للمخبر.
 /// =============================================================
+library;
 
 class LaboratoryProfile {
   final String laboratoryId;

@@ -1,0 +1,16 @@
+{
+  "schema_id": "LIFEX-DEVICE-INTEROPERABILITY",
+  "version": "1.0",
+  "adapterOrder": [
+    "exact",
+    "manufacturer",
+    "protocol",
+    "generic_service",
+    "generic_read",
+    "unknown_handler"
+  ],
+  "noInventedCommands": true,
+  "unknownNotTrusted": true,
+  "unitConversionOnlyWhenKnown": true,
+  "partialCompatibilityShownHonestly": true
+}

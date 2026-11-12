@@ -1,0 +1,20 @@
+{
+  "database_id": "LIFEX-UNIVERSAL-VIRTUAL-DEVICE-LAB",
+  "pack": 43,
+  "file": "lifex_universal_virtual_device_lab_v1.json",
+  "version": "1.0.0",
+  "offline_core": true,
+  "not_every_device_in_the_world": true,
+  "simulator_is_not_vendor_driver": true,
+  "identified_is_not_connected": true,
+  "connected_is_not_authorized": true,
+  "authorized_is_not_controllable": true,
+  "simulated_vitals_are_not_patient_readings": true,
+  "virtual_pump_is_not_real_actuator": true,
+  "industrial_lab_is_not_live_plant": true,
+  "vehicle_sim_is_not_vehicle_control": true,
+  "same_interface_as_future_real_adapters": true,
+  "next_pack": 44,
+  "next_pack_name": "universal_device_protocol",
+  "records": []
+}

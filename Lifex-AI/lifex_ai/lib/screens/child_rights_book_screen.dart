@@ -16,6 +16,8 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/reports/stamped_report.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class ChildRightsBookScreen extends StatefulWidget {
   const ChildRightsBookScreen({super.key});
@@ -48,7 +50,7 @@ class _ChildRightsBookScreenState extends State<ChildRightsBookScreen> {
     Clipboard.setData(ClipboardData(text: stamped));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('حُفظ الميثاق في الملف ونُسخ مختوماً. الطباعة من مشاركة النظام.'),
+        content: LifexText('حُفظ الميثاق في الملف ونُسخ مختوماً. الطباعة من مشاركة النظام.'),
       ),
     );
   }
@@ -58,15 +60,15 @@ class _ChildRightsBookScreenState extends State<ChildRightsBookScreen> {
     final chapters = _book.search(_query);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('حقوق الطفل'),
+        title: const LifexText('حقوق الطفل'),
         actions: [
           IconButton(
-            tooltip: _english ? 'العربية' : 'English',
+            tooltip: tr(_english ? 'العربية' : 'English'),
             onPressed: () => setState(() => _english = !_english),
             icon: const Icon(Icons.translate),
           ),
           IconButton(
-            tooltip: 'إيقاف النطق',
+            tooltip: tr('إيقاف النطق'),
             onPressed: () => VoiceEngine.instance.stopListening(),
             icon: const Icon(Icons.stop),
           ),
@@ -75,7 +77,7 @@ class _ChildRightsBookScreenState extends State<ChildRightsBookScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
+          LifexText(
             AppConstants.studioBannerCredit,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
@@ -89,20 +91,20 @@ class _ChildRightsBookScreenState extends State<ChildRightsBookScreen> {
             onChanged: (value) => setState(() => _textScale = value),
           ),
           TextField(
-            decoration: const InputDecoration(
-              labelText: 'بحث داخل الكتاب',
+            decoration: InputDecoration(
+              labelText: tr('بحث داخل الكتاب'),
               prefixIcon: Icon(Icons.search),
             ),
             onChanged: (value) => setState(() => _query = value.trim()),
           ),
           const SizedBox(height: 12),
-          Text('الفهرس', style: Theme.of(context).textTheme.titleMedium),
+          LifexText('الفهرس', style: Theme.of(context).textTheme.titleMedium),
           Wrap(
             spacing: 8,
             children: [
               for (final chapter in _book.chapters())
                 ActionChip(
-                  label: Text(chapter.kickerAr),
+                  label: LifexText(chapter.kickerAr),
                   onPressed: () => _speak(chapter),
                 ),
             ],
@@ -121,19 +123,19 @@ class _ChildRightsBookScreenState extends State<ChildRightsBookScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(chapter.kickerAr,
+                          LifexText(chapter.kickerAr,
                               style: TextStyle(
                                 color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.bold,
                               )),
-                          Text(chapter.titleAr,
+                          LifexText(chapter.titleAr,
                               style: Theme.of(context).textTheme.titleMedium),
                           const SizedBox(height: 8),
-                          Text(_english ? chapter.bodyEn : chapter.bodyAr),
+                          LifexText(_english ? chapter.bodyEn : chapter.bodyAr),
                           TextButton.icon(
                             onPressed: () => _speak(chapter),
                             icon: const Icon(Icons.volume_up_outlined),
-                            label: const Text('قراءة هذا القسم'),
+                            label: const LifexText('قراءة هذا القسم'),
                           ),
                         ],
                       ),
@@ -145,14 +147,14 @@ class _ChildRightsBookScreenState extends State<ChildRightsBookScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('مصفوفة الحقوق',
+                        LifexText('مصفوفة الحقوق',
                             style: Theme.of(context).textTheme.titleMedium),
                         const SizedBox(height: 8),
                         for (final row in _book.matrix())
                           ListTile(
                             dense: true,
-                            title: Text(row.kindAr),
-                            subtitle: Text(
+                            title: LifexText(row.kindAr),
+                            subtitle: LifexText(
                               '${row.examplesAr}\n${row.familyDutyAr}',
                             ),
                           ),
@@ -166,7 +168,7 @@ class _ChildRightsBookScreenState extends State<ChildRightsBookScreen> {
           FilledButton.icon(
             onPressed: _saveCharter,
             icon: const Icon(Icons.family_restroom_outlined),
-            label: const Text('حفظ الميثاق الأسري في الملف'),
+            label: const LifexText('حفظ الميثاق الأسري في الملف'),
           ),
         ],
       ),

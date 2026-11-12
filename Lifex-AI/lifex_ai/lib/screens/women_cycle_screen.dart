@@ -5,14 +5,20 @@
 /// =============================================================
 library lifex_ai.screens.women_cycle_screen;
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../features/medications/pharmacopoeia_reference.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/women_health/private_female_notice.dart';
 import '../features/women_health/women_ashram_engine.dart';
+import '../features/women_health/women_care_desk.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
 
 class WomenCycleScreen extends StatefulWidget {
   const WomenCycleScreen({super.key});
@@ -25,15 +31,30 @@ class _WomenCycleScreenState extends State<WomenCycleScreen> {
   static const _enabledKey = 'cycleTrackingEnabled';
   static const _startsKey = 'cycleStarts';
   static const _pregnantKey = 'womenPregnancyConfirmed';
+  static const _basisKey = 'womenPregnancyBasis';
+  static const _babyKey = 'linkedBabyProfileId';
   static const _lmpKey = 'lastMenstrualPeriod';
   static const _openedKey = 'womenOpenedPrivateNotices';
 
   final _opened = <String>{};
+  PharmacopoeiaReference? _pharmacopoeia;
 
-  ProfileBoxStore? _store() {
-    final profile = context.read<ActiveProfileController>().activeProfile;
-    if (profile == null) return null;
-    return ProfileBoxStore(profile);
+  @override
+  void initState() {
+    super.initState();
+    _loadPharmacopoeia();
+  }
+
+  Future<void> _loadPharmacopoeia() async {
+    try {
+      final raw = await rootBundle.loadString(PharmacopoeiaReference.assetPath);
+      final book = PharmacopoeiaReference.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
+      if (mounted) setState(() => _pharmacopoeia = book);
+    } catch (_) {
+      if (mounted) setState(() => _pharmacopoeia = null);
+    }
   }
 
   void _loadOpened(ProfileBoxStore store) {
@@ -59,6 +80,50 @@ class _WomenCycleScreenState extends State<WomenCycleScreen> {
 
   String _fmt(DateTime d) => '${d.year}/${d.month}/${d.day}';
 
+  Future<void> _askPregnancyBasis(
+    ProfileBoxStore store,
+    ActiveProfileController controller,
+    List<DateTime> starts,
+  ) async {
+    final basis = await showDialog<PregnancyBasis>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const LifexText('ما أساس التأكيد؟'),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, PregnancyBasis.homeTest),
+            child: const LifexText('اختبار حمل منزلي إيجابي'),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, PregnancyBasis.laboratory),
+            child: const LifexText('فحص مخبري'),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, PregnancyBasis.clinician),
+            child: const LifexText('تأكيد من مقدم الرعاية'),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, PregnancyBasis.unsure),
+            child: const LifexText('أحتاج إلى إرشاد لأنني غير متأكدة'),
+          ),
+        ],
+      ),
+    );
+    if (basis == null || !mounted) return;
+    final result = const WomenCareDesk().openFromBasis(basis);
+    store.setString(_basisKey, basis.name);
+    store.setString(_pregnantKey, result.confirmed ? 'true' : 'false');
+    if (result.confirmed && starts.isNotEmpty) {
+      final last = ([...starts]..sort()).last;
+      store.setString(_lmpKey, last.toIso8601String());
+    }
+    controller.saveActiveProfileChanges();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: LifexText(result.messageAr)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ActiveProfileController>(
@@ -66,8 +131,8 @@ class _WomenCycleScreenState extends State<WomenCycleScreen> {
         final profile = controller.activeProfile;
         if (profile == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('رعاية الإناث')),
-            body: const Center(child: Text('لا يوجد ملف صحي نشط.')),
+            appBar: AppBar(title: const LifexText('رعاية الإناث')),
+            body: const Center(child: LifexText('لا يوجد ملف صحي نشط.')),
           );
         }
         final store = ProfileBoxStore(profile);
@@ -88,10 +153,11 @@ class _WomenCycleScreenState extends State<WomenCycleScreen> {
           pregnancyConfirmed: pregnant,
           lmp: lmp,
           profile: profile,
+          pharmacopoeia: _pharmacopoeia,
         );
 
         return Scaffold(
-          appBar: AppBar(title: const Text('رعاية الإناث')),
+          appBar: AppBar(title: const LifexText('رعاية الإناث')),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -102,7 +168,7 @@ class _WomenCycleScreenState extends State<WomenCycleScreen> {
                     'ليس منع حمل ولا سوناراً.',
               ),
               SwitchListTile(
-                title: const Text('تفعيل الرعاية على هذا الملف'),
+                title: const LifexText('تفعيل الرعاية على هذا الملف'),
                 value: enabled,
                 onChanged: (value) {
                   store.setString(_enabledKey, value ? 'true' : 'false');
@@ -111,15 +177,14 @@ class _WomenCycleScreenState extends State<WomenCycleScreen> {
               ),
               if (enabled) ...[
                 const SizedBox(height: 8),
-                Text('الرسائل الخاصة',
+                LifexText('الرسائل الخاصة',
                     style: Theme.of(context).textTheme.titleMedium),
-                if (snap.notices.isEmpty)
-                  const Text('لا رسالة خاصة الآن.'),
+                if (snap.notices.isEmpty) const LifexText('لا رسالة خاصة الآن.'),
                 for (final notice in snap.notices)
                   Card(
                     child: ListTile(
-                      title: const Text(PrivateFemaleNotice.publicTitleAr),
-                      subtitle: Text(
+                      title: const LifexText(PrivateFemaleNotice.publicTitleAr),
+                      subtitle: LifexText(
                         _opened.contains(notice.id)
                             ? notice.bodyAr
                             : 'اضغطي لفتح الرسالة. المحتوى لا يظهر في الإشعار.',
@@ -129,6 +194,16 @@ class _WomenCycleScreenState extends State<WomenCycleScreen> {
                   ),
                 const SizedBox(height: 12),
                 FilledButton(
+                  onPressed: () {
+                    store.add(_startsKey, {
+                      'date': DateTime.now().toIso8601String(),
+                    });
+                    controller.saveActiveProfileChanges();
+                  },
+                  child: const LifexText('نعم، بدأت'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
                   onPressed: () async {
                     final picked = await showDatePicker(
                       context: context,
@@ -141,46 +216,76 @@ class _WomenCycleScreenState extends State<WomenCycleScreen> {
                     store.add(_startsKey, {'date': picked.toIso8601String()});
                     controller.saveActiveProfileChanges();
                   },
-                  child: const Text('تسجيل بداية كما حدّدتها'),
+                  child: const LifexText('تسجيل بداية في يوم سابق'),
                 ),
                 const SizedBox(height: 8),
-                Text('بدايات مسجّلة: ${starts.length}'),
+                LifexText('بدايات مسجّلة: ${starts.length}'),
+                if (snap.meanCycleDays == null)
+                  const LifexText(
+                    'لا تقدير شخصي من دورة واحدة. الموعد يبقى غير محسوب حتى تتوفر بدايتان على الأقل.',
+                  ),
                 if (snap.meanCycleDays != null)
-                  Text(
-                    'متوسط ما بين بداياتكِ: ${snap.meanCycleDays!.toStringAsFixed(1)} يوماً.',
+                  LifexText(
+                    'متوسط ما بين بداياتكِ: ${snap.meanCycleDays!.toStringAsFixed(1)} يوماً. هذا تقدير وقد يتغير.',
                   ),
                 if (snap.nextStart != null)
-                  Text('تقدير الموعد التالي (لكِ فقط داخل الوحدة): ${_fmt(snap.nextStart!)}'),
-                SwitchListTile(
-                  title: const Text('تأكيد الحمل'),
-                  subtitle: const Text(
-                    'تفعّليه أنتِ بعد الفحص. يحسب العمر من دوراتكِ ويراجع ملفكِ نحو الطبيبة.',
-                  ),
-                  value: pregnant,
-                  onChanged: (value) {
-                    store.setString(_pregnantKey, value ? 'true' : 'false');
-                    if (value && starts.isNotEmpty) {
-                      final last = ([...starts]..sort()).last;
-                      store.setString(_lmpKey, last.toIso8601String());
-                    }
-                    controller.saveActiveProfileChanges();
-                  },
+                  LifexText(
+                      'تقدير الموعد التالي (لكِ فقط داخل الوحدة): ${_fmt(snap.nextStart!)}'),
+                FilledButton(
+                  onPressed: () =>
+                      _askPregnancyBasis(store, controller, starts),
+                  child: const LifexText('أنا حامل'),
                 ),
+                const SizedBox(height: 8),
+                LifexText(const WomenCareDesk().dailyCheckInAr()),
+                if (store.stringField(_basisKey) == 'unsure')
+                  const LifexText(
+                    'متابعة محتملة فقط. لم يُسجَّل حمل مؤكد.',
+                  ),
                 if (pregnant) ...[
-                  if (snap.gestationalWeek != null)
-                    Text(
-                      'عمر الحمل التقريبي: الأسبوع ${snap.gestationalWeek} من 40. '
-                      'عمر الجنين التقريبي: ${snap.fetalAgeDays} يوماً من تقدير الإباضة حسب دوراتكِ. '
-                      'أدق من افتراض 28 يوماً، والسونار عند الطبيبة هو المرجع.',
+                  if (lmp != null)
+                    LifexText(
+                      const WomenCareDesk()
+                          .age(lmp: lmp, now: DateTime.now())
+                          .labelAr,
                     ),
+                  if (snap.gestationalWeek != null)
+                    LifexText(
+                      'عمر الحمل التقريبي: الأسبوع ${snap.gestationalWeek}. '
+                      'الطبيبة قد تعدّل التاريخ بعد التقييم. غياب الأعراض لا يعني أن الحمل سليم.',
+                    ),
+                  OutlinedButton(
+                    onPressed: () {
+                      final path = const WomenCareDesk().urgentPath('نزيف');
+                      if (path == null) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: LifexText(path)),
+                      );
+                    },
+                    child: const LifexText('لدي نزيف أو ألم شديد'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () {
+                      final id = const WomenCareDesk().babyProfileId(
+                        motherProfileId: profile.profileId,
+                        bornAt: DateTime.now(),
+                      );
+                      store.setString(_babyKey, id);
+                      controller.saveActiveProfileChanges();
+                    },
+                    child: const LifexText('تسجيل ولادة وملف طفل مستقل'),
+                  ),
+                  if (store.stringField(_babyKey) != null)
+                    LifexText('ملف الطفل: ${store.stringField(_babyKey)}'),
                   if (snap.dueDate != null)
-                    Text('تقدير نهاية الأربعين أسبوعاً: ${_fmt(snap.dueDate!)}'),
+                    LifexText(
+                        'تقدير نهاية الأربعين أسبوعاً: ${_fmt(snap.dueDate!)}'),
                   if (snap.weeklyCareAr != null) ...[
                     const SizedBox(height: 8),
-                    Text(snap.weeklyCareAr!),
+                    LifexText(snap.weeklyCareAr!),
                   ],
-                  if (snap.dailyCareAr != null) Text(snap.dailyCareAr!),
-                  for (final flag in snap.cvFlags) Text(flag),
+                  if (snap.dailyCareAr != null) LifexText(snap.dailyCareAr!),
+                  for (final flag in snap.cvFlags) LifexText(flag),
                 ],
               ],
             ],

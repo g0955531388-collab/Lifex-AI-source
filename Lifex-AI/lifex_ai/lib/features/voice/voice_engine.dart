@@ -10,8 +10,12 @@
 /// المستخدم (runtime permission) مع شرح واضح للسبب قبل الطلب. لا يُخزَّن
 /// أو يُرسل أي مقطع صوتي لأي خادم دون موافقة صريحة ومنفصلة عن إذن النظام.
 /// =============================================================
+library lifex_ai.features.voice.voice_engine;
 
+import '../../core/app_config.dart';
 import '../../core/error_handler.dart';
+import '../../core/i18n/lifex_runtime_translator.dart';
+import 'speech_queue.dart';
 
 /// حالة تشغيل محرك الصوت العامة.
 enum VoiceEngineState { idle, listening, processing, speaking, error }
@@ -44,13 +48,25 @@ class VoiceEngine {
   final List<VoiceStateListener> _listeners = [];
   String? partialTranscript;
   String? activeLocaleId;
+
+  /// لغة نطق أسماء الكاميرا. تُفرض من لغة الجهاز طوال الجملة ثم تُمسح.
+  String? nameSpeakLocale;
   String lastSignalAr = 'الصوت في وضع الانتظار';
+  int speechEpoch = 0;
+  final SpeechQueue _speech = SpeechQueue();
+  int _listenEpoch = 0;
 
   /// دوال منفَّذة من المحركات الفرعية (تُسجَّل عند التهيئة عبر
   /// voice_command_engine أو غيره) لتنفيذ العمليات الفعلية.
   Future<VoiceOperationResult> Function()? _startListeningImpl;
   Future<void> Function()? _stopListeningImpl;
+  Future<void> Function()? _stopSpeakingImpl;
   Future<VoiceOperationResult> Function(String text)? _speakImpl;
+
+  /// الاستماع أو النطق مربوطان فعلياً. الغياب لا يُعد سماعاً ولا قراءة.
+  bool get listeningBound => _startListeningImpl != null;
+
+  bool get speakingBound => _speakImpl != null;
 
   VoiceEngineState get state => _state;
 
@@ -97,6 +113,10 @@ class VoiceEngine {
     _stopListeningImpl = implementation;
   }
 
+  void bindStopSpeakingImplementation(Future<void> Function() implementation) {
+    _stopSpeakingImpl = implementation;
+  }
+
   /// ربط التنفيذ الفعلي للنطق (يُستدعى من text_to_speech_manager.dart).
   void bindSpeakImplementation(
     Future<VoiceOperationResult> Function(String text) implementation,
@@ -104,8 +124,53 @@ class VoiceEngine {
     _speakImpl = implementation;
   }
 
+  /// الميكروفون بدأ فعلاً. لا تُعرض حالة الاستماع قبل هذه الإشارة.
+  void noteCaptureStarted() {
+    if (_state == VoiceEngineState.processing ||
+        _state == VoiceEngineState.idle) {
+      signalAr('الميكروفون يستقبل الكلام.');
+      _setState(VoiceEngineState.listening);
+    }
+  }
+
+  Future<VoiceOperationResult>? _listenFlight;
+
   /// بدء الاستماع لصوت المستخدم وتحويله لنص.
+  /// جلسة واحدة في كل وقت: الطلب الثاني يُرفض حتى تنتهي الأولى.
   Future<VoiceOperationResult> startListening() async {
+    if (!AppConfig.instance.voiceCommandsEnabled) {
+      signalAr('أوامر النطق متوقفة.');
+      return const VoiceOperationResult.failure(
+        'أوامر النطق متوقفة، ولن أفتح الميكروفون.',
+      );
+    }
+    if (_listenFlight != null) {
+      signalAr('جلسة الاستماع السابقة لم تنته.');
+      return const VoiceOperationResult.failure(
+        'جلسة الاستماع السابقة لم تنته بعد.',
+      );
+    }
+    final flight = _listenOnce();
+    _listenFlight = flight;
+    try {
+      return await flight;
+    } finally {
+      if (identical(_listenFlight, flight)) _listenFlight = null;
+    }
+  }
+
+  /// يوقف الجلسة العالقة ثم يفتح جلسة جديدة. للبحث الصوتي والأوامر المتكررة.
+  Future<VoiceOperationResult> listenFresh() async {
+    if (_listenFlight != null ||
+        _state == VoiceEngineState.listening ||
+        _state == VoiceEngineState.processing) {
+      await stopListening();
+    }
+    return startListening();
+  }
+
+  Future<VoiceOperationResult> _listenOnce() async {
+    final epoch = _listenEpoch;
     if (_startListeningImpl == null) {
       ErrorHandler.instance.report(
         'VOICE_LISTEN_NOT_BOUND',
@@ -119,17 +184,26 @@ class VoiceEngine {
       );
     }
 
+    await _stopSpeakingImpl?.call();
+    if (epoch != _listenEpoch) {
+      return const VoiceOperationResult.failure('أُوقفت الجلسة السابقة.');
+    }
     partialTranscript = null;
-    signalAr('أستمع وأسجّل الآن.');
-    _setState(VoiceEngineState.listening);
+    signalAr('أجهّز التعرف على الكلام.');
+    _setState(VoiceEngineState.processing);
     try {
       final result = await _startListeningImpl!();
+      if (epoch != _listenEpoch) return result;
       signalAr(result.success
-          ? 'انتهى الاستماع.'
+          ? 'وصل كلامك.'
           : (result.errorMessageAr ?? 'تعذّر الاستماع.'));
-      _setState(VoiceEngineState.idle);
+      _setState(
+          result.success ? VoiceEngineState.idle : VoiceEngineState.error);
       return result;
     } catch (e, stackTrace) {
+      if (epoch != _listenEpoch) {
+        return const VoiceOperationResult.failure('أُوقفت الجلسة السابقة.');
+      }
       signalAr('تعذّر تشغيل الميكروفون.');
       _setState(VoiceEngineState.error);
       ErrorHandler.instance.report(
@@ -144,12 +218,79 @@ class VoiceEngine {
   }
 
   Future<void> stopListening() async {
+    _listenEpoch++;
     await _stopListeningImpl?.call();
+    _listenFlight = null;
     _setState(VoiceEngineState.idle);
   }
 
+  /// يقطع النطق فقط إذا كان المحرك يقرأ. التنقل الصامت لا يغيّر الإشارة.
+  Future<void> interruptIfSpeaking() async {
+    if (_state != VoiceEngineState.speaking) return;
+    await stopSpeaking();
+  }
+
+  /// يقطع النطق الجاري. يزيد [speechEpoch] حتى يتجاهل المتصل نتيجة النطق القديمة.
+  Future<void> stopSpeaking() async {
+    _speech.abandon();
+    speechEpoch++;
+    await _stopSpeakingImpl?.call();
+    signalAr('أوقفت القراءة.');
+    _setState(VoiceEngineState.idle);
+  }
+
+  /// الجملة العادية تُرفض إذا كان النطق جارياً.
+  Future<VoiceOperationResult> speak(String text) {
+    return _throughQueue(text, urgent: false);
+  }
+
+  /// للتنبيه العاجل فقط. يقطع الجملة الحالية، ويهتز بعد نهايتها إن طُلب.
+  Future<VoiceOperationResult> speakInterruptible(
+    String text, {
+    Future<void> Function()? hapticAfter,
+  }) {
+    return _throughQueue(text, urgent: true, hapticAfter: hapticAfter);
+  }
+
+  Future<VoiceOperationResult> _throughQueue(
+    String text, {
+    required bool urgent,
+    Future<void> Function()? hapticAfter,
+  }) async {
+    if (text.trim().isEmpty) {
+      return const VoiceOperationResult.failure('لا يوجد نص للقراءة.');
+    }
+    final forcedNames = nameSpeakLocale?.trim().isNotEmpty ?? false;
+    final spoken = forcedNames ? text : tr(text);
+    VoiceOperationResult? emitted;
+    final accepted = urgent
+        ? await _speech.speakInterruptible(
+            text: spoken,
+            stop: stopSpeaking,
+            hapticAfter: hapticAfter,
+            speak: (value) async {
+              emitted = await _emit(value);
+              return emitted!.success;
+            },
+          )
+        : await _speech.speakQueued(
+            text: spoken,
+            speak: (value) async {
+              emitted = await _emit(value);
+              return emitted!.success;
+            },
+          );
+    if (emitted != null) return emitted!;
+    if (!accepted) {
+      return const VoiceOperationResult.failure(
+        'النطق جارٍ. أُبقي الجملة الحالية.',
+      );
+    }
+    return const VoiceOperationResult.failure('تعذّر النطق.');
+  }
+
   /// نطق نص معيّن بصوت مسموع (Text-to-Speech).
-  Future<VoiceOperationResult> speak(String text) async {
+  Future<VoiceOperationResult> _emit(String text) async {
     if (_speakImpl == null) {
       ErrorHandler.instance.report(
         'VOICE_SPEAK_NOT_BOUND',
@@ -163,13 +304,42 @@ class VoiceEngine {
       );
     }
 
+    final epoch = ++speechEpoch;
     signalAr('أردّ بالصوت الآن.');
     _setState(VoiceEngineState.speaking);
     final result = await _speakImpl!(text);
+    if (epoch != speechEpoch) {
+      return VoiceOperationResult.success(textResult: text);
+    }
     signalAr(result.success
         ? 'انتهى الرد الصوتي.'
         : (result.errorMessageAr ?? 'تعذّر النطق.'));
     _setState(VoiceEngineState.idle);
     return result;
+  }
+}
+
+/// المدخل الذي تستخدمه الكاميرا. الطابور الفعلي واحد داخل [VoiceEngine].
+class SpeechDesk {
+  SpeechDesk._();
+
+  static final SpeechDesk instance = SpeechDesk._();
+
+  SpeechQueue get queue => VoiceEngine.instance._speech;
+
+  Future<bool> speakQueued(String text) async {
+    final result = await VoiceEngine.instance.speak(text);
+    return result.success;
+  }
+
+  Future<bool> speakInterruptible(
+    String text, {
+    Future<void> Function()? hapticAfter,
+  }) async {
+    final result = await VoiceEngine.instance.speakInterruptible(
+      text,
+      hapticAfter: hapticAfter,
+    );
+    return result.success;
   }
 }

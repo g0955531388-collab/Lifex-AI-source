@@ -7,6 +7,15 @@ library lifex_ai.features.voice.voice_locale_policy;
 
 import 'package:flutter/widgets.dart';
 
+class RecognitionChoice {
+  const RecognitionChoice({this.localeId, this.refusalAr});
+
+  final String? localeId;
+  final String? refusalAr;
+
+  bool get accepted => localeId != null && (refusalAr == null || refusalAr!.isEmpty);
+}
+
 class VoiceLocalePolicy {
   const VoiceLocalePolicy();
 
@@ -14,7 +23,7 @@ class VoiceLocalePolicy {
     try {
       return WidgetsBinding.instance.platformDispatcher.locale;
     } catch (_) {
-      return const Locale('ar');
+      return const Locale('en');
     }
   }
 
@@ -28,6 +37,35 @@ class VoiceLocalePolicy {
 
   String preferredListenCode() => engineIdFor(deviceLocale());
 
+  /// لغة التطبيق أولاً، ثم لغة الجهاز إن لم تتوفر على محرك التعرف.
+  /// اكتشاف لغة الكلام تلقائياً غير مضمون إذا لم يدعمه المحرك.
+  String listenCode({String? appLanguage}) {
+    final chosen = appLanguage?.trim();
+    if (chosen != null && chosen.isNotEmpty) return chosen;
+    return preferredListenCode();
+  }
+
+  /// اختيار لغة التعرف. النطق العربي لا يُحتسب تعرّفاً إذا لم تُثبَّت حزمة اللغة.
+  RecognitionChoice chooseRecognition({
+    required String preferred,
+    required List<String> available,
+  }) {
+    if (available.isEmpty) {
+      return RecognitionChoice(localeId: preferred);
+    }
+    final localeId = matchAvailable(preferred: preferred, available: available);
+    if (_languageOnly(localeId).toLowerCase() !=
+        _languageOnly(preferred).toLowerCase()) {
+      final shown = available.take(3).join('، ');
+      return RecognitionChoice(
+        refusalAr:
+            'التعرف على «${_languageOnly(preferred)}» غير مثبت في محرك الكلام. '
+            'النطق بهذه اللغة لا يعني أن التعرف متاح. المتاح: $shown.',
+      );
+    }
+    return RecognitionChoice(localeId: localeId);
+  }
+
   /// يختار أقرب لغة متاحة على محرّك الجهاز دون ادّعاء لغة غير مثبتة.
   String matchAvailable({
     required String preferred,
@@ -40,8 +78,6 @@ class VoiceLocalePolicy {
       device,
       _languageOnly(preferred),
       _languageOnly(device),
-      'ar_SA',
-      'ar',
       'en_US',
       'en',
     ];
@@ -54,9 +90,17 @@ class VoiceLocalePolicy {
 
   String speakCodeForText({
     required String text,
+    String? appLanguage,
     String? recognizedLocaleId,
     required List<String> availableTts,
   }) {
+    final governing = appLanguage?.trim() ?? '';
+    if (governing.isNotEmpty) {
+      return matchAvailable(
+        preferred: preferredTtsTag(governing),
+        available: availableTts,
+      );
+    }
     if (recognizedLocaleId != null && recognizedLocaleId.trim().isNotEmpty) {
       return matchAvailable(
         preferred: recognizedLocaleId.replaceAll('-', '_'),
@@ -79,6 +123,14 @@ class VoiceLocalePolicy {
     if (RegExp(r'[\u0900-\u097F]').hasMatch(text)) return 'hi';
     if (RegExp(r'[A-Za-z]').hasMatch(text)) return 'en';
     return null;
+  }
+
+  /// ar-SA و en-US عند توفر الحزمة. إن غابت، يختار أقرب لغة مثبتة.
+  String preferredTtsTag(String languageCode) {
+    final code = languageCode.trim().toLowerCase();
+    if (code.startsWith('ar')) return 'ar_SA';
+    if (code.startsWith('en')) return 'en_US';
+    return code.replaceAll('-', '_');
   }
 
   String _languageOnly(String code) =>

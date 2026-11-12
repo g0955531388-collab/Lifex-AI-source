@@ -2,9 +2,9 @@
 /// Lifex-AI — المعاملات المالية
 /// الملف: billing_exemption_policy.dart
 /// المسار: lib/features/finance/billing_exemption_policy.dart
-/// الوصف: إعفاء بلا أجور ولا رسوم لذوي الإعاقة بعد بطاقة من بلد الحساب،
-/// والمرضى الدائمين في الملف، والمكفوفين. الاشتراك العادي للأفراد 100
-/// دولار سنوياً ولا يشمل الإعلانات ولا الخدمات الخاصة.
+/// إعفاء بلا أجور ولا رسوم بعد التثبيت في وحدة المعاقين:
+/// بطاقة إعاقة أو بطاقة مريض دائم من البلد المسجّل فيه صاحب الحساب.
+/// التصريح، وعلم المكفوف، وحالة مزمنة مكتوبة في الملف لا تثبّت وحدها.
 /// =============================================================
 library lifex_ai.features.finance.billing_exemption_policy;
 
@@ -32,25 +32,8 @@ class BillingExemptionPolicy {
     final determination =
         const DeterminationCredentialPolicy().evaluate(profile);
     if (determination.recognized) {
-      return const BillingExemptionResult.exempt(
-        'إعفاء دائم: بطاقة همم من بلد صاحب الحساب (وطنية أو إعاقة أو مرض دائم).',
-      );
+      return BillingExemptionResult.exempt(determination.messageAr);
     }
-
-    if (profile.isBlind) {
-      return const BillingExemptionResult.exempt(
-        'إعفاء دائم: لا أجور ولا رسوم على المكفوفين في هذه الفئة.',
-      );
-    }
-
-    final hasActiveChronicCondition =
-        profile.chronicConditions.any((c) => c.isActive);
-    if (hasActiveChronicCondition) {
-      return const BillingExemptionResult.exempt(
-        'إعفاء دائم: لا أجور ولا رسوم على المرضى الدائمين المسجَّلين في الملف.',
-      );
-    }
-
     return const BillingExemptionResult.notExempt();
   }
 }

@@ -8,6 +8,7 @@
 /// الذي تستدعيه الواجهة مباشرة (عبر runTask) — لا تتعامل الواجهة مع
 /// Planner/Executor/ToolRegistry بشكل منفصل أبداً.
 /// =============================================================
+library;
 
 import 'agent_confidence.dart';
 import 'agent_context.dart';

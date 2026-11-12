@@ -8,12 +8,16 @@ library lifex_ai.screens.booking_workspace_screen;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/network_box/box_unit_catalog.dart';
 import '../features/network_box/profile_box_store.dart';
 import '../features/network_box/unified_booking_service.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../services/cloud/cloud_sync_manager.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class BookingWorkspaceScreen extends StatelessWidget {
   const BookingWorkspaceScreen({super.key});
@@ -25,18 +29,18 @@ class BookingWorkspaceScreen extends StatelessWidget {
         final profile = controller.activeProfile;
         if (profile == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('الحجز والأكواد')),
-            body: const Center(child: Text('لا يوجد ملف صحي نشط.')),
+            appBar: AppBar(title: const LifexText('الحجز والأكواد')),
+            body: const Center(child: LifexText('لا يوجد ملف صحي نشط.')),
           );
         }
         final bookings = UnifiedBookingService(ProfileBoxStore(profile));
         final items = bookings.all();
         return Scaffold(
-          appBar: AppBar(title: const Text('الحجز والأكواد')),
+          appBar: AppBar(title: const LifexText('الحجز والأكواد')),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _add(context, controller, bookings),
             icon: const Icon(Icons.add),
-            label: const Text('حجز محلي'),
+            label: const LifexText('حجز محلي'),
           ),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -47,24 +51,52 @@ class BookingWorkspaceScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               if (items.isEmpty)
-                const Text('لا حجوزات بعد.')
+                const LifexText('لا حجوزات بعد.')
               else
                 for (var i = 0; i < items.length; i++)
                   Card(
                     child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.qr_code_2)),
-                      title: Text(items[i].title),
-                      subtitle: Text(
+                      title: LifexText(items[i].title),
+                      subtitle: LifexText(
                         '${items[i].unitId} — ${items[i].place}\n'
                         '${items[i].scheduledAt.year}/${items[i].scheduledAt.month}/${items[i].scheduledAt.day}\n'
                         'رمز: ${items[i].accessCode} — ${items[i].status}',
                       ),
                       isThreeLine: true,
                       trailing: IconButton(
-                        tooltip: 'حذف الحجز',
+                        tooltip: tr('حذف الحجز'),
                         icon: const Icon(Icons.delete_outline),
-                        onPressed: () {
-                          bookings.removeAt(i);
+                        onPressed: () async {
+                          final profileId =
+                              controller.activeProfileId ?? 'local';
+                          final entry =
+                              context.read<LioSensitiveActionEntry>();
+                          final outcome = await entry.authorizeThenRun<void>(
+                            request: LioGatewayRequest(
+                              requestId:
+                                  'booking_del_${i}_${DateTime.now().millisecondsSinceEpoch}',
+                              correlationId: 'booking_$profileId',
+                              identityAccountId: profileId,
+                              purpose: 'scheduling',
+                              requestedAction: 'delete_local_booking',
+                              dataScope: 'profile_basic',
+                              sensitivity: LioDataSensitivity.personal,
+                              consent: const LioConsentContext(
+                                consentGranted: true,
+                                purposeAligned: true,
+                              ),
+                              riskLevel: LioActionRisk.medium,
+                              timestamp: DateTime.now().toUtc(),
+                              authenticated: true,
+                              authorized: true,
+                              minimumNecessarySatisfied: true,
+                            ),
+                            run: () async {
+                              bookings.removeAt(i);
+                            },
+                          );
+                          if (!outcome.executed) return;
                           controller.saveActiveProfileChanges();
                         },
                       ),
@@ -90,7 +122,7 @@ class BookingWorkspaceScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('حجز موحّد'),
+          title: const LifexText('حجز موحّد'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -101,26 +133,26 @@ class BookingWorkspaceScreen extends StatelessWidget {
                       .where((unit) => unit.needsServer)
                       .map((unit) => DropdownMenuItem(
                             value: unit.id,
-                            child: Text(unit.titleAr),
+                            child: LifexText(unit.titleAr),
                           ))
                       .toList(),
                   onChanged: (value) {
                     if (value != null) setState(() => unitId = value);
                   },
-                  decoration: const InputDecoration(labelText: 'الوحدة'),
+                  decoration: InputDecoration(labelText: tr('الوحدة')),
                 ),
                 TextField(
                   controller: title,
-                  decoration: const InputDecoration(labelText: 'الغرض'),
+                  decoration: InputDecoration(labelText: tr('الغرض')),
                 ),
                 TextField(
                   controller: place,
-                  decoration: const InputDecoration(labelText: 'المكان'),
+                  decoration: InputDecoration(labelText: tr('المكان')),
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('التاريخ'),
-                  subtitle: Text('${date.year}/${date.month}/${date.day}'),
+                  title: const LifexText('التاريخ'),
+                  subtitle: LifexText('${date.year}/${date.month}/${date.day}'),
                   onTap: () async {
                     final picked = await showDatePicker(
                       context: context,
@@ -137,11 +169,11 @@ class BookingWorkspaceScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('إلغاء'),
+              child: const LifexText('إلغاء'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('حفظ'),
+              child: const LifexText('حفظ'),
             ),
           ],
         ),

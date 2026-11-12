@@ -12,10 +12,12 @@ import 'package:provider/provider.dart';
 import '../core/permission_transparency.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/voice/clinical_watch_bridge.dart';
+import '../features/voice/clinical_watch_command_relay.dart';
 import '../features/voice/clinical_watch_policy.dart';
 import '../widgets/honesty_banner.dart';
 import 'live_sight_screen.dart';
 import 'permission_transparency_screen.dart';
+import '../widgets/lifex_text.dart';
 
 class ClinicalWatchScreen extends StatefulWidget {
   const ClinicalWatchScreen({super.key});
@@ -82,12 +84,14 @@ class _ClinicalWatchScreenState extends State<ClinicalWatchScreen> {
             ? '$message\n${_policy.engineHonestyAr(ClinicalWatchPurpose.commands)}'
             : message;
       });
+      if (allowed) ClinicalWatchCommandRelay.instance.start();
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _stop() async {
+    await ClinicalWatchCommandRelay.instance.stop();
     await ClinicalWatchBridge.instance.stop();
     if (!mounted) return;
     setState(() {
@@ -110,16 +114,16 @@ class _ClinicalWatchScreenState extends State<ClinicalWatchScreen> {
     final agreed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(body),
+        title: LifexText(title),
+        content: LifexText(body),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('رفض'),
+            child: const LifexText('رفض'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('أوافق لهذه الوظيفة'),
+            child: const LifexText('أوافق لهذه الوظيفة'),
           ),
         ],
       ),
@@ -136,7 +140,7 @@ class _ClinicalWatchScreenState extends State<ClinicalWatchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('مراقبة سريرية ظاهرة')),
+      appBar: AppBar(title: const LifexText('مراقبة سريرية ظاهرة')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -144,18 +148,19 @@ class _ClinicalWatchScreenState extends State<ClinicalWatchScreen> {
           const SizedBox(height: 8),
           const HonestyBanner(
             messageAr:
-                'الخدمة الحالية تُظهر إشعاراً دائماً. الاستماع للأوامر يعمل بعد إشارة الزر والتطبيق ظاهر. '
-                'لن أختلق سقوطاً أو تنفساً أو إنذاراً بلا محرك معتمد.',
+                'مع الإشعار الدائم يستمر الاستماع للأوامر في الخلفية لحماية من يستخدم هذا الهاتف. '
+                'إيقاف الإشعار أو انتهاء العملية يوقف الميكروفون. '
+                'لا أختلق سقوطاً أو تنفساً، ولا أتصل بأحد من تلقاء نفسي.',
           ),
           SwitchListTile(
-            title: const Text('أوافق على مراقبة ظاهرة بجانب المريض'),
-            subtitle: const Text('يمكن إيقافها فوراً من الإشعار أو من هنا'),
+            title: const LifexText('أوافق على مراقبة ظاهرة بجانب المريض'),
+            subtitle: const LifexText('يمكن إيقافها فوراً من الإشعار أو من هنا'),
             value: _optIn,
             onChanged: (value) => setState(() => _optIn = value),
           ),
           SwitchListTile(
-            title: const Text('إعلان العدسة في الإشعار (بلا حفظ إطار)'),
-            subtitle: Text(_policy.engineHonestyAr(ClinicalWatchPurpose.bedsideCamera)),
+            title: const LifexText('إعلان العدسة في الإشعار (بلا حفظ إطار)'),
+            subtitle: LifexText(_policy.engineHonestyAr(ClinicalWatchPurpose.bedsideCamera)),
             value: _cameraNotice,
             onChanged: !_optIn
                 ? null
@@ -164,27 +169,27 @@ class _ClinicalWatchScreenState extends State<ClinicalWatchScreen> {
           for (final purpose in ClinicalWatchPurpose.values)
             ListTile(
               leading: const Icon(Icons.info_outline),
-              title: Text(_policy.purposeAr(purpose)),
-              subtitle: Text(_policy.engineHonestyAr(purpose)),
+              title: LifexText(_policy.purposeAr(purpose)),
+              subtitle: LifexText(_policy.engineHonestyAr(purpose)),
             ),
           FilledButton.icon(
             onPressed: _busy || !_optIn ? null : _start,
             icon: const Icon(Icons.notifications_active_outlined),
-            label: Text(_busy ? 'يبدأ الإشعار...' : 'بدء الإشعار الظاهر'),
+            label: LifexText(_busy ? 'يبدأ الإشعار...' : 'بدء الإشعار الظاهر'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: _noticeVisible || _optIn ? _stop : null,
             icon: const Icon(Icons.stop_circle_outlined),
-            label: const Text('إيقاف المراقبة'),
+            label: const LifexText('إيقاف المراقبة'),
           ),
           const SizedBox(height: 12),
-          Text(_status),
+          LifexText(_status),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.videocam_outlined),
-            title: const Text('البث الحي على الشاشة'),
-            subtitle: const Text('العدسة ظاهرة. لا أرشيف'),
+            title: const LifexText('البث الحي على الشاشة'),
+            subtitle: const LifexText('العدسة ظاهرة. لا أرشيف'),
             onTap: () {
               final id =
                   context.read<ActiveProfileController>().activeProfileId;
@@ -197,7 +202,7 @@ class _ClinicalWatchScreenState extends State<ClinicalWatchScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.security_outlined),
-            title: const Text('شفافية الصلاحيات'),
+            title: const LifexText('شفافية الصلاحيات'),
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(

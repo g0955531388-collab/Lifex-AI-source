@@ -6,6 +6,7 @@
 /// =============================================================
 library lifex_ai.features.women_health.women_ashram_engine;
 
+import '../medications/pharmacopoeia_reference.dart';
 import '../profile/health_profile.dart';
 import 'female_cycle_tracker.dart';
 import 'pregnancy_cv_guard.dart';
@@ -45,21 +46,32 @@ class WomenAshramSnapshot {
 class WomenAshramEngine {
   const WomenAshramEngine();
 
+  /// خط أساس ثلاثة أشهر. إن لم يكفِ سجل داخل النافذة يُستخدم السجل كله.
+
   /// طول الدورة = من بداية إلى بداية، كما سجّلتها هي.
-  double? meanStartToStartDays(List<DateTime> starts) {
+  double? meanStartToStartDays(List<DateTime> starts, {DateTime? asOf}) {
     if (starts.length < 2) return null;
     final ordered = [...starts]..sort();
+    final anchor = asOf ?? ordered.last;
+    final windowStart = DateTime(anchor.year, anchor.month, anchor.day)
+        .subtract(const Duration(days: FemaleCycleTracker.baselineDays));
+    final recent = ordered
+        .where(
+          (d) => !DateTime(d.year, d.month, d.day).isBefore(windowStart),
+        )
+        .toList();
+    final sample = recent.length >= 2 ? recent : ordered;
     var sum = 0;
-    for (var i = 1; i < ordered.length; i++) {
-      sum += ordered[i].difference(ordered[i - 1]).inDays;
+    for (var i = 1; i < sample.length; i++) {
+      sum += sample[i].difference(sample[i - 1]).inDays;
     }
-    return sum / (ordered.length - 1);
+    return sum / (sample.length - 1);
   }
 
-  DateTime? nextStartFrom(List<DateTime> starts) {
-    if (starts.isEmpty) return null;
+  DateTime? nextStartFrom(List<DateTime> starts, {DateTime? asOf}) {
+    final mean = meanStartToStartDays(starts, asOf: asOf);
+    if (mean == null) return null;
     final ordered = [...starts]..sort();
-    final mean = meanStartToStartDays(starts) ?? 28;
     return ordered.last.add(Duration(days: mean.round()));
   }
 
@@ -70,7 +82,8 @@ class WomenAshramEngine {
   }) {
     final mean = meanStartToStartDays(starts) ?? 28;
     final shift = mean.round() - 28;
-    return FemaleCycleTracker.estimatedDueFromLmp(lmp).add(Duration(days: shift));
+    return FemaleCycleTracker.estimatedDueFromLmp(lmp)
+        .add(Duration(days: shift));
   }
 
   /// عمر الحمل بالأسابيع من آخر دورة. عمر الجنين من تقدير الإباضة
@@ -98,6 +111,7 @@ class WomenAshramEngine {
     required bool pregnancyConfirmed,
     DateTime? lmp,
     HealthProfile? profile,
+    PharmacopoeiaReference? pharmacopoeia,
   }) {
     if (!trackingEnabled) {
       return const WomenAshramSnapshot(
@@ -106,8 +120,9 @@ class WomenAshramEngine {
       );
     }
 
-    final mean = meanStartToStartDays(starts);
-    final next = nextStartFrom(starts);
+    final cycleAnchor = pregnancyConfirmed ? null : now;
+    final mean = meanStartToStartDays(starts, asOf: cycleAnchor);
+    final next = nextStartFrom(starts, asOf: cycleAnchor);
     final notices = <PrivateFemaleNotice>[];
     int? until;
     int? late;
@@ -116,11 +131,11 @@ class WomenAshramEngine {
       until = DateTime(next.year, next.month, next.day)
           .difference(DateTime(now.year, now.month, now.day))
           .inDays;
-      if (until >= 0 && until <= 3) {
+      if (until == 1 || until == 0) {
         notices.add(
           PrivateFemaleNotice.cycleSoon(daysUntil: until),
         );
-      } else if (until < -7) {
+      } else if (until <= -7) {
         late = -until;
         notices.add(PrivateFemaleNotice.lateCycle(daysLate: late));
       }
@@ -134,9 +149,8 @@ class WomenAshramEngine {
     var flags = <String>[];
 
     if (pregnancyConfirmed) {
-      final usedLmp = lmp ?? (starts.isEmpty
-          ? null
-          : ([...starts]..sort()).last);
+      final usedLmp =
+          lmp ?? (starts.isEmpty ? null : ([...starts]..sort()).last);
       if (usedLmp != null) {
         due = dueFromCycles(lmp: usedLmp, starts: starts);
         final age = ages(lmp: usedLmp, now: now, starts: starts);
@@ -148,7 +162,11 @@ class WomenAshramEngine {
         notices.add(PrivateFemaleNotice.dailyCare());
       }
       if (profile != null) {
-        flags = const PregnancyCvGuard().flagsFor(profile);
+        flags = const PregnancyCvGuard().flagsFor(
+          profile,
+          pharmacopoeia: pharmacopoeia,
+          gestationalWeek: week,
+        );
         if (flags.isNotEmpty) {
           notices.add(PrivateFemaleNotice.cvReview(flags: flags));
         }

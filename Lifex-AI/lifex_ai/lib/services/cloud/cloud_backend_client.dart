@@ -30,9 +30,56 @@ class CloudBackendClient {
   final String baseUrl;
   final http.Client _httpClient;
 
-  /// الرابط الحالي مثال تنظيمي وليس خادم Lifex-AI العامل.
-  bool get isEndpointConfigured =>
-      baseUrl.isNotEmpty && !baseUrl.contains('example.com');
+  /// فراغ أو example.com أو placeholder ليس خادماً عاملاً.
+  bool get isEndpointConfigured {
+    final url = baseUrl.trim();
+    if (url.isEmpty) return false;
+    final lower = url.toLowerCase();
+    return !lower.contains('example.com') && !lower.contains('placeholder');
+  }
+
+  static final String _installId =
+      'install-${DateTime.now().microsecondsSinceEpoch}';
+
+  /// يطلب معرّف ملف من الخادم. يعيد null إن لم يكن الخادم مضبوطاً أو رفض الطلب.
+  /// [deviceId] معرّف تثبيت يرسله التطبيق، وليس إثبات هوية.
+  Future<String?> requestServerProfileId({
+    String? displayName,
+    String? deviceId,
+  }) async {
+    if (!isEndpointConfigured) return null;
+    final sentDeviceId =
+        (deviceId == null || deviceId.trim().isEmpty) ? _installId : deviceId.trim();
+    try {
+      final response = await _httpClient.post(
+        Uri.parse('$baseUrl/auth/profile'),
+        headers: _defaultHeaders,
+        body: jsonEncode({
+          'deviceId': sentDeviceId,
+          if (displayName != null && displayName.trim().isNotEmpty)
+            'displayName': displayName.trim(),
+        }),
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        return null;
+      }
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map) return null;
+      final profileId = decoded['profileId'];
+      if (profileId is! String || profileId.trim().isEmpty) return null;
+      return profileId.trim();
+    } catch (e, stackTrace) {
+      ErrorHandler.instance.report(
+        'CLOUD_PROFILE_ID_FAILED',
+        'تعذّر إصدار profileId من الخادم. يُستخدم معرّف محلي.',
+        sourceModule: 'cloud_backend_client',
+        severity: ErrorSeverity.warning,
+        exception: e,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
 
   Map<String, String> get _defaultHeaders => {
         'Content-Type': 'application/json',
@@ -47,11 +94,16 @@ class CloudBackendClient {
     required String entityId,
     required Map<String, dynamic> payload,
   }) async {
+    if (!isEndpointConfigured) return false;
     try {
       final response = await _httpClient.post(
-        Uri.parse('$baseUrl/sync/${entityType.name}/$entityId'),
+        Uri.parse('$baseUrl/sync/push'),
         headers: _defaultHeaders,
-        body: jsonEncode(payload),
+        body: jsonEncode({
+          'profileId': entityId,
+          'entityType': entityType.name,
+          'payload': payload,
+        }),
       );
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e, stackTrace) {
@@ -73,13 +125,21 @@ class CloudBackendClient {
     required SyncEntityType entityType,
     required String entityId,
   }) async {
+    if (!isEndpointConfigured) return null;
     try {
       final response = await _httpClient.get(
-        Uri.parse('$baseUrl/sync/${entityType.name}/$entityId'),
+        Uri.parse(
+          '$baseUrl/sync/pull?profileId=${Uri.encodeQueryComponent(entityId)}',
+        ),
         headers: _defaultHeaders,
       );
       if (response.statusCode != 200) return null;
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map) return null;
+      final payload = decoded['payload'];
+      if (payload is Map<String, dynamic>) return payload;
+      if (payload is Map) return Map<String, dynamic>.from(payload);
+      return Map<String, dynamic>.from(decoded);
     } catch (e, stackTrace) {
       ErrorHandler.instance.report(
         'CLOUD_PULL_FAILED',

@@ -18,6 +18,7 @@ class _FakeSucceedingGateway implements PaymentGatewayClient {
     required int amountInSmallestUnit,
     required String currencyCode,
     required String description,
+    String? idempotencyKey,
   }) async {
     return const PaymentResult(
       status: PaymentStatus.succeeded,
@@ -38,6 +39,7 @@ HealthProfile _person({
   String seat = 'individual',
   bool blind = false,
   bool chronic = false,
+  String cardKind = '',
 }) {
   return HealthProfile(
     profileId: 'p1',
@@ -45,6 +47,11 @@ HealthProfile _person({
     dateOfBirth: DateTime(1990, 1, 1),
     billingSeat: seat,
     isBlind: blind,
+    isPersonOfDetermination: cardKind.isNotEmpty,
+    accountCountry: cardKind.isEmpty ? '' : 'سوريا',
+    determinationCardKind: cardKind,
+    determinationCardCountry: cardKind.isEmpty ? '' : 'سوريا',
+    determinationCardRef: cardKind.isEmpty ? '' : 'CARD-1',
     chronicConditions: chronic
         ? [
             ChronicConditionRecord(
@@ -81,13 +88,13 @@ void main() {
     expect(ledger.historyFor('p1').single.amountInSmallestUnit, 10000);
   });
 
-  test('المكفوف لا يدفع اشتراكاً ولا رسوم تحويل', () async {
+  test('المكفوف يُعفى بعد بطاقة إعاقة من بلده المسجّل', () async {
     final ledger = TransactionLedger();
     final manager = SubscriptionBillingManager(
       ledger: ledger,
       exemptionPolicy: const BillingExemptionPolicy(),
     )..registerGateway(_FakeSucceedingGateway());
-    final profile = _person(blind: true);
+    final profile = _person(blind: true, cardKind: 'disabilityCard');
 
     final sub = await manager.chargeAnnualSubscription(
       profile: profile,
@@ -123,10 +130,10 @@ void main() {
     expect(quote.dueCents, 0);
   });
 
-  test('المريض الدائم معفى من الدورة التدريبية', () {
+  test('مريض مرض مستعصٍ يُعفى بعد بطاقة مريض دائم من بلده المسجّل', () {
     const fees = PlatformFeePolicy();
     final quote = fees.onExtraService(
-      profile: _person(chronic: true),
+      profile: _person(chronic: true, cardKind: 'chronicIllnessCard'),
       kind: ExtraServiceKind.trainingCourse,
       negotiatedCents: 5000,
     );

@@ -45,13 +45,24 @@ class ProfileDonorDirectory {
       if (simple == null) continue;
       final identity =
           HealthIdentityManager.instance.getByProfileId(profile.profileId);
+      final city = profile.questionnaireData['bloodCity']?.toString() ?? '';
+      final latRaw = profile.questionnaireData['bloodLatitude'];
+      final lonRaw = profile.questionnaireData['bloodLongitude'];
+      final lat = latRaw is num ? latRaw.toDouble() : 0.0;
+      final lon = lonRaw is num ? lonRaw.toDouble() : 0.0;
+      final usable = DonorEligibilityFilter.coordinatesUsable(lat, lon);
+      final radiusRaw = profile.questionnaireData['bloodRadiusKm'];
       donors.add(
         DonorLocation(
           donorLifexId: identity?.lifexId ?? profile.profileId,
           bloodType: simple,
-          latitude: 0,
-          longitude: 0,
+          latitude: usable ? lat : 0,
+          longitude: usable ? lon : 0,
           hasOptedOutOfDonationAlerts: !profile.acceptsBloodDonationAlerts,
+          city: city,
+          profileId: profile.profileId,
+          hasReliableFix: usable,
+          preferredRadiusKm: radiusRaw is num ? radiusRaw.toDouble() : null,
         ),
       );
     }

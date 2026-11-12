@@ -18,6 +18,8 @@ import '../features/reports/stamped_report.dart';
 import '../features/voice/voice_engine.dart';
 import '../features/voice/voice_locale_policy.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class ChoiceMirrorScreen extends StatefulWidget {
   const ChoiceMirrorScreen({super.key});
@@ -118,7 +120,7 @@ class _ChoiceMirrorScreenState extends State<ChoiceMirrorScreen> {
     Clipboard.setData(ClipboardData(text: stamped));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('حُفظ دفتر المرآة في الملف ونُسخ مختوماً. ليست شهادة توافق.'),
+        content: LifexText('حُفظ دفتر المرآة في الملف ونُسخ مختوماً. ليست شهادة توافق.'),
       ),
     );
   }
@@ -130,10 +132,10 @@ class _ChoiceMirrorScreenState extends State<ChoiceMirrorScreen> {
     final total = _book.totalScore(marks);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(ChoiceMirrorBook.titleAr),
+        title: const LifexText(ChoiceMirrorBook.titleAr),
         actions: [
           IconButton(
-            tooltip: _english ? 'العربية' : 'English',
+            tooltip: tr(_english ? 'العربية' : 'English'),
             onPressed: () => setState(() {
               _languagePinned = true;
               _english = !_english;
@@ -141,7 +143,7 @@ class _ChoiceMirrorScreenState extends State<ChoiceMirrorScreen> {
             icon: const Icon(Icons.translate),
           ),
           IconButton(
-            tooltip: 'إيقاف النطق',
+            tooltip: tr('إيقاف النطق'),
             onPressed: () => VoiceEngine.instance.stopListening(),
             icon: const Icon(Icons.stop),
           ),
@@ -150,17 +152,17 @@ class _ChoiceMirrorScreenState extends State<ChoiceMirrorScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
+          LifexText(
             AppConstants.studioBannerCredit,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
-          const Text(
+          const LifexText(
             ChoiceMirrorBook.authorsAr,
             textAlign: TextAlign.center,
           ),
-          Text(
+          LifexText(
             ChoiceMirrorBook.imprintAr,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
@@ -177,13 +179,13 @@ class _ChoiceMirrorScreenState extends State<ChoiceMirrorScreen> {
           ),
           TextField(
             decoration: InputDecoration(
-              labelText: _english ? 'Search this book' : 'بحث داخل الكتاب',
+              labelText: tr(_english ? 'Search this book' : 'بحث داخل الكتاب'),
               prefixIcon: const Icon(Icons.search),
             ),
             onChanged: (value) => setState(() => _query = value.trim()),
           ),
           const SizedBox(height: 8),
-          Text(
+          LifexText(
             _english
                 ? 'Reflection score: $total of ${_book.maxScore()} — ${_book.reading(total: total, english: true)}'
                 : 'درجة التأمل: $total من ${_book.maxScore()} — ${_book.reading(total: total, english: false)}',
@@ -202,37 +204,37 @@ class _ChoiceMirrorScreenState extends State<ChoiceMirrorScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          LifexText(
                             'الفصل ${chapter.kickerAr}',
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text(
+                          LifexText(
                             chapter.titleAr,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
-                          Text(chapter.subtitleAr),
+                          LifexText(chapter.subtitleAr),
                           const SizedBox(height: 8),
-                          Text(chapter.shownBody(english: _english)),
+                          LifexText(chapter.shownBody(english: _english)),
                           TextButton.icon(
                             onPressed: () => VoiceEngine.instance.speak(
                               chapter.spoken(english: _english),
                             ),
                             icon: const Icon(Icons.volume_up_outlined),
-                            label: Text(
+                            label: LifexText(
                               _english ? 'Read this chapter' : 'قراءة هذا الفصل',
                             ),
                           ),
-                          Text(
+                          LifexText(
                             _english
                                 ? 'Mirror items (0 to 4)'
                                 : 'اختبار المرآة (0 إلى 4)',
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                           for (final prompt in chapter.prompts) ...[
-                            Text(prompt.shown(english: _english)),
+                            LifexText(prompt.shown(english: _english)),
                             Slider(
                               value: (marks[prompt.id] ?? 0).clamp(0, 4).toDouble(),
                               min: 0,
@@ -253,25 +255,25 @@ class _ChoiceMirrorScreenState extends State<ChoiceMirrorScreen> {
           TextField(
             controller: _strength,
             decoration: InputDecoration(
-              labelText: _english
+              labelText: tr(_english
                   ? 'My strongest point'
-                  : 'أكثر نقطة قوة أتمتع بها',
+                  : 'أكثر نقطة قوة أتمتع بها'),
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _weekly,
             decoration: InputDecoration(
-              labelText: _english
+              labelText: tr(_english
                   ? 'Practical change this week'
-                  : 'السلوك العملي للتغيير هذا الأسبوع',
+                  : 'السلوك العملي للتغيير هذا الأسبوع'),
             ),
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: _saveJournal,
             icon: const Icon(Icons.bookmark_added_outlined),
-            label: Text(
+            label: LifexText(
               _english
                   ? 'Save the journal and copy a stamped note'
                   : 'حفظ دفتر المرآة ونسخه مختوماً',

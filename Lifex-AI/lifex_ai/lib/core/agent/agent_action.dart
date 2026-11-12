@@ -6,6 +6,7 @@
 /// الخطة تتحول في النهاية إلى AgentAction واحد أو أكثر يُمرَّر إلى
 /// AgentExecutor ثم AgentToolRegistry.
 /// =============================================================
+library;
 
 enum AgentActionStatus {
   pending,

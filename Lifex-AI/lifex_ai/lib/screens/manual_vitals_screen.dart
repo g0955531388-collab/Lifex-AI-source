@@ -14,6 +14,8 @@ import '../features/profile/active_profile_controller.dart';
 import '../features/vitals/manual_vital_board.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class ManualVitalsScreen extends StatefulWidget {
   const ManualVitalsScreen({super.key});
@@ -30,6 +32,8 @@ class _ManualVitalsScreenState extends State<ManualVitalsScreen> {
   final _oxygen = TextEditingController();
   final _pulse = TextEditingController();
   final _bp = TextEditingController();
+  final _foam = TextEditingController();
+  final _clarity = TextEditingController();
   String _urine = UrineColorNote.none;
   String _status = 'أدخل أرقام جهازك. لن تُملأ قيم افتراضية.';
 
@@ -39,6 +43,8 @@ class _ManualVitalsScreenState extends State<ManualVitalsScreen> {
     _oxygen.dispose();
     _pulse.dispose();
     _bp.dispose();
+    _foam.dispose();
+    _clarity.dispose();
     super.dispose();
   }
 
@@ -49,6 +55,8 @@ class _ManualVitalsScreenState extends State<ManualVitalsScreen> {
       pulseBpm: int.tryParse(_pulse.text.trim()),
       bloodPressure: _bp.text.trim(),
       urineColorNote: _urine,
+      urineFoamNote: _foam.text,
+      urineClarityNote: _clarity.text,
     );
   }
 
@@ -84,7 +92,7 @@ class _ManualVitalsScreenState extends State<ManualVitalsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('القياسات اليدوية')),
+      appBar: AppBar(title: const LifexText('القياسات اليدوية')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -99,56 +107,68 @@ class _ManualVitalsScreenState extends State<ManualVitalsScreen> {
           TextField(
             controller: _temp,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'الحرارة (°م) إن قستها',
+            decoration: InputDecoration(
+              labelText: tr('الحرارة (°م) إن قستها'),
             ),
           ),
           TextField(
             controller: _oxygen,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'الأكسجين (%) إن قسته',
+            decoration: InputDecoration(
+              labelText: tr('الأكسجين (%) إن قسته'),
             ),
           ),
           TextField(
             controller: _pulse,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'النبض (ضربة/دقيقة) إن قسته',
+            decoration: InputDecoration(
+              labelText: tr('النبض (ضربة/دقيقة) إن قسته'),
             ),
           ),
           TextField(
             controller: _bp,
-            decoration: const InputDecoration(
-              labelText: 'الضغط كما قرأته (مثل 120/80)',
+            decoration: InputDecoration(
+              labelText: tr('الضغط كما قرأته (مثل 120/80)'),
             ),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: _urine,
-            decoration: const InputDecoration(labelText: 'ملاحظة لون البول'),
+            decoration: InputDecoration(labelText: tr('ملاحظة لون البول')),
             items: [
               for (final option in UrineColorNote.options)
-                DropdownMenuItem(value: option, child: Text(option)),
+                DropdownMenuItem(value: option, child: LifexText(option)),
             ],
             onChanged: (value) {
               if (value != null) setState(() => _urine = value);
             },
           ),
+          TextField(
+            controller: _foam,
+            decoration: InputDecoration(
+              labelText: tr('ملاحظة الرغوة، إن كتبتها'),
+            ),
+          ),
+          TextField(
+            controller: _clarity,
+            decoration: InputDecoration(
+              labelText: tr('ملاحظة الوضوح، إن كتبتها'),
+            ),
+          ),
           const SizedBox(height: 20),
           FilledButton.icon(
             onPressed: () => _review(save: false),
             icon: const Icon(Icons.rule),
-            label: const Text('مراجعة الأرقام دون حفظ'),
+            label: const LifexText('مراجعة الأرقام دون حفظ'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: () => _review(save: true),
             icon: const Icon(Icons.save_outlined),
-            label: const Text('حفظ في القياسات اليدوية'),
+            label: const LifexText('حفظ في القياسات اليدوية'),
           ),
           const SizedBox(height: 16),
-          Text(_status),
+          LifexText(_status),
         ],
       ),
     );

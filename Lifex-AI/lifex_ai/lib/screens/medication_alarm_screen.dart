@@ -11,12 +11,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/health_event_manager.dart';
+import '../core/orchestrator/lio_gateway_contracts.dart';
+import '../core/orchestrator/lio_sensitive_action_entry.dart';
 import '../features/medications/medication_alarm_engine.dart';
 import '../features/medications/medication_alarm_ledger.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
 import '../widgets/voice_fill_button.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class MedicationAlarmScreen extends StatefulWidget {
   const MedicationAlarmScreen({super.key});
@@ -101,7 +105,7 @@ class _MedicationAlarmScreenState extends State<MedicationAlarmScreen> {
         final alarms = _all(controller);
         final due = _engine.dueAlarms(alarms, DateTime.now());
         return Scaffold(
-          appBar: AppBar(title: const Text('منبّه الأدوية الذكي')),
+          appBar: AppBar(title: const LifexText('منبّه الأدوية الذكي')),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -111,7 +115,7 @@ class _MedicationAlarmScreenState extends State<MedicationAlarmScreen> {
                     'ليس منبّهاً خفياً بعد إغلاق التطبيق. Lifex لا يصف الجرعة.',
               ),
               if (people.isEmpty)
-                const Text('أضف ملفاً في الحساب أولاً.')
+                const LifexText('أضف ملفاً في الحساب أولاً.')
               else
                 DropdownButtonFormField<String>(
                   value: people.any((item) => item.profileId == _forProfileId)
@@ -121,12 +125,12 @@ class _MedicationAlarmScreenState extends State<MedicationAlarmScreen> {
                     for (final person in people)
                       DropdownMenuItem(
                         value: person.profileId,
-                        child: Text(person.fullName),
+                        child: LifexText(person.fullName),
                       ),
                   ],
                   onChanged: (value) => setState(() => _forProfileId = value),
-                  decoration: const InputDecoration(
-                    labelText: 'الشخص (اسمه الحقيقي)',
+                  decoration: InputDecoration(
+                    labelText: tr('الشخص (اسمه الحقيقي)'),
                   ),
                 ),
               Row(
@@ -134,9 +138,9 @@ class _MedicationAlarmScreenState extends State<MedicationAlarmScreen> {
                   Expanded(
                     child: TextField(
                       controller: _medicine,
-                      decoration: const InputDecoration(
-                        labelText: 'اسم الدواء كما في الوصفة',
-                        hintText: 'مثال: أومنتين',
+                      decoration: InputDecoration(
+                        labelText: tr('اسم الدواء كما في الوصفة'),
+                        hintText: tr('مثال: أومنتين'),
                       ),
                     ),
                   ),
@@ -149,7 +153,7 @@ class _MedicationAlarmScreenState extends State<MedicationAlarmScreen> {
                 ],
               ),
               ListTile(
-                title: Text('ساعة الدواء: ${_clock.format(context)}'),
+                title: LifexText('ساعة الدواء: ${_clock.format(context)}'),
                 trailing: const Icon(Icons.schedule),
                 onTap: () async {
                   final picked = await showTimePicker(
@@ -174,22 +178,22 @@ class _MedicationAlarmScreenState extends State<MedicationAlarmScreen> {
                   _medicine.clear();
                   setState(() {});
                 },
-                child: const Text('حفظ المنبّه لهذا الشخص'),
+                child: const LifexText('حفظ المنبّه لهذا الشخص'),
               ),
               const SizedBox(height: 16),
-              Text('مستحق الآن', style: Theme.of(context).textTheme.titleMedium),
+              LifexText('مستحق الآن', style: Theme.of(context).textTheme.titleMedium),
               if (due.isEmpty)
-                const Text('لا جرعة مستحقة. المنبّه صامت.')
+                const LifexText('لا جرعة مستحقة. المنبّه صامت.')
               else
                 for (final alarm in due)
                   Card(
                     color: Colors.orange.withOpacity(0.12),
                     child: ListTile(
-                      title: Text(_engine.cue(alarm).writtenAr),
-                      subtitle: const Text('قل «لقد تناولت الدواء» أو «تم» أو اضغط.'),
+                      title: LifexText(_engine.cue(alarm).writtenAr),
+                      subtitle: const LifexText('قل «لقد تناولت الدواء» أو «تم» أو اضغط.'),
                       trailing: FilledButton(
                         onPressed: () => _take(alarm),
-                        child: const Text('لقد تناولت الدواء'),
+                        child: const LifexText('لقد تناولت الدواء'),
                       ),
                     ),
                   ),
@@ -201,18 +205,46 @@ class _MedicationAlarmScreenState extends State<MedicationAlarmScreen> {
                 },
               ),
               const SizedBox(height: 12),
-              Text('كل المنبّهات في الحساب',
+              LifexText('كل المنبّهات في الحساب',
                   style: Theme.of(context).textTheme.titleMedium),
               for (final alarm in alarms)
                 ListTile(
-                  title: Text('${alarm.personName} — ${alarm.medicine}'),
-                  subtitle: Text(alarm.clock),
+                  title: LifexText('${alarm.personName} — ${alarm.medicine}'),
+                  subtitle: LifexText(alarm.clock),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: () {
+                    onPressed: () async {
                       final person = controller.profileById(alarm.profileId);
                       if (person == null) return;
-                      _ledger.remove(person, alarm.id);
+                      final profileId = controller.activeProfileId ??
+                          alarm.profileId;
+                      final entry =
+                          context.read<LioSensitiveActionEntry>();
+                      final outcome = await entry.authorizeThenRun<void>(
+                        request: LioGatewayRequest(
+                          requestId:
+                              'alarm_del_${alarm.id}_${DateTime.now().millisecondsSinceEpoch}',
+                          correlationId: 'alarm_$profileId',
+                          identityAccountId: profileId,
+                          purpose: 'care_support',
+                          requestedAction: 'delete_medication_alarm',
+                          dataScope: 'profile_basic',
+                          sensitivity: LioDataSensitivity.personal,
+                          consent: const LioConsentContext(
+                            consentGranted: true,
+                            purposeAligned: true,
+                          ),
+                          riskLevel: LioActionRisk.medium,
+                          timestamp: DateTime.now().toUtc(),
+                          authenticated: true,
+                          authorized: true,
+                          minimumNecessarySatisfied: true,
+                        ),
+                        run: () async {
+                          _ledger.remove(person, alarm.id);
+                        },
+                      );
+                      if (!outcome.executed || !mounted) return;
                       controller.saveActiveProfileChanges();
                       setState(() {});
                     },

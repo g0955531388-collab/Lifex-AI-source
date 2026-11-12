@@ -6,6 +6,9 @@
 /// لأي مزوّد TTS فعلي، ويربطه بـ VoiceEngine المركزي.
 /// =============================================================
 
+library lifex_ai.features.voice.text_to_speech_manager;
+
+import 'assistant_session.dart';
 import 'language_detector.dart';
 import 'voice_engine.dart';
 
@@ -27,6 +30,9 @@ abstract class TextToSpeechProvider {
   Future<bool> speak(String text, SpeechSettings settings);
   Future<void> stop();
   Future<bool> get isLanguageSupported;
+
+  /// سبب رفض النطق الأخير، إن وُجد. لا يعني أن الصوت سُمع.
+  String? get lastBlockAr => null;
 }
 
 /// مدير النطق — يربط بين VoiceEngine المركزي وأي مزوّد TTS فعلي.
@@ -41,6 +47,7 @@ class TextToSpeechManager {
 
   void registerWithVoiceEngine(VoiceEngine engine) {
     engine.bindSpeakImplementation(_speak);
+    engine.bindStopSpeakingImplementation(provider.stop);
   }
 
   Future<VoiceOperationResult> _speak(String text) async {
@@ -52,7 +59,7 @@ class TextToSpeechManager {
     final locale = detection.preciseLanguageCode ??
         LanguageDetector.instance.localeCodeFor(detection.language);
     final settings = SpeechSettings(
-      speechRate: defaultSettings.speechRate,
+      speechRate: AssistantSession.instance.speechRate,
       pitch: defaultSettings.pitch,
       localeCode: locale,
     );
@@ -64,10 +71,12 @@ class TextToSpeechManager {
       );
     }
 
+    await provider.stop();
     final success = await provider.speak(text, settings);
     if (!success) {
-      return const VoiceOperationResult.failure(
-        'تعذّرت القراءة الصوتية للنص. حاول مرة أخرى.',
+      return VoiceOperationResult.failure(
+        provider.lastBlockAr ??
+            'تعذّرت القراءة الصوتية للنص. حاول مرة أخرى.',
       );
     }
     return VoiceOperationResult.success(textResult: text);

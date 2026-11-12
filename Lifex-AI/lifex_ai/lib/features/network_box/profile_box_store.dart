@@ -20,6 +20,8 @@ class BoxKeys {
   static const pharmacy = 'pharmacyRecords';
   static const hospital = 'hospitalRecords';
   static const dental = 'dentalRecords';
+  static const dentalSessions = 'dentalSessionRecords';
+  static const meetingRooms = 'localMeetingRooms';
   static const women = 'womenHealthRecords';
   static const donations = 'donationRecords';
   static const education = 'careTrainingRecords';
@@ -32,6 +34,12 @@ class BoxKeys {
   static const remoteLinks = 'remoteGuardianLinks';
   static const familyMessages = 'familyMessages';
   static const pharmacyStock = 'pharmacyStock';
+  static const pharmacyLedger = 'pharmacyMovementRecords';
+  static const pharmacyRequests = 'pharmacyServiceRequests';
+  static const pharmacyAccredited = 'pharmacyAccreditedLinks';
+  static const pharmacyNotices = 'pharmacyNoticeRecords';
+  static const careNotices = 'careCycleNotices';
+  static const unitHolds = 'careUnitHolds';
   static const cameraNotes = 'cameraNotes';
   static const careOrders = 'careOrders';
   static const accountEmail = 'accountEmail';
@@ -65,11 +73,18 @@ class BoxKeys {
   static const disabilityRecords = 'disabilitySelfRecords';
   static const marriageRequests = 'marriageHealthRequests';
   static const healthThreads = 'healthChannelThreads';
+  static const messengerGroups = 'messengerGroups';
+  static const messengerGroupPosts = 'messengerGroupPosts';
+  static const messengerCalls = 'messengerCallRequests';
+  static const messengerAnnouncements = 'messengerAnnouncements';
+  static const messengerBloodNotes = 'messengerBloodNotes';
   static const cvVault = 'ownerCvVault';
   static const accreditedPatientInbox = 'accreditedPatientInbox';
   static const doctorNotices = 'doctorUnitNotices';
   static const medicationAlarms = 'medicationAlarms';
   static const choiceMirrorJournal = 'choiceMirrorJournal';
+  static const unitOwnPlace = 'unitOwnPlace';
+  static const unitExchange = 'unitExchangePackets';
 }
 
 /// قراءة وكتابة قوائم الصندوق داخل [HealthProfile.questionnaireData].
@@ -100,6 +115,19 @@ class ProfileBoxStore {
     items.add(stored);
     setList(key, items);
     return stored;
+  }
+
+  bool replaceById(String key, String id, Map<String, dynamic> record) {
+    if (id.isEmpty) return false;
+    final items = list(key);
+    final index = items.indexWhere((item) => item['id']?.toString() == id);
+    if (index < 0) return false;
+    final stored = Map<String, dynamic>.from(record);
+    stored['id'] = id;
+    stored['createdAt'] ??= items[index]['createdAt'];
+    items[index] = stored;
+    setList(key, items);
+    return true;
   }
 
   void removeAt(String key, int index) {

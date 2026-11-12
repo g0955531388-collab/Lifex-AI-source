@@ -25,6 +25,21 @@ void main() {
       expect(profile.ageInYears, 30);
     });
 
+    test('العمر المكتوب يُعتمد بلا تاريخ ميلاد', () {
+      final profile = HealthProfile(
+        profileId: 'p-age',
+        fullName: 'اختبار',
+        statedAgeYears: 34,
+      );
+
+      expect(profile.dateOfBirth, isNull);
+      expect(profile.ageInYears, 34);
+      final restored = HealthProfile.fromJson(profile.toJson());
+      expect(restored.dateOfBirth, isNull);
+      expect(restored.statedAgeYears, 34);
+      expect(restored.ageInYears, 34);
+    });
+
     test('لا يحسب العام الحالي إذا لم يأتِ عيد الميلاد بعد', () {
       final now = DateTime.now();
       // تاريخ ميلاد في المستقبل القريب ضمن نفس السنة القادمة (لم يأتِ
@@ -74,7 +89,8 @@ void main() {
         fullName: 'اختبار',
         dateOfBirth: DateTime(1990, 1, 1),
       );
-      profile.addAllergy(AllergyRecord(substance: 'Penicillin', severity: 'high'));
+      profile
+          .addAllergy(AllergyRecord(substance: 'Penicillin', severity: 'high'));
 
       expect(profile.hasAllergyTo('penicillin'), isTrue);
       expect(profile.hasAllergyTo('PENICILLIN'), isTrue);

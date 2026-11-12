@@ -3014,6 +3014,17 @@
       "generalInfoAr": "عدوى بكتيرية تنتقل عن طريق القراد.",
       "requiresImmediateAttention": false,
       "source": "lifex-ai-diseases-database-v1"
+    },
+    {
+      "id": "d213",
+      "nameAr": "متلازمة إهلرز دانلوس",
+      "nameEn": "Ehlers-Danlos Syndrome",
+      "category": "rheumatology",
+      "commonSymptomsIds": [],
+      "riskFactors": [],
+      "generalInfoAr": "مجموعة اضطرابات وراثية تؤثر على إنتاج الكولاجين، مما يؤدي إلى مرونة مفرطة في المفاصل والجلد. مرجع توعية وليس تشخيصاً.",
+      "requiresImmediateAttention": false,
+      "source": "Ghazi.josn"
     }
   ]
 }

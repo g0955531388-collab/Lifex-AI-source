@@ -5,6 +5,7 @@
 /// الوصف: إرفاق بيانات طبية (وصفة، نتيجة تحليل، صورة أشعة) داخل محادثة،
 /// بربط آمن بمصدر البيانات الأصلي بدلاً من نسخها.
 /// =============================================================
+library;
 
 enum MedicalAttachmentType { prescription, labResult, imagingRecord, generalDocument }
 

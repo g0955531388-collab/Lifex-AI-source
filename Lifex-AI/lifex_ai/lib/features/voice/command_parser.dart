@@ -8,6 +8,7 @@ library lifex_ai.features.voice.command_parser;
 
 import '../../core/network_canon.dart';
 import 'spoken_blood_type.dart';
+import 'spoken_fold.dart';
 import 'wake_word_detector.dart';
 
 enum VoiceCommandIntent {
@@ -21,11 +22,25 @@ enum VoiceCommandIntent {
   switchProfile,
   openProjectBox,
   openSearch,
+  openWebSearch,
+  openLibrary,
+  openVisionResources,
+  goBack,
+  goHome,
   openPharmacy,
   openDoctors,
   openCamera,
   openAccessibility,
   openLiveSight,
+  readVisibleText,
+  repeatScene,
+  pauseScene,
+  resumeScene,
+  stopReading,
+  readScreen,
+  raiseVolume,
+  openEpidemicDesk,
+  openHealthGuidance,
   openLayeredLens,
   openThumbnail,
   openDoctorDiary,
@@ -37,10 +52,36 @@ enum VoiceCommandIntent {
   openKnowledgeArcade,
   openPersonalShelf,
   openClinicalWatch,
+  openMessenger,
+  openSite,
   openManualVitals,
   openOpticalRadar,
   openNetworkUnit,
   clarifyHealthAspect,
+  openDeviceCenter,
+  listConnectedDevices,
+  showWheelchair,
+  wheelchairStatus,
+  wheelchairMoveForward,
+  wheelchairStop,
+  wheelchairEmergencyStop,
+  phoneBattery,
+  wheelchairReadBattery,
+  confirmDeviceMotion,
+  openDonations,
+  donateSearchCancer,
+  donateSearchHeart,
+  openWallet,
+  walletBalance,
+  walletTopUp,
+  slowReading,
+  fasterReading,
+  updateCameraMind,
+  disableAutoModelUpdate,
+  readBarcode,
+  tellTime,
+  openClockAlarms,
+  stopClockAlarm,
   unknown,
 }
 
@@ -70,6 +111,21 @@ class CommandParser {
   final WakeWordDetector _wake;
 
   final List<_CommandRule> _rules = const [
+    _CommandRule(VoiceCommandIntent.openEpidemicDesk, [
+      'رصد الأوبئة',
+      'مراقبة الأوبئة',
+      'الوباء العالمي',
+      'إشارة وبائية',
+      'epidemic',
+      'outbreak watch',
+    ]),
+    _CommandRule(VoiceCommandIntent.openHealthGuidance, [
+      'الإرشاد الصحي',
+      'الوقاية الصحية',
+      'استشارة مجانية',
+      'health guidance',
+      'prevention guidance',
+    ]),
     _CommandRule(VoiceCommandIntent.openHealthProfile, [
       'ملفي الصحي',
       'الملف الصحي',
@@ -117,8 +173,14 @@ class CommandParser {
       'مواعيدي',
       'المواعيد',
       'حجز موعد',
+      'افتح المواعيد',
+      'مواعيد هذا الشهر',
+      'مواعيدي اليوم',
+      'التقويم',
       'appointments',
       'my appointments',
+      'open appointments',
+      'calendar',
       'rendez-vous',
       'citas',
       'termine',
@@ -159,6 +221,8 @@ class CommandParser {
     ]),
     _CommandRule(VoiceCommandIntent.readLastLabResult, [
       'نتيجة التحليل',
+      'اقرأ لي نتيجة الفحص',
+      'نتيجة الفحص',
       'آخر تحليل',
       'اقرأ نتيجتي',
       'lab result',
@@ -182,7 +246,42 @@ class CommandParser {
       'project box',
       'open box',
     ]),
+    _CommandRule(VoiceCommandIntent.openWebSearch, [
+      'وسّع البحث عبر الإنترنت',
+      'وسع البحث عبر الإنترنت',
+      'ابحث في الإنترنت عن',
+      'ابحث في الإنترنت',
+      'بحث الإنترنت',
+      'search the web',
+      'search online',
+    ]),
+    _CommandRule(VoiceCommandIntent.openLibrary, [
+      'ابحث عن كتاب',
+      'افتح المكتبة',
+      'المكتبة',
+      'open the library',
+      'open library',
+    ]),
+    _CommandRule(VoiceCommandIntent.openVisionResources, [
+      'موارد الكاميرا',
+      'دليل الرؤية',
+      'vision resources',
+    ]),
+    _CommandRule(VoiceCommandIntent.goHome, [
+      'ارجع إلى الشاشة الرئيسية',
+      'ارجع للشاشة الرئيسية',
+      'الشاشة الرئيسية',
+      'go home',
+    ]),
+    _CommandRule(VoiceCommandIntent.goBack, [
+      'ارجع للخلف',
+      'عد للخلف',
+      'ارجع',
+      'رجوع',
+      'go back',
+    ]),
     _CommandRule(VoiceCommandIntent.openSearch, [
+      'افتح البحث الداخلي',
       'بحث',
       'ابحث',
       'search',
@@ -204,6 +303,7 @@ class CommandParser {
     _CommandRule(VoiceCommandIntent.openDoctors, [
       'الأطباء',
       'طبيب قريب',
+      'افتح الأطباء',
       'doctor',
       'doctors',
       'médecin',
@@ -228,15 +328,135 @@ class CommandParser {
       '3d camera',
     ]),
     _CommandRule(VoiceCommandIntent.openLiveSight, [
+      'افتح كاميرا المكفوفين',
+      'كاميرا المكفوفين',
+      'افتح المساعد البصري',
+      'المساعد البصري',
+      'افتح الكاميرا',
       'ما الموجود أمامي',
       'ماذا أمامي',
       'صف باستمرار',
       'الكاميرا الحية',
       'البث الحي',
+      'اقرأ ما أمامي',
+      'ماذا يوجد أمامي',
+      'صف المشهد',
+      'صف ما أمامي',
+      'describe the scene',
       'افتح العدسة',
+      'لايف',
+      'live',
       'live camera',
       'what is in front',
       'what is ahead',
+      'open the camera',
+      'open visual assistant',
+    ]),
+    _CommandRule(VoiceCommandIntent.readVisibleText, [
+      'اقرأ النص الموجود في الصورة',
+      'اقرأ لي النص',
+      'اقرأ هذا النص',
+      'اقرأ النص',
+      'read this text',
+      'read the text',
+    ]),
+    _CommandRule(VoiceCommandIntent.repeatScene, [
+      'أعد الوصف',
+      'اعد الوصف',
+      'repeat the description',
+      'repeat description',
+    ]),
+    _CommandRule(VoiceCommandIntent.pauseScene, [
+      'أوقف الوصف',
+      'اوقف الوصف',
+      'stop the description',
+      'stop description',
+    ]),
+    _CommandRule(VoiceCommandIntent.resumeScene, [
+      'استأنف الوصف',
+      'استانف الوصف',
+      'resume the description',
+      'resume description',
+    ]),
+    _CommandRule(VoiceCommandIntent.readScreen, [
+      'اقرأ النتائج',
+      'اقرأ هذه الشاشة',
+      'اقرأ الشاشة',
+      'read this screen',
+      'read the screen',
+    ]),
+    _CommandRule(VoiceCommandIntent.stopReading, [
+      'توقف عن الكلام',
+      'أوقف القراءة',
+      'اوقف القراءة',
+      'أوقف النطق',
+      'اوقف النطق',
+      'stop reading',
+      'stop speaking',
+    ]),
+    _CommandRule(VoiceCommandIntent.slowReading, [
+      'أبطئ القراءة',
+      'ابطئ القراءة',
+      'خفّض السرعة',
+      'خفض السرعة',
+    ]),
+    _CommandRule(VoiceCommandIntent.fasterReading, [
+      'أسرع القراءة',
+      'اسرع القراءة',
+      'ارفع السرعة',
+    ]),
+    _CommandRule(VoiceCommandIntent.updateCameraMind, [
+      'حدّث ذكاء الكاميرا الآن',
+      'حدث ذكاء الكاميرا الآن',
+      'حدّث ذكاء الكاميرا',
+    ]),
+    _CommandRule(VoiceCommandIntent.disableAutoModelUpdate, [
+      'أوقف التحديث التلقائي',
+      'اوقف التحديث التلقائي',
+    ]),
+    _CommandRule(VoiceCommandIntent.readBarcode, [
+      'اقرأ الباركود',
+      'اقرأ الرمز',
+    ]),
+    _CommandRule(VoiceCommandIntent.tellTime, [
+      'كم الساعة',
+      'قديش الساعة',
+      'شو الساعة',
+      'ما الوقت',
+      'الوقت الآن',
+      'أخبرني بالوقت',
+      'قل الوقت',
+      'what time is it',
+      'tell me the time',
+      'what is the time',
+    ]),
+    _CommandRule(VoiceCommandIntent.openClockAlarms, [
+      'المنبه',
+      'المنبهات',
+      'منبه الساعة',
+      'افتح المنبه',
+      'اضبط منبه',
+      'اضبط المنبه',
+      'ضبط المنبه',
+      'open alarms',
+      'set an alarm',
+      'alarm clock',
+    ]),
+    _CommandRule(VoiceCommandIntent.stopClockAlarm, [
+      'أوقف المنبه',
+      'اوقف المنبه',
+      'أوقف التنبيه',
+      'اوقف التنبيه',
+      'أسكت المنبه',
+      'اسكت المنبه',
+      'stop the alarm',
+      'stop alarm',
+    ]),
+    _CommandRule(VoiceCommandIntent.raiseVolume, [
+      'ارفع مستوى الصوت',
+      'ارفع الصوت',
+      'raise the volume',
+      'raise volume',
     ]),
     _CommandRule(VoiceCommandIntent.openCamera, [
       'الكاميرا',
@@ -304,11 +524,26 @@ class CommandParser {
       'personal shelf',
     ]),
     _CommandRule(VoiceCommandIntent.openClinicalWatch, [
+      'حماية في الخلفية',
+      'الحماية في الخلفية',
       'المراقبة السريرية',
       'مراقبة سريرية',
       'إشعار المراقبة',
       'clinical watch',
       'bedside monitor',
+    ]),
+    _CommandRule(VoiceCommandIntent.openMessenger, [
+      'راسل بالمعرف',
+      'تراسل بالمعرف',
+      'المسنجر',
+      'open messenger',
+    ]),
+    _CommandRule(VoiceCommandIntent.openSite, [
+      'تشغيل الموقع',
+      'شغّل الموقع',
+      'شغل الموقع',
+      'افتح الموقع',
+      'open the site',
     ]),
     _CommandRule(VoiceCommandIntent.openManualVitals, [
       'القياسات اليدوية',
@@ -327,10 +562,8 @@ class CommandParser {
       'gfrs',
     ]),
     _CommandRule(VoiceCommandIntent.openAccessibility, [
-      'صف المشهد',
       'المساعد البصري',
       'صورة واحدة',
-      'describe the scene',
     ]),
     _CommandRule(VoiceCommandIntent.clarifyHealthAspect, [
       'كيف وضعي',
@@ -339,17 +572,128 @@ class CommandParser {
       'how am I',
       "how's my status",
     ]),
+    _CommandRule(VoiceCommandIntent.openDeviceCenter, [
+      'مركز الأجهزة',
+      'الأجهزة',
+      'device center',
+      'devices',
+      'فتح الأجهزة',
+    ]),
+    _CommandRule(VoiceCommandIntent.listConnectedDevices, [
+      'ما الأجهزة المتصلة',
+      'الأجهزة المتصلة',
+      'connected devices',
+      'list devices',
+    ]),
+    _CommandRule(VoiceCommandIntent.showWheelchair, [
+      'أظهر الكرسي',
+      'افتح الكرسي',
+      'الكرسي الذكي',
+      'show wheelchair',
+      'wheelchair',
+    ]),
+    _CommandRule(VoiceCommandIntent.wheelchairStatus, [
+      'هل الكرسي متصل',
+      'حالة الكرسي',
+      'wheelchair status',
+      'is the wheelchair connected',
+    ]),
+    _CommandRule(VoiceCommandIntent.wheelchairMoveForward, [
+      'تقدم',
+      'تحرك للأمام',
+      'إلى الأمام',
+      'move forward',
+      'go forward',
+    ]),
+    _CommandRule(VoiceCommandIntent.wheelchairStop, [
+      'توقف',
+      'أوقف الكرسي',
+      'stop wheelchair',
+      'stop',
+    ]),
+    _CommandRule(VoiceCommandIntent.wheelchairEmergencyStop, [
+      'أوقف الكرسي فورا',
+      'أوقف الكرسي فوراً',
+      'فرملة الكرسي',
+      'wheelchair e-stop',
+      'wheelchair emergency stop',
+    ]),
+    _CommandRule(VoiceCommandIntent.phoneBattery, [
+      'كم شحن الجوال',
+      'كم شحن الهاتف',
+      'phone battery',
+      'how much battery',
+    ]),
+    _CommandRule(VoiceCommandIntent.wheelchairReadBattery, [
+      'بطارية الكرسي',
+      'ما نسبة البطارية',
+      'wheelchair battery',
+      'read battery',
+    ]),
+    _CommandRule(VoiceCommandIntent.confirmDeviceMotion, [
+      'أكد الحركة',
+      'أكّد الحركة',
+      'تأكيد الحركة',
+      'confirm motion',
+      'confirm movement',
+    ]),
+    _CommandRule(VoiceCommandIntent.donateSearchCancer, [
+      'أريد التبرع لمرضى السرطان',
+      'تبرع لمرضى السرطان',
+      'مرضى السرطان',
+      'donate cancer',
+      'cancer donation',
+    ]),
+    _CommandRule(VoiceCommandIntent.openWallet, [
+      'افتح محفظتي',
+      'المحفظة',
+      'محفظتي',
+      'open wallet',
+      'my wallet',
+    ]),
+    _CommandRule(VoiceCommandIntent.walletBalance, [
+      'كم رصيدي',
+      'رصيدي',
+      'ما رصيدي',
+      'wallet balance',
+      'my balance',
+    ]),
+    _CommandRule(VoiceCommandIntent.walletTopUp, [
+      'شحن المحفظة',
+      'شحن الرصيد',
+      'أريد شحن',
+      'top up',
+      'topup',
+      'charge wallet',
+    ]),
+    _CommandRule(VoiceCommandIntent.donateSearchHeart, [
+      'أريد التبرع لمرضى القلب',
+      'تبرع لمرضى القلب',
+      'مرضى القلب',
+      'donate heart',
+      'heart donation',
+    ]),
+    _CommandRule(VoiceCommandIntent.openDonations, [
+      'أظهر الحملات المتاحة للتبرع',
+      'التبرعات',
+      'أريد التبرع',
+      'افتح التبرعات',
+      'أظهر الحملات',
+      'الحملات المتاحة',
+      'donations',
+      'i want to donate',
+      'open donations',
+    ]),
   ];
 
   ParsedVoiceCommand parse(String rawText) {
     final stripped = _wake.strip(rawText);
     final normalized = stripped.trim();
-    final folded = normalized.toLowerCase();
+    final folded = foldSpoken(normalized);
 
-    bool matches(_CommandRule rule) => rule.keywords.any((keyword) {
-          final key = keyword.toLowerCase();
-          return normalized.contains(keyword) || folded.contains(key);
-        });
+    bool hit(String keyword) => spokenContains(folded, keyword);
+
+    bool matches(_CommandRule rule) => rule.keywords.any(hit);
 
     final emergencyRule = _rules.firstWhere(
       (r) => r.intent == VoiceCommandIntent.callEmergency,
@@ -366,8 +710,8 @@ class CommandParser {
     for (final rule in _rules) {
       if (rule.intent == VoiceCommandIntent.callEmergency) continue;
       for (final keyword in rule.keywords) {
-        final key = keyword.toLowerCase();
-        if (!normalized.contains(keyword) && !folded.contains(key)) continue;
+        final key = foldSpoken(keyword);
+        if (key.isEmpty || !folded.contains(key)) continue;
         if (keyword.length <= strength) continue;
         chosen = rule;
         strength = keyword.length;

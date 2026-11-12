@@ -6,6 +6,7 @@
 /// نوع صريح وليس Exception عام، حتى يستطيع AgentOrchestrator اتخاذ
 /// قرار مختلف حسب نوع الفشل (إعادة محاولة / بديل / طلب تدخل بشري).
 /// =============================================================
+library;
 
 /// الأساس المشترك لكل أخطاء الوكيل. لا تُستخدم هذه الفئة مباشرة؛
 /// استخدم أحد الأنواع الفرعية الصريحة أدناه.
@@ -33,23 +34,20 @@ class ToolNotFoundError extends AgentError {
 }
 
 class PermissionDeniedError extends AgentError {
-  const PermissionDeniedError(String message, {String? sourceToolName})
-      : super(message, sourceToolName: sourceToolName);
+  const PermissionDeniedError(super.message, {super.sourceToolName});
   @override
   String get code => 'PERMISSION_DENIED';
 }
 
 class InvalidArgumentsError extends AgentError {
-  const InvalidArgumentsError(String message, {String? sourceToolName})
-      : super(message, sourceToolName: sourceToolName);
+  const InvalidArgumentsError(super.message, {super.sourceToolName});
   @override
   String get code => 'INVALID_ARGUMENTS';
 }
 
 class ToolExecutionFailedError extends AgentError {
-  const ToolExecutionFailedError(String message,
-      {String? sourceToolName, this.originalException})
-      : super(message, sourceToolName: sourceToolName);
+  const ToolExecutionFailedError(super.message,
+      {super.sourceToolName, this.originalException});
 
   final Object? originalException;
 
@@ -58,35 +56,31 @@ class ToolExecutionFailedError extends AgentError {
 }
 
 class ModelError extends AgentError {
-  const ModelError(String message) : super(message);
+  const ModelError(super.message);
   @override
   String get code => 'MODEL_ERROR';
 }
 
 class AgentTimeoutError extends AgentError {
-  const AgentTimeoutError(String message, {String? sourceToolName})
-      : super(message, sourceToolName: sourceToolName);
+  const AgentTimeoutError(super.message, {super.sourceToolName});
   @override
   String get code => 'TIMEOUT';
 }
 
 class ValidationFailedError extends AgentError {
-  const ValidationFailedError(String message, {String? sourceToolName})
-      : super(message, sourceToolName: sourceToolName);
+  const ValidationFailedError(super.message, {super.sourceToolName});
   @override
   String get code => 'VALIDATION_FAILED';
 }
 
 class SafetyBlockedError extends AgentError {
-  const SafetyBlockedError(String message, {String? sourceToolName})
-      : super(message, sourceToolName: sourceToolName);
+  const SafetyBlockedError(super.message, {super.sourceToolName});
   @override
   String get code => 'SAFETY_BLOCKED';
 }
 
 class UserCancelledError extends AgentError {
-  const UserCancelledError([String message = 'ألغى المستخدم المهمة.'])
-      : super(message);
+  const UserCancelledError([super.message = 'ألغى المستخدم المهمة.']);
   @override
   String get code => 'USER_CANCELLED';
 }

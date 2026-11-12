@@ -22,17 +22,35 @@ class PayPalPaymentGatewayClient implements PaymentGatewayClient {
   @override
   String get gatewayName => 'PayPal';
 
+  bool get isConfigured {
+    final id = clientId.trim();
+    return id.isNotEmpty && !id.toLowerCase().contains('placeholder');
+  }
+
+  bool get isAvailable => isConfigured;
+
   @override
   Future<PaymentResult> chargeAmount({
     required int amountInSmallestUnit,
     required String currencyCode,
     required String description,
+    String? idempotencyKey,
   }) async {
-    // TODO: استبدال هذا بالاستدعاء الفعلي لـ PayPal Orders API (إنشاء
-    // Order ثم Capture) عند اعتماد حساب PayPal تجاري حقيقي للمشروع.
+    if (!isConfigured) {
+      return const PaymentResult(
+        status: PaymentStatus.failed,
+        environment: FinancialEnvironment.production,
+        isSandbox: false,
+        errorMessageAr:
+            'PayPal غير موصول بمعرّف عميل صالح. لا حركة أموال حقيقية.',
+      );
+    }
     return const PaymentResult(
       status: PaymentStatus.failed,
-      errorMessageAr: 'بوابة PayPal غير مُفعَّلة بعد. يُرجى المحاولة لاحقاً.',
+      environment: FinancialEnvironment.production,
+      isSandbox: false,
+      errorMessageAr:
+          'واجهة PayPal Orders غير مربوطة في هذا البناء. لا حركة أموال حقيقية.',
     );
   }
 
@@ -43,6 +61,8 @@ class PayPalPaymentGatewayClient implements PaymentGatewayClient {
   }) async {
     return const PaymentResult(
       status: PaymentStatus.failed,
+      environment: FinancialEnvironment.production,
+      isSandbox: false,
       errorMessageAr: 'بوابة PayPal غير مُفعَّلة بعد.',
     );
   }

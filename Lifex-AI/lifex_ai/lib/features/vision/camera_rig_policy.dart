@@ -129,6 +129,15 @@ class CameraRigPolicy {
   bool get flashPercentIsTorchCurrent => false;
   bool get ppmIsCameraRaw => false;
 
+  /// قص منطقة من الإطار ليس تكبيراً بصرياً ×200.
+  bool get cropIsOpticalZoom200 => false;
+
+  /// رقم عشوائي على الإطار ليس كشف طوارئ.
+  bool get randomFrameIsEmergency => false;
+
+  /// أسماء إضافية على البانر ليست إسناد المشروع.
+  bool get extraCreditNamesAllowed => false;
+
   int clampTimerSeconds(int requested) {
     if (requested < 0) return 0;
     if (requested > AdvertisedCameraSliders.timerSecondsMax) {

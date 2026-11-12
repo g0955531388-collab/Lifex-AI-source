@@ -8,6 +8,8 @@ library lifex_ai.features.voice.hardware_cue_bridge;
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../accessibility/access_mode_preference.dart';
+import '../accessibility/blind_volume_shortcut.dart';
 import 'hardware_cue_calibrator.dart';
 
 class HardwareCueBridge {
@@ -19,6 +21,7 @@ class HardwareCueBridge {
 
   final HardwareCueCalibrator calibrator = HardwareCueCalibrator();
   void Function()? onCueFired;
+  bool blindArmed = false;
 
   Future<void> attach() async {
     final prefs = await SharedPreferences.getInstance();
@@ -36,7 +39,43 @@ class HardwareCueBridge {
       }
     }
     _channel.setMethodCallHandler(_onNative);
+    await refreshBlindArm();
+  }
+
+  /// أربع ضغطات للمكفوف لا تستبدل معايرة الضغطتين المحفوظة.
+  Future<void> refreshBlindArm() async {
+    final prefs = await SharedPreferences.getInstance();
+    final access = prefs.getBool(AccessModePreference.enabledKey) ?? false;
+    final chosen = prefs.getBool(BlindVolumeShortcut.prefsKey) ?? false;
+    blindArmed = BlindVolumeShortcut.armed(
+      accessModeEnabled: access,
+      shortcutChosen: chosen,
+    );
+    if (blindArmed) {
+      await _pushCounts(
+        kind: HardwareCueKind.volumeUpDouble.name,
+        tapCount: BlindVolumeShortcut.taps,
+        windowMs: BlindVolumeShortcut.windowMs,
+      );
+      return;
+    }
     await _pushToNative();
+  }
+
+  Future<void> _pushCounts({
+    required String kind,
+    required int tapCount,
+    required int windowMs,
+  }) async {
+    try {
+      await _channel.invokeMethod<void>('configure', {
+        'kind': kind,
+        'tapCount': tapCount,
+        'windowMs': windowMs,
+      });
+    } on MissingPluginException {
+      // الاختبارات والمنصات بلا جسر تبقى المعايرة محلية.
+    }
   }
 
   Future<void> save() async {
@@ -45,6 +84,10 @@ class HardwareCueBridge {
       _prefsKey,
       '${calibrator.kind.name}|${calibrator.tapCount}|${calibrator.windowMs}|${calibrator.startSignal.name}',
     );
+    if (blindArmed) {
+      await refreshBlindArm();
+      return;
+    }
     await _pushToNative();
   }
 

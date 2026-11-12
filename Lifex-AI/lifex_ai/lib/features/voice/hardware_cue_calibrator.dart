@@ -29,14 +29,20 @@ class HardwareCueCalibrator {
         return 'زر الطاقة ملك النظام (غالباً الكاميرا). التطبيق العادي لا يخطفه. '
             'يمكن طلب دور المساعد لاحقاً. بلا Device Admin. عاير رفع/خفض الصوت أو السماعة.';
       case HardwareCueKind.volumeUpDouble:
-        return 'رفع الصوت مرتين متتاليتين يستدعي الميكروفون ما دام ليفكس ظاهراً أو بإشعار المراقبة.';
+        return _volumeCueHonesty('رفع');
       case HardwareCueKind.volumeDownDouble:
-        return 'خفض الصوت مرتين متتاليتين يستدعي الميكروفون.';
+        return _volumeCueHonesty('خفض');
       case HardwareCueKind.headsetHook:
         return 'زر السماعة السلكية أو بلوتوث إن أوصله النظام لهذا التطبيق.';
       case HardwareCueKind.onScreenHold:
         return 'الزر الظاهر في شريط الصوت. يعمل حتى في وضع بقاء الطاقة كدفعة واحدة.';
     }
+  }
+
+  String _volumeCueHonesty(String direction) {
+    return '$direction الصوت $tapCount مرات متتالية يستدعي الميكروفون فقط بينما شاشة ليفكس في الأمام. '
+        'إشعار المراقبة لا يلتقط زر الصوت في الخلفية ولا من شاشة القفل. '
+        'البديل المتاح هو زر التحدث على الشاشة.';
   }
 
   String kindLabelAr(HardwareCueKind value) {
@@ -57,7 +63,7 @@ class HardwareCueCalibrator {
   Map<String, dynamic> toMap() => {
         'kind': kind.name,
         'tapCount': tapCount.clamp(2, 4),
-        'windowMs': windowMs.clamp(250, 900),
+        'windowMs': windowMs.clamp(250, 1800),
         'startSignal': startSignal.name,
       };
 
@@ -68,7 +74,7 @@ class HardwareCueCalibrator {
     final taps = raw['tapCount'];
     if (taps is int) tapCount = taps.clamp(2, 4);
     final window = raw['windowMs'];
-    if (window is int) windowMs = window.clamp(250, 900);
+    if (window is int) windowMs = window.clamp(250, 1800);
     for (final value in StartSignalKind.values) {
       if (value.name == raw['startSignal']) startSignal = value;
     }

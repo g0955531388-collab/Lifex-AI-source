@@ -38,6 +38,17 @@ void main() {
     expect(window.register(t0, matchingKind: false), isFalse);
   });
 
+  test('أربع ضغطات على رفع الصوت لا تُنسب إلى إشعار الخلفية', () {
+    final calibrator = HardwareCueCalibrator()
+      ..kind = HardwareCueKind.volumeUpDouble
+      ..tapCount = 4;
+    final text = calibrator.honestyAr();
+    expect(text, contains('4'));
+    expect(text, contains('في الأمام'));
+    expect(text, contains('لا يلتقط زر الصوت'));
+    expect(text, isNot(contains('أو بإشعار المراقبة')));
+  });
+
   test('زر الطاقة يبقى ملك النظام بلا Device Admin', () {
     final calibrator = HardwareCueCalibrator()
       ..kind = HardwareCueKind.powerDouble;

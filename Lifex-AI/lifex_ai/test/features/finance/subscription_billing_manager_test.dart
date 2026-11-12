@@ -16,6 +16,7 @@ class _FakeSucceedingGateway implements PaymentGatewayClient {
     required int amountInSmallestUnit,
     required String currencyCode,
     required String description,
+    String? idempotencyKey,
   }) async {
     return const PaymentResult(
       status: PaymentStatus.succeeded,
@@ -63,7 +64,7 @@ void main() {
       profile: _buildProfile(
         isPersonOfDetermination: true,
         accountCountry: 'SY',
-        determinationCardKind: 'nationalId',
+        determinationCardKind: 'disabilityCard',
         determinationCardCountry: 'SY',
         determinationCardRef: 'N-1',
       ),

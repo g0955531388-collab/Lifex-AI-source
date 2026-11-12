@@ -106,11 +106,18 @@ class MedicationAlarmEngine {
         ..sort((a, b) => a.slotOn(now).compareTo(b.slotOn(now)));
 
   MedicationCue cue(MedicationAlarm alarm) {
-    final written =
-        '${alarm.personName} لديك دواء ${alarm.medicine} في الساعة ${alarm.clock}. '
-        'اتبع وصفة الطبيب. Lifex لا يصف الجرعة.';
+    final name = alarm.personName.trim();
+    if (name.isEmpty) {
+      return MedicationCue(
+        alarm: alarm,
+        writtenAr:
+            'اسم المريض فارغ. لن يُنطق تذكير الدواء حتى يُكتب الاسم، منعاً للخلط.',
+        spokenAr: 'اسم المريض فارغ. لن أذكّر بالدواء حتى يُكتب الاسم.',
+      );
+    }
     final spoken =
-        '${alarm.personName} لديك دواء ${alarm.medicine} في الساعة ${alarm.clock}.';
+        'المريض $name. لديك دواء ${alarm.medicine} في الساعة ${alarm.clock}.';
+    final written = '$spoken اتبع وصفة الطبيب. Lifex لا يصف الجرعة.';
     return MedicationCue(alarm: alarm, writtenAr: written, spokenAr: spoken);
   }
 

@@ -1,0 +1,6074 @@
+{
+  "system_name": "Lifex-AI Global Pharmacopoeia",
+  "version": "1.0.0",
+  "description": "مرجع تصنيفي لأسماء وأشكال مذكورة. ليس وصفة ولا جرعة ولا إذناً بالحمل.",
+  "automatic_stop_allowed": false,
+  "automatic_alternative_allowed": false,
+  "dosing_advice_allowed": false,
+  "pregnancy_category_is_not_clearance": true,
+  "disclaimer_ar": "فئة الحمل والموانع هنا ملاحظة مرجع. Lifex لا يوقف الدواء ولا يقترح بديلاً ولا يحوّل الجرعة المكتوبة إلى أمر استخدام.",
+  "drug_categories": [
+    {
+      "category_id": "CAT_001",
+      "category_name_ar": "مسكنات الألم ومضادات الالتهاب",
+      "category_name_en": "Analgesics and Anti-inflammatory",
+      "drugs": [
+        {
+          "generic_name": "Paracetamol",
+          "generic_name_ar": "باراسيتامول",
+          "trade_names": [
+            "Panadol",
+            "Tylenol",
+            "Tempra",
+            "Acetaminophen"
+          ],
+          "forms": [
+            "Tablet",
+            "Syrup",
+            "IV",
+            "Suppository"
+          ],
+          "standard_dosages": [
+            "500mg",
+            "1000mg"
+          ],
+          "pregnancy_safety_category": "B",
+          "contraindications": [
+            "Severe hepatic impairment"
+          ]
+        },
+        {
+          "generic_name": "Ibuprofen",
+          "generic_name_ar": "إيبوبروفين",
+          "trade_names": [
+            "Advil",
+            "Nurofen",
+            "Brufen"
+          ],
+          "forms": [
+            "Tablet",
+            "Capsule",
+            "Syrup"
+          ],
+          "standard_dosages": [
+            "200mg",
+            "400mg",
+            "600mg"
+          ],
+          "pregnancy_safety_category": "C (D in 3rd trimester)",
+          "contraindications": [
+            "Peptic ulcer",
+            "Severe renal failure"
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_002",
+      "category_name_ar": "أدوية الجهاز القلبي الوعائي وضغط الدم",
+      "category_name_en": "Cardiovascular and Blood Pressure Medications",
+      "drugs": [
+        {
+          "generic_name": "Amlodipine",
+          "generic_name_ar": "أملوديبين",
+          "trade_names": [
+            "Norvasc"
+          ],
+          "forms": [
+            "Tablet"
+          ],
+          "standard_dosages": [
+            "5mg",
+            "10mg"
+          ],
+          "pregnancy_safety_category": "C",
+          "contraindications": [
+            "Severe hypotension"
+          ]
+        },
+        {
+          "generic_name": "Lisinopril",
+          "generic_name_ar": "ليزينوبريل",
+          "trade_names": [
+            "Zestril",
+            "Prinivil"
+          ],
+          "forms": [
+            "Tablet"
+          ],
+          "standard_dosages": [
+            "5mg",
+            "10mg",
+            "20mg"
+          ],
+          "pregnancy_safety_category": "D",
+          "contraindications": [
+            "History of angioedema",
+            "Pregnancy"
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_003",
+      "category_name_ar": "المضادات الحيوية ومقاومة الميكروبات",
+      "category_name_en": "Antibiotics and Antimicrobials",
+      "drugs": [
+        {
+          "generic_name": "Amoxicillin / Clavulanic Acid",
+          "generic_name_ar": "أموكسيسيلين وكلافولانات",
+          "trade_names": [
+            "Augmentin",
+            "Amclav"
+          ],
+          "forms": [
+            "Tablet",
+            "Suspension",
+            "IV"
+          ],
+          "standard_dosages": [
+            "625mg",
+            "1g"
+          ],
+          "pregnancy_safety_category": "B",
+          "contraindications": [
+            "Penicillin hypersensitivity",
+            "History of cholestatic jaundice"
+          ]
+        },
+        {
+          "generic_name": "Azithromycin",
+          "generic_name_ar": "أزيثرومايسين",
+          "trade_names": [
+            "Zithromax"
+          ],
+          "forms": [
+            "Tablet",
+            "Capsule",
+            "Suspension"
+          ],
+          "standard_dosages": [
+            "250mg",
+            "500mg"
+          ],
+          "pregnancy_safety_category": "B",
+          "contraindications": [
+            "Hypersensitivity to macrolides",
+            "Liver dysfunction"
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_004",
+      "category_name_ar": "أدوية الجهاز الهضمي ومضادات الحموضة",
+      "category_name_en": "Gastrointestinal and Antacids",
+      "drugs": [
+        {
+          "generic_name": "Omeprazole",
+          "generic_name_ar": "أوميبرازول",
+          "trade_names": [
+            "Losec",
+            "Prilosec"
+          ],
+          "forms": [
+            "Capsule",
+            "IV"
+          ],
+          "standard_dosages": [
+            "20mg",
+            "40mg"
+          ],
+          "pregnancy_safety_category": "C",
+          "contraindications": [
+            "Hypersensitivity to proton pump inhibitors"
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_005",
+      "category_name_ar": "أدوية الجهاز التنفسي وموسعات الشعب الهوائية",
+      "category_name_en": "Respiratory and Bronchodilators",
+      "drugs": [
+        {
+          "generic_name": "Salbutamol",
+          "generic_name_ar": "سالبوتامول",
+          "trade_names": [
+            "Ventolin",
+            "Albuterol"
+          ],
+          "forms": [
+            "Inhaler",
+            "Syrup",
+            "Nebulizer solution"
+          ],
+          "standard_dosages": [
+            "100mcg/actuation"
+          ],
+          "pregnancy_safety_category": "C",
+          "contraindications": [
+            "Tachyarrhythmias"
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_006",
+      "category_name_ar": "أسماء مسكنات إضافية",
+      "category_name_en": "Additional analgesic names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Aspirin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Naproxen",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Diclofenac",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ketorolac",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Celecoxib",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Etoricoxib",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Indomethacin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Meloxicam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Piroxicam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nabumetone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Etodolac",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Oxaprozin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sulindac",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tolmetin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Meclofenamate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Flurbiprofen",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ketoprofen",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fenoprofen",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nefopam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Metamizole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Phenazone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Salsalate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lidocaine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Capsaicin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bupivacaine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ropivacaine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tramadol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Codeine",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Codeine phosphate",
+            "Codeine/Phosphate"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Morphine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Oxycodone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Hydrocodone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fentanyl",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tapentadol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Buprenorphine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pentazocine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nalbuphine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Hydromorphone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Levorphanol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sufentanil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Remifentanil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Alfentanil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Meperidine",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Pethidine"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Methadone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Propoxyphene",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Dextropropoxyphene"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Paracetamol/Codeine",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Acetaminophen/Codeine",
+            "Codeine/Paracetamol"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tramadol/Paracetamol",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Acetaminophen/Tramadol",
+            "Paracetamol/Tramadol"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Oxycodone/Acetaminophen",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Oxycodone/Paracetamol"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Hydrocodone/Paracetamol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ibuprofen/Codeine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Clinician-only opioid name"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Diclofenac/Misoprostol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Aspirin/Paracetamol/Caffeine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ibuprofen/Famotidine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ibuprofen/Pseudoephedrine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lidocaine/Prilocaine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_007",
+      "category_name_ar": "أسماء مضادات حيوية إضافية",
+      "category_name_en": "Additional antibiotic names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Amoxicillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ampicillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Penicillin G",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Benzylpenicillin"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Penicillin V",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Phenoxymethylpenicillin"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Oxacillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cloxacillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dicloxacillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Flucloxacillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nafcillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Piperacillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ticarcillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Carbenicillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Mezlocillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Azlocillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bacampicillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Methicillin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Piperacillin/Tazobactam",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Zosyn"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ampicillin/Sulbactam",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Sultamicillin"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ticarcillin/Clavulanic Acid",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Timentin"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [
+            "Penicillin hypersensitivity"
+          ],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefalexin",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Cephalexin"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefadroxil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefaclor",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefuroxime",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Cefuroxime Axetil"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefprozil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefixime",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefpodoxime",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Cefpodoxime Proxetil"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefdinir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefditoren",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Cefditoren Pivoxil"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefepime",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefpirome",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefotaxime",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ceftriaxone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ceftazidime",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ceftibuten",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ceftizoxime",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefoperazone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefotetan",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefoxitin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefazolin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefradine",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Cephradine"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefalotin",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Cephalothin"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefapirin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefamandole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefmetazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefotiam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefmenoxime",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefetamet",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefonicid",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ceftaroline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ceftobiprole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefiderocol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Clarithromycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Erythromycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Roxithromycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Spiramycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Telithromycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fidaxomicin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Clindamycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lincomycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Vancomycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Teicoplanin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Daptomycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Linezolid",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tedizolid",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Quinupristin/Dalfopristin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Doxycycline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tetracycline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Minocycline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tigecycline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Eravacycline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Omadacycline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sarecycline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Gentamicin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tobramycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Amikacin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Streptomycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Kanamycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Neomycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Paromomycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Spectinomycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Netilmicin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Plazomicin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ciprofloxacin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Levofloxacin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Moxifloxacin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ofloxacin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Norfloxacin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Delafloxacin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Imipenem",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Meropenem",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ertapenem",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Doripenem",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Imipenem/Cilastatin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Meropenem/Vaborbactam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ceftazidime/Avibactam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ceftolozane/Tazobactam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefoperazone/Sulbactam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cefepime/Enmetazobactam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Aztreonam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Polymyxin B",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Polymyxin E",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Colistin"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fosfomycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nitrofurantoin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Metronidazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tinidazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Trimethoprim",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sulfamethoxazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sulfamethoxazole/Trimethoprim",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Cotrimoxazole"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sulfadiazine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Rifampicin",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Rifampin"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Rifabutin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Rifaximin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Chloramphenicol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Mupirocin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lefamulin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Isoniazid",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pyrazinamide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ethambutol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bedaquiline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Delamanid",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pretomanid",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_008",
+      "category_name_ar": "أسماء أدوية السكري",
+      "category_name_en": "Diabetes medicine names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Metformin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Glipizide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Gliclazide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Glyburide",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Glibenclamide"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Glimepiride",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pioglitazone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Rosiglitazone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sitagliptin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Saxagliptin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Linagliptin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Vildagliptin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Alogliptin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Acarbose",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Miglitol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Repaglinide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nateglinide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Insulin Glargine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Insulin Detemir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Insulin NPH",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Insulin Lispro",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Insulin Aspart",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Insulin Regular",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Insulin 70/30",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Insulin 70/30 Mix"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Exenatide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Liraglutide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dulaglutide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Semaglutide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pramlintide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Canagliflozin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dapagliflozin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Empagliflozin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_009",
+      "category_name_ar": "أسماء مضادات الفطريات",
+      "category_name_en": "Antifungal names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Fluconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Itraconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Voriconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Posaconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Isavuconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ketoconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Clotrimazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Miconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Econazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Oxiconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sulconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tioconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Luliconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Efinaconazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Terbinafine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Naftifine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Butenafine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ciclopirox",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tavaborole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Amphotericin B",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nystatin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Caspofungin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Micafungin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Anidulafungin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Griseofulvin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Flucytosine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_010",
+      "category_name_ar": "أسماء أدوية الضغط",
+      "category_name_en": "Blood pressure medicine names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Enalapril",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Captopril",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ramipril",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Perindopril",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Losartan",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Valsartan",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Candesartan",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Telmisartan",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Irbesartan",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Felodipine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nifedipine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Diltiazem",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Verapamil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Hydrochlorothiazide",
+          "generic_name_ar": "",
+          "trade_names": [
+            "HCTZ"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Chlorthalidone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Furosemide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Spironolactone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Eplerenone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Metoprolol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Atenolol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bisoprolol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Propranolol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Carvedilol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nebivolol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Clonidine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Methyldopa",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Hydralazine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Minoxidil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nitroprusside",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Diazoxide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_011",
+      "category_name_ar": "أسماء مضادات الفيروسات",
+      "category_name_en": "Antiviral names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Acyclovir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Valacyclovir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Famciclovir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Penciclovir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ganciclovir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Valganciclovir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Foscarnet",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cidofovir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fomivirsen",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Idoxuridine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Trifluridine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Docosanol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Brivudine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Oseltamivir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Zanamivir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Peramivir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Baloxavir marboxil",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Baloxavir"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Amantadine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Rimantadine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Favipiravir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ribavirin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Remdesivir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Molnupiravir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nirmatrelvir/Ritonavir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sofosbuvir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ledipasvir/Sofosbuvir",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Sofosbuvir/Ledipasvir"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Velpatasvir/Sofosbuvir",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Sofosbuvir/Velpatasvir"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sofosbuvir/Velpatasvir/Voxilaprevir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Daclatasvir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Elbasvir/Grazoprevir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Glecaprevir/Pibrentasvir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Simeprevir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Paritaprevir/Ritonavir/Ombitasvir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dasabuvir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tenofovir",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Tenofovir disoproxil fumarate"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Emtricitabine/Tenofovir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Emtricitabine/Tenofovir alafenamide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lamivudine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Zidovudine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Abacavir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Efavirenz",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dolutegravir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Rilpivirine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cabotegravir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Atazanavir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Darunavir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lopinavir/Ritonavir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Saquinavir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Indinavir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dolutegravir/Abacavir/Lamivudine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bictegravir/Emtricitabine/Tenofovir alafenamide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Maribavir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Letermovir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Entecavir",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Adefovir",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Adefovir dipivoxil"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Telbivudine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_012",
+      "category_name_ar": "أسماء أدوية القلب",
+      "category_name_en": "Heart medicine names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Amiodarone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sotalol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nitroglycerin",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Glyceryl trinitrate"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Isosorbide Mononitrate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Isosorbide Dinitrate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Digoxin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Clopidogrel",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ticagrelor",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Prasugrel",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_013",
+      "category_name_ar": "أسماء أدوية الهضم",
+      "category_name_en": "Digestive medicine names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Pantoprazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Esomeprazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lansoprazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ranitidine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Famotidine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sucralfate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bismuth Subsalicylate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Loperamide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dicyclomine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ondansetron",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Metoclopramide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Domperidone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Simethicone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Aluminum Hydroxide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Magnesium Hydroxide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Calcium Carbonate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_014",
+      "category_name_ar": "أسماء الهرمونات",
+      "category_name_en": "Hormone names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Prednisone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Prednisolone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Hydrocortisone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Methylprednisolone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dexamethasone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Betamethasone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fludrocortisone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Levothyroxine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Liothyronine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Methimazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Propylthiouracil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Desmopressin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Estradiol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Estriol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Progesterone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Medroxyprogesterone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Testosterone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Levonorgestrel",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Clomiphene",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Goserelin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Leuprolide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_015",
+      "category_name_ar": "أسماء الحساسية والتنفس",
+      "category_name_en": "Allergy and breathing names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Levocetirizine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Loratadine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fexofenadine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Diphenhydramine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Montelukast",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Theophylline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ipratropium",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tiotropium",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fluticasone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Budesonide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ciclesonide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Mometasone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Omalizumab",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_016",
+      "category_name_ar": "أسماء العين والأذن والجلد",
+      "category_name_en": "Eye, ear, and skin names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Latanoprost",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Timolol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Brimonidine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pilocarpine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Artificial Tears",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bacitracin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Salicylic Acid",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tretinoin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Isotretinoin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_017",
+      "category_name_ar": "أسماء أدوية إضافية",
+      "category_name_en": "Additional medicine names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Atorvastatin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Simvastatin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Rosuvastatin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pravastatin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ezetimibe",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Niacin",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Niacin Extended Release"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Finasteride",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dutasteride",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Alendronate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Risedronate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Calcitonin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Denosumab",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Hydroxychloroquine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Methotrexate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Azathioprine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Mycophenolate Mofetil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cyclosporine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tacrolimus",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sirolimus",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Rituximab",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Colchicine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Allopurinol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Febuxostat",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Probenecid",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Amiloride",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tolterodine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Oxybutynin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Solifenacin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tamsulosin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Alfuzosin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Donepezil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Rivastigmine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Galantamine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Memantine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Zolpidem",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Zaleplon",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Eszopiclone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Modafinil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Armodafinil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Baclofen",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tizanidine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Gabapentin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pregabalin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Levodopa/Carbidopa",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Carbidopa/Levodopa"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ropinirole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pramipexole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_018",
+      "category_name_ar": "أسماء المطهرات",
+      "category_name_en": "Antiseptic names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Ethanol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Isopropanol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Chlorhexidine",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Chlorhexidine Gluconate"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Povidone-Iodine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Hydrogen Peroxide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sodium Hypochlorite",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Benzalkonium Chloride",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Triclosan",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Alcohol-based Hand Sanitizer",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Phenol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Glutaraldehyde",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sodium Dichloroisocyanurate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Chloroxylenol",
+          "generic_name_ar": "",
+          "trade_names": [
+            "PCMX"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Octenidine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_019",
+      "category_name_ar": "أسماء أدوية الأعصاب والنفس",
+      "category_name_en": "Nervous system medicine names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Diazepam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lorazepam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Alprazolam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Clonazepam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Temazepam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Flurazepam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Buspirone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Carbamazepine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Valproate",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Valproic acid",
+            "Sodium valproate"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lamotrigine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Levetiracetam",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Phenytoin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Topiramate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lithium Carbonate",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Lithium"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sertraline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fluoxetine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Citalopram",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Escitalopram",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Paroxetine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Venlafaxine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Duloxetine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Mirtazapine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Amitriptyline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nortriptyline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Imipramine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Clomipramine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Risperidone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Olanzapine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Quetiapine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Aripiprazole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ziprasidone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Haloperidol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Chlorpromazine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fluphenazine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Clozapine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Selegiline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Entacapone",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Atomoxetine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Methylphenidate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dexmethylphenidate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lisdexamfetamine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_020",
+      "category_name_ar": "أسماء أدوية الأورام",
+      "category_name_en": "Oncology medicine names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Cisplatin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Carboplatin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Oxaliplatin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cyclophosphamide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ifosfamide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "5-Fluorouracil",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Fluorouracil"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Capecitabine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Doxorubicin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Epirubicin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Daunorubicin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bleomycin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Vincristine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Vinblastine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Vinorelbine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Paclitaxel",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Docetaxel",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Etoposide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Topotecan",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Irinotecan",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Gemcitabine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cytarabine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Busulfan",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Hydroxyurea",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "L-asparaginase",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Asparaginase"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bortezomib",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lenalidomide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Thalidomide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Imatinib",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dasatinib",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nilotinib",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sorafenib",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Sunitinib",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Temozolomide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Everolimus",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Trastuzumab",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bevacizumab",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pembrolizumab",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nivolumab",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Atezolizumab",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cetuximab",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Panitumumab",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tamoxifen",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Anastrozole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Letrozole",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Exemestane",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bicalutamide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Flutamide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Nilutamide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Abiraterone",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Abiraterone acetate"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Enzalutamide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_021",
+      "category_name_ar": "أسماء داعمة",
+      "category_name_en": "Supportive medicine names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Granisetron",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Palonosetron",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Filgrastim",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pegfilgrastim",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Erythropoietin",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Epoetin"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Iron sucrose",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Leucovorin",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Calcium folinate",
+            "Folinic acid"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Prochlorperazine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Promethazine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Normal Saline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_022",
+      "category_name_ar": "أسماء الفيتامينات والمكملات",
+      "category_name_en": "Vitamin and supplement names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Folic Acid",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Iron Sulfate",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Ferrous sulfate"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Vitamin D3",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Cholecalciferol",
+            "Vitamin D"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Omega-3",
+          "generic_name_ar": "",
+          "trade_names": [
+            "DHA/EPA"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Vitamin B12",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Cyanocobalamin"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Vitamin B6",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Pyridoxine"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Vitamin C",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Ascorbic acid"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Magnesium Citrate",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Zinc Sulfate",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Zinc"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Iodine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Choline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Evening Primrose Oil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fenugreek",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Biotin",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Vitamin B7"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Saw Palmetto",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_023",
+      "category_name_ar": "أسماء مستحضرات إضافية",
+      "category_name_en": "Additional preparation names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Cyproterone",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Cyproterone Acetate"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Glycerin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bisacodyl",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Mesalazine",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Mesalamine"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Eflornithine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lanolin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Calamine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Hyaluronic Acid",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Menthol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_024",
+      "category_name_ar": "أسماء التنفس والحساسية",
+      "category_name_en": "Breathing and allergy names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Formoterol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Salmeterol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Beclometasone",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Beclomethasone"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Zafirlukast",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Aminophylline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cromolyn Sodium",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Sodium cromoglicate",
+            "Cromoglycate"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Roflumilast",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Cetirizine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Chlorpheniramine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bromhexine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ambroxol",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Acetylcysteine",
+          "generic_name_ar": "",
+          "trade_names": [
+            "N-acetylcysteine"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Guaifenesin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Dextromethorphan",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Phenylephrine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Pseudoephedrine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Oxymetazoline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Xylometazoline",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Palivizumab",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ipratropium/Salbutamol",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Salbutamol/Ipratropium"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Budesonide/Formoterol",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Formoterol/Budesonide"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Fluticasone/Salmeterol",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Salmeterol/Fluticasone"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Beclometasone/Formoterol",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Beclomethasone/Formoterol",
+            "Formoterol/Beclometasone"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Mometasone/Formoterol",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Formoterol/Mometasone"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    },
+    {
+      "category_id": "CAT_025",
+      "category_name_ar": "أسماء مواد إضافية",
+      "category_name_en": "Additional substance names",
+      "strength_is_not_an_order": true,
+      "drugs": [
+        {
+          "generic_name": "Sildenafil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tadalafil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Vardenafil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Avanafil",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "L-Arginine",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Arginine"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Yohimbine",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Maca",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Maca Root"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Ginseng",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "DHEA",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Prasterone"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Flibanserin",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Bremelanotide",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Lactic Acid",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Horny Goat Weed",
+          "generic_name_ar": "",
+          "trade_names": [
+            "Epimedium"
+          ],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        },
+        {
+          "generic_name": "Tribulus Terrestris",
+          "generic_name_ar": "",
+          "trade_names": [],
+          "forms": [],
+          "pregnancy_safety_category": "",
+          "contraindications": [],
+          "name_only": true
+        }
+      ]
+    }
+  ]
+}

@@ -20,6 +20,7 @@ void main() {
       doctor: doctor,
       doctorName: 'د. هدى',
       cvPlainText: 'سي في كامل',
+      shareFullRecord: true,
     );
     expect(result.deliveredToDoctor, isTrue);
     final inbox = ProfileBoxStore(doctor).list(BoxKeys.accreditedPatientInbox);
@@ -29,6 +30,31 @@ void main() {
       ProfileBoxStore(doctor).list(BoxKeys.doctorNotices),
       isNotEmpty,
     );
+  });
+
+  test('بلا اختيار صريح يصل الحد الأدنى فقط: بلا رقم وطني ولا حالات ولا سيرة', () {
+    final patient = _p('p', 'سامي الحقيقي');
+    ProfileBoxStore(patient).setString(BoxKeys.ownerNationalId, '0123456789');
+    final doctor = _p('d', 'د. هدى');
+    final minimum = AccreditedDoctorBond.minimumText(
+      patient: patient,
+      doctorName: 'د. هدى',
+    );
+    final result = const AccreditedDoctorBond().accredit(
+      patient: patient,
+      doctor: doctor,
+      doctorName: 'د. هدى',
+      cvPlainText: minimum,
+    );
+    expect(result.messageAr, contains('الحد الأدنى'));
+    final row = ProfileBoxStore(doctor).list(BoxKeys.accreditedPatientInbox).single;
+    expect(row['shareFullRecord'], isFalse);
+    expect(row['nationalId'], isEmpty);
+    expect(row['detail'], isEmpty);
+    expect(row['cv'], minimum);
+    expect(row['cv'], isNot(contains('0123456789')));
+    final mine = ProfileBoxStore(patient).list(BoxKeys.doctorMyDoctors).single;
+    expect(mine['cvSent'], isFalse);
   });
 
   test('12 ساعة وكل نصف ساعة تعطي 24 حصة عامة', () {

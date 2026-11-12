@@ -15,6 +15,7 @@ import 'booking_workspace_screen.dart';
 import 'camera_notes_screen.dart';
 import 'care_order_screen.dart';
 import 'dental_chart_screen.dart';
+import 'disability_fixation_screen.dart';
 import 'doctor_directory_screen.dart';
 import 'doctor_diary_screen.dart';
 import 'emergency_contacts_screen.dart';
@@ -106,6 +107,8 @@ class UnitBranchNavigator {
         return const ManualVitalsScreen();
       case UnitShortcut.medicationAlarms:
         return const MedicationAlarmScreen();
+      case UnitShortcut.disabilityFixation:
+        return const DisabilityFixationScreen();
       case UnitShortcut.bookings:
         return const BookingWorkspaceScreen();
       case UnitShortcut.bloodNetwork:

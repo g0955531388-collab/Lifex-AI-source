@@ -1,0 +1,18 @@
+01:33 +356: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/core/lio/ci_evidence_live_integration_test.dart: Failed workflow wireName → VERIFICATION_FAILED
+01:33 +357: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/core/lio/ci_evidence_live_integration_test.dart: Failed workflow wireName → VERIFICATION_FAILED
+01:34 +362: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/core/lio/ci_evidence_verifier_test.dart: Test2 Workflow فشل → FAILED
+01:34 +363: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/core/lio/ci_evidence_verifier_test.dart: Test2 Workflow فشل → FAILED
+01:34 +363: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/core/lio/ci_evidence_verifier_test.dart: Test3 Commit غير متطابق → FAILED
+01:34 +364: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/core/lio/ci_evidence_verifier_test.dart: Test3 Commit غير متطابق → FAILED
+01:34 +368: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/core/lio/ci_evidence_verifier_test.dart: Test8 Digest غير متطابق → FAILED
+01:34 +369: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/core/lio/ci_evidence_verifier_test.dart: Test8 Digest غير متطابق → FAILED
+01:50 +448: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/core/lio/mcp_live_gateway_pipeline_test.dart: Test10 نجاح ثم Verification فاشل → VERIFICATION_FAILED
+01:50 +449: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/core/lio/mcp_live_gateway_pipeline_test.dart: Test10 نجاح ثم Verification فاشل → VERIFICATION_FAILED
+03:13 +679 -1: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/features/blood_network/blood_appeal_desk_test.dart: الاستجابة ليست أهلية، والملخص لا يكشف الأسماء [E]
+Expected: null
+Expected: exactly one matching candidate
+03:18 +680 -2: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/features/blood_network/blood_appeal_desk_test.dart: الشريط يُغلق ولا يعود ويُقرأ باسم الوحدة والزمرة [E]
+Test failed. See exception logs above.
+03:37 +708 -3: C:/Users/sdsds/Downloads/Lifex-AI-source-main/Lifex-AI/lifex_ai/test/features/disability_declaration_test.dart: تصريح الإعاقة يُحفظ ولا يرتّب التبرع [E]
+Expected: 'disabilitySelfRecords'
+05:27 +996 -3: Some tests failed.

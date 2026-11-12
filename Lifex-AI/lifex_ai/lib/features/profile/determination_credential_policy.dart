@@ -1,9 +1,9 @@
 /// =============================================================
 /// Lifex-AI — الهوية الصحية
 /// الملف: determination_credential_policy.dart
-/// التصريح بذوي الهمم لا يمنح الميزة. تُقبل بطاقة وطنية أو بطاقة إعاقة
-/// أو بطاقة مرض دائم من بلد صاحب الحساب نفسه فقط. بلا ذلك لا يُعدّ
-/// من ذوي الإعاقة. ليست مطابقة حكومية عبر شبكة.
+/// التصريح بذوي الهمم لا يثبّت الوضع. التثبيت في وحدة المعاقين
+/// ببطاقة إعاقة أو بطاقة مريض دائم من البلد المسجّل فيه صاحب الحساب.
+/// ليست مطابقة حكومية عبر شبكة.
 /// =============================================================
 library lifex_ai.features.profile.determination_credential_policy;
 
@@ -16,6 +16,11 @@ enum DeterminationCardKind {
 }
 
 extension DeterminationCardKindLabel on DeterminationCardKind {
+  bool get fixesInDisabilityUnit {
+    return this == DeterminationCardKind.disabilityCard ||
+        this == DeterminationCardKind.chronicIllnessCard;
+  }
+
   String get labelAr {
     switch (this) {
       case DeterminationCardKind.nationalId:
@@ -44,7 +49,7 @@ class DeterminationCheck {
   const DeterminationCheck.recognized()
       : recognized = true,
         messageAr =
-            'اُعتمد وضع ذوي الهمم ببطاقة من بلد صاحب الحساب. ليست مطابقة حكومية عبر شبكة.';
+            'ثُبّت في وحدة المعاقين ببطاقة من البلد المسجّل فيه صاحب الحساب. ليست مطابقة حكومية عبر شبكة.';
 }
 
 class DeterminationCredentialPolicy {
@@ -86,11 +91,11 @@ class DeterminationCredentialPolicy {
       );
     }
     final kind = parseKind(profile.determinationCardKind);
-    if (kind == null) {
+    if (kind == null || !kind.fixesInDisabilityUnit) {
       return const DeterminationCheck(
         recognized: false,
         messageAr:
-            'أدخل بطاقة وطنية أو بطاقة إعاقة أو بطاقة مرض دائم من بلد صاحب الحساب.',
+            'التثبيت في وحدة المعاقين: بطاقة إعاقة أو بطاقة مريض دائم من البلد المسجّل فيه صاحب الحساب.',
       );
     }
     if (!sameCountry(
@@ -100,7 +105,7 @@ class DeterminationCredentialPolicy {
       return const DeterminationCheck(
         recognized: false,
         messageAr:
-            'البطاقة يجب أن تكون من بلد صاحب الحساب نفسه. بلا ذلك لا يُعدّ من ذوي الإعاقة.',
+            'البطاقة من البلد المسجّل فيه صاحب الحساب. بلد آخر لا يثبّت الوضع.',
       );
     }
     if (profile.determinationCardRef.trim().isEmpty) {

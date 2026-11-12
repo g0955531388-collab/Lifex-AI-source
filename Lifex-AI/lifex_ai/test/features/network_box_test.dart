@@ -17,6 +17,7 @@ import 'package:lifex_ai/features/network_box/unit_branch_catalog.dart';
 import 'package:lifex_ai/features/profile/health_profile.dart';
 import 'package:lifex_ai/features/reports/stamped_report.dart';
 import 'package:lifex_ai/services/cloud/cloud_backend_client.dart';
+import 'package:lifex_ai/services/cloud/cloud_sync_manager.dart';
 
 void main() {
   HealthProfile profile() => HealthProfile(
@@ -136,11 +137,17 @@ void main() {
   });
 
   group('CloudBackendClient', () {
-    test('يرفض رابط المثال كخادم عامل', () {
+    test('يرفض رابط المثال كخادم عامل', () async {
       final client = CloudBackendClient(
         baseUrl: 'https://backend.lifex-ai.example.com',
       );
       expect(client.isEndpointConfigured, isFalse);
+      final pushed = await client.pushEntity(
+        entityType: SyncEntityType.healthProfile,
+        entityId: 'p1',
+        payload: const {'name': 'x'},
+      );
+      expect(pushed, isFalse);
     });
   });
 

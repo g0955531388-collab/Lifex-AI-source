@@ -5,6 +5,7 @@
 /// الوصف: إدارة ترخيص التطبيق، إسناد النسخة، والتحقق من صلاحية الاستخدام.
 /// إعداد وتطوير: غازي سليم بكفلاوي
 /// =============================================================
+library;
 
 import 'app_constants.dart';
 
@@ -96,7 +97,7 @@ class LicenseManager {
       ownerName: ownerName,
       issuedAt: DateTime.now(),
       expiresAt: DateTime.now().add(
-        Duration(days: AppConstants.trialPeriodDays),
+        const Duration(days: AppConstants.trialPeriodDays),
       ),
       status: LicenseStatus.trial,
       appVersion: AppConstants.appVersion,
@@ -150,6 +151,23 @@ class LicenseManager {
     return 'لا يوجد خادم ترخيص لقبول مفاتيح خارجية بعد.';
   }
 
+  /// جسم يحتوي «valid» أو رابط مع معرّف جهاز لا يفعّل الترخيص.
+  static const bool remoteBodyActivationAllowed = false;
+
+  /// نافذة ما بعد الثلاثين يوماً ليست خصماً محفوظاً ولا ترخيصاً.
+  static const bool postTrialDiscountIsLicense = false;
+
+  bool acceptRemoteActivation({
+    required String key,
+    required String verifyUrl,
+    required String body,
+  }) {
+    return remoteBodyActivationAllowed &&
+        key.isNotEmpty &&
+        verifyUrl.isNotEmpty &&
+        body.isNotEmpty;
+  }
+
   String appendAr(String body) {
     const stamp = AppConstants.ownershipStatementShort;
     final trimmed = body.trim();
@@ -163,11 +181,13 @@ class LicenseManager {
   }
 
   String appendEn(String body) {
-    const stamp =
-        'Lifex-AI — invented by Ghazi Salim Bakfalawi with Rabab Alhayek.';
+    const stamp = AppConstants.ownershipStatementShortEn;
     final trimmed = body.trim();
     if (trimmed.isEmpty) return stamp;
-    if (trimmed.contains(stamp) || trimmed.contains('Bakfalawi')) {
+    if (trimmed.contains(stamp) ||
+        trimmed.contains(AppConstants.ownershipStatementEn) ||
+        trimmed.contains('Ghazi Salim Bekfalawi') ||
+        trimmed.contains('Bakfalawi')) {
       return trimmed;
     }
     return '$trimmed $stamp';

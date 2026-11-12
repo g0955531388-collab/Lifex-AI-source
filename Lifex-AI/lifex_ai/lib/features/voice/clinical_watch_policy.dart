@@ -57,7 +57,7 @@ class ClinicalWatchPolicy {
   String engineHonestyAr(ClinicalWatchPurpose purpose) {
     switch (purpose) {
       case ClinicalWatchPurpose.commands:
-        return 'الأوامر تعمل عبر التعرّف على الجهاز بعد إشارة البدء.';
+        return 'أوامر صوتية ما دام إشعار الحماية ظاهراً، حتى والتطبيق في الخلفية. إيقاف الإشعار يوقف الميكروفون. لا اتصال صامت.';
       case ClinicalWatchPurpose.bedsideCamera:
         return 'العدسة تُفتح وتُعرض. لا أرشيف صور. الوصف الآلي يحتاج محرك رؤية معتمداً.';
       case ClinicalWatchPurpose.unusualSounds:

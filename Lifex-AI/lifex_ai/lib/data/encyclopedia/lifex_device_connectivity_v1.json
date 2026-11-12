@@ -1,0 +1,20 @@
+{
+  "database_id": "LIFEX-DEVICE-CONNECTIVITY",
+  "pack": 41,
+  "file": "lifex_device_connectivity_v1.json",
+  "version": "1.0.0",
+  "offline_core": true,
+  "not_every_device_in_the_world": true,
+  "unbound_transport_is_not_connected": true,
+  "name_is_not_confirmed_identity": true,
+  "pairing_is_not_encryption": true,
+  "known_name_is_not_full_permission": true,
+  "heartbeat_stale_is_not_alive": true,
+  "measurement_is_not_diagnosis": true,
+  "no_auto_emergency_from_link": true,
+  "baud_rate_not_assumed": true,
+  "nfc_is_not_bulk_transfer": true,
+  "scan_empty_is_not_vendor_catalog": true,
+  "records": [],
+  "next_pack": 42
+}

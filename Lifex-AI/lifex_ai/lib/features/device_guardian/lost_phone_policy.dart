@@ -5,6 +5,8 @@
 /// =============================================================
 library lifex_ai.features.device_guardian.lost_phone_policy;
 
+import 'lost_phone_desk.dart';
+
 class LostPhonePolicy {
   const LostPhonePolicy();
 
@@ -17,8 +19,9 @@ class LostPhonePolicy {
       'قريب: رسالة أنا هنا + إنذار صوتي ظاهر. بلا تصوير من يمسك الهاتف.';
 
   String farSmsTemplate() =>
-      '$farSmsKeyword ثم الرمز. إن صح: موقع تقريبي محفوظ، توفير طاقة، صامت، '
-      'إطفاء الشاشة، تشغيل بيانات أو GPS إن أذن المستخدم مسبقاً.';
+      '$farSmsKeyword ثم الرمز عبر قناة مصادق عليها. قراءة الرسائل النصية غير مفعّلة في هذا البناء. '
+      'نجاح الإرسال يُسجَّل فقط إذا أعادت القناة نجاحاً. '
+      '${LostPhoneDesk.limitAr}';
 
   String simChangeWithoutPinAr() =>
       'تغيير الشريحة بلا الرمز ينبّه النسخة الاحتياطية وعشرة أرقام موثوقة. '

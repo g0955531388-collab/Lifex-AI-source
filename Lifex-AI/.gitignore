@@ -10,3 +10,5 @@ ios/Pods/
 .flutter-plugins-dependencies
 *.g.dart.bak
 .DS_Store
+lifex_ai/assets/config/app_config.json
+backend/lifex-backend/node_modules/

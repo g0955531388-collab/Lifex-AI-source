@@ -9,6 +9,7 @@
 /// هنا In-Memory فقط، آمن للاستخدام فوراً دون كسر شيء، ويمكن استبداله
 /// لاحقاً بـ HiveMemoryStore دون تعديل أي كود يستخدم هذا العقد.
 /// =============================================================
+library;
 
 abstract class AgentMemoryStore {
   Future<void> save(String profileId, String key, Map<String, dynamic> value);

@@ -6,6 +6,7 @@
 /// لكل مستخدم، تتغير مع الزمن وتجمع البيانات الأساسية، الحيوية، الطبية،
 /// والسلوكية، وترتبط بجميع وحدات Lifex-AI حسب الصلاحيات الممنوحة.
 /// =============================================================
+library;
 
 import '../../core/health_event_manager.dart';
 
@@ -14,7 +15,17 @@ import '../../core/health_event_manager.dart';
 enum BiologicalSex { male, female, unspecified }
 
 /// فصيلة الدم.
-enum BloodType { aPositive, aNegative, bPositive, bNegative, abPositive, abNegative, oPositive, oNegative, unknown }
+enum BloodType {
+  aPositive,
+  aNegative,
+  bPositive,
+  bNegative,
+  abPositive,
+  abNegative,
+  oPositive,
+  oNegative,
+  unknown
+}
 
 /// عنصر واحد في تاريخ الحساسية.
 class AllergyRecord {
@@ -83,7 +94,12 @@ class HealthProfile {
   /// الاسم الحقيقي — يخضع لصلاحيات profile_privacy_manager.dart عند العرض.
   String fullName;
 
-  DateTime dateOfBirth;
+  /// تاريخ الميلاد اختياري. غيابه لا يمنع إنشاء الملف.
+  DateTime? dateOfBirth;
+
+  /// العمر المكتوب بعدد السنوات. هذا هو العمر المعتمد عند وجوده.
+  int? statedAgeYears;
+
   BiologicalSex biologicalSex;
   BloodType bloodType;
 
@@ -115,8 +131,8 @@ class HealthProfile {
   /// توصية من التطبيق. تُستخدم في شاشة أدويتي لفحص التداخلات المرجعية.
   List<String> currentMedicationNames;
 
-  /// هل يقبل المستخدم استقبال طلبات التبرع بالدم؟ الافتراضي true وفق
-  /// شبكة الدم، ويمكن إيقافه صراحة من الإعدادات.
+  /// هل قبل المستخدم استقبال نداءات التبرع بالدم؟ الافتراضي إيقاف حتى
+  /// موافقة واضحة، ويمكن إيقافها لاحقاً من الملف.
   bool acceptsBloodDonationAlerts;
 
   /// إجابات الاستبيان الصحي الموسّع والمواعيد وجهات الثقة وسجلات الوحدات.
@@ -128,7 +144,8 @@ class HealthProfile {
   HealthProfile({
     required this.profileId,
     required this.fullName,
-    required this.dateOfBirth,
+    this.dateOfBirth,
+    this.statedAgeYears,
     this.biologicalSex = BiologicalSex.unspecified,
     this.bloodType = BloodType.unknown,
     this.heightCm,
@@ -144,7 +161,7 @@ class HealthProfile {
     this.billingSeat = 'individual',
     List<String>? linkedFamilyProfileIds,
     List<String>? currentMedicationNames,
-    this.acceptsBloodDonationAlerts = true,
+    this.acceptsBloodDonationAlerts = false,
     Map<String, dynamic>? questionnaireData,
     DateTime? lastUpdatedAt,
   })  : allergies = allergies ?? [],
@@ -154,12 +171,16 @@ class HealthProfile {
         questionnaireData = questionnaireData ?? {},
         lastUpdatedAt = lastUpdatedAt ?? DateTime.now();
 
-  /// العمر الحالي بالسنوات، محسوب من تاريخ الميلاد.
+  /// العمر بالسنوات. المكتوب يتقدم على الحساب من تاريخ الميلاد.
   int get ageInYears {
+    final stated = statedAgeYears;
+    if (stated != null) return stated;
+    final birth = dateOfBirth;
+    if (birth == null) return 0;
     final now = DateTime.now();
-    int age = now.year - dateOfBirth.year;
-    if (now.month < dateOfBirth.month ||
-        (now.month == dateOfBirth.month && now.day < dateOfBirth.day)) {
+    var age = now.year - birth.year;
+    if (now.month < birth.month ||
+        (now.month == birth.month && now.day < birth.day)) {
       age--;
     }
     return age;
@@ -211,14 +232,14 @@ class HealthProfile {
   Map<String, dynamic> toJson() => {
         'profileId': profileId,
         'fullName': fullName,
-        'dateOfBirth': dateOfBirth.toIso8601String(),
+        'dateOfBirth': dateOfBirth?.toIso8601String(),
+        'statedAgeYears': statedAgeYears,
         'biologicalSex': biologicalSex.name,
         'bloodType': bloodType.name,
         'heightCm': heightCm,
         'weightKg': weightKg,
         'allergies': allergies.map((a) => a.toJson()).toList(),
-        'chronicConditions':
-            chronicConditions.map((c) => c.toJson()).toList(),
+        'chronicConditions': chronicConditions.map((c) => c.toJson()).toList(),
         'isPersonOfDetermination': isPersonOfDetermination,
         'accountCountry': accountCountry,
         'determinationCardKind': determinationCardKind,
@@ -236,7 +257,10 @@ class HealthProfile {
   factory HealthProfile.fromJson(Map<String, dynamic> json) => HealthProfile(
         profileId: json['profileId'] as String,
         fullName: json['fullName'] as String,
-        dateOfBirth: DateTime.parse(json['dateOfBirth'] as String),
+        dateOfBirth: json['dateOfBirth'] == null
+            ? null
+            : DateTime.parse(json['dateOfBirth'] as String),
+        statedAgeYears: (json['statedAgeYears'] as num?)?.toInt(),
         biologicalSex: BiologicalSex.values.firstWhere(
           (e) => e.name == json['biologicalSex'],
           orElse: () => BiologicalSex.unspecified,
@@ -272,7 +296,7 @@ class HealthProfile {
                 .map((e) => e as String)
                 .toList(),
         acceptsBloodDonationAlerts:
-            json['acceptsBloodDonationAlerts'] as bool? ?? true,
+            json['acceptsBloodDonationAlerts'] as bool? ?? false,
         questionnaireData: Map<String, dynamic>.from(
           json['questionnaireData'] as Map<dynamic, dynamic>? ?? {},
         ),

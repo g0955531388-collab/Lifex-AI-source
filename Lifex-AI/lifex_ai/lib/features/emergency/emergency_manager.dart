@@ -5,6 +5,7 @@
 /// الوصف: المدير المركزي لحالة الطوارئ الكاملة — من إطلاقها حتى حلها،
 /// وينسّق بين تقييم الخطر وإرسال الاستغاثة.
 /// =============================================================
+library;
 
 import '../../core/health_event_manager.dart';
 import '../accessibility/multi_sensory_alert_manager.dart';

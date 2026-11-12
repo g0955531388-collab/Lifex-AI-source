@@ -5,6 +5,7 @@
 /// الوصف: إدارة مخزون بنك الدم الداخلي للمستشفى، وربطه اختيارياً بشبكة
 /// التبرع بالدم الخارجية (blood_request_engine.dart) عند نقص المخزون.
 /// =============================================================
+library;
 
 enum BloodTypeSimple { aPositive, aNegative, bPositive, bNegative, abPositive, abNegative, oPositive, oNegative }
 

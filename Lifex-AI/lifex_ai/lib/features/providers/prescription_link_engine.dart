@@ -8,6 +8,7 @@
 /// ⚠️ لا يُصرف أي دواء يتطلب وصفة (requiresPrescription = true في
 /// medications_database.json) دون وجود وصفة مرتبطة ومؤكدة هنا.
 /// =============================================================
+library;
 
 enum PrescriptionFulfillmentStatus { pendingReview, approved, dispensed, rejected }
 

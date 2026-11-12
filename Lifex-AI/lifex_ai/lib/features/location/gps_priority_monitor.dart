@@ -26,20 +26,24 @@ class GpsPriorityMonitor {
 
   static const bannerPriority = 90;
 
+  /// خانة المكان على كل الحسابات يكتبها صاحب الحساب. لا إحداثيات جاهزة.
+  static const bool userPlaceFieldsStartEmpty = true;
+  static const bool inventedCoordinatesAllowed = false;
+
   GpsPrioritySnapshot fromPermission({required bool granted}) {
     if (granted) {
       return const GpsPrioritySnapshot(
         lane: GpsLane.permissionReady,
         priority: bannerPriority,
         messageAr:
-            'حالة GPS أولوية عالية: الإذن موجود. لا نقطة على الخريطة حتى تُقرأ إحداثيات صادقة من الجهاز.',
+            'الموقع جزء من اقتراح الوحدات. الإذن موجود، ولا تُكتب نقطة في ملف الوحدة إلا بعد قراءة صادقة من الجهاز.',
       );
     }
     return const GpsPrioritySnapshot(
       lane: GpsLane.permissionMissing,
       priority: bannerPriority,
       messageAr:
-          'النظام يعمل الآن بلا GPS. حالته تبقى أولوية: اطلب الإذن عند الدم أو الطوارئ فقط.',
+          'النظام يعمل بلا نقطة. فعّل الموقع ليُقترح الأقرب وتُكتب الإحداثيات في ملف الوحدة. لا تُخترع إحداثيات.',
     );
   }
 }

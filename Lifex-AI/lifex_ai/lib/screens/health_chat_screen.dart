@@ -16,11 +16,14 @@ import '../core/trial_manager.dart';
 import '../features/finance/billing_exemption_policy.dart';
 import '../features/messaging/conversation_type_router.dart';
 import '../features/messaging/health_thread_ledger.dart';
+import '../features/network_box/profile_box_store.dart';
 import '../features/profile/active_profile_controller.dart';
 import '../features/profile/health_identity_manager.dart';
 import '../features/profile/health_profile.dart';
 import '../features/voice/voice_engine.dart';
 import '../widgets/honesty_banner.dart';
+import '../widgets/lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class HealthChatScreen extends StatelessWidget {
   const HealthChatScreen({super.key});
@@ -32,15 +35,15 @@ class HealthChatScreen extends StatelessWidget {
         final me = controller.activeProfile;
         if (me == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('القناة الصحية')),
-            body: const Center(child: Text('لا يوجد ملف نشط.')),
+            appBar: AppBar(title: const LifexText('القناة الصحية')),
+            body: const Center(child: LifexText('لا يوجد ملف نشط.')),
           );
         }
         final others = controller.allProfiles
             .where((item) => item.profileId != me.profileId)
             .toList();
         return Scaffold(
-          appBar: AppBar(title: const Text('القناة الصحية')),
+          appBar: AppBar(title: const LifexText('القناة الصحية')),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -48,16 +51,35 @@ class HealthChatScreen extends StatelessWidget {
                 messageAr:
                     'مثل أسلوب واتساب للتنظيم الصحي على هذا الجهاز: تسليم فوري هنا فقط. '
                     'العامة بلا إباحي ولا نابية. الأطباء والوحدات قد يرسلون ملفاً طبياً حرجاً. '
-                    'المشترك يرفق قواعد أكبر من جيغا محلياً دون رفع سحابي.',
+                    'المشترك يرفق قواعد أكبر من جيغا محلياً دون رفع سحابي. '
+                    'غرفة الاجتماع سجل محلي للحضور، وليست مكالمة فيديو.',
               ),
+              const SizedBox(height: 8),
+              FilledButton.icon(
+                onPressed: others.isEmpty
+                    ? null
+                    : () => _openLocalMeeting(context, controller, me, others),
+                icon: const Icon(Icons.groups_outlined),
+                label: const LifexText('غرفة اجتماع محلية'),
+              ),
+              for (final room
+                  in ProfileBoxStore(me).list(BoxKeys.meetingRooms))
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.meeting_room_outlined),
+                  title: LifexText(room['conversationId'] as String? ?? 'غرفة'),
+                  subtitle: LifexText(
+                    'حضور: ${(room['participantLifexIds'] as List?)?.length ?? 0}',
+                  ),
+                ),
               if (others.isEmpty)
-                const Text('أضيفي ملفاً آخر من العائلة لتبدأ محادثة ثنائية.'),
+                const LifexText('أضيفي ملفاً آخر من العائلة لتبدأ محادثة ثنائية.'),
               for (final other in others)
                 Card(
                   child: ListTile(
                     leading: const Icon(Icons.chat),
-                    title: Text(other.fullName),
-                    subtitle: Text(
+                    title: LifexText(other.fullName),
+                    subtitle: LifexText(
                       other.billingSeat == 'hospital' ||
                               other.billingSeat == 'healthUnit'
                           ? 'محادثة سريرية — مرفقات طبية مسموحة'
@@ -66,7 +88,7 @@ class HealthChatScreen extends StatelessWidget {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => _ThreadPage(me: me, other: other),
+                        builder: (_) => HealthThreadPage(me: me, other: other),
                       ),
                     ),
                   ),
@@ -77,20 +99,88 @@ class HealthChatScreen extends StatelessWidget {
       },
     );
   }
+
+  Future<void> _openLocalMeeting(
+    BuildContext context,
+    ActiveProfileController controller,
+    HealthProfile me,
+    List<HealthProfile> others,
+  ) async {
+    final selected = <String>{};
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setLocal) => AlertDialog(
+          title: const LifexText('غرفة اجتماع محلية'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const LifexText('تُحفظ أسماء الحضور على هذا الجهاز. لا تبدأ مكالمة.'),
+                for (final other in others)
+                  CheckboxListTile(
+                    value: selected.contains(other.profileId),
+                    title: LifexText(other.fullName),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    onChanged: (value) {
+                      setLocal(() {
+                        if (value == true) {
+                          selected.add(other.profileId);
+                        } else {
+                          selected.remove(other.profileId);
+                        }
+                      });
+                    },
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const LifexText('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const LifexText('فتح السجل'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (saved != true || !context.mounted) return;
+    final room = ConversationTypeRouter().openMeetingRoom(
+      participantLifexIds: [me.profileId, ...selected],
+    );
+    if (room == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: LifexText('اختر مشاركاً واحداً على الأقل معك.')),
+      );
+      return;
+    }
+    ProfileBoxStore(me).add(BoxKeys.meetingRooms, {
+      'conversationId': room.conversationId,
+      'type': room.type.name,
+      'participantLifexIds': room.participantLifexIds,
+      'createdAt': room.createdAt.toIso8601String(),
+    });
+    controller.saveActiveProfileChanges();
+  }
 }
 
-class _ThreadPage extends StatefulWidget {
-  const _ThreadPage({required this.me, required this.other});
+class HealthThreadPage extends StatefulWidget {
+  const HealthThreadPage({super.key, required this.me, required this.other});
 
   final HealthProfile me;
   final HealthProfile other;
 
   @override
-  State<_ThreadPage> createState() => _ThreadPageState();
+  State<HealthThreadPage> createState() => _ThreadPageState();
 }
 
-class _ThreadPageState extends State<_ThreadPage> {
+class _ThreadPageState extends State<HealthThreadPage> {
   final _input = TextEditingController();
+  final _scroll = ScrollController();
   String? _fileName;
   int _sizeBytes = 0;
   String? _statusAr;
@@ -117,9 +207,23 @@ class _ThreadPageState extends State<_ThreadPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _scrollToEnd();
+  }
+
+  @override
   void dispose() {
     _input.dispose();
+    _scroll.dispose();
     super.dispose();
+  }
+
+  void _scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+    });
   }
 
   Future<void> _pickFile() async {
@@ -148,6 +252,7 @@ class _ThreadPageState extends State<_ThreadPage> {
     _input.clear();
     _fileName = null;
     _sizeBytes = 0;
+    _scrollToEnd();
     controller.saveActiveProfileChanges();
     try {
       final engine = InternalSearchEngine(
@@ -171,16 +276,17 @@ class _ThreadPageState extends State<_ThreadPage> {
       HealthThreadLedger.threadId(widget.me.profileId, widget.other.profileId),
     );
     return Scaffold(
-      appBar: AppBar(title: Text(widget.other.fullName)),
+      appBar: AppBar(title: LifexText(widget.other.fullName)),
       body: Column(
         children: [
           if (_statusAr != null)
             Padding(
               padding: const EdgeInsets.all(8),
-              child: Text(_statusAr!),
+              child: LifexText(_statusAr!),
             ),
           Expanded(
             child: ListView.builder(
+              controller: _scroll,
               padding: const EdgeInsets.all(12),
               itemCount: posts.length,
               itemBuilder: (_, index) {
@@ -190,19 +296,21 @@ class _ThreadPageState extends State<_ThreadPage> {
                   alignment:
                       mine ? Alignment.centerLeft : Alignment.centerRight,
                   child: Card(
-                    color: mine ? Colors.green.withOpacity(0.12) : null,
+                    color: mine
+                        ? Theme.of(context).colorScheme.primary.withOpacity(0.16)
+                        : null,
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(post.text.isEmpty ? '(مرفق)' : post.text),
+                          LifexText(post.text.isEmpty ? '(مرفق)' : post.text),
                           if (post.fileName.isNotEmpty)
-                            Text(
+                            LifexText(
                               '📎 ${post.fileName} (${post.sizeBytes} بايت)',
                               style: const TextStyle(fontSize: 12),
                             ),
-                          Text(
+                          LifexText(
                             post.read ? 'قُرئت' : 'وُصلت على هذا الجهاز',
                             style: const TextStyle(fontSize: 11),
                           ),
@@ -220,7 +328,7 @@ class _ThreadPageState extends State<_ThreadPage> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'إرفاق صورة أو ملف من المعرض',
+                    tooltip: tr('إرفاق صورة أو ملف من المعرض'),
                     onPressed: _pickFile,
                     icon: const Icon(Icons.attach_file),
                   ),
@@ -230,9 +338,9 @@ class _ThreadPageState extends State<_ThreadPage> {
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _send(),
                       decoration: InputDecoration(
-                        hintText: _fileName == null
+                        hintText: tr(_fileName == null
                             ? 'رسالة صحية…'
-                            : 'مرفق: $_fileName',
+                            : 'مرفق: $_fileName'),
                         border: const OutlineInputBorder(),
                       ),
                     ),
@@ -240,7 +348,7 @@ class _ThreadPageState extends State<_ThreadPage> {
                   IconButton.filled(
                     onPressed: _send,
                     icon: const Icon(Icons.send),
-                    tooltip: 'إرسال',
+                    tooltip: tr('إرسال'),
                   ),
                 ],
               ),

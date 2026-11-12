@@ -6,6 +6,7 @@
 /// وتقارير جاهزة للواجهة (كشف حساب، ملخص شهري) دون تعديل السجل نفسه،
 /// حفاظاً على مبدأ "سجل للإضافة فقط" (Append-only Ledger).
 /// =============================================================
+library;
 
 import 'transaction_ledger.dart';
 
@@ -55,6 +56,7 @@ class TransactionService {
       switch (t.type) {
         case TransactionType.topUp:
         case TransactionType.refund:
+        case TransactionType.transferIn:
           totalTopUps += t.amountInSmallestUnit;
           break;
         case TransactionType.hospitalPayment:
@@ -63,6 +65,8 @@ class TransactionService {
         case TransactionType.appStoreSale:
         case TransactionType.platformFee:
         case TransactionType.extraService:
+        case TransactionType.transferOut:
+        case TransactionType.withdrawal:
           totalPayments += t.amountInSmallestUnit;
           break;
       }

@@ -1,0 +1,10 @@
+{
+  "name": "lifex-backend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Lifex-AI preliminary backend: profile id, manifest, sync. Memory only.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

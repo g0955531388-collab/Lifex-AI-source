@@ -10,6 +10,8 @@ import 'package:flutter/services.dart';
 
 import '../core/permission_transparency.dart';
 import '../features/voice/voice_engine.dart';
+import 'lifex_text.dart';
+import '../core/i18n/lifex_runtime_translator.dart';
 
 class VoiceFillButton extends StatefulWidget {
   const VoiceFillButton({super.key, required this.onText});
@@ -28,18 +30,18 @@ class _VoiceFillButtonState extends State<VoiceFillButton> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('إذن الميكروفون'),
-        content: const Text(
+        title: const LifexText('إذن الميكروفون'),
+        content: const LifexText(
           'لملء الحقل بالصوت وأنت تضغط. ليس تجسساً في الخلفية ولا قراءة رسائل.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('رفض'),
+            child: const LifexText('رفض'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('موافق'),
+            child: const LifexText('موافق'),
           ),
         ],
       ),
@@ -55,20 +57,20 @@ class _VoiceFillButtonState extends State<VoiceFillButton> {
     HapticFeedback.selectionClick();
     final messenger = ScaffoldMessenger.maybeOf(context);
     messenger?.showSnackBar(
-      const SnackBar(content: Text('أستمع وأسجّل الآن...')),
+      const SnackBar(content: LifexText('أستمع وأسجّل الآن...')),
     );
-    final result = await VoiceEngine.instance.startListening();
+    final result = await VoiceEngine.instance.listenFresh();
     if (!mounted) return;
     setState(() => _busy = false);
     final text = result.textResult?.trim() ?? '';
     if (text.isNotEmpty) {
       widget.onText(text);
-      messenger?.showSnackBar(SnackBar(content: Text('سُجّل: $text')));
+      messenger?.showSnackBar(SnackBar(content: LifexText('سُجّل: $text')));
       return;
     }
     messenger?.showSnackBar(
       SnackBar(
-        content: Text(
+        content: LifexText(
           result.errorMessageAr ?? 'لم يُسمع كلام. لا أملأ الحقل بدون صوت.',
         ),
       ),
@@ -78,7 +80,7 @@ class _VoiceFillButtonState extends State<VoiceFillButton> {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: _busy ? 'جارٍ الاستماع' : 'ملء بالصوت',
+      tooltip: tr(_busy ? 'جارٍ الاستماع' : 'ملء بالصوت'),
       onPressed: _busy ? null : _listen,
       icon: Icon(
         _busy ? Icons.hearing : Icons.mic,

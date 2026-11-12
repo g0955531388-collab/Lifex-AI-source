@@ -29,6 +29,9 @@ void main() {
     expect(rig.flashPercentIsTorchCurrent, isFalse);
     expect(rig.previewFilterChangesSensor, isFalse);
     expect(rig.ppmIsCameraRaw, isFalse);
+    expect(rig.cropIsOpticalZoom200, isFalse);
+    expect(rig.randomFrameIsEmergency, isFalse);
+    expect(rig.extraCreditNamesAllowed, isFalse);
     expect(planned.messageAr, contains('معاينة'));
     expect(planned.messageAr, isNot(contains('أمتار')));
     expect(rig.refuseCssZoomAr(8), contains('8.0'));
@@ -69,7 +72,8 @@ void main() {
     expect(rig.clampTimerSeconds(40), 15);
     expect(rig.clampTimerSeconds(-3), 0);
     expect(
-      CameraRigPolicy.normalizeCrop(left: 0.1, top: 0.1, width: 0.01, height: 0.4),
+      CameraRigPolicy.normalizeCrop(
+          left: 0.1, top: 0.1, width: 0.01, height: 0.4),
       isNull,
     );
     final board = StudioSliceBoard();
@@ -90,7 +94,7 @@ void main() {
     expect(parser.parse('x200').intent, VoiceCommandIntent.openLayeredLens);
     expect(
       parser.parse('افتح الكاميرا').intent,
-      VoiceCommandIntent.openCamera,
+      VoiceCommandIntent.openLiveSight,
     );
     expect(NetworkCanon.match('الزوم الكبير')?.unitId, 'radiology');
     expect(NetworkCanon.seatForInboxFile('x200.html'), 'radiology');

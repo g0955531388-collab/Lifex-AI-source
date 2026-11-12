@@ -94,11 +94,19 @@ class HealthThreadLedger {
     int sizeBytes = 0,
     required bool subscriber,
   }) {
+    final trimmed = text.trim();
+    final named = fileName.trim();
+    if (trimmed.isEmpty && named.isEmpty) {
+      return const HealthThreadSendResult(
+        ok: false,
+        messageAr: 'اكتب رسالة أو أرفق ملفاً قبل الإرسال.',
+      );
+    }
     final verdict = filter.inspect(
       type: type,
       senderSeat: from.billingSeat,
-      text: text,
-      fileName: fileName,
+      text: trimmed,
+      fileName: named,
       sizeBytes: sizeBytes,
       subscriber: subscriber,
     );
@@ -108,8 +116,8 @@ class HealthThreadLedger {
     final post = HealthThreadPost(
       id: 'HP-${DateTime.now().millisecondsSinceEpoch}',
       fromId: from.profileId,
-      text: text.trim(),
-      fileName: fileName,
+      text: trimmed,
+      fileName: named,
       sizeBytes: sizeBytes,
       at: DateTime.now(),
     );

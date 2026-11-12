@@ -10,6 +10,7 @@ pluginManagement {
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
     repositories {
+        // Google and Maven Central. Aliyun and Huawei do not resolve on this machine.
         google()
         mavenCentral()
         gradlePluginPortal()

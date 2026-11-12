@@ -7,6 +7,7 @@
 /// (وهو ما يضيفه DocumentReaderTool). يستخدم نفس عقد OcrTextExtractor
 /// الموجود في features/vision/medical_ocr_reader.dart دون تكراره.
 /// =============================================================
+library;
 
 import '../../../features/vision/medical_ocr_reader.dart' show OcrTextExtractor;
 import '../agent_context.dart';

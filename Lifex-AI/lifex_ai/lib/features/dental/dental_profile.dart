@@ -4,6 +4,7 @@
 /// المسار: lib/features/dental/dental_profile.dart
 /// الوصف: الملف العام (الخارجي) لطبيب أو مركز الأسنان.
 /// =============================================================
+library;
 
 class DentalProfile {
   final String dentalProviderId;

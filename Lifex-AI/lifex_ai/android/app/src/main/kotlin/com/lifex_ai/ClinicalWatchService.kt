@@ -33,7 +33,7 @@ class ClinicalWatchService : Service() {
         } else {
             startForeground(NOTICE_ID, notification)
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     private fun ensureChannel() {
@@ -65,8 +65,8 @@ class ClinicalWatchService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("ليفكس — مراقبة صحية بموافقتك")
-            .setContentText("الميكروفون أو العدسة مفتوحان. لا حفظ صور. اضغط لإيقاف.")
+            .setContentTitle("ليفكس — حماية ظاهرة")
+            .setContentText("الاستماع للأوامر مستمر بموافقتك. ليس تصويراً خفياً. اضغط لإيقاف.")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(open)
             .setOngoing(true)

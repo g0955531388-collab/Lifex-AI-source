@@ -86,6 +86,15 @@ void main() {
       HealthThreadLedger().posts(a, HealthThreadLedger.threadId('a', 'b')),
       isNotEmpty,
     );
+    final blank = HealthThreadLedger().send(
+      from: a,
+      to: b,
+      type: ConversationType.direct,
+      text: '   ',
+      subscriber: true,
+    );
+    expect(blank.ok, isFalse);
+    expect(blank.messageAr, contains('اكتب رسالة'));
   });
 
   test('فهرس البحث الدائم لا ينتهي ويُدمج مع المرجع', () {
@@ -140,6 +149,8 @@ void main() {
     final off = monitor.fromPermission(granted: false);
     expect(off.lane, GpsLane.permissionMissing);
     expect(off.priority, GpsPriorityMonitor.bannerPriority);
+    expect(GpsPriorityMonitor.inventedCoordinatesAllowed, isFalse);
+    expect(GpsPriorityMonitor.userPlaceFieldsStartEmpty, isTrue);
     expect(monitor.fromPermission(granted: true).lane, GpsLane.permissionReady);
   });
 }
