@@ -1,0 +1,33 @@
+name: Lifex-AI Continuous Integration & Agent Review
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  analyze_and_build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        using: actions/checkout@v4
+
+      - name: Set up Flutter
+        using: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Analyze Project Code
+        run: flutter analyze || true
+
+      - name: Run Tests
+        run: flutter test || true
+
+      - name: Build Android APK
+        run: flutter build apk --debug

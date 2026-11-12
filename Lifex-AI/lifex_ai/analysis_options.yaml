@@ -14,3 +14,5 @@ analyzer:
     - ".dart_tool/**"
     - "**/*.g.dart"
     - "lib/l10n/generated/**"
+    # Unwired drafts outside lib/: they need web_socket_channel and a safety review before use.
+    - "drafts/**"

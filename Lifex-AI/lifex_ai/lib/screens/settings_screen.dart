@@ -173,7 +173,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final activeProfileId =
         Provider.of<ActiveProfileController>(context).activeProfileId;
     if (activeProfileId == null) return null;
-    return HealthIdentityManager.instance.getByProfileId(activeProfileId)?.lifexId;
+    return HealthIdentityManager.instance
+        .getByProfileId(activeProfileId)
+        ?.lifexId;
   }
 
   void _showOwnerActivationClosed() {

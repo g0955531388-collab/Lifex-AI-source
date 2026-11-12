@@ -66,14 +66,12 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
     _nationalId.text = store?.stringField(BoxKeys.ownerNationalId) ?? '';
     _nationality.text = store?.stringField(BoxKeys.nationality) ?? '';
     _residence.text = store?.stringField(BoxKeys.residencePlace) ?? '';
-    _publicAliasMode =
-        store?.stringField(BoxKeys.publicIdentityMode) != 'real';
+    _publicAliasMode = store?.stringField(BoxKeys.publicIdentityMode) != 'real';
     _seeded = true;
   }
 
   ProfileBoxStore? _store() {
-    final profile =
-        context.read<ActiveProfileController>().activeProfile;
+    final profile = context.read<ActiveProfileController>().activeProfile;
     if (profile == null) return null;
     return ProfileBoxStore(profile);
   }
@@ -155,7 +153,8 @@ class _IdentityWorkspaceScreenState extends State<IdentityWorkspaceScreen> {
                     const SizedBox(height: 12),
                     Center(
                       child: LifexThumbnail(
-                        localPath: _store()?.stringField(BoxKeys.profileThumbnailPath),
+                        localPath:
+                            _store()?.stringField(BoxKeys.profileThumbnailPath),
                         size: 96,
                       ),
                     ),

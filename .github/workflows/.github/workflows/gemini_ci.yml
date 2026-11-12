@@ -1,0 +1,16 @@
+jobs:
+  analyze-and-build:
+    runs-on: ubuntu-latest
+    
+    # ⚠️ يجب تحديد اسم البيئة هنا لاستدعاء السر المنشأ داخلها
+    environment: التكوين مفتاح واجهة برمجة تطبيقات الجوزاء
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Gemini Diagnostic
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          echo "Gemini API Key is ready for use."

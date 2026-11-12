@@ -14,18 +14,23 @@ import 'app_constants.dart';
 enum TrialPhase {
   /// اشتراك سنوي محلي مسجّل أو إعفاء يُمرَّر من الواجهة.
   subscribed,
+
   /// نسخة إهداء تعمل كاملة خمسة عشر يوماً.
   giftWorking,
+
   /// انتهت الخمسة عشر يوماً. تتوقف حتى التخصيص.
   giftFrozen,
+
   /// مشترك جديد في الشهر المجاني بخدمات أقل.
   reducedMonth,
+
   /// بلا اشتراك أو منتهٍ: إشعارات وتبرعات وإسعاف ودم.
   residual,
 }
 
 class GiftActionResult {
-  const GiftActionResult({required this.ok, required this.messageAr, this.token});
+  const GiftActionResult(
+      {required this.ok, required this.messageAr, this.token});
 
   final bool ok;
   final String messageAr;

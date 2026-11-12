@@ -117,7 +117,8 @@ void main() {
 
     test('الأطباء يفصلون مهتم عن طبيبي', () {
       final ids = UnitBranchCatalog.forUnit('doctors').map((b) => b.id);
-      expect(ids, containsAll(['interested', 'myDoctor', 'publicCv', 'directory']));
+      expect(ids,
+          containsAll(['interested', 'myDoctor', 'publicCv', 'directory']));
     });
 
     test('المرأة تغطي الحمل والنفاس والدورة', () {
@@ -129,7 +130,8 @@ void main() {
       final ids = UnitBranchCatalog.healthCv.map((b) => b.id);
       expect(
         ids,
-        containsAll(['cvIdentity', 'cvMeds', 'cvHistory', 'cvVaccines', 'cvFamily']),
+        containsAll(
+            ['cvIdentity', 'cvMeds', 'cvHistory', 'cvVaccines', 'cvFamily']),
       );
     });
   });
